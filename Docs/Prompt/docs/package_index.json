@@ -1,0 +1,26 @@
+{
+  "project": "CyberTrust KSA",
+  "package": "Repair Prompts Series",
+  "principle": "Rules First -> AI Second -> Auditor Final",
+  "prompt_count": 18,
+  "execution_order": [
+    "01_repository_audit_and_current_state_report.md",
+    "02_freeze_architecture_contract.md",
+    "03_multi_framework_control_library_repair.md",
+    "04_company_registration_and_profile_repair.md",
+    "05_smart_classification_engine_repair.md",
+    "06_applicability_engine_repair.md",
+    "07_assessment_lifecycle_repair.md",
+    "08_evidence_upload_ocr_file_security_repair.md",
+    "09_ai_evidence_analyzer_repair.md",
+    "10_rule_engine_repair.md",
+    "11_risk_gap_remediation_repair.md",
+    "12_auditor_portal_repair.md",
+    "13_report_generator_nca_aramco_sacs_repair.md",
+    "14_role_specific_dashboards_repair.md",
+    "15_monitoring_alerts_continuous_compliance_repair.md",
+    "16_integrations_hub_automated_control_testing_foundation.md",
+    "17_security_tenancy_audit_trail_hardening.md",
+    "18_api_contract_tests_final_repair_gate.md"
+  ]
+}
