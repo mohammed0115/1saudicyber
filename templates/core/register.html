@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Register - CyberTrust KSA{% endblock %}
+
+{% block body %}
+<div class="min-h-screen gradient-gov flex items-center justify-center py-12 px-4">
+    <div class="max-w-2xl w-full">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <a href="{% url 'core:landing' %}" class="inline-flex items-center space-x-3 mb-6">
+                <i class="fas fa-shield-halved text-white text-3xl"></i>
+                <span class="text-white font-bold text-2xl">CyberTrust KSA</span>
+            </a>
+            <h1 class="text-3xl font-bold text-white">Register Your Company</h1>
+            <p class="text-gov-green-200 mt-2">Start your compliance journey with AI-powered assessments</p>
+        </div>
+
+        <!-- Registration Form -->
+        <form method="post" action="{% url 'core:register' %}" class="glass-card rounded-2xl p-8 shadow-2xl">
+            {% csrf_token %}
+
+            <!-- Company Information -->
+            <h2 class="text-lg font-bold text-gov-green-800 mb-4 flex items-center">
+                <i class="fas fa-building mr-2"></i> Company Information
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Company Name (English) *</label>
+                    <input type="text" name="company_name" required class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Company Name (Arabic)</label>
+                    <input type="text" name="company_name_ar" dir="rtl" class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">CR Number *</label>
+                    <input type="text" name="cr_number" required placeholder="e.g., 1010XXXXXX" class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Sector *</label>
+                    <select name="sector" required class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                        <option value="">Select Sector</option>
+                        {% for value, label in sectors %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Company Size *</label>
+                    <select name="size" required class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                        <option value="">Select Size</option>
+                        {% for value, label in sizes %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">City</label>
+                    <input type="text" name="city" class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                </div>
+            </div>
+
+            <!-- Vendor Targets -->
+            <h2 class="text-lg font-bold text-gov-green-800 mb-4 flex items-center">
+                <i class="fas fa-bullseye mr-2"></i> Certification Targets
+            </h2>
+            <div class="grid md:grid-cols-3 gap-4 mb-6">
+                <label class="flex items-center p-4 border-2 border-gov-gray-200 rounded-xl cursor-pointer hover:border-gov-green-500 transition has-[:checked]:border-gov-green-600 has-[:checked]:bg-gov-green-50">
+                    <input type="checkbox" name="target_nca" class="w-5 h-5 text-gov-green-600 rounded mr-3">
+                    <div>
+                        <div class="font-semibold text-gov-green-800">NCA ECC</div>
+                        <div class="text-xs text-gov-gray-500">Government</div>
+                    </div>
+                </label>
+                <label class="flex items-center p-4 border-2 border-gov-gray-200 rounded-xl cursor-pointer hover:border-gov-green-500 transition has-[:checked]:border-gov-green-600 has-[:checked]:bg-gov-green-50">
+                    <input type="checkbox" name="target_aramco" class="w-5 h-5 text-gov-green-600 rounded mr-3">
+                    <div>
+                        <div class="font-semibold text-gov-green-800">Aramco</div>
+                        <div class="text-xs text-gov-gray-500">SACS-002</div>
+                    </div>
+                </label>
+                <label class="flex items-center p-4 border-2 border-gov-gray-200 rounded-xl cursor-pointer hover:border-gov-green-500 transition has-[:checked]:border-gov-green-600 has-[:checked]:bg-gov-green-50">
+                    <input type="checkbox" name="target_sabic" class="w-5 h-5 text-gov-green-600 rounded mr-3">
+                    <div>
+                        <div class="font-semibold text-gov-green-800">SABIC</div>
+                        <div class="text-xs text-gov-gray-500">CyberTrust</div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Contact Information -->
+            <h2 class="text-lg font-bold text-gov-green-800 mb-4 flex items-center">
+                <i class="fas fa-user mr-2"></i> Contact & Account
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">First Name *</label>
+                    <input type="text" name="first_name" required class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Last Name *</label>
+                    <input type="text" name="last_name" required class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Email *</label>
+                    <input type="email" name="email" required class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Phone</label>
+                    <input type="tel" name="phone" class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Password *</label>
+                    <input type="password" name="password" required minlength="8" class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                    <p class="text-xs text-gov-gray-500 mt-1">Minimum 8 characters</p>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-gov-green-800 text-white py-3.5 rounded-lg font-bold text-lg hover:bg-gov-green-700 transition shadow-lg">
+                <i class="fas fa-rocket mr-2"></i> Register & Start AI Classification
+            </button>
+
+            <p class="text-center text-sm text-gov-gray-500 mt-4">
+                Already have an account? <a href="{% url 'core:login' %}" class="text-gov-green-700 font-medium hover:underline">Login here</a>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}

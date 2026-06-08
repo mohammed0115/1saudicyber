@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}No Company - CyberTrust KSA{% endblock %}
+{% block content %}
+<div class="text-center py-20">
+    <i class="fas fa-building text-gov-gray-300 text-6xl mb-6"></i>
+    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">No Company Associated</h2>
+    <p class="text-gov-gray-600 mb-6">Your account is not linked to any company. Please contact your administrator.</p>
+    <a href="{% url 'core:landing' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+        <i class="fas fa-home mr-2"></i> Back to Home
+    </a>
+</div>
+{% endblock %}

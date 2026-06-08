@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CyberTrust KSA{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gov-green': {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#1a4731',
+                            900: '#14532d',
+                            950: '#0a2e1a',
+                        },
+                        'gov-gray': {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'Noto Sans Arabic', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', 'Noto Sans Arabic', sans-serif; }
+        .gradient-gov { background: linear-gradient(135deg, #1a4731 0%, #14532d 50%, #0a2e1a 100%); }
+        .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .score-ring { background: conic-gradient(#16a34a var(--score), #e5e7eb var(--score)); }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gov-gray-50 min-h-screen">
+    {% block body %}
+    <!-- Navigation -->
+    {% if user.is_authenticated %}
+    <nav class="bg-gov-green-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'dashboard:main' %}" class="flex items-center space-x-3">
+                        <i class="fas fa-shield-halved text-white text-2xl"></i>
+                        <span class="text-white font-bold text-xl">CyberTrust KSA</span>
+                    </a>
+                    <div class="hidden md:flex ml-10 space-x-4">
+                        <a href="{% url 'dashboard:main' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
+                            <i class="fas fa-chart-line mr-1"></i> Dashboard
+                        </a>
+                        <a href="{% url 'compliance:controls_list' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
+                            <i class="fas fa-list-check mr-1"></i> Controls
+                        </a>
+                        <a href="{% url 'monitoring:hub' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
+                            <i class="fas fa-radar mr-1"></i> Monitoring
+                        </a>
+                        {% if user.role == 'auditor' %}
+                        <a href="{% url 'auditor_portal:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
+                            <i class="fas fa-clipboard-check mr-1"></i> Auditor Portal
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gov-green-200 text-sm">{{ user.get_full_name|default:user.username }}</span>
+                    <a href="{% url 'core:logout' %}" class="text-gov-green-200 hover:text-white text-sm">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div class="rounded-lg p-4 mb-2 {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="{% if user.is_authenticated %}max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if user.is_authenticated %}
+    <!-- Footer -->
+    <footer class="bg-gov-green-950 text-gov-green-200 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            <p>&copy; 2024 CyberTrust KSA. AI-Powered Cybersecurity Compliance Platform.</p>
+            <p class="mt-1 text-gov-green-400">Aligned with NCA ECC, Aramco SACS-002, SABIC CyberTrust Standards</p>
+        </div>
+    </footer>
+    {% endif %}
+    {% endblock %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

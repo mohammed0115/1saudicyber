@@ -1,0 +1,226 @@
+"""REST API views (/api/v1) — mirrors SRS Appendix D endpoints."""
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from core.models import Company, User
+from compliance.models import Control, CompanyControl, Evidence
+from monitoring.models import ComplianceScore, Alert
+from ai_engine.models import GapAnalysis
+from .serializers import (
+    RegisterSerializer, ControlSerializer, CompanyControlSerializer,
+    EvidenceSerializer, ComplianceScoreSerializer, AlertSerializer,
+    GapAnalysisSerializer, CompanySerializer,
+)
+
+ALLOWED = lambda: getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
+MAXSZ = lambda: getattr(settings, 'MAX_EVIDENCE_FILE_SIZE', 50 * 1024 * 1024)
+
+
+def _require_company(request):
+    return getattr(request.user, 'company', None)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    s = RegisterSerializer(data=request.data)
+    s.is_valid(raise_exception=True)
+    d = s.validated_data
+    with transaction.atomic():
+        company = Company.objects.create(
+            name=d['company_name'], name_ar=d.get('company_name_ar', ''),
+            cr_number=d['cr_number'], sector=d['sector'], size=d['size'],
+            contact_email=d['email'],
+            target_nca=d['target_nca'], target_aramco=d['target_aramco'], target_sabic=d['target_sabic'],
+        )
+        user = User.objects.create_user(
+            username=d['email'], email=d['email'], password=d['password'],
+            first_name=d['first_name'], last_name=d['last_name'],
+            company=company, role='company_admin',
+        )
+    from core.views import _create_company_control_checklist
+    _create_company_control_checklist(company)
+    from core.services import send_verification_email
+    send_verification_email(user)
+    refresh = RefreshToken.for_user(user)
+    return Response({
+        'company': CompanySerializer(company).data,
+        'access': str(refresh.access_token), 'refresh': str(refresh),
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def controls(request):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    qs = CompanyControl.objects.filter(company=company).select_related(
+        'control', 'control__framework', 'control__domain')
+    fw = request.query_params.get('framework')
+    if fw:
+        qs = qs.filter(control__framework__code=fw)
+    return Response(CompanyControlSerializer(qs, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def control_detail(request, control_id):
+    try:
+        control = Control.objects.select_related('framework', 'domain').get(id=control_id)
+    except Control.DoesNotExist:
+        return Response({'detail': 'Not found.'}, status=404)
+    return Response(ControlSerializer(control).data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def classify(request):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    from ai_engine.services import classify_company
+    result = classify_company({
+        'name': company.name, 'sector': company.get_sector_display(),
+        'size': company.get_size_display(), 'target_aramco': company.target_aramco,
+        'target_sabic': company.target_sabic, 'target_nca': company.target_nca,
+    })
+    if 'error' not in result:
+        company.risk_level = result.get('risk_level', 'medium')
+        company.classification_summary = result.get('summary_en', '')
+        company.status = 'classified'
+        company.classification_date = timezone.now()
+        company.save()
+    return Response(result)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
+def evidence_upload(request):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    control_id = request.data.get('control_id')
+    f = request.FILES.get('evidence_file')
+    if not control_id or not f:
+        return Response({'detail': 'control_id and evidence_file are required.'}, status=400)
+    try:
+        control = Control.objects.get(id=control_id)
+    except Control.DoesNotExist:
+        return Response({'detail': 'Control not found.'}, status=404)
+
+    import os
+    ext = os.path.splitext(f.name)[1].lower().replace('.', '')
+    if ext not in ALLOWED():
+        return Response({'detail': f'Unsupported type .{ext}.'}, status=400)
+    if f.size > MAXSZ():
+        return Response({'detail': 'File too large.'}, status=400)
+
+    cc, _ = CompanyControl.objects.get_or_create(company=company, control=control)
+    evidence = Evidence.objects.create(
+        company_control=cc, uploaded_by=request.user, file=f,
+        original_filename=f.name, file_type=ext, file_size=f.size, status='processing',
+    )
+    from compliance.services import process_evidence_pipeline
+    try:
+        from monitoring.tasks import analyze_evidence_async
+        analyze_evidence_async.delay(evidence.id)
+        queued = True
+    except Exception:
+        process_evidence_pipeline(evidence.id)
+        queued = False
+    evidence.refresh_from_db()
+    return Response({'evidence': EvidenceSerializer(evidence).data, 'queued': queued},
+                    status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def evidence_analyze(request, evidence_id):
+    from compliance.services import process_evidence_pipeline
+    result = process_evidence_pipeline(evidence_id)
+    return Response(result)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def gap_analysis(request):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    latest = (GapAnalysis.objects.filter(company=company)
+              .order_by('framework_code', '-generated_at'))
+    seen, rows = set(), []
+    for g in latest:
+        if g.framework_code not in seen:
+            seen.add(g.framework_code)
+            rows.append(g)
+    return Response(GapAnalysisSerializer(rows, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_executive(request):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    return Response({
+        'company': CompanySerializer(company).data,
+        'open_alerts': Alert.objects.filter(company=company, is_resolved=False).count(),
+        'critical_alerts': Alert.objects.filter(company=company, is_resolved=False, severity='critical').count(),
+        'scores': ComplianceScoreSerializer(
+            ComplianceScore.objects.filter(company=company).order_by('-date')[:30], many=True).data,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_compliance(request):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    qs = CompanyControl.objects.filter(company=company)
+    by_status = {}
+    for row in qs.values('status'):
+        by_status[row['status']] = by_status.get(row['status'], 0) + 1
+    return Response({'company': CompanySerializer(company).data, 'status_breakdown': by_status,
+                     'total_controls': qs.count()})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def monitoring_scores(request):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    qs = ComplianceScore.objects.filter(company=company).order_by('-date')[:90]
+    return Response(ComplianceScoreSerializer(qs, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def monitoring_alerts(request):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    qs = Alert.objects.filter(company=company).order_by('-created_at')[:100]
+    return Response(AlertSerializer(qs, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def auditor_assignments(request):
+    if request.user.role != 'auditor':
+        return Response({'detail': 'Auditor role required.'}, status=403)
+    from compliance.models import Assessment
+    qs = Assessment.objects.filter(assigned_auditor=request.user)
+    return Response([{'id': a.id, 'company': a.company.name, 'status': a.status} for a in qs])
