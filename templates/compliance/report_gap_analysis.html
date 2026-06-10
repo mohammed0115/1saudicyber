@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}تحليل الفجوات - CyberTrust KSA{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <a href="{% url 'compliance:reports_index' %}" class="text-gov-green-700 hover:underline text-sm">رجوع للتقارير</a>
+    <h1 class="text-2xl font-bold text-gov-green-800">تحليل الفجوات — {{ company.name }}</h1>
+    {% for f in frameworks %}
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
+        <h2 class="font-semibold text-gov-green-800">{{ f.framework_version.framework.name }} — {{ f.framework_version.code }}</h2>
+        {% if f.source_document %}<p class="text-xs text-gov-gray-500">المصدر: {{ f.source_document.title }}</p>{% endif %}
+        <p class="text-sm text-gov-gray-600 mt-1">إجمالي منطبق: {{ f.total_applicable }} | مطابق: {{ f.counts.compliant }} | غير مطابق: {{ f.counts.non_compliant }} | جزئي: {{ f.counts.partially_compliant }} | يحتاج أدلة: {{ f.counts.needs_more_evidence }} | غير مُراجَع: {{ f.counts.not_reviewed }} | معالجة مطلوبة: {{ f.remediation_required_count }}</p>
+        <table class="w-full text-sm mt-3">
+            <thead class="text-gov-gray-600"><tr><th class="text-right py-1">الضابط</th><th class="text-right py-1">الحالة</th><th class="text-right py-1">الاستحقاق</th></tr></thead>
+            <tbody class="divide-y divide-gov-gray-100">
+            {% for g in f.gaps %}<tr><td class="py-1 font-mono text-xs">{{ g.control_id }}</td><td class="py-1 text-xs">{{ g.status }}</td><td class="py-1 text-xs">{{ g.remediation_due|default:"—" }}</td></tr>
+            {% empty %}<tr><td colspan="3" class="py-3 text-center text-gov-gray-500">لا فجوات.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% empty %}<p class="text-gov-gray-500">لا أطر معتمدة بعد.</p>{% endfor %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm"><i class="fas fa-info-circle"></i> الضوابط غير المُراجَعة لا تُحتسب كمطابِقة.</div>
+</div>
+{% endblock %}

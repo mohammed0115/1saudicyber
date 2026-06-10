@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}التقارير - CyberTrust KSA{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <h1 class="text-2xl font-bold text-gov-green-800">تقارير الامتثال</h1>
+    <p class="text-gov-gray-600">تقارير للقراءة فقط مبنية على الضوابط الرسمية وقرارات المدقّق. لا تغيّر أي قرار.</p>
+    <div class="grid md:grid-cols-3 gap-4">
+        <a href="{% url 'compliance:report_executive_summary' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-chart-pie text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">الملخّص التنفيذي</h2></a>
+        <a href="{% url 'compliance:report_gap_analysis' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-triangle-exclamation text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">تحليل الفجوات</h2></a>
+        <a href="{% url 'compliance:report_evidence_matrix' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-table text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">مصفوفة الأدلة</h2></a>
+    </div>
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
+        <h2 class="font-semibold text-gov-green-800 mb-2">تقارير حسب الإطار</h2>
+        <ul class="space-y-1 text-sm">
+        {% for fv in frameworks %}
+            <li><a href="{% url 'compliance:report_framework' fv.id %}" class="text-gov-green-700 hover:underline">{{ fv.framework.name }} — {{ fv.code }}</a></li>
+        {% empty %}<li class="text-gov-gray-500">لا أطر معتمدة بعد.</li>{% endfor %}
+        </ul>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm"><i class="fas fa-info-circle"></i> الضوابط غير المُراجَعة لا تُحتسب كمطابِقة.</div>
+</div>
+{% endblock %}

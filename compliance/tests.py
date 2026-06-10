@@ -3011,3 +3011,203 @@ class Phase3GBackwardCompatTests(TestCase):
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regg@x.com',
                 'password': 'longenough12', 'target_nca': 'on'})
         self.assertEqual(resp.status_code, 302)
+
+
+# ============================================================
+# Phase 3H — Read-only compliance reports + gap analysis + exports
+# ============================================================
+from compliance.reporting import (
+    build_executive_summary, build_framework_gap_analysis, build_evidence_matrix,
+    get_approved_framework_versions, calculate_assessment_counts,
+)
+
+
+def _company_with_assessments(fv_code='ARAMCO-SACS-002'):
+    """Company + approved scope + control plan + checklist + assessments (2 official controls)."""
+    c, fv, scope = _company_with_official_plan(fv_code)
+    generate_evidence_requirements(apply=True)
+    generate_evidence_checklist_for_company(c, apply=True)
+    create_assessments_for_company(c, apply=True)
+    return c, fv, scope
+
+
+class ReportingServiceTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_assessments()
+        self.assessments = list(ControlAssessment.objects.filter(company=self.c))
+
+    def _set_status(self, idx, status):
+        a = self.assessments[idx]; a.status = status; a.save()
+
+    def test_executive_summary_counts_match_control_assessments(self):
+        self._set_status(0, 'compliant')
+        s = build_executive_summary(self.c)
+        self.assertEqual(s['total_applicable'], 2)
+        self.assertEqual(s['counts']['compliant'], 1)
+        self.assertEqual(s['counts']['not_reviewed'], 1)
+
+    def test_gap_analysis_uses_official_controls_only(self):
+        gap = build_framework_gap_analysis(self.c)
+        for f in gap:
+            for g in f['gaps']:
+                ctrl = Control.objects.get(control_id=g['control_id'], framework_version=self.fv)
+                self.assertFalse(ctrl.is_legacy_import)
+
+    def test_gap_analysis_skips_legacy_controls(self):
+        fw = self.fv.framework
+        Control.objects.create(framework=fw, domain=Domain.objects.filter(framework=fw).first(),
+                               control_id='L-9', title='legacy', description='d')  # legacy
+        gap = build_framework_gap_analysis(self.c)
+        ids = [g['control_id'] for f in gap for g in f['gaps']]
+        self.assertNotIn('L-9', ids)
+
+    def test_evidence_matrix_includes_submission_counts(self):
+        item = EvidenceChecklistItem.objects.filter(company=self.c).first()
+        _submission(self.c, item)
+        rows = build_evidence_matrix(self.c)
+        total_subs = sum(r['submission_count'] for r in rows)
+        self.assertGreaterEqual(total_subs, 1)
+
+    def test_evidence_matrix_includes_ai_advisory_status(self):
+        rows = build_evidence_matrix(self.c)
+        self.assertTrue(all('latest_ai_status' in r for r in rows))
+
+    def test_reports_do_not_create_or_update_control_assessment(self):
+        before = {a.id: a.status for a in ControlAssessment.objects.filter(company=self.c)}
+        build_executive_summary(self.c); build_framework_gap_analysis(self.c); build_evidence_matrix(self.c)
+        after = {a.id: a.status for a in ControlAssessment.objects.filter(company=self.c)}
+        self.assertEqual(before, after)
+        self.assertEqual(len(before), 2)  # no new assessments created
+
+    def test_reports_do_not_create_companycontrol(self):
+        build_executive_summary(self.c); build_evidence_matrix(self.c)
+        self.assertEqual(CompanyControl.objects.count(), 0)
+
+    def test_unreviewed_controls_not_counted_as_compliant(self):
+        # All not_reviewed -> 0% compliance.
+        s = build_executive_summary(self.c)
+        self.assertEqual(s['counts']['compliant'], 0)
+        self.assertEqual(s['compliance_percentage'], 0.0)
+
+    def test_completion_percentage_calculation(self):
+        self._set_status(0, 'compliant')  # 1 of 2 assessed
+        s = build_executive_summary(self.c)
+        self.assertEqual(s['completion_percentage'], 50.0)
+
+    def test_evidence_coverage_calculation(self):
+        item = EvidenceChecklistItem.objects.filter(company=self.c).first()
+        _submission(self.c, item)
+        s = build_executive_summary(self.c)
+        self.assertEqual(s['evidence_coverage_count'], 1)  # 1 of 2 controls has evidence
+        self.assertEqual(s['evidence_coverage_percentage'], 50.0)
+
+
+class ReportViewTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.c, self.fv, self.scope = _company_with_assessments()
+        self.user = User.objects.create_user(email='rep@x.com', password='longenough12',
+                                             company=self.c, role='company_admin')
+
+    def test_reports_index_requires_login(self):
+        self.assertEqual(self.client.get(reverse('compliance:reports_index')).status_code, 302)
+
+    def test_executive_summary_view_requires_login(self):
+        self.assertEqual(self.client.get(reverse('compliance:report_executive_summary')).status_code, 302)
+
+    def test_gap_analysis_view_requires_login(self):
+        self.assertEqual(self.client.get(reverse('compliance:report_gap_analysis')).status_code, 302)
+
+    def test_evidence_matrix_view_requires_login(self):
+        self.assertEqual(self.client.get(reverse('compliance:report_evidence_matrix')).status_code, 302)
+
+    def test_framework_report_filters_by_framework_version(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:report_framework', args=[self.fv.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, self.fv.code)
+
+    def test_user_cannot_view_other_company_reports(self):
+        other, ofv, oscope = _company_with_assessments('SABIC-CYBERTRUST-1-0')
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:report_framework', args=[ofv.id]))
+        self.assertEqual(resp.status_code, 302)  # other company's framework not approved for this user
+
+    def test_report_pages_show_framework_version(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:report_gap_analysis'))
+        self.assertContains(resp, self.fv.code)
+
+    def test_report_pages_show_unreviewed_warning(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:report_executive_summary'))
+        self.assertContains(resp, 'غير المُراجَعة')
+
+
+class ReportExportTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.c, self.fv, self.scope = _company_with_assessments()
+        self.user = User.objects.create_user(email='exp@x.com', password='longenough12',
+                                             company=self.c, role='company_admin')
+        self.client.force_login(self.user)
+
+    def test_evidence_matrix_csv_export(self):
+        resp = self.client.get(reverse('compliance:export_evidence_matrix_csv'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'text/csv')
+        self.assertIn(b'control_id', resp.content)
+
+    def test_evidence_matrix_xlsx_export(self):
+        resp = self.client.get(reverse('compliance:export_evidence_matrix_xlsx'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content[:2], b'PK')  # xlsx magic
+
+    def test_exports_are_tenant_scoped(self):
+        other, ofv, oscope = _company_with_assessments('SABIC-CYBERTRUST-1-0')
+        # this user's CSV must contain only their framework's controls (ARAMCO TPC ids), not SABIC CT.
+        resp = self.client.get(reverse('compliance:export_evidence_matrix_csv'))
+        self.assertNotIn(b'SABIC-CYBERTRUST-1-0', resp.content)
+
+    def test_exports_use_official_controls_only(self):
+        fw = self.fv.framework
+        Control.objects.create(framework=fw, domain=Domain.objects.filter(framework=fw).first(),
+                               control_id='LEG-XYZ', title='legacy', description='d')
+        resp = self.client.get(reverse('compliance:export_evidence_matrix_csv'))
+        self.assertNotIn(b'LEG-XYZ', resp.content)
+
+
+class Phase3HBackwardCompatTests(TestCase):
+    def test_old_upload_evidence_flow_still_works(self):
+        from core.models import User
+        company, control = _company_with_control()
+        user = User.objects.create_user(email='bc3h@x.com', password='longenough12',
+                                        company=company, role='company_admin')
+        self.client.force_login(user)
+        with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[control.id]),
+                                    {'evidence_file': _SUF('p.txt', b'ok')})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Evidence.objects.count(), 1)
+
+    def test_auditor_assessment_still_works(self):
+        c, fv, scope = _company_with_assessments()
+        a = ControlAssessment.objects.filter(company=c).first()
+        from core.models import User
+        u = User.objects.create_user(email='aud3h@x.com', password='longenough12', company=c, is_staff=True)
+        update_assessment_from_auditor_input(a, {'status': 'compliant'}, u)
+        a.refresh_from_db(); self.assertEqual(a.status, 'compliant')
+
+    def test_no_otcc_dcc_imported_by_reports(self):
+        from compliance.official_dataset import DATASET_FILES
+        self.assertNotIn('NCA-OTCC-1-2022', DATASET_FILES)
+        self.assertNotIn('NCA-DCC-1-2022', DATASET_FILES)
+
+    def test_registration_flow_still_works(self):
+        fw, dom = _fw_dom()
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), {
+                'company_name': 'RegH', 'cr_number': '6060601234', 'sector': 'technology',
+                'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regh@x.com',
+                'password': 'longenough12', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)

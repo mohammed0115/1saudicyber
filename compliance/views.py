@@ -495,3 +495,112 @@ def generate_assessments_view(request):
         stats = create_assessments_for_company(company, apply=True)
         messages.success(request, f'تم إنشاء {stats["created"]} تقييماً (not_reviewed) للضوابط الرسمية المنطبقة.')
     return redirect('compliance:auditor_review_queue')
+
+
+# ============================================================
+# Phase 3H — Read-only compliance reports + gap analysis + exports
+# ============================================================
+@login_required
+def reports_index(request):
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    from .reporting import get_approved_framework_versions
+    return render(request, 'compliance/reports_index.html', {
+        'company': company, 'frameworks': get_approved_framework_versions(company)})
+
+
+@login_required
+def report_executive_summary(request):
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    from .reporting import build_executive_summary
+    return render(request, 'compliance/report_executive_summary.html',
+                  {'company': company, 'summary': build_executive_summary(company)})
+
+
+@login_required
+def report_gap_analysis(request):
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    from .reporting import build_framework_gap_analysis
+    return render(request, 'compliance/report_gap_analysis.html',
+                  {'company': company, 'frameworks': build_framework_gap_analysis(company)})
+
+
+@login_required
+def report_evidence_matrix(request):
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    from .reporting import build_evidence_matrix
+    return render(request, 'compliance/report_evidence_matrix.html',
+                  {'company': company, 'rows': build_evidence_matrix(company)})
+
+
+@login_required
+def report_framework(request, framework_version_id):
+    """Framework-filtered report (gap + matrix), scoped to an approved framework version."""
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    from .reporting import (get_approved_framework_versions, build_framework_gap_analysis,
+                            build_evidence_matrix)
+    fv = next((f for f in get_approved_framework_versions(company) if f.id == framework_version_id), None)
+    if fv is None:
+        messages.error(request, 'الإطار غير معتمد لشركتك أو غير موجود.')
+        return redirect('compliance:reports_index')
+    gap = build_framework_gap_analysis(company, framework_version=fv)
+    return render(request, 'compliance/report_framework.html', {
+        'company': company, 'framework_version': fv,
+        'gap': gap[0] if gap else None,
+        'rows': build_evidence_matrix(company, framework_version=fv)})
+
+
+@login_required
+def export_evidence_matrix_csv(request):
+    """CSV export of the evidence matrix (official controls only, tenant-scoped)."""
+    import csv
+    from django.http import HttpResponse
+    from .reporting import build_evidence_matrix
+    company = request.user.company
+    if not company:
+        return redirect('compliance:reports_index')
+    resp = HttpResponse(content_type='text/csv')
+    resp['Content-Disposition'] = 'attachment; filename="evidence_matrix.csv"'
+    w = csv.writer(resp)
+    w.writerow(['framework', 'control_id', 'title', 'requirement_count', 'submission_count',
+                'latest_submission_status', 'latest_ai_status', 'assessment_status'])
+    for r in build_evidence_matrix(company):
+        w.writerow([r['framework'], r['control_id'], r['title'], r['requirement_count'],
+                    r['submission_count'], r['latest_submission_status'], r['latest_ai_status'],
+                    r['assessment_status']])
+    return resp
+
+
+@login_required
+def export_evidence_matrix_xlsx(request):
+    """XLSX export of the evidence matrix (openpyxl)."""
+    from django.http import HttpResponse
+    from .reporting import build_evidence_matrix
+    company = request.user.company
+    if not company:
+        return redirect('compliance:reports_index')
+    try:
+        from openpyxl import Workbook
+    except Exception:
+        messages.error(request, 'تصدير Excel غير متاح (openpyxl غير مثبّت).')
+        return redirect('compliance:report_evidence_matrix')
+    wb = Workbook(); ws = wb.active; ws.title = 'Evidence Matrix'
+    ws.append(['framework', 'control_id', 'title', 'requirement_count', 'submission_count',
+               'latest_submission_status', 'latest_ai_status', 'assessment_status'])
+    for r in build_evidence_matrix(company):
+        ws.append([r['framework'], r['control_id'], r['title'], r['requirement_count'],
+                   r['submission_count'], r['latest_submission_status'], r['latest_ai_status'],
+                   r['assessment_status']])
+    resp = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    resp['Content-Disposition'] = 'attachment; filename="evidence_matrix.xlsx"'
+    wb.save(resp)
+    return resp

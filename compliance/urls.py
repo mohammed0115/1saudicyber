@@ -34,4 +34,13 @@ urlpatterns = [
     path('auditor-review/', views.auditor_review_queue, name='auditor_review_queue'),
     path('auditor-review/generate/', views.generate_assessments_view, name='generate_assessments'),
     path('auditor-review/<int:assessment_id>/', views.auditor_review_detail, name='auditor_review_detail'),
+
+    # Phase 3H — read-only compliance reports + gap analysis + exports
+    path('reports/', views.reports_index, name='reports_index'),
+    path('reports/executive-summary/', views.report_executive_summary, name='report_executive_summary'),
+    path('reports/gap-analysis/', views.report_gap_analysis, name='report_gap_analysis'),
+    path('reports/evidence-matrix/', views.report_evidence_matrix, name='report_evidence_matrix'),
+    path('reports/evidence-matrix.csv', views.export_evidence_matrix_csv, name='export_evidence_matrix_csv'),
+    path('reports/evidence-matrix.xlsx', views.export_evidence_matrix_xlsx, name='export_evidence_matrix_xlsx'),
+    path('reports/framework/<int:framework_version_id>/', views.report_framework, name='report_framework'),
 ]
