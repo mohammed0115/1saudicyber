@@ -17,4 +17,8 @@ urlpatterns = [
     path('frameworks/scope/<int:scope_id>/reject/', views.reject_framework_scope_view, name='reject_scope'),
     path('frameworks/scope/<int:scope_id>/generate-plan/', views.generate_control_plan_view, name='generate_plan'),
     path('control-plan/', views.control_plan, name='control_plan'),
+
+    # Phase 3D — Evidence checklist planning (no upload here)
+    path('evidence-checklist/', views.evidence_checklist, name='evidence_checklist'),
+    path('evidence-checklist/generate/', views.generate_evidence_checklist_view, name='generate_evidence_checklist'),
 ]

@@ -1458,8 +1458,9 @@ def _seed_official(fv_code, framework_code, n=2):
 
 def _company(**kw):
     from core.models import Company
-    defaults = dict(name='Co', cr_number='1011011010', sector='technology', size='small',
-                    contact_email='c@x.com')
+    n = Company.objects.count() + 1
+    defaults = dict(name='Co', cr_number=f'{n:010d}', sector='technology', size='small',
+                    contact_email=f'co{n}@x.com')
     defaults.update(kw)
     return Company.objects.create(**defaults)
 
@@ -1728,9 +1729,10 @@ class IntakeViewTests(TestCase):
     def test_intake_does_not_create_evidencerequirement(self):
         # No EvidenceRequirement model should exist / be created in this phase.
         self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
-        from django.apps import apps
-        self.assertFalse(apps.is_installed('evidence_requirement'))
-        self.assertNotIn('EvidenceRequirement', [m.__name__ for m in apps.get_models()])
+        from compliance.models import EvidenceRequirement, EvidenceChecklistItem
+        # Intake must not generate evidence requirement templates or checklist items.
+        self.assertEqual(EvidenceRequirement.objects.count(), 0)
+        self.assertEqual(EvidenceChecklistItem.objects.count(), 0)
 
     def test_user_cannot_see_other_company_results(self):
         # Tenant scoping: a user only ever sees their own company's results (request.user.company).
@@ -1892,8 +1894,8 @@ class ScopeServiceTests(TestCase):
         generate_control_applicability_plan(c, s, apply=True)
         self.assertEqual(CompanyControl.objects.count(), 0)
         self.assertEqual(Evidence.objects.count(), 0)
-        from django.apps import apps
-        self.assertNotIn('EvidenceRequirement', [m.__name__ for m in apps.get_models()])
+        from compliance.models import EvidenceChecklistItem
+        self.assertEqual(EvidenceChecklistItem.objects.count(), 0)
 
     def test_generate_control_plan_skips_unapproved_scope(self):
         c, fv = _company_with_applicability(); propose_framework_scopes(c, apply=True)
@@ -2129,3 +2131,202 @@ class Phase2PGuardrailTests(TestCase):
                           (core.views, 'register_company'),
                           (compliance.views, 'upload_evidence')]:
             self.assertTrue(hasattr(mod, name))
+
+
+# ============================================================
+# Phase 3D — Evidence Requirement templates + checklist planning
+# ============================================================
+from compliance.models import EvidenceRequirement, EvidenceChecklistItem
+from compliance.evidence_planning import (
+    create_default_requirement_for_control, generate_evidence_requirements,
+    generate_evidence_checklist_for_company, generate_evidence_checklist_for_framework_scope,
+)
+from compliance.framework_scope import (
+    propose_framework_scopes as _propose3d, approve_framework_scope as _approve3d,
+    generate_control_applicability_plan as _plan3d,
+)
+
+
+def _company_with_official_plan(fv_code='ARAMCO-SACS-002'):
+    """Company with an approved framework scope + generated control plan over official controls."""
+    fwname = {'ARAMCO-SACS-002': 'ARAMCO_SACS002', 'SABIC-CYBERTRUST-1-0': 'SABIC_CT'}.get(fv_code, 'ARAMCO_SACS002')
+    fv = _seed_official(fv_code, fwname)
+    c = _company()
+    CompanyIntakeProfile.objects.create(company=c, works_with_aramco=True, works_with_sabic=True)
+    _eval3c(c, apply=True)
+    _propose3d(c, apply=True)
+    scope = _approve3d(CompanyFrameworkScope.objects.get(company=c, framework_version=fv))
+    _plan3d(c, scope, apply=True)
+    return c, fv, scope
+
+
+class EvidenceRequirementModelTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def test_evidence_requirement_can_be_created(self):
+        fv = _seed_official('ARAMCO-SACS-002', 'ARAMCO_SACS002')
+        ctrl = Control.objects.filter(framework_version=fv, is_legacy_import=False).first()
+        r = EvidenceRequirement.objects.create(control=ctrl, title='Policy doc')
+        self.assertEqual(r.requirement_level, 'mandatory')
+
+    def test_evidence_requirement_unique_per_control_title(self):
+        fv = _seed_official('ARAMCO-SACS-002', 'ARAMCO_SACS002')
+        ctrl = Control.objects.filter(framework_version=fv, is_legacy_import=False).first()
+        EvidenceRequirement.objects.create(control=ctrl, title='X')
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                EvidenceRequirement.objects.create(control=ctrl, title='X')
+
+    def test_checklist_item_unique_per_company_requirement(self):
+        c, fv, scope = _company_with_official_plan()
+        ctrl = Control.objects.filter(framework_version=fv, is_legacy_import=False).first()
+        req = EvidenceRequirement.objects.create(control=ctrl, title='Y')
+        car = ControlApplicabilityResult.objects.get(company=c, control=ctrl)
+        EvidenceChecklistItem.objects.create(company=c, control_applicability_result=car, evidence_requirement=req)
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                EvidenceChecklistItem.objects.create(company=c, control_applicability_result=car, evidence_requirement=req)
+
+
+class EvidencePlanningServiceTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def test_create_default_requirement_for_official_control(self):
+        fv = _seed_official('ARAMCO-SACS-002', 'ARAMCO_SACS002')
+        ctrl = Control.objects.filter(framework_version=fv, is_legacy_import=False).first()
+        req, created = create_default_requirement_for_control(ctrl, apply=True)
+        self.assertTrue(created)
+        self.assertEqual(req.control, ctrl)
+
+    def test_default_requirement_skips_legacy_control(self):
+        fw, dom = _fw_dom()
+        legacy = Control.objects.create(framework=fw, domain=dom, control_id='L-1', title='t', description='d')
+        req, created = create_default_requirement_for_control(legacy, apply=True)
+        self.assertIsNone(req)
+        self.assertFalse(created)
+
+    def test_generate_requirements_official_only(self):
+        _seed_official('ARAMCO-SACS-002', 'ARAMCO_SACS002')
+        fw, dom = _fw_dom()
+        Control.objects.create(framework=fw, domain=dom, control_id='L-9', title='t', description='d')  # legacy
+        generate_evidence_requirements(apply=True)
+        for r in EvidenceRequirement.objects.all():
+            self.assertIsNotNone(r.control.framework_version_id)
+            self.assertFalse(r.control.is_legacy_import)
+
+    def test_generate_requirements_is_idempotent(self):
+        _seed_official('ARAMCO-SACS-002', 'ARAMCO_SACS002')
+        generate_evidence_requirements(apply=True)
+        n = EvidenceRequirement.objects.count()
+        generate_evidence_requirements(apply=True)
+        self.assertEqual(EvidenceRequirement.objects.count(), n)
+
+    def test_generate_checklist_for_company(self):
+        c, fv, scope = _company_with_official_plan()
+        generate_evidence_requirements(apply=True)
+        res = generate_evidence_checklist_for_company(c, apply=True)
+        self.assertEqual(res['planned'], 2)  # 2 official controls -> 2 default requirements
+        self.assertEqual(EvidenceChecklistItem.objects.filter(company=c).count(), 2)
+
+    def test_generate_checklist_is_idempotent(self):
+        c, fv, scope = _company_with_official_plan()
+        generate_evidence_requirements(apply=True)
+        generate_evidence_checklist_for_company(c, apply=True)
+        n = EvidenceChecklistItem.objects.count()
+        generate_evidence_checklist_for_company(c, apply=True)
+        self.assertEqual(EvidenceChecklistItem.objects.count(), n)
+
+    def test_checklist_uses_official_controls_only(self):
+        c, fv, scope = _company_with_official_plan()
+        generate_evidence_requirements(apply=True)
+        generate_evidence_checklist_for_company(c, apply=True)
+        for it in EvidenceChecklistItem.objects.filter(company=c):
+            self.assertIsNotNone(it.evidence_requirement.control.framework_version_id)
+            self.assertFalse(it.evidence_requirement.control.is_legacy_import)
+
+    def test_checklist_does_not_create_evidence_or_companycontrol(self):
+        from compliance.models import Evidence
+        c, fv, scope = _company_with_official_plan()
+        generate_evidence_requirements(apply=True)
+        generate_evidence_checklist_for_company(c, apply=True)
+        self.assertEqual(Evidence.objects.count(), 0)
+        self.assertEqual(CompanyControl.objects.count(), 0)
+
+
+class EvidencePlanningCommandTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_official_plan()
+
+    def test_generate_requirements_dry_run_does_not_write(self):
+        call_command('generate_evidence_requirements', stdout=StringIO())
+        self.assertEqual(EvidenceRequirement.objects.count(), 0)
+
+    def test_generate_requirements_apply_writes(self):
+        call_command('generate_evidence_requirements', apply=True, stdout=StringIO())
+        self.assertTrue(EvidenceRequirement.objects.exists())
+
+    def test_generate_checklist_dry_run_does_not_write(self):
+        call_command('generate_evidence_requirements', apply=True, stdout=StringIO())
+        call_command('generate_evidence_checklist', company_id=self.c.id, stdout=StringIO())
+        self.assertEqual(EvidenceChecklistItem.objects.count(), 0)
+
+    def test_generate_checklist_apply_writes(self):
+        call_command('generate_evidence_requirements', apply=True, stdout=StringIO())
+        call_command('generate_evidence_checklist', company_id=self.c.id, apply=True, stdout=StringIO())
+        self.assertEqual(EvidenceChecklistItem.objects.filter(company=self.c).count(), 2)
+
+
+class EvidenceChecklistViewTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.c, self.fv, self.scope = _company_with_official_plan()
+        self.user = User.objects.create_user(email='ec@x.com', password='longenough12',
+                                             company=self.c, role='company_admin')
+        self.staff = User.objects.create_user(email='ecs@x.com', password='longenough12',
+                                              company=self.c, role='admin', is_staff=True)
+
+    def test_checklist_page_requires_login(self):
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_checklist_page_no_upload_form(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'evidence_file')
+        self.assertNotContains(resp, 'multipart/form-data')
+
+    def test_staff_can_generate_checklist(self):
+        self.client.force_login(self.staff)
+        self.client.post(reverse('compliance:generate_evidence_checklist'))
+        self.assertEqual(EvidenceChecklistItem.objects.filter(company=self.c).count(), 2)
+
+    def test_non_staff_cannot_generate_checklist(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse('compliance:generate_evidence_checklist'))
+        self.assertEqual(EvidenceChecklistItem.objects.filter(company=self.c).count(), 0)
+
+    def test_checklist_tenant_isolated(self):
+        other, ofv, oscope = _company_with_official_plan('SABIC-CYBERTRUST-1-0')
+        generate_evidence_requirements(apply=True)
+        generate_evidence_checklist_for_company(other, apply=True)
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        for it in resp.context['items']:
+            self.assertEqual(it.company, self.c)
+
+
+class Phase3DGuardrailTests(TestCase):
+    def test_upload_flow_untouched(self):
+        import core.views, core.forms, compliance.views
+        for mod, name in [(core.forms, 'CompanyRegistrationForm'),
+                          (core.views, 'register_company'),
+                          (compliance.views, 'upload_evidence')]:
+            self.assertTrue(hasattr(mod, name))
+
+    def test_no_otcc_dcc_registered(self):
+        from compliance.official_dataset import DATASET_FILES
+        self.assertNotIn('NCA-OTCC-1-2022', DATASET_FILES)
+        self.assertNotIn('NCA-DCC-1-2022', DATASET_FILES)

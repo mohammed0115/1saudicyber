@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}قائمة الأدلة - CyberTrust KSA{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gov-green-800">قائمة الأدلة المخطّطة (Evidence Checklist)</h1>
+            <p class="text-gov-gray-600">مهام أدلة مخطّطة للضوابط الرسمية المنطبقة. هذه خطة — لا رفع ملفات هنا.</p>
+        </div>
+        {% if can_generate %}
+        <form method="post" action="{% url 'compliance:generate_evidence_checklist' %}">
+            {% csrf_token %}
+            <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
+                توليد قائمة الأدلة
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if messages %}{% for m in messages %}
+    <div class="bg-gov-green-50 border border-gov-green-200 text-gov-green-800 rounded-lg p-3">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">
+            العناصر المخطّطة ({{ items|length }})
+        </div>
+        <table class="w-full text-sm">
+            <thead class="text-gov-gray-600">
+                <tr>
+                    <th class="text-right px-4 py-2">الضابط</th>
+                    <th class="text-right px-4 py-2">الإطار</th>
+                    <th class="text-right px-4 py-2">متطلّب الدليل</th>
+                    <th class="text-right px-4 py-2">المستوى</th>
+                    <th class="text-right px-4 py-2">الأولوية</th>
+                    <th class="text-right px-4 py-2">الحالة</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gov-gray-100">
+                {% for it in items %}
+                <tr>
+                    <td class="px-4 py-2 font-mono text-xs">{{ it.evidence_requirement.control.control_id }}</td>
+                    <td class="px-4 py-2 text-xs text-gov-gray-500">{{ it.evidence_requirement.control.framework_version.code }}</td>
+                    <td class="px-4 py-2 text-gov-gray-700">{{ it.evidence_requirement.title }}</td>
+                    <td class="px-4 py-2 text-xs">{{ it.evidence_requirement.get_requirement_level_display }}</td>
+                    <td class="px-4 py-2 text-xs">{{ it.get_priority_display }}</td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">{{ it.get_status_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-4 py-6 text-center text-gov-gray-500">
+                    لا توجد عناصر مخطّطة بعد. اعتمد إطاراً وولّد خطة الضوابط، ثم ولّد قائمة الأدلة.
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-lock"></i>
+        رفع الأدلة وربطها سيُضاف في مرحلة لاحقة (Evidence Upload v2). لا رفع في هذه الصفحة.
+    </div>
+</div>
+{% endblock %}

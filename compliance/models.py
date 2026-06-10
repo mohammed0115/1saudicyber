@@ -605,3 +605,83 @@ class ControlApplicabilityResult(models.Model):
 
     def __str__(self):
         return f"{self.company.name} :: {self.control.control_id} = {self.decision}"
+
+
+# ============================================================
+# Phase 3D — Evidence Requirement templates + company checklist planning (additive)
+# EvidenceRequirement = reusable template per control. EvidenceChecklistItem =
+# a company-specific PLANNED task. NOT Evidence, NOT CompanyControl, NO upload here.
+# Official controls only.
+# ============================================================
+
+class EvidenceRequirement(models.Model):
+    """Reusable template describing an evidence item expected for a control."""
+    EVIDENCE_TYPE_CHOICES = Control.EVIDENCE_TYPE_CHOICES
+    REQUIREMENT_LEVEL_CHOICES = [
+        ('mandatory', 'Mandatory'),
+        ('recommended', 'Recommended'),
+        ('optional', 'Optional'),
+    ]
+    SOURCE_CHOICES = [
+        ('default_template', 'Default Template'),
+        ('official', 'Official Source'),
+        ('manual', 'Manual'),
+    ]
+
+    control = models.ForeignKey(Control, on_delete=models.CASCADE, related_name='evidence_requirements')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    evidence_type = models.CharField(max_length=20, choices=EVIDENCE_TYPE_CHOICES, default='policy')
+    requirement_level = models.CharField(max_length=20, choices=REQUIREMENT_LEVEL_CHOICES, default='mandatory')
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='default_template')
+    source_reference = models.TextField(blank=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'evidence_requirements'
+        ordering = ['control', 'sort_order']
+        unique_together = ['control', 'title']
+
+    def __str__(self):
+        return f"{self.control.control_id} :: {self.title}"
+
+
+class EvidenceChecklistItem(models.Model):
+    """A company-specific planned evidence task (NOT an uploaded Evidence record)."""
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('in_progress', 'In Progress'),
+        ('submitted', 'Submitted'),
+        ('waived', 'Waived'),
+    ]
+    PRIORITY_CHOICES = [
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='evidence_checklist_items')
+    control_applicability_result = models.ForeignKey(
+        ControlApplicabilityResult, on_delete=models.CASCADE, related_name='checklist_items')
+    evidence_requirement = models.ForeignKey(
+        EvidenceRequirement, on_delete=models.CASCADE, related_name='checklist_items')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    due_date = models.DateField(null=True, blank=True)
+    assigned_to = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_checklist_items')
+    notes = models.TextField(blank=True)
+    waiver_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'evidence_checklist_items'
+        unique_together = ['company', 'evidence_requirement']
+        ordering = ['company', 'control_applicability_result']
+
+    def __str__(self):
+        return f"{self.company.name} :: {self.evidence_requirement.title} ({self.status})"

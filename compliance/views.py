@@ -289,3 +289,38 @@ def control_plan(request):
         'company': company, 'approved': approved, 'plan': plan,
         'can_generate': request.user.is_staff,
     })
+
+
+# ============================================================
+# Phase 3D — Evidence Checklist planning page (no upload form here)
+# ============================================================
+@login_required
+def evidence_checklist(request):
+    """Read-only planned evidence checklist for the user's company (no upload here)."""
+    from .models import EvidenceChecklistItem
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    items = (EvidenceChecklistItem.objects.filter(company=company)
+             .select_related('evidence_requirement', 'evidence_requirement__control',
+                             'evidence_requirement__control__framework_version',
+                             'control_applicability_result'))
+    return render(request, 'compliance/evidence_checklist.html', {
+        'company': company, 'items': items, 'can_generate': request.user.is_staff,
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def generate_evidence_checklist_view(request):
+    """Staff-only: generate the company's evidence checklist plan (separate button)."""
+    from .evidence_planning import generate_evidence_requirements, generate_evidence_checklist_for_company
+    if not request.user.is_staff:
+        messages.error(request, 'يتطلّب صلاحية موظّف/مدقّق لتوليد قائمة الأدلة.')
+        return redirect('compliance:evidence_checklist')
+    company = request.user.company
+    if company:
+        generate_evidence_requirements(apply=True)  # ensure templates exist (official only)
+        res = generate_evidence_checklist_for_company(company, apply=True)
+        messages.success(request, f'تم تخطيط {res["planned"]} عنصر أدلة (من ضوابط رسمية منطبقة).')
+    return redirect('compliance:evidence_checklist')

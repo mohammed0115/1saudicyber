@@ -4,6 +4,7 @@ from .models import (
     SourceDocument, FrameworkVersion, ControlVersion, ControlApplicabilityTag,
     CompanyIntakeProfile, FrameworkApplicabilityResult,
     CompanyFrameworkScope, ControlApplicabilityResult,
+    EvidenceRequirement, EvidenceChecklistItem,
 )
 
 
@@ -112,4 +113,22 @@ class ControlApplicabilityResultAdmin(admin.ModelAdmin):
     list_display = ['company', 'control', 'decision', 'source', 'confidence']
     list_filter = ['decision', 'source', 'framework_scope__framework_version']
     search_fields = ['company__name', 'control__control_id', 'control__title', 'reason']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+# ---- Phase 3D: Evidence Requirement templates + checklist planning ----
+
+@admin.register(EvidenceRequirement)
+class EvidenceRequirementAdmin(admin.ModelAdmin):
+    list_display = ['control', 'title', 'evidence_type', 'requirement_level', 'source', 'is_active']
+    list_filter = ['evidence_type', 'requirement_level', 'source', 'is_active']
+    search_fields = ['control__control_id', 'title', 'description']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(EvidenceChecklistItem)
+class EvidenceChecklistItemAdmin(admin.ModelAdmin):
+    list_display = ['company', 'evidence_requirement', 'status', 'priority', 'due_date', 'assigned_to']
+    list_filter = ['status', 'priority']
+    search_fields = ['company__name', 'evidence_requirement__title', 'evidence_requirement__control__control_id']
     readonly_fields = ['created_at', 'updated_at']
