@@ -781,3 +781,56 @@ class EvidenceAnalysisResult(models.Model):
 
     def __str__(self):
         return f"Analysis[{self.evidence_submission.original_filename}] ({self.status})"
+
+
+# ============================================================
+# Phase 3G — Auditor-driven Control Assessment (additive)
+# First FINAL assessment model. Created/updated by auditor/staff ONLY — never by
+# AI, never by evidence upload/analysis. Official controls only. Not CompanyControl.
+# ============================================================
+
+class ControlAssessment(models.Model):
+    """The auditor's final compliance decision for an official control (per company)."""
+    STATUS_CHOICES = [
+        ('not_reviewed', 'Not Reviewed'),
+        ('compliant', 'Compliant'),
+        ('partially_compliant', 'Partially Compliant'),
+        ('non_compliant', 'Non-Compliant'),
+        ('not_applicable', 'Not Applicable'),
+        ('needs_more_evidence', 'Needs More Evidence'),
+    ]
+    RISK_LEVEL_CHOICES = [('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')]
+    CONFIDENCE_CHOICES = [('low', 'Low'), ('medium', 'Medium'), ('high', 'High')]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='control_assessments')
+    control = models.ForeignKey(Control, on_delete=models.CASCADE, related_name='assessments')
+    control_applicability_result = models.ForeignKey(
+        ControlApplicabilityResult, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='assessments')
+    framework_scope = models.ForeignKey(
+        CompanyFrameworkScope, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='assessments')
+
+    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='not_reviewed')
+    score = models.IntegerField(null=True, blank=True)
+    auditor_notes = models.TextField(blank=True)
+    remediation_required = models.BooleanField(default=False)
+    remediation_plan = models.TextField(blank=True)
+    remediation_due_date = models.DateField(null=True, blank=True)
+    evidence_summary = models.TextField(blank=True)
+    ai_summary_snapshot = models.TextField(blank=True)
+    risk_level = models.CharField(max_length=10, choices=RISK_LEVEL_CHOICES, blank=True)
+    confidence_level = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, blank=True)
+    reviewed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='control_assessments')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'control_assessments'
+        unique_together = ['company', 'control']
+        ordering = ['company', 'control']
+
+    def __str__(self):
+        return f"{self.company.name} :: {self.control.control_id} = {self.status}"

@@ -418,3 +418,80 @@ def analyze_submission_view(request, submission_id):
     res = analyze_evidence_submission(sub, apply=True)
     messages.success(request, f'تم تشغيل التحليل الاستشاري (الحالة: {res.get("status")}). القرار النهائي للمدقّق.')
     return redirect('compliance:evidence_submission_detail', submission_id=sub.id)
+
+
+# ============================================================
+# Phase 3G — Auditor review + Control Assessment (staff-only to assess)
+# ============================================================
+@login_required
+def auditor_review_queue(request):
+    """Queue of the company's control assessments (applicable official controls)."""
+    from .models import ControlAssessment
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    assessments = (ControlAssessment.objects.filter(company=company)
+                   .select_related('control', 'control__framework_version', 'control__domain'))
+    return render(request, 'compliance/auditor_review_queue.html', {
+        'company': company, 'assessments': assessments, 'can_assess': request.user.is_staff})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def auditor_review_detail(request, assessment_id):
+    """Assessment detail + auditor decision form (staff-only to update). Tenant-scoped."""
+    from .models import ControlAssessment, EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult
+    from .control_assessment import update_assessment_from_auditor_input
+    company = request.user.company
+    a = ControlAssessment.objects.filter(id=assessment_id, company=company).select_related(
+        'control', 'control__framework_version').first()
+    if a is None:
+        messages.error(request, 'التقييم غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:auditor_review_queue')
+
+    if request.method == 'POST':
+        if not request.user.is_staff:
+            messages.error(request, 'يتطلّب صلاحية موظّف/مدقّق لاتخاذ القرار.')
+            return redirect('compliance:auditor_review_detail', assessment_id=a.id)
+        data = {
+            'status': request.POST.get('status', a.status),
+            'score': request.POST.get('score') or None,
+            'auditor_notes': request.POST.get('auditor_notes', ''),
+            'remediation_required': request.POST.get('remediation_required') == 'on',
+            'remediation_plan': request.POST.get('remediation_plan', ''),
+            'remediation_due_date': request.POST.get('remediation_due_date') or None,
+            'risk_level': request.POST.get('risk_level', ''),
+            'confidence_level': request.POST.get('confidence_level', ''),
+        }
+        update_assessment_from_auditor_input(a, data, request.user)
+        messages.success(request, 'تم حفظ قرار التقييم (قرار المدقّق النهائي).')
+        return redirect('compliance:auditor_review_detail', assessment_id=a.id)
+
+    control = a.control
+    reqs = control.evidence_requirements.all()
+    submissions = EvidenceSubmission.objects.filter(
+        company=company, checklist_item__evidence_requirement__control=control)
+    analyses = EvidenceAnalysisResult.objects.filter(company=company, control=control)
+    return render(request, 'compliance/auditor_review_detail.html', {
+        'company': company, 'assessment': a, 'control': control,
+        'requirements': reqs, 'submissions': submissions, 'analyses': analyses,
+        'can_assess': request.user.is_staff,
+        'status_choices': ControlAssessment.STATUS_CHOICES,
+        'risk_choices': ControlAssessment.RISK_LEVEL_CHOICES,
+        'confidence_choices': ControlAssessment.CONFIDENCE_CHOICES,
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def generate_assessments_view(request):
+    """Staff-only: create not_reviewed assessments for applicable official controls."""
+    from .control_assessment import create_assessments_for_company
+    if not request.user.is_staff:
+        messages.error(request, 'يتطلّب صلاحية موظّف/مدقّق.')
+        return redirect('compliance:auditor_review_queue')
+    company = request.user.company
+    if company:
+        stats = create_assessments_for_company(company, apply=True)
+        messages.success(request, f'تم إنشاء {stats["created"]} تقييماً (not_reviewed) للضوابط الرسمية المنطبقة.')
+    return redirect('compliance:auditor_review_queue')

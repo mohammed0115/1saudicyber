@@ -2800,3 +2800,214 @@ class Phase3FBackwardCompatTests(TestCase):
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regf@x.com',
                 'password': 'longenough12', 'target_nca': 'on'})
         self.assertEqual(resp.status_code, 302)
+
+
+# ============================================================
+# Phase 3G — Auditor review + Control Assessment
+# ============================================================
+from compliance.models import ControlAssessment
+from compliance.control_assessment import (
+    get_or_create_assessment_for_control, create_assessments_for_company,
+    update_assessment_from_auditor_input,
+)
+
+
+class ControlAssessmentModelTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_official_plan()
+        self.control = Control.objects.filter(framework_version=self.fv, is_legacy_import=False).first()
+
+    def test_control_assessment_can_be_created(self):
+        a = ControlAssessment.objects.create(company=self.c, control=self.control)
+        self.assertEqual(a.status, 'not_reviewed')
+
+    def test_control_assessment_unique_company_control(self):
+        ControlAssessment.objects.create(company=self.c, control=self.control)
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                ControlAssessment.objects.create(company=self.c, control=self.control)
+
+    def test_control_assessment_links_official_control(self):
+        a = ControlAssessment.objects.create(company=self.c, control=self.control)
+        self.assertIsNotNone(a.control.framework_version_id)
+        self.assertFalse(a.control.is_legacy_import)
+
+    def test_get_or_create_skips_legacy_control(self):
+        fw, dom = _fw_dom()
+        legacy = Control.objects.create(framework=fw, domain=dom, control_id='L-1', title='t', description='d')
+        obj, created = get_or_create_assessment_for_control(self.c, legacy, apply=True)
+        self.assertIsNone(obj)
+        self.assertFalse(ControlAssessment.objects.filter(control=legacy).exists())
+
+
+class AssessmentServiceTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_official_plan()
+
+    def test_generate_assessments_dry_run_does_not_write(self):
+        create_assessments_for_company(self.c, apply=False)
+        self.assertEqual(ControlAssessment.objects.count(), 0)
+
+    def test_generate_assessments_apply_creates_not_reviewed(self):
+        create_assessments_for_company(self.c, apply=True)
+        self.assertEqual(ControlAssessment.objects.filter(company=self.c).count(), 2)
+        self.assertTrue(all(a.status == 'not_reviewed' for a in ControlAssessment.objects.filter(company=self.c)))
+
+    def test_generate_assessments_official_controls_only(self):
+        fw = self.fv.framework
+        Control.objects.create(framework=fw, domain=Domain.objects.filter(framework=fw).first(),
+                               control_id='L-9', title='t', description='d')  # legacy
+        create_assessments_for_company(self.c, apply=True)
+        for a in ControlAssessment.objects.filter(company=self.c):
+            self.assertIsNotNone(a.control.framework_version_id)
+            self.assertFalse(a.control.is_legacy_import)
+
+    def test_generate_assessments_does_not_create_companycontrol(self):
+        create_assessments_for_company(self.c, apply=True)
+        self.assertEqual(CompanyControl.objects.count(), 0)
+
+    def test_generate_assessments_does_not_create_reports(self):
+        from monitoring.models import MonthlyReport
+        before = MonthlyReport.objects.count()
+        create_assessments_for_company(self.c, apply=True)
+        self.assertEqual(MonthlyReport.objects.count(), before)
+
+    def test_ai_analysis_does_not_set_assessment_status(self):
+        # Running advisory AI analysis must not create/alter a ControlAssessment.
+        from compliance.evidence_analysis import analyze_evidence_submission
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertEqual(ControlAssessment.objects.count(), 0)
+
+    def test_auditor_update_sets_status_and_reviewed_by(self):
+        from core.models import User
+        create_assessments_for_company(self.c, apply=True)
+        a = ControlAssessment.objects.filter(company=self.c).first()
+        u = User.objects.create_user(email='aud@x.com', password='longenough12', company=self.c, is_staff=True)
+        update_assessment_from_auditor_input(a, {'status': 'compliant', 'auditor_notes': 'ok'}, u)
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'compliant')
+        self.assertEqual(a.reviewed_by, u)
+        self.assertIsNotNone(a.reviewed_at)
+
+    def test_auditor_update_rejects_invalid_status(self):
+        from core.models import User
+        create_assessments_for_company(self.c, apply=True)
+        a = ControlAssessment.objects.filter(company=self.c).first()
+        u = User.objects.create_user(email='aud2@x.com', password='longenough12', company=self.c, is_staff=True)
+        update_assessment_from_auditor_input(a, {'status': 'totally_compliant_auto'}, u)
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'not_reviewed')  # invalid ignored
+
+
+class AssessmentCommandTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_official_plan()
+
+    def test_generate_control_assessments_command_dry_run(self):
+        call_command('generate_control_assessments', company_id=self.c.id, stdout=StringIO())
+        self.assertEqual(ControlAssessment.objects.count(), 0)
+
+    def test_generate_control_assessments_command_apply(self):
+        call_command('generate_control_assessments', company_id=self.c.id, apply=True, stdout=StringIO())
+        self.assertEqual(ControlAssessment.objects.filter(company=self.c).count(), 2)
+
+    def test_generate_control_assessments_company_scoped_no_cross_tenant(self):
+        other, ofv, oscope = _company_with_official_plan('SABIC-CYBERTRUST-1-0')
+        call_command('generate_control_assessments', company_id=self.c.id, apply=True, stdout=StringIO())
+        self.assertFalse(ControlAssessment.objects.filter(company=other).exists())
+
+
+class AuditorReviewViewTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.c, self.fv, self.scope = _company_with_official_plan()
+        create_assessments_for_company(self.c, apply=True)
+        self.a = ControlAssessment.objects.filter(company=self.c).first()
+        self.user = User.objects.create_user(email='arv@x.com', password='longenough12',
+                                             company=self.c, role='company_admin')
+        self.staff = User.objects.create_user(email='arvs@x.com', password='longenough12',
+                                              company=self.c, role='admin', is_staff=True)
+
+    def test_auditor_review_requires_login(self):
+        resp = self.client.get(reverse('compliance:auditor_review_queue'))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_auditor_review_queue_shows_official_controls(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:auditor_review_queue'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, self.a.control.control_id)
+
+    def test_auditor_review_detail_shows_ai_advisory_label(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:auditor_review_detail', args=[self.a.id]))
+        self.assertContains(resp, 'استشاري')
+
+    def test_auditor_can_update_assessment(self):
+        self.client.force_login(self.staff)
+        self.client.post(reverse('compliance:auditor_review_detail', args=[self.a.id]),
+                         {'status': 'compliant', 'auditor_notes': 'reviewed'})
+        self.a.refresh_from_db()
+        self.assertEqual(self.a.status, 'compliant')
+        self.assertEqual(self.a.reviewed_by, self.staff)
+
+    def test_non_staff_cannot_update_assessment(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse('compliance:auditor_review_detail', args=[self.a.id]),
+                         {'status': 'compliant'})
+        self.a.refresh_from_db()
+        self.assertEqual(self.a.status, 'not_reviewed')
+
+    def test_user_cannot_view_other_company_assessment(self):
+        other, ofv, oscope = _company_with_official_plan('SABIC-CYBERTRUST-1-0')
+        create_assessments_for_company(other, apply=True)
+        oa = ControlAssessment.objects.filter(company=other).first()
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:auditor_review_detail', args=[oa.id]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_user_cannot_update_other_company_assessment(self):
+        other, ofv, oscope = _company_with_official_plan('SABIC-CYBERTRUST-1-0')
+        create_assessments_for_company(other, apply=True)
+        oa = ControlAssessment.objects.filter(company=other).first()
+        self.client.force_login(self.staff)  # staff of self.c, not other
+        self.client.post(reverse('compliance:auditor_review_detail', args=[oa.id]), {'status': 'compliant'})
+        oa.refresh_from_db()
+        self.assertEqual(oa.status, 'not_reviewed')
+
+
+class Phase3GBackwardCompatTests(TestCase):
+    def test_old_upload_evidence_flow_still_works(self):
+        from core.models import User
+        company, control = _company_with_control()
+        user = User.objects.create_user(email='bc3g@x.com', password='longenough12',
+                                        company=company, role='company_admin')
+        self.client.force_login(user)
+        with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[control.id]),
+                                    {'evidence_file': _SUF('p.txt', b'ok')})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Evidence.objects.count(), 1)
+
+    def test_evidence_upload_v2_and_analysis_still_work(self):
+        from compliance.evidence_analysis import analyze_evidence_submission
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).exists())
+
+    def test_no_reports_created_by_assessment(self):
+        from monitoring.models import MonthlyReport
+        c, fv, scope = _company_with_official_plan()
+        before = MonthlyReport.objects.count()
+        create_assessments_for_company(c, apply=True)
+        self.assertEqual(MonthlyReport.objects.count(), before)
+
+    def test_registration_flow_still_works(self):
+        fw, dom = _fw_dom()
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), {
+                'company_name': 'RegG', 'cr_number': '7070701234', 'sector': 'technology',
+                'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regg@x.com',
+                'password': 'longenough12', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)

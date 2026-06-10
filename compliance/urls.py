@@ -29,4 +29,9 @@ urlpatterns = [
 
     # Phase 3F — advisory analysis trigger (staff-only)
     path('evidence-submissions/<int:submission_id>/analyze/', views.analyze_submission_view, name='analyze_submission'),
+
+    # Phase 3G — Auditor review + control assessment
+    path('auditor-review/', views.auditor_review_queue, name='auditor_review_queue'),
+    path('auditor-review/generate/', views.generate_assessments_view, name='generate_assessments'),
+    path('auditor-review/<int:assessment_id>/', views.auditor_review_detail, name='auditor_review_detail'),
 ]

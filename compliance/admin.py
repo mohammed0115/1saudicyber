@@ -5,6 +5,7 @@ from .models import (
     CompanyIntakeProfile, FrameworkApplicabilityResult,
     CompanyFrameworkScope, ControlApplicabilityResult,
     EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
+    ControlAssessment,
 )
 
 
@@ -153,3 +154,13 @@ class EvidenceAnalysisResultAdmin(admin.ModelAdmin):
     list_filter = ['status', 'provider', 'company']
     search_fields = ['company__name', 'control__control_id', 'evidence_submission__original_filename', 'summary']
     readonly_fields = ['created_at', 'updated_at', 'extracted_text', 'model_used', 'provider', 'analysis_metadata']
+
+
+# ---- Phase 3G: Auditor control assessment ----
+
+@admin.register(ControlAssessment)
+class ControlAssessmentAdmin(admin.ModelAdmin):
+    list_display = ['company', 'control', 'status', 'risk_level', 'remediation_required', 'reviewed_by', 'reviewed_at']
+    list_filter = ['status', 'risk_level', 'remediation_required', 'company']
+    search_fields = ['company__name', 'control__control_id', 'control__title', 'auditor_notes']
+    readonly_fields = ['created_at', 'updated_at', 'ai_summary_snapshot']
