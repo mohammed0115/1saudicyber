@@ -728,3 +728,56 @@ class EvidenceSubmission(models.Model):
 
     def __str__(self):
         return f"{self.company.name} :: {self.original_filename} (v{self.version}, {self.status})"
+
+
+# ============================================================
+# Phase 3F — Advisory AI/OCR evidence analysis (additive)
+# DRAFT analysis only. NOT a compliance decision, NOT an auditor review,
+# NOT a ControlAssessment. AI is assistant only; final decision is the auditor's (Phase 3G).
+# ============================================================
+
+class EvidenceAnalysisResult(models.Model):
+    """Advisory analysis of an EvidenceSubmission. One latest result per submission."""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('skipped', 'Skipped'),
+        ('needs_human_review', 'Needs Human Review'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='evidence_analyses')
+    evidence_submission = models.OneToOneField(
+        EvidenceSubmission, on_delete=models.CASCADE, related_name='analysis')
+    checklist_item = models.ForeignKey(
+        EvidenceChecklistItem, on_delete=models.CASCADE, related_name='analyses')
+    control = models.ForeignKey(Control, on_delete=models.CASCADE, related_name='evidence_analyses')
+    evidence_requirement = models.ForeignKey(
+        EvidenceRequirement, on_delete=models.SET_NULL, null=True, blank=True, related_name='analyses')
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    extracted_text = models.TextField(blank=True)
+    extracted_text_truncated = models.BooleanField(default=False)
+    summary = models.TextField(blank=True)
+    requirement_match = models.TextField(blank=True)
+    potential_gaps = models.TextField(blank=True)
+    risk_flags = models.JSONField(default=list, blank=True)
+    confidence = models.FloatField(null=True, blank=True)
+    model_used = models.CharField(max_length=80, blank=True)
+    provider = models.CharField(max_length=40, blank=True)
+    prompt_version = models.CharField(max_length=20, blank=True)
+    analysis_metadata = models.JSONField(default=dict, blank=True)
+    error_message = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_analyses')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'evidence_analysis_results'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Analysis[{self.evidence_submission.original_filename}] ({self.status})"

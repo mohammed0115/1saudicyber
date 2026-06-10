@@ -13,6 +13,39 @@
         <p><span class="text-gov-gray-500">الضابط:</span> {{ submission.checklist_item.evidence_requirement.control.control_id }}</p>
         {% if submission.notes %}<p><span class="text-gov-gray-500">ملاحظات:</span> {{ submission.notes }}</p>{% endif %}
     </div>
+
+    <!-- Phase 3F: advisory AI analysis -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-2 text-sm">
+        <div class="flex justify-between items-center">
+            <h2 class="font-bold text-gov-green-800">التحليل الاستشاري (AI)</h2>
+            {% if can_analyze %}
+            <form method="post" action="{% url 'compliance:analyze_submission' submission.id %}">
+                {% csrf_token %}
+                <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-3 py-1.5 rounded text-xs">تشغيل التحليل</button>
+            </form>
+            {% endif %}
+        </div>
+        {% if analysis %}
+            <p><span class="text-gov-gray-500">الحالة:</span> {{ analysis.get_status_display }}</p>
+            {% if analysis.summary %}<p><span class="text-gov-gray-500">ملخّص:</span> {{ analysis.summary }}</p>{% endif %}
+            {% if analysis.requirement_match %}<p><span class="text-gov-gray-500">المطابقة للمتطلّب:</span> {{ analysis.requirement_match }}</p>{% endif %}
+            {% if analysis.potential_gaps %}<p><span class="text-gov-gray-500">فجوات محتملة:</span> {{ analysis.potential_gaps }}</p>{% endif %}
+            {% if analysis.risk_flags %}<p><span class="text-gov-gray-500">إشارات خطر:</span> {{ analysis.risk_flags|join:", " }}</p>{% endif %}
+            {% if analysis.confidence is not None %}<p><span class="text-gov-gray-500">الثقة:</span> {{ analysis.confidence }}</p>{% endif %}
+            {% if analysis.error_message %}<p class="text-amber-700"><span class="text-gov-gray-500">ملاحظة:</span> {{ analysis.error_message }}</p>{% endif %}
+            {% if analysis.extracted_text %}
+            <details class="mt-2"><summary class="cursor-pointer text-gov-gray-600">معاينة النص المُستخرَج{% if analysis.extracted_text_truncated %} (مقتطع){% endif %}</summary>
+            <pre class="text-xs bg-gov-gray-50 p-2 rounded mt-1 whitespace-pre-wrap max-h-48 overflow-auto">{{ analysis.extracted_text|truncatechars:2000 }}</pre></details>
+            {% endif %}
+        {% else %}
+            <p class="text-gov-gray-500">لا يوجد تحليل بعد.</p>
+        {% endif %}
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded p-2 text-xs mt-2">
+            <i class="fas fa-triangle-exclamation"></i>
+            التحليل الآلي استشاري فقط. القرار النهائي للامتثال يجب أن يتّخذه مدقّق بشري.
+        </div>
+    </div>
+
     <a href="{% url 'compliance:evidence_submission_list' submission.checklist_item.id %}" class="text-gov-green-700 hover:underline text-sm">رجوع للقائمة</a>
 </div>
 {% endblock %}

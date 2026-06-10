@@ -4,7 +4,7 @@ from .models import (
     SourceDocument, FrameworkVersion, ControlVersion, ControlApplicabilityTag,
     CompanyIntakeProfile, FrameworkApplicabilityResult,
     CompanyFrameworkScope, ControlApplicabilityResult,
-    EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission,
+    EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
 )
 
 
@@ -143,3 +143,13 @@ class EvidenceSubmissionAdmin(admin.ModelAdmin):
     search_fields = ['original_filename', 'company__name',
                      'checklist_item__evidence_requirement__control__control_id']
     readonly_fields = ['uploaded_at', 'file_hash', 'file_size', 'created_at', 'updated_at']
+
+
+# ---- Phase 3F: advisory evidence analysis ----
+
+@admin.register(EvidenceAnalysisResult)
+class EvidenceAnalysisResultAdmin(admin.ModelAdmin):
+    list_display = ['company', 'evidence_submission', 'control', 'status', 'confidence', 'provider', 'created_at']
+    list_filter = ['status', 'provider', 'company']
+    search_fields = ['company__name', 'control__control_id', 'evidence_submission__original_filename', 'summary']
+    readonly_fields = ['created_at', 'updated_at', 'extracted_text', 'model_used', 'provider', 'analysis_metadata']

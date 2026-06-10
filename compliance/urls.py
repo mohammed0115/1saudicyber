@@ -26,4 +26,7 @@ urlpatterns = [
     path('evidence-checklist/<int:item_id>/upload/', views.evidence_upload_v2, name='evidence_upload_v2'),
     path('evidence-checklist/<int:item_id>/submissions/', views.evidence_submission_list, name='evidence_submission_list'),
     path('evidence-submissions/<int:submission_id>/', views.evidence_submission_detail, name='evidence_submission_detail'),
+
+    # Phase 3F — advisory analysis trigger (staff-only)
+    path('evidence-submissions/<int:submission_id>/analyze/', views.analyze_submission_view, name='analyze_submission'),
 ]

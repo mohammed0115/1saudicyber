@@ -394,4 +394,27 @@ def evidence_submission_detail(request, submission_id):
     if sub is None:
         messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
         return redirect('compliance:evidence_checklist')
-    return render(request, 'compliance/evidence_submission_detail.html', {'submission': sub})
+    analysis = getattr(sub, 'analysis', None)
+    return render(request, 'compliance/evidence_submission_detail.html',
+                  {'submission': sub, 'analysis': analysis, 'can_analyze': request.user.is_staff})
+
+
+# ============================================================
+# Phase 3F — Evidence analysis trigger (advisory). Staff-only to trigger.
+# ============================================================
+@login_required
+@require_http_methods(["POST"])
+def analyze_submission_view(request, submission_id):
+    """Staff-only: run advisory analysis for a submission (tenant-scoped). No compliance decision."""
+    from .models import EvidenceSubmission
+    from .evidence_analysis import analyze_evidence_submission
+    if not request.user.is_staff:
+        messages.error(request, 'يتطلّب صلاحية موظّف/مدقّق لتشغيل التحليل.')
+        return redirect('compliance:evidence_checklist')
+    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
+    if sub is None:
+        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    res = analyze_evidence_submission(sub, apply=True)
+    messages.success(request, f'تم تشغيل التحليل الاستشاري (الحالة: {res.get("status")}). القرار النهائي للمدقّق.')
+    return redirect('compliance:evidence_submission_detail', submission_id=sub.id)

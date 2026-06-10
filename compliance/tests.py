@@ -2570,3 +2570,233 @@ class Phase3EBackwardCompatTests(TestCase):
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'rege@x.com',
                 'password': 'longenough12', 'target_nca': 'on'})
         self.assertEqual(resp.status_code, 302)
+
+
+# ============================================================
+# Phase 3F — Advisory AI/OCR evidence analysis
+# ============================================================
+from compliance.models import EvidenceAnalysisResult
+from compliance.evidence_analysis import (
+    extract_text_from_submission, analyze_evidence_submission, batch_analyze_pending_submissions,
+)
+
+
+def _submission(company, item, name='p.txt', content=b'Cybersecurity policy approved by management.', ftype='txt'):
+    return EvidenceSubmission.objects.create(
+        company=company, checklist_item=item, uploaded_file=_SUF(name, content),
+        original_filename=name, file_type=ftype, file_size=len(content))
+
+
+def _company_with_submission(fv_code='ARAMCO-SACS-002', **subkw):
+    c, fv, scope = _company_with_checklist(fv_code)
+    item = EvidenceChecklistItem.objects.filter(company=c).first()
+    sub = _submission(c, item, **subkw)
+    return c, item, sub
+
+
+class EvidenceAnalysisModelTests(TestCase):
+    def test_evidence_analysis_result_can_be_created(self):
+        c, item, sub = _company_with_submission()
+        r = EvidenceAnalysisResult.objects.create(
+            company=c, evidence_submission=sub, checklist_item=item,
+            control=item.evidence_requirement.control, status='completed')
+        self.assertEqual(r.status, 'completed')
+
+    def test_evidence_analysis_links_submission_checklist_control(self):
+        c, item, sub = _company_with_submission()
+        r = EvidenceAnalysisResult.objects.create(
+            company=c, evidence_submission=sub, checklist_item=item,
+            control=item.evidence_requirement.control)
+        self.assertEqual(r.evidence_submission, sub)
+        self.assertEqual(r.control, item.evidence_requirement.control)
+
+    def test_evidence_analysis_is_not_control_assessment(self):
+        # The advisory result must not expose any compliance-decision field.
+        fields = {f.name for f in EvidenceAnalysisResult._meta.get_fields()}
+        for forbidden in ('compliant', 'compliance_status', 'final_status', 'accepted'):
+            self.assertNotIn(forbidden, fields)
+
+
+class TextExtractionTests(TestCase):
+    def test_extract_text_from_txt_submission(self):
+        c, item, sub = _company_with_submission(content=b'Approved cybersecurity policy v2.')
+        text, trunc, note = extract_text_from_submission(sub)
+        self.assertIn('policy', text)
+
+    def test_extract_text_from_csv_submission(self):
+        c, item, sub = _company_with_submission(name='d.csv', content=b'asset,owner\nfirewall,IT', ftype='csv')
+        text, trunc, note = extract_text_from_submission(sub)
+        self.assertIn('firewall', text)
+
+    def test_extract_text_handles_unsupported_file(self):
+        c, item, sub = _company_with_submission(name='p.pdf', content=b'%PDF-1.4', ftype='pdf')
+        text, trunc, note = extract_text_from_submission(sub)
+        self.assertEqual(text, '')
+        self.assertIn('OCR', note)  # pdf deferred -> needs human review
+
+    def test_extract_text_respects_size_limit(self):
+        from compliance.evidence_analysis import MAX_EXTRACT_CHARS
+        big = b'a' * (MAX_EXTRACT_CHARS + 500)
+        c, item, sub = _company_with_submission(content=big)
+        text, trunc, note = extract_text_from_submission(sub)
+        self.assertLessEqual(len(text), MAX_EXTRACT_CHARS)
+        self.assertTrue(trunc)
+
+    def test_extract_text_does_not_log_full_content(self):
+        # Extraction returns text but the error path returns only an error class, never content.
+        c, item, sub = _company_with_submission(name='x.docx', content=b'not a real docx', ftype='docx')
+        text, trunc, note = extract_text_from_submission(sub)
+        self.assertNotIn('not a real docx', note)  # note never contains raw content
+
+
+class AnalysisServiceTests(TestCase):
+    # No OPENAI_API_KEY in tests -> AI fails gracefully to needs_human_review.
+    def test_analyze_submission_dry_run_does_not_write(self):
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=False)
+        self.assertEqual(EvidenceAnalysisResult.objects.count(), 0)
+
+    def test_analyze_submission_creates_result_in_apply(self):
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertEqual(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).count(), 1)
+
+    def test_analyze_submission_missing_api_key_fails_gracefully(self):
+        from django.test import override_settings
+        with override_settings(OPENAI_API_KEY=''):
+            c, item, sub = _company_with_submission()
+            res = analyze_evidence_submission(sub, apply=True)
+        r = EvidenceAnalysisResult.objects.get(evidence_submission=sub)
+        self.assertEqual(r.status, 'needs_human_review')
+        self.assertIn('not configured', r.error_message)
+
+    def test_analyze_submission_does_not_mark_compliant(self):
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        sub.refresh_from_db(); item.refresh_from_db()
+        self.assertNotEqual(sub.status, 'accepted')
+        self.assertNotIn(item.status, ('accepted',))
+
+    def test_analyze_submission_does_not_accept_or_reject_evidence(self):
+        c, item, sub = _company_with_submission()
+        before = sub.status
+        analyze_evidence_submission(sub, apply=True)
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, before)  # submission status untouched by analysis
+
+    def test_analyze_submission_uses_official_control_context(self):
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        r = EvidenceAnalysisResult.objects.get(evidence_submission=sub)
+        self.assertIsNotNone(r.control.framework_version_id)
+        self.assertFalse(r.control.is_legacy_import)
+
+    def test_analyze_submission_is_idempotent(self):
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        analyze_evidence_submission(sub, apply=True)
+        self.assertEqual(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).count(), 1)
+
+    def test_analyze_does_not_create_companycontrol_or_assessment(self):
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertEqual(CompanyControl.objects.count(), 0)
+        names = [m.__name__ for m in __import__('django.apps', fromlist=['apps']).apps.get_models()]
+        if 'ControlAssessment' in names:
+            from compliance.models import ControlAssessment
+            self.assertEqual(ControlAssessment.objects.count(), 0)
+
+
+class AnalysisCommandTests(TestCase):
+    def setUp(self):
+        self.c, self.item, self.sub = _company_with_submission()
+
+    def test_analyze_evidence_submission_command_dry_run(self):
+        call_command('analyze_evidence_submission', submission_id=self.sub.id, stdout=StringIO())
+        self.assertEqual(EvidenceAnalysisResult.objects.count(), 0)
+
+    def test_analyze_evidence_submission_command_apply(self):
+        call_command('analyze_evidence_submission', submission_id=self.sub.id, apply=True, stdout=StringIO())
+        self.assertEqual(EvidenceAnalysisResult.objects.filter(evidence_submission=self.sub).count(), 1)
+
+    def test_analyze_pending_evidence_company_scoped(self):
+        call_command('analyze_pending_evidence', company_id=self.c.id, apply=True, stdout=StringIO())
+        self.assertTrue(EvidenceAnalysisResult.objects.filter(company=self.c).exists())
+
+    def test_analyze_pending_evidence_does_not_cross_tenant(self):
+        other, oitem, osub = _company_with_submission('SABIC-CYBERTRUST-1-0')
+        call_command('analyze_pending_evidence', company_id=self.c.id, apply=True, stdout=StringIO())
+        self.assertFalse(EvidenceAnalysisResult.objects.filter(company=other).exists())
+
+
+class AnalysisViewTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.c, self.item, self.sub = _company_with_submission()
+        self.user = User.objects.create_user(email='av@x.com', password='longenough12',
+                                             company=self.c, role='company_admin')
+        self.staff = User.objects.create_user(email='avs@x.com', password='longenough12',
+                                              company=self.c, role='admin', is_staff=True)
+
+    def test_submission_detail_shows_analysis_section(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[self.sub.id]))
+        self.assertContains(resp, 'استشاري')  # advisory analysis section present
+
+    def test_staff_can_trigger_analysis(self):
+        self.client.force_login(self.staff)
+        self.client.post(reverse('compliance:analyze_submission', args=[self.sub.id]))
+        self.assertEqual(EvidenceAnalysisResult.objects.filter(evidence_submission=self.sub).count(), 1)
+
+    def test_non_staff_cannot_trigger_analysis(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse('compliance:analyze_submission', args=[self.sub.id]))
+        self.assertEqual(EvidenceAnalysisResult.objects.count(), 0)
+
+    def test_user_cannot_view_other_company_analysis(self):
+        other, oitem, osub = _company_with_submission('SABIC-CYBERTRUST-1-0')
+        EvidenceAnalysisResult.objects.create(company=other, evidence_submission=osub,
+                                              checklist_item=oitem, control=oitem.evidence_requirement.control)
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[osub.id]))
+        self.assertEqual(resp.status_code, 302)  # cannot view other company's submission/analysis
+
+
+class Phase3FBackwardCompatTests(TestCase):
+    def test_old_upload_evidence_flow_still_works(self):
+        from core.models import User
+        company, control = _company_with_control()
+        user = User.objects.create_user(email='bc3f@x.com', password='longenough12',
+                                        company=company, role='company_admin')
+        self.client.force_login(user)
+        with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[control.id]),
+                                    {'evidence_file': _SUF('p.txt', b'ok')})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Evidence.objects.count(), 1)
+
+    def test_evidence_upload_v2_still_works(self):
+        from core.models import User
+        c, item, _ = _company_with_submission()
+        u = User.objects.create_user(email='v23f@x.com', password='longenough12', company=c)
+        self.client.force_login(u)
+        resp = self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                                {'uploaded_file': _SUF('q.pdf', b'%PDF')})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(EvidenceSubmission.objects.filter(company=c, original_filename='q.pdf').exists())
+
+    def test_no_reports_created_by_analysis(self):
+        from monitoring.models import MonthlyReport
+        c, item, sub = _company_with_submission()
+        before = MonthlyReport.objects.count()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertEqual(MonthlyReport.objects.count(), before)
+
+    def test_registration_flow_still_works(self):
+        fw, dom = _fw_dom()
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), {
+                'company_name': 'RegF', 'cr_number': '8080801234', 'sector': 'technology',
+                'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regf@x.com',
+                'password': 'longenough12', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)
