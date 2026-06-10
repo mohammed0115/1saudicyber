@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}تفاصيل دليل - CyberTrust KSA{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-4">
+    <h1 class="text-2xl font-bold text-gov-green-800">تفاصيل الدليل</h1>
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-2 text-sm">
+        <p><span class="text-gov-gray-500">الملف:</span> {{ submission.original_filename }}</p>
+        <p><span class="text-gov-gray-500">النسخة:</span> v{{ submission.version }}</p>
+        <p><span class="text-gov-gray-500">النوع/الحجم:</span> {{ submission.file_type }} — {{ submission.file_size }} bytes</p>
+        <p><span class="text-gov-gray-500">SHA-256:</span> <span class="font-mono text-xs break-all">{{ submission.file_hash }}</span></p>
+        <p><span class="text-gov-gray-500">الحالة:</span> {{ submission.get_status_display }}</p>
+        <p><span class="text-gov-gray-500">رفعه:</span> {{ submission.uploaded_by }} في {{ submission.uploaded_at|date:"Y-m-d H:i" }}</p>
+        <p><span class="text-gov-gray-500">الضابط:</span> {{ submission.checklist_item.evidence_requirement.control.control_id }}</p>
+        {% if submission.notes %}<p><span class="text-gov-gray-500">ملاحظات:</span> {{ submission.notes }}</p>{% endif %}
+    </div>
+    <a href="{% url 'compliance:evidence_submission_list' submission.checklist_item.id %}" class="text-gov-green-700 hover:underline text-sm">رجوع للقائمة</a>
+</div>
+{% endblock %}

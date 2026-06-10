@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}رفع دليل - CyberTrust KSA{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gov-green-800">رفع دليل (Evidence Upload v2)</h1>
+        <p class="text-gov-gray-600">
+            الضابط: <span class="font-mono">{{ item.evidence_requirement.control.control_id }}</span>
+            ({{ item.evidence_requirement.control.framework_version.code }})<br>
+            المتطلّب: {{ item.evidence_requirement.title }}
+        </p>
+    </div>
+    {% if messages %}{% for m in messages %}
+    <div class="bg-gov-green-50 border border-gov-green-200 text-gov-green-800 rounded-lg p-3">{{ m }}</div>
+    {% endfor %}{% endif %}
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-4">
+        {% csrf_token %}
+        <div>
+            <label class="block text-sm font-medium text-gov-gray-700 mb-1">الملف</label>
+            {{ form.uploaded_file }}
+            {% if form.uploaded_file.errors %}<p class="text-red-600 text-xs mt-1">{{ form.uploaded_file.errors|striptags }}</p>{% endif %}
+            <p class="text-xs text-gov-gray-500 mt-1">المسموح: pdf, png, jpg, jpeg, xlsx, docx, csv, txt.</p>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gov-gray-700 mb-1">ملاحظات</label>
+            {{ form.notes }}
+        </div>
+        <div class="flex items-center gap-3">
+            <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-6 py-2.5 rounded-lg font-medium">رفع</button>
+            <a href="{% url 'compliance:evidence_submission_list' item.id %}" class="text-gov-green-700 hover:underline text-sm">عرض الأدلة المرفوعة</a>
+        </div>
+    </form>
+    <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 text-sm">
+        <i class="fas fa-info-circle"></i> لا تحليل آلي أو قرار امتثال في هذه المرحلة — مجرّد رفع وربط بعنصر القائمة.
+    </div>
+</div>
+{% endblock %}

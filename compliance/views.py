@@ -304,7 +304,8 @@ def evidence_checklist(request):
     items = (EvidenceChecklistItem.objects.filter(company=company)
              .select_related('evidence_requirement', 'evidence_requirement__control',
                              'evidence_requirement__control__framework_version',
-                             'control_applicability_result'))
+                             'control_applicability_result')
+             .prefetch_related('submissions'))
     return render(request, 'compliance/evidence_checklist.html', {
         'company': company, 'items': items, 'can_generate': request.user.is_staff,
     })
@@ -324,3 +325,73 @@ def generate_evidence_checklist_view(request):
         res = generate_evidence_checklist_for_company(company, apply=True)
         messages.success(request, f'تم تخطيط {res["planned"]} عنصر أدلة (من ضوابط رسمية منطبقة).')
     return redirect('compliance:evidence_checklist')
+
+
+# ============================================================
+# Phase 3E — Evidence Upload v2 (linked to EvidenceChecklistItem)
+# Does NOT touch legacy upload_evidence / Evidence; no AI/OCR; no compliance decision.
+# ============================================================
+def _company_checklist_item(request, item_id):
+    """Fetch a checklist item scoped to the user's company (tenant isolation) or None."""
+    from .models import EvidenceChecklistItem
+    return EvidenceChecklistItem.objects.filter(id=item_id, company=request.user.company).first()
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def evidence_upload_v2(request, item_id):
+    """Upload an EvidenceSubmission for a checklist item (tenant-scoped). No AI/OCR."""
+    import hashlib, os
+    from .forms import EvidenceSubmissionForm
+    from .models import EvidenceSubmission
+    item = _company_checklist_item(request, item_id)
+    if item is None:
+        messages.error(request, 'عنصر القائمة غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+
+    if request.method == 'POST':
+        form = EvidenceSubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            f = form.cleaned_data['uploaded_file']
+            ext = os.path.splitext(f.name)[1].lower().lstrip('.')
+            digest = hashlib.sha256()
+            for chunk in f.chunks():
+                digest.update(chunk)
+            f.seek(0)
+            version = item.submissions.count() + 1
+            EvidenceSubmission.objects.create(
+                company=request.user.company, checklist_item=item, uploaded_file=f,
+                original_filename=f.name, file_type=ext, file_size=f.size,
+                file_hash=digest.hexdigest(), version=version, status='pending_review',
+                uploaded_by=request.user, notes=form.cleaned_data.get('notes', ''))
+            # Reflect progress on the checklist item (NOT a compliance decision).
+            if item.status in ('planned', 'in_progress'):
+                item.status = 'submitted'
+                item.save(update_fields=['status', 'updated_at'])
+            messages.success(request, 'تم رفع الدليل وربطه بعنصر القائمة (قيد المراجعة).')
+            return redirect('compliance:evidence_submission_list', item_id=item.id)
+    else:
+        form = EvidenceSubmissionForm()
+    return render(request, 'compliance/evidence_upload_v2.html', {'item': item, 'form': form})
+
+
+@login_required
+def evidence_submission_list(request, item_id):
+    """List submissions for a checklist item (tenant-scoped)."""
+    item = _company_checklist_item(request, item_id)
+    if item is None:
+        messages.error(request, 'عنصر القائمة غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    return render(request, 'compliance/evidence_submission_list.html', {
+        'item': item, 'submissions': item.submissions.all()})
+
+
+@login_required
+def evidence_submission_detail(request, submission_id):
+    """Submission detail (tenant-scoped to the user's company)."""
+    from .models import EvidenceSubmission
+    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
+    if sub is None:
+        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    return render(request, 'compliance/evidence_submission_detail.html', {'submission': sub})

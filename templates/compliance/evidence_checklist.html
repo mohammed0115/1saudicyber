@@ -35,6 +35,8 @@
                     <th class="text-right px-4 py-2">المستوى</th>
                     <th class="text-right px-4 py-2">الأولوية</th>
                     <th class="text-right px-4 py-2">الحالة</th>
+                    <th class="text-right px-4 py-2">الأدلة المرفوعة</th>
+                    <th class="text-right px-4 py-2">إجراء</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gov-gray-100">
@@ -46,9 +48,23 @@
                     <td class="px-4 py-2 text-xs">{{ it.evidence_requirement.get_requirement_level_display }}</td>
                     <td class="px-4 py-2 text-xs">{{ it.get_priority_display }}</td>
                     <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">{{ it.get_status_display }}</span></td>
+                    <td class="px-4 py-2 text-xs">
+                        {% with subs=it.submissions.all %}
+                        {% if subs %}
+                            <a href="{% url 'compliance:evidence_submission_list' it.id %}" class="text-gov-green-700 hover:underline">
+                                {{ subs|length }} ملف — آخرها: {{ subs.0.get_status_display }}
+                            </a>
+                        {% else %}
+                            <span class="text-gov-gray-400">لا دليل مرفوع بعد</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td class="px-4 py-2 text-xs">
+                        <a href="{% url 'compliance:evidence_upload_v2' it.id %}" class="text-gov-green-700 hover:underline">رفع دليل</a>
+                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6" class="px-4 py-6 text-center text-gov-gray-500">
+                <tr><td colspan="8" class="px-4 py-6 text-center text-gov-gray-500">
                     لا توجد عناصر مخطّطة بعد. اعتمد إطاراً وولّد خطة الضوابط، ثم ولّد قائمة الأدلة.
                 </td></tr>
                 {% endfor %}

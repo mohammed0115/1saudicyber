@@ -2330,3 +2330,243 @@ class Phase3DGuardrailTests(TestCase):
         from compliance.official_dataset import DATASET_FILES
         self.assertNotIn('NCA-OTCC-1-2022', DATASET_FILES)
         self.assertNotIn('NCA-DCC-1-2022', DATASET_FILES)
+
+
+# ============================================================
+# Phase 3E — Evidence Upload v2 + EvidenceSubmission linking
+# ============================================================
+from django.core.files.uploadedfile import SimpleUploadedFile as _SUF
+from compliance.models import EvidenceSubmission
+
+
+def _company_with_checklist(fv_code='ARAMCO-SACS-002'):
+    """Company with an approved scope, control plan, and generated evidence checklist."""
+    c, fv, scope = _company_with_official_plan(fv_code)
+    generate_evidence_requirements(apply=True)
+    generate_evidence_checklist_for_company(c, apply=True)
+    return c, fv, scope
+
+
+class EvidenceSubmissionModelTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_checklist()
+        self.item = EvidenceChecklistItem.objects.filter(company=self.c).first()
+
+    def test_evidence_submission_can_be_created(self):
+        s = EvidenceSubmission.objects.create(
+            company=self.c, checklist_item=self.item,
+            uploaded_file=_SUF('p.pdf', b'%PDF-1.4', content_type='application/pdf'),
+            original_filename='p.pdf', file_type='pdf', file_size=7)
+        self.assertEqual(s.status, 'pending_review')
+
+    def test_evidence_submission_links_to_checklist_item(self):
+        s = EvidenceSubmission.objects.create(
+            company=self.c, checklist_item=self.item,
+            uploaded_file=_SUF('p.txt', b'x'), original_filename='p.txt', file_type='txt', file_size=1)
+        self.assertIn(s, self.item.submissions.all())
+
+    def test_evidence_submission_stores_file_metadata(self):
+        s = EvidenceSubmission.objects.create(
+            company=self.c, checklist_item=self.item,
+            uploaded_file=_SUF('p.txt', b'abc'), original_filename='p.txt', file_type='txt',
+            file_size=3, file_hash='deadbeef')
+        self.assertEqual(s.file_type, 'txt'); self.assertEqual(s.file_size, 3)
+        self.assertEqual(s.file_hash, 'deadbeef')
+
+    def test_evidence_submission_status_defaults_correctly(self):
+        s = EvidenceSubmission.objects.create(
+            company=self.c, checklist_item=self.item,
+            uploaded_file=_SUF('p.txt', b'x'), original_filename='p.txt', file_type='txt')
+        self.assertEqual(s.status, 'pending_review')
+        self.assertEqual(s.version, 1)
+
+
+class EvidenceUploadV2ValidationTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.c, self.fv, self.scope = _company_with_checklist()
+        self.item = EvidenceChecklistItem.objects.filter(company=self.c).first()
+        self.user = User.objects.create_user(email='v2@x.com', password='longenough12',
+                                             company=self.c, role='company_admin')
+        self.client.force_login(self.user)
+        self.url = reverse('compliance:evidence_upload_v2', args=[self.item.id])
+
+    def test_upload_rejects_disallowed_extension(self):
+        bad = _SUF('m.exe', b'MZ', content_type='application/octet-stream')
+        self.client.post(self.url, {'uploaded_file': bad})
+        self.assertEqual(EvidenceSubmission.objects.count(), 0)
+
+    def test_upload_rejects_large_file(self):
+        from compliance.forms import EVIDENCE_V2_MAX_SIZE
+        from unittest import mock
+        with mock.patch('compliance.forms.EVIDENCE_V2_MAX_SIZE', 5):
+            big = _SUF('p.pdf', b'x' * 50, content_type='application/pdf')
+            self.client.post(self.url, {'uploaded_file': big})
+        self.assertEqual(EvidenceSubmission.objects.count(), 0)
+
+    def test_upload_accepts_allowed_file_types(self):
+        ok = _SUF('p.pdf', b'%PDF-1.4 ok', content_type='application/pdf')
+        resp = self.client.post(self.url, {'uploaded_file': ok})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(EvidenceSubmission.objects.filter(company=self.c).count(), 1)
+
+
+class EvidenceUploadV2ViewTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.c, self.fv, self.scope = _company_with_checklist()
+        self.item = EvidenceChecklistItem.objects.filter(company=self.c).first()
+        self.user = User.objects.create_user(email='v2v@x.com', password='longenough12',
+                                             company=self.c, role='company_admin')
+
+    def _upload(self):
+        self.client.force_login(self.user)
+        return self.client.post(reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+                                {'uploaded_file': _SUF('p.pdf', b'%PDF-1.4 ok'), 'notes': 'n'})
+
+    def test_evidence_upload_v2_requires_login(self):
+        resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[self.item.id]))
+        self.assertEqual(resp.status_code, 302); self.assertIn('/login', resp.url)
+
+    def test_evidence_upload_v2_creates_submission(self):
+        self._upload()
+        s = EvidenceSubmission.objects.get(company=self.c)
+        self.assertEqual(s.checklist_item, self.item)
+        self.assertEqual(s.uploaded_by, self.user)
+        self.assertTrue(s.file_hash)  # checksum computed
+
+    def test_evidence_upload_v2_updates_checklist_status(self):
+        self._upload()
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.status, 'submitted')
+
+    def test_evidence_submission_detail_requires_login(self):
+        self._upload()
+        s = EvidenceSubmission.objects.get(company=self.c)
+        self.client.logout()
+        resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[s.id]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_evidence_submission_list_shows_submissions(self):
+        self._upload()
+        resp = self.client.get(reverse('compliance:evidence_submission_list', args=[self.item.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context['submissions']), 1)
+
+    def test_checklist_page_shows_upload_links(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertContains(resp, reverse('compliance:evidence_upload_v2', args=[self.item.id]))
+
+    def test_checklist_page_shows_submission_count(self):
+        self._upload()
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertContains(resp, 'ملف')  # "N ملف — آخرها..."
+
+
+class EvidenceV2TenantTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.c, _, _ = _company_with_checklist()
+        self.other, _, _ = _company_with_checklist('SABIC-CYBERTRUST-1-0')
+        self.other_item = EvidenceChecklistItem.objects.filter(company=self.other).first()
+        self.user = User.objects.create_user(email='ten@x.com', password='longenough12',
+                                             company=self.c, role='company_admin')
+        self.client.force_login(self.user)
+
+    def test_user_cannot_upload_to_other_company_checklist_item(self):
+        resp = self.client.post(reverse('compliance:evidence_upload_v2', args=[self.other_item.id]),
+                                {'uploaded_file': _SUF('p.pdf', b'%PDF')})
+        self.assertEqual(EvidenceSubmission.objects.filter(checklist_item=self.other_item).count(), 0)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_user_cannot_view_other_company_submission(self):
+        s = EvidenceSubmission.objects.create(
+            company=self.other, checklist_item=self.other_item,
+            uploaded_file=_SUF('p.txt', b'x'), original_filename='p.txt', file_type='txt')
+        resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[s.id]))
+        self.assertEqual(resp.status_code, 302)  # redirected away (not this company)
+
+    def test_user_cannot_list_other_company_submissions(self):
+        resp = self.client.get(reverse('compliance:evidence_submission_list', args=[self.other_item.id]))
+        self.assertEqual(resp.status_code, 302)
+
+
+class Phase3EBackwardCompatTests(TestCase):
+    def setUp(self):
+        from core.models import User
+        self.company, self.control = _company_with_control()
+        self.user = User.objects.create_user(email='bc3e@x.com', password='longenough12',
+                                             company=self.company, role='company_admin')
+
+    def test_old_upload_evidence_flow_still_works(self):
+        self.client.force_login(self.user)
+        good = _SUF('policy.txt', b'ok', content_type='text/plain')
+        with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[self.control.id]),
+                                    {'evidence_file': good})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Evidence.objects.count(), 1)  # legacy Evidence still created by OLD flow
+
+    def test_old_evidence_model_unchanged(self):
+        fields = {f.name for f in Evidence._meta.get_fields()}
+        for f in ('company_control', 'file', 'ai_verdict', 'extracted_text'):
+            self.assertIn(f, fields)
+
+    def test_companycontrol_not_created_by_upload_v2(self):
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        from core.models import User
+        u = User.objects.create_user(email='cc3e@x.com', password='longenough12', company=c)
+        self.client.force_login(u)
+        before = CompanyControl.objects.count()
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                         {'uploaded_file': _SUF('p.pdf', b'%PDF')})
+        self.assertEqual(CompanyControl.objects.count(), before)
+
+    def test_evidence_legacy_not_created_by_upload_v2(self):
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        from core.models import User
+        u = User.objects.create_user(email='le3e@x.com', password='longenough12', company=c)
+        self.client.force_login(u)
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                         {'uploaded_file': _SUF('p.pdf', b'%PDF')})
+        self.assertEqual(Evidence.objects.count(), 0)  # v2 does NOT create legacy Evidence
+        self.assertEqual(EvidenceSubmission.objects.filter(company=c).count(), 1)
+
+    def test_no_ai_analysis_created(self):
+        from ai_engine.models import AIAuditLog
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        from core.models import User
+        u = User.objects.create_user(email='ai3e@x.com', password='longenough12', company=c)
+        self.client.force_login(u)
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                         {'uploaded_file': _SUF('p.pdf', b'%PDF')})
+        self.assertEqual(AIAuditLog.objects.count(), 0)
+
+    def test_no_control_assessment_model_used(self):
+        # No ControlAssessment is created by upload v2 (compliance decisions are out of scope).
+        from django.apps import apps
+        names = [m.__name__ for m in apps.get_models()]
+        # If a ControlAssessment model exists later, this still must not be populated by v2.
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        from core.models import User
+        u = User.objects.create_user(email='ca3e@x.com', password='longenough12', company=c)
+        self.client.force_login(u)
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                         {'uploaded_file': _SUF('p.pdf', b'%PDF')})
+        if 'ControlAssessment' in names:
+            from compliance.models import ControlAssessment
+            self.assertEqual(ControlAssessment.objects.count(), 0)
+
+    def test_registration_flow_still_works(self):
+        fw, dom = _fw_dom()
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), {
+                'company_name': 'RegE', 'cr_number': '9090901234', 'sector': 'technology',
+                'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'rege@x.com',
+                'password': 'longenough12', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)

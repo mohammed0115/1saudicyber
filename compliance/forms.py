@@ -44,3 +44,33 @@ class CompanyIntakeForm(forms.ModelForm):
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+
+
+# ============================================================
+# Phase 3E — Evidence Upload v2 form
+# ============================================================
+from django.conf import settings as _settings
+
+# Allowed extensions for upload v2 (per Phase 3E spec).
+EVIDENCE_V2_ALLOWED_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'xlsx', 'docx', 'csv', 'txt']
+# Reuse the existing project limit if present, else a conservative 50 MB default.
+EVIDENCE_V2_MAX_SIZE = getattr(_settings, 'MAX_EVIDENCE_FILE_SIZE', 50 * 1024 * 1024)
+
+
+class EvidenceSubmissionForm(forms.Form):
+    """Upload v2: validates file type/size only. No AI/OCR, no content parsing."""
+    uploaded_file = forms.FileField()
+    notes = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
+
+    def clean_uploaded_file(self):
+        import os
+        f = self.cleaned_data['uploaded_file']
+        ext = os.path.splitext(f.name)[1].lower().lstrip('.')
+        if ext not in EVIDENCE_V2_ALLOWED_EXTENSIONS:
+            raise forms.ValidationError(
+                f'نوع الملف ".{ext}" غير مسموح. المسموح: {", ".join(EVIDENCE_V2_ALLOWED_EXTENSIONS)}.')
+        if f.size > EVIDENCE_V2_MAX_SIZE:
+            raise forms.ValidationError(
+                f'حجم الملف كبير جداً ({f.size // (1024*1024)} MB). الحد الأقصى '
+                f'{EVIDENCE_V2_MAX_SIZE // (1024*1024)} MB.')
+        return f

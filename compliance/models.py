@@ -685,3 +685,46 @@ class EvidenceChecklistItem(models.Model):
 
     def __str__(self):
         return f"{self.company.name} :: {self.evidence_requirement.title} ({self.status})"
+
+
+# ============================================================
+# Phase 3E — Evidence Upload v2: EvidenceSubmission linked to checklist items (additive)
+# New upload model. Does NOT replace the legacy Evidence model, does NOT write
+# CompanyControl, does NOT make compliance decisions, no AI/OCR here.
+# ============================================================
+
+class EvidenceSubmission(models.Model):
+    """An uploaded evidence file linked to an EvidenceChecklistItem (upload v2)."""
+    STATUS_CHOICES = [
+        ('uploaded', 'Uploaded'),
+        ('pending_review', 'Pending Review'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('needs_reupload', 'Needs Re-upload'),
+        ('archived', 'Archived'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='evidence_submissions')
+    checklist_item = models.ForeignKey(
+        EvidenceChecklistItem, on_delete=models.CASCADE, related_name='submissions')
+    uploaded_file = models.FileField(upload_to='evidence_v2/%Y/%m/')
+    original_filename = models.CharField(max_length=255)
+    file_type = models.CharField(max_length=20)
+    file_size = models.PositiveIntegerField(default=0)
+    file_hash = models.CharField(max_length=128, blank=True, help_text='SHA-256 of the uploaded file')
+    version = models.PositiveIntegerField(default=1)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending_review')
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='evidence_submissions')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+    rejection_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'evidence_submissions'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.company.name} :: {self.original_filename} (v{self.version}, {self.status})"

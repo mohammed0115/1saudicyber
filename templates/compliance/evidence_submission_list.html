@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}أدلة العنصر - CyberTrust KSA{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gov-green-800">الأدلة المرفوعة</h1>
+        <a href="{% url 'compliance:evidence_upload_v2' item.id %}" class="bg-gov-green-700 text-white px-4 py-2 rounded-lg text-sm">رفع دليل جديد</a>
+    </div>
+    <p class="text-gov-gray-600">
+        {{ item.evidence_requirement.control.control_id }} — {{ item.evidence_requirement.title }}
+    </p>
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="text-gov-gray-600"><tr>
+                <th class="text-right px-4 py-2">الملف</th><th class="text-right px-4 py-2">النسخة</th>
+                <th class="text-right px-4 py-2">النوع</th><th class="text-right px-4 py-2">الحالة</th>
+                <th class="text-right px-4 py-2">التاريخ</th><th class="text-right px-4 py-2"></th>
+            </tr></thead>
+            <tbody class="divide-y divide-gov-gray-100">
+            {% for s in submissions %}
+                <tr>
+                    <td class="px-4 py-2">{{ s.original_filename }}</td>
+                    <td class="px-4 py-2">v{{ s.version }}</td>
+                    <td class="px-4 py-2 text-xs">{{ s.file_type }}</td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">{{ s.get_status_display }}</span></td>
+                    <td class="px-4 py-2 text-xs text-gov-gray-500">{{ s.uploaded_at|date:"Y-m-d H:i" }}</td>
+                    <td class="px-4 py-2"><a href="{% url 'compliance:evidence_submission_detail' s.id %}" class="text-gov-green-700 hover:underline text-xs">تفاصيل</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="px-4 py-6 text-center text-gov-gray-500">لا أدلة مرفوعة بعد.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

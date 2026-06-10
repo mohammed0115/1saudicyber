@@ -4,7 +4,7 @@ from .models import (
     SourceDocument, FrameworkVersion, ControlVersion, ControlApplicabilityTag,
     CompanyIntakeProfile, FrameworkApplicabilityResult,
     CompanyFrameworkScope, ControlApplicabilityResult,
-    EvidenceRequirement, EvidenceChecklistItem,
+    EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission,
 )
 
 
@@ -132,3 +132,14 @@ class EvidenceChecklistItemAdmin(admin.ModelAdmin):
     list_filter = ['status', 'priority']
     search_fields = ['company__name', 'evidence_requirement__title', 'evidence_requirement__control__control_id']
     readonly_fields = ['created_at', 'updated_at']
+
+
+# ---- Phase 3E: Evidence Upload v2 submissions ----
+
+@admin.register(EvidenceSubmission)
+class EvidenceSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['company', 'original_filename', 'file_type', 'version', 'status', 'uploaded_at']
+    list_filter = ['status', 'file_type', 'company']
+    search_fields = ['original_filename', 'company__name',
+                     'checklist_item__evidence_requirement__control__control_id']
+    readonly_fields = ['uploaded_at', 'file_hash', 'file_size', 'created_at', 'updated_at']

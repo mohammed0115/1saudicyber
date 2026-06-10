@@ -21,4 +21,9 @@ urlpatterns = [
     # Phase 3D — Evidence checklist planning (no upload here)
     path('evidence-checklist/', views.evidence_checklist, name='evidence_checklist'),
     path('evidence-checklist/generate/', views.generate_evidence_checklist_view, name='generate_evidence_checklist'),
+
+    # Phase 3E — Evidence Upload v2 (linked to checklist items)
+    path('evidence-checklist/<int:item_id>/upload/', views.evidence_upload_v2, name='evidence_upload_v2'),
+    path('evidence-checklist/<int:item_id>/submissions/', views.evidence_submission_list, name='evidence_submission_list'),
+    path('evidence-submissions/<int:submission_id>/', views.evidence_submission_detail, name='evidence_submission_detail'),
 ]
