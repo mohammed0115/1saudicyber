@@ -180,3 +180,43 @@ class PdplTests(TestCase):
         out = io.StringIO()
         call_command('purge_expired_data', stdout=out)
         self.assertIn('Retention purge complete', out.getvalue())
+
+
+class RegisterViewTests(TestCase):
+    """PATCH #5 (registration validation) + #6 (post-classification control checklist)
+    exercised through the real web registration view, end to end."""
+
+    def _payload(self, **over):
+        data = {
+            'company_name': 'WebCo', 'cr_number': '4444444444', 'sector': 'technology',
+            'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'web@x.com',
+            'password': 'longenough12', 'target_nca': 'on'}
+        data.update(over)
+        return data
+
+    def test_invalid_cr_does_not_create_company(self):
+        # PATCH #5: bad CR must be rejected by the form, not 500 / silently accepted.
+        from unittest import mock
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), self._payload(cr_number='123'))
+        self.assertEqual(resp.status_code, 200)  # re-rendered with errors, no redirect
+        self.assertEqual(Company.objects.count(), 0)
+
+    def test_duplicate_cr_rejected(self):
+        Company.objects.create(name='Existing', cr_number='4444444444', sector='technology',
+                               size='small', contact_email='e@x.com', target_nca=True)
+        from unittest import mock
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), self._payload())
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(Company.objects.count(), 1)
+
+    def test_successful_registration_builds_checklist(self):
+        # PATCH #6: after registration the company's control checklist must be populated.
+        fw, controls = make_framework_with_controls('NCA_ECC', 5)
+        from unittest import mock
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), self._payload())
+        self.assertEqual(resp.status_code, 302)
+        company = Company.objects.get(cr_number='4444444444')
+        self.assertEqual(CompanyControl.objects.filter(company=company).count(), 5)

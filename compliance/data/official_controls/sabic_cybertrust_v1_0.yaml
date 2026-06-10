@@ -1,0 +1,1154 @@
+# CyberTrust KSA — Official control dataset (Phase 2G)
+# Source of truth: SABIC CyberTrust Standard v1.0 (NOT the legacy 334 Excel).
+framework_version_code: SABIC-CYBERTRUST-1-0
+source_document_title: SABIC CyberTrust Standard v1.0
+expected_control_count: 94
+notes: >-
+  Statements transcribed from the official SABIC CyberTrust Report Template v1.0; domain/subdomain mapped
+  from the SABIC CyberTrust Standard v1.0 (NIST CSF 2.0 functions/categories). Excluded: CT-24 (present
+  in the report template but absent from the governing Standard PDF; domain unconfirmed, deferred). NOT
+  derived from the legacy 334 Excel.
+controls:
+- control_id: CT-01
+  external_reference: SABIC CT-01
+  domain: GOVERN
+  subdomain: Policies, Processes, and Procedures (GV.PO)
+  title: Suppliers must have defined policies for information security, approved by…
+  statement: >-
+    Suppliers must have defined policies for information security, approved by their management, and communicated
+    to the people with access to their information systems.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, GOVERN / Policies, Processes, and Procedures (GV.PO) / CT-01
+  tags: []
+- control_id: CT-02
+  external_reference: SABIC CT-02
+  domain: IDENTIFY
+  subdomain: Improvement (ID.IM)
+  title: Suppliers will perform, at minimum, a self-assessment of their operational…
+  statement: >-
+    Suppliers will perform, at minimum, a self-assessment of their operational resilience and Cybersecurity
+    practices in order to identify and appropriately manage potential risks. The self-assessment must
+    include, at minimum, all the requirements included in this document. The self-assessment must be repeated
+    at yearly intervals (or when requested by SABIC).
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Improvement (ID.IM) / CT-02
+  tags: []
+- control_id: CT-03
+  external_reference: SABIC CT-03
+  domain: IDENTIFY
+  subdomain: Asset Management (ID.AM)
+  title: SABIC Assets associated with information processing facilities managed by the…
+  statement: >-
+    SABIC Assets associated with information processing facilities managed by the Supplier must be identified
+    and an inventory of these Assets must be drawn up and maintained by the Supplier.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Asset Management (ID.AM) / CT-03
+  tags: []
+- control_id: CT-04
+  external_reference: SABIC CT-04
+  domain: PROTECT
+  subdomain: Asset Management (ID.AM)
+  title: Supplier must have a defined, documented and enforced Access Management Policy…
+  statement: >-
+    Supplier must have a defined, documented and enforced Access Management Policy for physical and Logical
+    access to networks, systems, and applications in Supplier Environment that processes, accesses, or
+    stores SABIC ‘s data. At least the Access control management must include: • The access rights granting,
+    changing, and disabling based on documented and authorized approvals. • A process implemented to ensure
+    the disabling of account of personnel no longer on employment or contracted. • The periodical review
+    of access rights to ensure that access is fit for purpose. In addition, it is recommended to implement
+    the following password security requirements. • Password minimum length of 8 characters and complexity
+    rules. • Password expiry set not less than 90 days. • Account lockout threshold set to 10 attempts
+    (or less). • No password sharing allowed.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Asset Management (ID.AM) / CT-04
+  tags: []
+- control_id: CT-05
+  external_reference: SABIC CT-05
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: Supplier must define and implement the security perimeters of their Environment…
+  statement: >-
+    Supplier must define and implement the security perimeters of their Environment to protect key systems/services
+    and physical assets.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-05
+  tags: []
+- control_id: CT-06
+  external_reference: SABIC CT-06
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: Supplier must protect both paper and electronic information or any other media…
+  statement: >-
+    Supplier must protect both paper and electronic information or any other media storing SABIC’s data,
+    by limiting access to information on those media to the authorized System Users and Sanitize or destroy
+    information system media before disposal or release for reuse.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-06
+  tags: []
+- control_id: CT-07
+  external_reference: SABIC CT-07
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: Suppliers must apply preventive measures confirming the adequacy and integrity…
+  statement: >-
+    Suppliers must apply preventive measures confirming the adequacy and integrity of their System Users
+    involved in the provision of services to SABIC. These measures must, at minimum, include the verification
+    of their references and identity and the employee’s agreement for proper use of information systems.
+    The Supplier must report all changes related to System Users with access to SABIC’s information systems
+    so that their access authorization can be updated by SABIC accordingly. The Supplier must have formal
+    procedures for off-boarding employees and contractors. Off-boarding procedures must include the return
+    of Assets, and removal of all associated access rights.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-07
+  tags: []
+- control_id: CT-08
+  external_reference: SABIC CT-08
+  domain: PROTECT
+  subdomain: Awareness and Training (PR.AT)
+  title: Supplier must provide and require all System Users to take a yearly mandatory…
+  statement: >-
+    Supplier must provide and require all System Users to take a yearly mandatory Cybersecurity awareness
+    training that addresses acceptable use and good computing practices. Training must address at least
+    the following topics: • Cybersecurity Acceptable Use. • Internet and social media security. • Social
+    Engineering and Phishing emails. • Confidentiality and not sharing credentials (e.g., user/password).
+    • Information security policies.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Awareness and Training (PR.AT) / CT-08
+  tags: []
+- control_id: CT-09
+  external_reference: SABIC CT-09
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: 'The Supplier must protect its email service with at least the following: •…'
+  statement: >-
+    The Supplier must protect its email service with at least the following: • Analyzing and filtering
+    email messages (specifically regarding Phishing and spam) using up-to-date email protection techniques
+    • Multi-Factor Authentication for remote and webmail access to email service. • Email archiving and
+    Backup. • Secure management and protection against Advanced Persistent Threats. • Validation of the
+    Supplier email service domains (e.g., using Sender Policy Framework).
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-09
+  tags: []
+- control_id: CT-10
+  external_reference: SABIC CT-10
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Supplier technology Assets and systems must be regularly updated with the…
+  statement: >-
+    Supplier technology Assets and systems must be regularly updated with the operating system (OS), software
+    and applications Patches provided by their manufacturer according with industry best practices.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-10
+  tags: []
+- control_id: CT-11
+  external_reference: SABIC CT-11
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Supplier technology Assets must be protected with Anti-Malware software.
+  statement: >-
+    Supplier technology Assets must be protected with Anti-Malware software. Updates must be applied daily,
+    and full system scans must be performed at least every two weeks. In case of virus/malware detection,
+    the virus/malware must be eradicated promptly, and the affected systems restored to a clean status.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-11
+  tags: []
+- control_id: CT-12
+  external_reference: SABIC CT-12
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Networks in the Supplier Environment shall be managed and controlled to protect…
+  statement: >-
+    Networks in the Supplier Environment shall be managed and controlled to protect information in systems
+    and applications. Network controls shall be deployed by means of Firewalls and other network security
+    technologies that includes Intrusion Detection Systems (IPS) or Intrusion Detection Systems (IDS)
+    and acting as network policy enforcement points.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-12
+  tags: []
+- control_id: CT-13
+  external_reference: SABIC CT-13
+  domain: DETECT
+  subdomain: Continuous Monitoring (DE.CM)
+  title: Supplier must create and maintain information system Audit Logs needed to allow…
+  statement: >-
+    Supplier must create and maintain information system Audit Logs needed to allow the analysis, investigation,
+    and reporting of unauthorized, or inappropriate information system activity in the Supplier Environment
+    and ensure that the actions of individual information System Users can be attributed to those System
+    Users.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, DETECT / Continuous Monitoring (DE.CM) / CT-13
+  tags: []
+- control_id: CT-14
+  external_reference: SABIC CT-14
+  domain: RESPOND
+  subdomain: Incident Management (RS.MA)
+  title: Supplier must have an incident handling process for information systems in the…
+  statement: >-
+    Supplier must have an incident handling process for information systems in the Supplier Environment,
+    which includes the preparation to detect, analyze, contain, recover and response to incidents.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, RESPOND / Incident Management (RS.MA) / CT-14
+  tags: []
+- control_id: CT-15
+  external_reference: SABIC CT-15
+  domain: RESPOND
+  subdomain: Incident Analysis (RS.AN)
+  title: The supplier must define a clear process of how incidents are categorized based…
+  statement: >-
+    The supplier must define a clear process of how incidents are categorized based on the impact it could
+    leave.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, RESPOND / Incident Analysis (RS.AN) / CT-15
+  tags: []
+- control_id: CT-16
+  external_reference: SABIC CT-16
+  domain: RECOVER
+  subdomain: Incident Recovery Communication (RC.CO)
+  title: The Supplier must notify and report to SABIC any adverse situation or…
+  statement: >-
+    The Supplier must notify and report to SABIC any adverse situation or Cybersecurity incident that
+    occurs in the Supplier Environment, affecting any networks, systems or applications that process,
+    access, or store SABIC’s data. The notification must be made as soon as practicable, but no later
+    than twenty-four (24) hours after the Supplier becomes aware of it or should have become aware of
+    it. The Supplier must make the notification to SABIC using the following channel: Email: CyberSecurityCenter@SABIC.COM
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RECOVER / Incident Recovery Communication (RC.CO) / CT-16
+  tags: []
+- control_id: CT-17
+  external_reference: SABIC CT-17
+  domain: GOVERN
+  subdomain: Risk Management Strategy (GV.RM)
+  title: The Supplier must maintain a Cybersecurity risk management and mitigation…
+  statement: >-
+    The Supplier must maintain a Cybersecurity risk management and mitigation program, with clear roles
+    & responsibilities, processes, risk appetite and tolerance, risk strategy, and Third Party Risk Management.
+    The supplier must maintain a Cybersecurity risk management and mitigation program, with clear roles
+    & responsibilities, processes, risk appetite, risk strategy, and Third-Party Risk Management.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, GOVERN / Risk Management Strategy (GV.RM) / CT-17
+  tags: []
+- control_id: CT-18
+  external_reference: SABIC CT-18
+  domain: GOVERN
+  subdomain: Policies, Processes, and Procedures (GV.PO)
+  title: The Supplier must have policies and processes to classify information in terms…
+  statement: >-
+    The Supplier must have policies and processes to classify information in terms of its value, sensitivity,
+    criticality, confidentiality and regulatory requirements. The Supplier must have policies and processes
+    to classify information in terms of its value, criticality, and confidentiality.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, GOVERN / Policies, Processes, and Procedures (GV.PO) / CT-18
+  tags: []
+- control_id: CT-19
+  external_reference: SABIC CT-19
+  domain: GOVERN
+  subdomain: Policies, Processes, and Procedures (GV.PO)
+  title: >-
+    The Supplier must have employee(s) whose primary responsibility is Cybersecurity.
+  statement: >-
+    The Supplier must have employee(s) whose primary responsibility is Cybersecurity. Responsibilities
+    of those personnel must include maintaining the security of information systems and ensuring compliance
+    with existing policies.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, GOVERN / Policies, Processes, and Procedures (GV.PO) / CT-19
+  tags: []
+- control_id: CT-20
+  external_reference: SABIC CT-20
+  domain: GOVERN
+  subdomain: Policies, Processes, and Procedures (GV.PO)
+  title: The Supplier must conduct background check (screening/vetting) on Employees…
+  statement: >-
+    The Supplier must conduct background check (screening/vetting) on Employees viewing or/and processing
+    SABIC’s confidential and strictly confidential
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, GOVERN / Policies, Processes, and Procedures (GV.PO) / CT-20
+  tags: []
+- control_id: CT-21
+  external_reference: SABIC CT-21
+  domain: IDENTIFY
+  subdomain: Asset Management (ID.AM)
+  title: The Supplier must follow an established Secure development Life Cycle (SDLC)…
+  statement: >-
+    The Supplier must follow an established Secure development Life Cycle (SDLC) for the Software and
+    product development. The SDLC should comply with applicable best practice guidelines. SDLC should
+    incorporate vendor-specific development best practices to ensure applications are built with the recommended
+    security guidance from the vendor.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Asset Management (ID.AM) / CT-21
+  tags: []
+- control_id: CT-22
+  external_reference: SABIC CT-22
+  domain: IDENTIFY
+  subdomain: Asset Management (ID.AM)
+  title: Supplier must use Secure-by-design principles as part of security architectural…
+  statement: >-
+    Supplier must use Secure-by-design principles as part of security architectural designs for OT/ICS
+    products. Secure-by-design principles include establish secure defaults, minimize attack surface area,
+    fail securely, defense in depth, least privilege, separation of duties, keeping security simple and
+    avoid security by obscurity.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Asset Management (ID.AM) / CT-22
+  tags: []
+- control_id: CT-23
+  external_reference: SABIC CT-23
+  domain: IDENTIFY
+  subdomain: Asset Management (ID.AM)
+  title: The Supplier must inventory all third-party software components (whether…
+  statement: >-
+    The Supplier must inventory all third-party software components (whether commercial, free, or open-source
+    software) used in the Software development and provide such inventory to SABIC upon request. Supplier
+    must assess whether any such components have any security defects or vulnerabilities that could lead
+    to a Security Incident.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Asset Management (ID.AM) / CT-23
+  tags: []
+- control_id: CT-25
+  external_reference: SABIC CT-25
+  domain: IDENTIFY
+  subdomain: Risk Assessment (ID.RA)
+  title: The Supplier must perform a regular vulnerability scanning using trusted…
+  statement: >-
+    The Supplier must perform a regular vulnerability scanning using trusted vulnerability management
+    technologies.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Risk Assessment (ID.RA) / CT-25
+  tags: []
+- control_id: CT-26
+  external_reference: SABIC CT-26
+  domain: IDENTIFY
+  subdomain: Risk Assessment (ID.RA)
+  title: The Supplier must conduct at least annual Penetration Testing on its IT…
+  statement: >-
+    The Supplier must conduct at least annual Penetration Testing on its IT infrastructure systems and
+    internet facing applications by reputed external party.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Risk Assessment (ID.RA) / CT-26
+  tags: []
+- control_id: CT-27
+  external_reference: SABIC CT-27
+  domain: IDENTIFY
+  subdomain: Improvement (ID.IM)
+  title: The personnel with access to OT/ICS assets, besides the general cybersecurity…
+  statement: >-
+    The personnel with access to OT/ICS assets, besides the general cybersecurity training and awareness,
+    must go through an OT/ICS cybersecurity awareness and training program. The program must include,
+    at a minimum, the following: customized training, qualifications, knowledge, and professional skillsets
+    related to the OT/ICS assets cybersecurity.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Improvement (ID.IM) / CT-27
+  tags: []
+- control_id: CT-28
+  external_reference: SABIC CT-28
+  domain: IDENTIFY
+  subdomain: Improvement (ID.IM)
+  title: The Supplier must have a process in place to guarantee that a non-disclosure…
+  statement: >-
+    The Supplier must have a process in place to guarantee that a non-disclosure agreement between contracted
+    employees of the Supplier and the Supplier is signed before access to SABIC systems and/or premises
+    is granted.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, IDENTIFY / Improvement (ID.IM) / CT-28
+  tags: []
+- control_id: CT-29
+  external_reference: SABIC CT-29
+  domain: PROTECT
+  subdomain: Improvement (ID.IM)
+  title: >-
+    System Users must have unique user logins and passwords for applications and systems.
+  statement: >-
+    System Users must have unique user logins and passwords for applications and systems. Generic accounts
+    must not be allowed, unless explicitly approved, restricted, and controlled.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Improvement (ID.IM) / CT-29
+  tags: []
+- control_id: CT-30
+  external_reference: SABIC CT-30
+  domain: PROTECT
+  subdomain: Improvement (ID.IM)
+  title: >-
+    All privileged accounts must be limited, justified, and reviewed on regular basis.
+  statement: >-
+    All privileged accounts must be limited, justified, and reviewed on regular basis.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Improvement (ID.IM) / CT-30
+  tags: []
+- control_id: CT-31
+  external_reference: SABIC CT-31
+  domain: PROTECT
+  subdomain: Improvement (ID.IM)
+  title: Multi-factor authentication must be enforced on all privileged accounts access…
+  statement: >-
+    Multi-factor authentication must be enforced on all privileged accounts access including remote access
+    to information systems and applications.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Improvement (ID.IM) / CT-31
+  tags: []
+- control_id: CT-32
+  external_reference: SABIC CT-32
+  domain: PROTECT
+  subdomain: Improvement (ID.IM)
+  title: The Supplier must support identity federation services.
+  statement: The Supplier must support identity federation services.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Improvement (ID.IM) / CT-32
+  tags: []
+- control_id: CT-33
+  external_reference: SABIC CT-33
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: >-
+    The Software must have the capability to segregate different data typology processed.
+  statement: >-
+    The Software must have the capability to segregate different data typology processed.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-33
+  tags: []
+- control_id: CT-34
+  external_reference: SABIC CT-34
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Software must have the capability to provide authorization based on roles.
+  statement: The Software must have the capability to provide authorization based on roles.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-34
+  tags: []
+- control_id: CT-35
+  external_reference: SABIC CT-35
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Software must support multi-factor authentication for users.
+  statement: The Software must support multi-factor authentication for users.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-35
+  tags: []
+- control_id: CT-36
+  external_reference: SABIC CT-36
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Software must have the capability to segregate users’ accessible data.
+  statement: The Software must have the capability to segregate users’ accessible data.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-36
+  tags: []
+- control_id: CT-37
+  external_reference: SABIC CT-37
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: Network connections to information systems and applications at the Supplier…
+  statement: >-
+    Network connections to information systems and applications at the Supplier location must be authorized
+    and monitored.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-37
+  tags: []
+- control_id: CT-38
+  external_reference: SABIC CT-38
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The cryptographic technologies used by the product must be aligned with the…
+  statement: >-
+    The cryptographic technologies used by the product must be aligned with the applicable national regulations.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-38
+  tags: []
+- control_id: CT-39
+  external_reference: SABIC CT-39
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must implement sufficient mechanisms to protect data-in-transit.
+  statement: >-
+    The Supplier must implement sufficient mechanisms to protect data-in-transit. Data-in-transit should
+    be encrypted with strong, approved algorithms. End-to-end encryption should be enforced where applicable
+    using VPN and/or TLS capable connectivity solutions with secure key exchange and forward-secrecy capability.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-39
+  tags: []
+- control_id: CT-40
+  external_reference: SABIC CT-40
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: Encryption keys and certificates must be managed in a secure manner.
+  statement: Encryption keys and certificates must be managed in a secure manner.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-40
+  tags: []
+- control_id: CT-41
+  external_reference: SABIC CT-41
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must implement data-at-rest encryption mechanisms, using at least…
+  statement: >-
+    The Supplier must implement data-at-rest encryption mechanisms, using at least AES-128 encryption
+    algorithm, on all devices or storage media hosting sensitive data.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-41
+  tags: []
+- control_id: CT-42
+  external_reference: SABIC CT-42
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: Wireless networks accessing information systems must use strong encryption for…
+  statement: >-
+    Wireless networks accessing information systems must use strong encryption for authentication and
+    transmission, such as WPA2 or WPA2 Enterprise.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-42
+  tags: []
+- control_id: CT-43
+  external_reference: SABIC CT-43
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: Creation of tunnels must be based on certificates with automation of tunnel…
+  statement: >-
+    Creation of tunnels must be based on certificates with automation of tunnel creation and key rotation
+    for each tunnel.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-43
+  tags: []
+- control_id: CT-44
+  external_reference: SABIC CT-44
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must provide secure session management including session…
+  statement: >-
+    The Supplier must provide secure session management including session authenticity, lockout, and timeout
+    termination.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-44
+  tags: []
+- control_id: CT-45
+  external_reference: SABIC CT-45
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must have network controls deployed such as firewalls, network…
+  statement: >-
+    The Supplier must have network controls deployed such as firewalls, network segmentation, network
+    access control, Intrusion Detection Systems (IDS) or Intrusion Prevention Systems (IPS) and DoS filtering.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-45
+  tags: []
+- control_id: CT-46
+  external_reference: SABIC CT-46
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must implement a device control mechanism (Endpoint Security) on…
+  statement: >-
+    The Supplier must implement a device control mechanism (Endpoint Security) on Assets that are used
+    to receive, store, process or transmit SABIC data.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-46
+  tags: []
+- control_id: CT-47
+  external_reference: SABIC CT-47
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must have and apply a secure baseline configuration which should…
+  statement: >-
+    The Supplier must have and apply a secure baseline configuration which should be established following
+    applicable best practice guidelines (e.g., CIS) for all underlying assets used to provide the agreed
+    service.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-47
+  tags: []
+- control_id: CT-48
+  external_reference: SABIC CT-48
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must conduct periodic vulnerability scans to evaluate…
+  statement: >-
+    The Supplier must conduct periodic vulnerability scans to evaluate configuration, Patches, and services
+    for known Vulnerabilities.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-48
+  tags: []
+- control_id: CT-49
+  external_reference: SABIC CT-49
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must implement a sanitization process before any Assets are…
+  statement: >-
+    The Supplier must implement a sanitization process before any Assets are loaned, donated, destroyed,
+    transferred, or surpluses. The process must be aligned to industry best practices such as NIST 800-88.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-49
+  tags: []
+- control_id: CT-50
+  external_reference: SABIC CT-50
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must retain all audit logs from information systems and…
+  statement: >-
+    The Supplier must retain all audit logs from information systems and applications storing, processing,
+    or transmitting SABIC data for one (1) year, as per local and international laws and regulations (whichever
+    is greater) depending upon the type of data being collected.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-50
+  tags: []
+- control_id: CT-51
+  external_reference: SABIC CT-51
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must ensure the isolation of tenants.
+  statement: >-
+    The Supplier must ensure the isolation of tenants. The SABIC's environments/data (specifically virtual
+    server if applicable) must be separated from other customer environments/data hosted at the cloud
+    services provider.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-51
+  tags: []
+- control_id: CT-52
+  external_reference: SABIC CT-52
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: The Supplier must have the capability to restrict the storage of the customer…
+  statement: >-
+    The Supplier must have the capability to restrict the storage of the customer data to specific countries
+    or geographical locations in compliance with applicable laws and regulations.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-52
+  tags: []
+- control_id: CT-53
+  external_reference: SABIC CT-53
+  domain: PROTECT
+  subdomain: Platform Security (PR.PS)
+  title: >-
+    The supplier must ensure the implementation of a data loss prevention (DLP) technology.
+  statement: >-
+    The supplier must ensure the implementation of a data loss prevention (DLP) technology.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, PROTECT / Platform Security (PR.PS) / CT-53
+  tags: []
+- control_id: CT-54
+  external_reference: SABIC CT-54
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must ensure that physical assets are adequately secured and that…
+  statement: >-
+    The Supplier must ensure that physical assets are adequately secured and that access to the physical
+    assets as well as SABIC’s data is restricted to authorized personnel only. Access in such cases must
+    be documented, and compliant with any applicable legal requirements.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-54
+  tags: []
+- control_id: CT-55
+  external_reference: SABIC CT-55
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must implement data validation on all input fields for…
+  statement: >-
+    The Supplier must implement data validation on all input fields for applications or Cloud Services
+    used by SABIC to only accept input with valid data type, syntax, length range, sanitized, accurate,
+    well-formed, and adheres to defined constraints.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-55
+  tags: []
+- control_id: CT-56
+  external_reference: SABIC CT-56
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Access to the Internet must be restricted by Content-filtering technologies to…
+  statement: >-
+    Access to the Internet must be restricted by Content-filtering technologies to block: • Malicious
+    and suspicious websites. • Personal and non-company email services. • Personal and non-company approved
+    public cloud services.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-56
+  tags: []
+- control_id: CT-57
+  external_reference: SABIC CT-57
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Physical security procedures defined and followed that address the control of…
+  statement: >-
+    Physical security procedures defined and followed that address the control of physical access, environmental
+    protection, equipment maintenance, equipment siting, visitor management etc.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-57
+  tags: []
+- control_id: CT-58
+  external_reference: SABIC CT-58
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Access to sensitive areas (server location, tape library, computer room, etc.)…
+  statement: >-
+    Access to sensitive areas (server location, tape library, computer room, etc.) must be physically
+    restricted to authorized personnel only; wherever applicable physical access control must be implemented.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-58
+  tags: []
+- control_id: CT-59
+  external_reference: SABIC CT-59
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The facilities must be protected against fire, water damage, vandalism, and…
+  statement: >-
+    The facilities must be protected against fire, water damage, vandalism, and other threats known or
+    likely to occur at their geographical locations.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-59
+  tags: []
+- control_id: CT-60
+  external_reference: SABIC CT-60
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Facilities and server rooms must be monitored via a Closed-Circuit Television…
+  statement: >-
+    Facilities and server rooms must be monitored via a Closed-Circuit Television (CCTV) system on a 24/7
+    basis. All video surveillance data must be protected from unauthorized disclosure and modification
+    and maintained for at least ninety (90) days or otherwise in accordance with the local/regional regulations.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-60
+  tags: []
+- control_id: CT-61
+  external_reference: SABIC CT-61
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Uninterruptible Power Supplies (UPS) and surge protector must be used to…
+  statement: >-
+    Uninterruptible Power Supplies (UPS) and surge protector must be used to provide short-term and long-term
+    power when the power fails and to protect information systems from voltage spikes and reductions.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-61
+  tags: []
+- control_id: CT-62
+  external_reference: SABIC CT-62
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Cloud service provider must establish mechanisms to automatically identify…
+  statement: >-
+    The Cloud service provider must establish mechanisms to automatically identify equipment using connection
+    authentication (cryptographic based mechanisms that get verified after establishing a connection between
+    the communicating services).
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-62
+  tags: []
+- control_id: CT-63
+  external_reference: SABIC CT-63
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: >-
+    The Supplier must return the SABIC data in a usable format upon service completion.
+  statement: >-
+    The Supplier must return the SABIC data in a usable format upon service completion.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-63
+  tags: []
+- control_id: CT-64
+  external_reference: SABIC CT-64
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must provide security documentation for any equipment or services…
+  statement: >-
+    The Supplier must provide security documentation for any equipment or services under request by SABIC.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-64
+  tags: []
+- control_id: CT-65
+  external_reference: SABIC CT-65
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must use a build process that reliably builds a complete…
+  statement: >-
+    The Supplier must use a build process that reliably builds a complete distribution from source. This
+    process must include a method for verifying the integrity of the software delivered to Client, such
+    as signing with a certificate from an industry recognized Certificate Authority.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-65
+  tags: []
+- control_id: CT-66
+  external_reference: SABIC CT-66
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Supplier system development environments, including testing environment and…
+  statement: >-
+    Supplier system development environments, including testing environment and integration platforms,
+    must be protected.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-66
+  tags: []
+- control_id: CT-67
+  external_reference: SABIC CT-67
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must use a build process that reliably builds a complete…
+  statement: >-
+    The Supplier must use a build process that reliably builds a complete distribution from source. This
+    process must include a method for verifying the integrity of the software delivered to Client, such
+    as signing with a certificate from an industry recognized Certificate Authority.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-67
+  tags: []
+- control_id: CT-68
+  external_reference: SABIC CT-68
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must apply, test, and validate the appropriate patches and updates…
+  statement: >-
+    The Supplier must apply, test, and validate the appropriate patches and updates and/or workarounds
+    on a test version of the application before distribution.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-68
+  tags: []
+- control_id: CT-69
+  external_reference: SABIC CT-69
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must provide periodic security patches certified by it and…
+  statement: >-
+    The Supplier must provide periodic security patches certified by it and upgrades and implementation
+    guidance or recommendations with respect to cybersecurity.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-69
+  tags: []
+- control_id: CT-70
+  external_reference: SABIC CT-70
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: All media must be inventoried and labelled as per the classification level.
+  statement: >-
+    All media must be inventoried and labelled as per the classification level. Inventory audit should
+    be used to avoid unknown or unresolved discrepancies in tape inventories in order to find the information
+    needed to get up and running in the event of a disaster.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-70
+  tags: []
+- control_id: CT-71
+  external_reference: SABIC CT-71
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Backup media must be secured to block/inhibit unauthorized physical access.
+  statement: Backup media must be secured to block/inhibit unauthorized physical access.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-71
+  tags: []
+- control_id: CT-72
+  external_reference: SABIC CT-72
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Supplier must establish and follow regular procedures for backup of critical…
+  statement: >-
+    Supplier must establish and follow regular procedures for backup of critical systems and SABIC’s data,
+    software, and websites.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-72
+  tags: []
+- control_id: CT-73
+  external_reference: SABIC CT-73
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Backup stored at an off-site location must be encrypted using at least AES…
+  statement: >-
+    Backup stored at an off-site location must be encrypted using at least AES encryption algorithm, and
+    128 bits key.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-73
+  tags: []
+- control_id: CT-74
+  external_reference: SABIC CT-74
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Clear desk and clear screen policy must be enforced in the organization.
+  statement: Clear desk and clear screen policy must be enforced in the organization.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-74
+  tags: []
+- control_id: CT-75
+  external_reference: SABIC CT-75
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must monitor Technology Assets, Systems, and applications to…
+  statement: >-
+    The Supplier must monitor Technology Assets, Systems, and applications to identify unauthorized access,
+    or unauthorized activity.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-75
+  tags: []
+- control_id: CT-76
+  external_reference: SABIC CT-76
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must conduct an analysis of software errors, most common…
+  statement: >-
+    The Supplier must conduct an analysis of software errors, most common programming errors, vulnerabilities,
+    risks a threat as early as possible during the software lifecycle. The Supplier must share with SABIC
+    all security-relevant information regarding the vulnerabilities, risks, threats, and mitigated steps
+    taken.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-76
+  tags: []
+- control_id: CT-77
+  external_reference: SABIC CT-77
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must ensure that errors and events within the application that may…
+  statement: >-
+    The Supplier must ensure that errors and events within the application that may be the result of failures,
+    crashes, unauthorized access attempts or other indicators of potential compromise, are appropriately
+    recorded in a log file conforming to industry standards.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-77
+  tags: []
+- control_id: CT-78
+  external_reference: SABIC CT-78
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: The Supplier must perform security scans (with the most current signature…
+  statement: >-
+    The Supplier must perform security scans (with the most current signature files) to verify that the
+    system has not been compromised during the testing phase or it has open vulnerabilities. The Supplier
+    must provide to SABIC written documentation of the results of the scans and tests it has performed
+    along with a mitigation plan. These vulnerabilities must be mitigated within a pre-negotiated period.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-78
+  tags: []
+- control_id: CT-79
+  external_reference: SABIC CT-79
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: All physical access control logs periodically reviewed and retained as per…
+  statement: >-
+    All physical access control logs periodically reviewed and retained as per retention requirements.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-79
+  tags: []
+- control_id: CT-80
+  external_reference: SABIC CT-80
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Systems’ logs and critical files must be protected from unauthorized access,…
+  statement: >-
+    Systems’ logs and critical files must be protected from unauthorized access, tampering, illegitimate
+    modification and/or deletion.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-80
+  tags: []
+- control_id: CT-81
+  external_reference: SABIC CT-81
+  domain: PROTECT
+  subdomain: Technology Infrastructure Resilience (PR.IR)
+  title: Records kept of all suspected or actual faults and all maintenance activities…
+  statement: >-
+    Records kept of all suspected or actual faults and all maintenance activities performed on equipment's
+    Is the maintenance must be carried out by authorized personnel only.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, PROTECT / Technology Infrastructure Resilience (PR.IR) / CT-81
+  tags: []
+- control_id: CT-82
+  external_reference: SABIC CT-82
+  domain: DETECT
+  subdomain: Continuous Monitoring (DE.CM)
+  title: The remediation of newly discovered critical vulnerabilities presenting…
+  statement: >-
+    The remediation of newly discovered critical vulnerabilities presenting significant risks must be
+    performed in a timely manner: • Critical Risk: immediate correction up to fourteen (14) calendar days
+    of critical vendor patch release, notification from SABIC, or discovered security breach whichever
+    is earlier. • High Risk: within one (1) month of vendor patch release or discovered security breach
+    whichever is earlier. • Medium and Low Risk: within three (3) months of discovery.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, DETECT / Continuous Monitoring (DE.CM) / CT-82
+  tags: []
+- control_id: CT-83
+  external_reference: SABIC CT-83
+  domain: DETECT
+  subdomain: Continuous Monitoring (DE.CM)
+  title: The supplier must be continuously monitoring cybersecurity events through a…
+  statement: >-
+    The supplier must be continuously monitoring cybersecurity events through a security incident and
+    event management process.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, DETECT / Continuous Monitoring (DE.CM) / CT-83
+  tags: []
+- control_id: CT-84
+  external_reference: SABIC CT-84
+  domain: DETECT
+  subdomain: Adverse Event Analysis (DE.AE)
+  title: Suppliers must periodically aggregate and correlate data from multiple systems…
+  statement: >-
+    Suppliers must periodically aggregate and correlate data from multiple systems and critical applications
+    such as Firewalls, IDS/IPS, and anti-virus in a central repository for event monitoring and analysis
+    purposes.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, DETECT / Adverse Event Analysis (DE.AE) / CT-84
+  tags: []
+- control_id: CT-85
+  external_reference: SABIC CT-85
+  domain: DETECT
+  subdomain: Adverse Event Analysis (DE.AE)
+  title: The Supplier must have a Disaster Recovery Plan (DR Plan) which is documented,…
+  statement: >-
+    The Supplier must have a Disaster Recovery Plan (DR Plan) which is documented, maintained, tested,
+    and communicated to appropriate parties. The DR Plan should address the recovery of Assets and communications
+    following a major disruption to business operations.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, DETECT / Adverse Event Analysis (DE.AE) / CT-85
+  tags: []
+- control_id: CT-86
+  external_reference: SABIC CT-86
+  domain: RESPOND
+  subdomain: Incident Management (RS.MA)
+  title: The Supplier must have security mechanisms in place to achieve resilience…
+  statement: >-
+    The Supplier must have security mechanisms in place to achieve resilience requirements in normal and
+    adverse situations and ensure high availability of its services. This includes having sufficient capacity
+    available.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, RESPOND / Incident Management (RS.MA) / CT-86
+  tags: []
+- control_id: CT-87
+  external_reference: SABIC CT-87
+  domain: RESPOND
+  subdomain: Incident Management (RS.MA)
+  title: Procedures for the backups of the provisioned solution and SABIC's data must be…
+  statement: >-
+    Procedures for the backups of the provisioned solution and SABIC's data must be established, conducted,
+    maintained, and tested on a regular basis. SABIC can define more specific requirements for backup
+    in the Scope of Work.
+  level: control
+  source_reference: SABIC CyberTrust Standard v1.0, RESPOND / Incident Management (RS.MA) / CT-87
+  tags: []
+- control_id: CT-88
+  external_reference: SABIC CT-88
+  domain: RESPOND
+  subdomain: Incident Response Reporting and Communication (RS.CO)
+  title: Supplier must have an Incident Response capability that includes preparation,…
+  statement: >-
+    Supplier must have an Incident Response capability that includes preparation, detection and analysis,
+    containment, eradication, recovery, documentation and preservation of evidence, communication protocols
+    and lessons learned.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RESPOND / Incident Response Reporting and Communication (RS.CO) /
+    CT-88
+  tags: []
+- control_id: CT-89
+  external_reference: SABIC CT-89
+  domain: RESPOND
+  subdomain: Incident Response Reporting and Communication (RS.CO)
+  title: >-
+    Documented Security Incident Response process covering physical security incidents.
+  statement: >-
+    Documented Security Incident Response process covering physical security incidents.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RESPOND / Incident Response Reporting and Communication (RS.CO) /
+    CT-89
+  tags: []
+- control_id: CT-90
+  external_reference: SABIC CT-90
+  domain: RESPOND
+  subdomain: Incident Response Reporting and Communication (RS.CO)
+  title: The Cloud Services provider must host and storage SABIC´s information…
+  statement: >-
+    The Cloud Services provider must host and storage SABIC´s information originated or owned by Saudi-Based
+    departments or affiliates inside the Kingdom of Saudi Arabia.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RESPOND / Incident Response Reporting and Communication (RS.CO) /
+    CT-90
+  tags: []
+- control_id: CT-91
+  external_reference: SABIC CT-91
+  domain: RESPOND
+  subdomain: Incident Response Reporting and Communication (RS.CO)
+  title: The Cloud Services provider must fulfill NCA's requests to remove software or…
+  statement: >-
+    The Cloud Services provider must fulfill NCA's requests to remove software or services, provided by
+    third-party providers that may be considered a cybersecurity threat to national organizations, from
+    the marketplace provided to SABIC
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RESPOND / Incident Response Reporting and Communication (RS.CO) /
+    CT-91
+  tags: []
+- control_id: CT-92
+  external_reference: SABIC CT-92
+  domain: RESPOND
+  subdomain: Incident Response Reporting and Communication (RS.CO)
+  title: If SABIC´s information originated or owned by Saudi-Based classified by SABIC…
+  statement: >-
+    If SABIC´s information originated or owned by Saudi-Based classified by SABIC as critical is involved
+    in the cloud service: The Cloud services provider must be following NCA’s Cloud Cybersecurity Controls
+    (CCC)
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RESPOND / Incident Response Reporting and Communication (RS.CO) /
+    CT-92
+  tags: []
+- control_id: CT-93
+  external_reference: SABIC CT-93
+  domain: RESPOND
+  subdomain: Incident Response Reporting and Communication (RS.CO)
+  title: If SABIC data or systems classified by SABIC as critical is involved in the…
+  statement: >-
+    If SABIC data or systems classified by SABIC as critical is involved in the service: Outsourcing services
+    must rely on Saudi companies and organizations, in accordance with the relevant legislative and regulatory
+    requirements.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RESPOND / Incident Response Reporting and Communication (RS.CO) /
+    CT-93
+  tags: []
+- control_id: CT-94
+  external_reference: SABIC CT-94
+  domain: RESPOND
+  subdomain: Incident Response Reporting and Communication (RS.CO)
+  title: Cybersecurity managed services centers for monitoring and operations must be…
+  statement: >-
+    Cybersecurity managed services centers for monitoring and operations must be completely present inside
+    the Kingdom of Saudi Arabia.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RESPOND / Incident Response Reporting and Communication (RS.CO) /
+    CT-94
+  tags: []
+- control_id: CT-95
+  external_reference: SABIC CT-95
+  domain: RESPOND
+  subdomain: Incident Response Reporting and Communication (RS.CO)
+  title: If a hosted telework system is provided to Saudi-Based SABIC systems, it must…
+  statement: >-
+    If a hosted telework system is provided to Saudi-Based SABIC systems, it must be inside the Kingdom
+    of Saudi Arabia.
+  level: control
+  source_reference: >-
+    SABIC CyberTrust Standard v1.0, RESPOND / Incident Response Reporting and Communication (RS.CO) /
+    CT-95
+  tags: []

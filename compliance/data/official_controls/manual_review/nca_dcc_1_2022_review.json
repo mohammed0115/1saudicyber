@@ -1,0 +1,13 @@
+{
+  "framework_version_code": "NCA-DCC-1-2022",
+  "source_document": "Docs/SRS/NCA/Data-Cybersecurity-Controls-.pdf",
+  "extraction_status": "blocked",
+  "official_count_detected": null,
+  "numbering_pattern_detected": null,
+  "text_extraction_quality": "image-based: ~180 chars/page over 28 pages; only cover/header/footer/disclaimer text extracts, no control bodies",
+  "blocker_reason": "DCC control pages are scanned images. No control statements, no control-id pattern, and no announced 'N Main Controls' line can be extracted without heavy OCR.",
+  "recommended_next_action": "Obtain a text-based official DCC PDF/Word from NCA, OR run a separately-approved OCR pass with mandatory human review before any dataset registration. Do NOT fall back to the legacy 334 Excel.",
+  "review_status": "blocked",
+  "reviewer_notes": "Confirmed image-based in Phase 2L/2M investigation. Remains backlog until a clean text source is provided.",
+  "controls": []
+}

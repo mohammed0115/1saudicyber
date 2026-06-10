@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}الأطر المنطبقة - CyberTrust KSA{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gov-green-800">مراجعة الأطر المنطبقة</h1>
+            <p class="text-gov-gray-600">قرارات حتمية مبنية على إجابات التصنيف — مع سبب ومصدر كل قرار.</p>
+        </div>
+        <a href="{% url 'compliance:intake' %}" class="text-gov-green-700 hover:underline text-sm">تعديل التصنيف</a>
+    </div>
+
+    {% if not has_profile %}
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4">
+            لم تُكمل بيانات التصنيف بعد.
+            <a href="{% url 'compliance:intake' %}" class="underline font-medium">ابدأ التصنيف الآن</a>.
+        </div>
+    {% endif %}
+
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-gov-green-50 text-gov-green-800">
+                <tr>
+                    <th class="text-right px-4 py-3">الإطار</th>
+                    <th class="text-right px-4 py-3">القرار</th>
+                    <th class="text-right px-4 py-3">السبب</th>
+                    <th class="text-right px-4 py-3">المصدر</th>
+                    <th class="text-right px-4 py-3">الثقة</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gov-gray-100">
+                {% for r in results %}
+                <tr>
+                    <td class="px-4 py-3 font-medium text-gov-gray-800">
+                        {{ r.framework_version.framework.name }}<br>
+                        <span class="text-xs text-gov-gray-500">{{ r.framework_version.code }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if r.decision == 'applicable' %}
+                            <span class="inline-block px-2 py-1 rounded bg-gov-green-100 text-gov-green-800 text-xs">منطبق</span>
+                        {% elif r.decision == 'needs_review' %}
+                            <span class="inline-block px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs">يحتاج مراجعة</span>
+                        {% elif r.decision == 'manually_overridden' %}
+                            <span class="inline-block px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">تعديل يدوي</span>
+                        {% else %}
+                            <span class="inline-block px-2 py-1 rounded bg-gov-gray-100 text-gov-gray-600 text-xs">غير منطبق</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gov-gray-600">{{ r.reason }}</td>
+                    <td class="px-4 py-3 text-gov-gray-500 text-xs">{{ r.get_source_display }}</td>
+                    <td class="px-4 py-3 text-gov-gray-500">{{ r.confidence }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-4 py-6 text-center text-gov-gray-500">لا توجد نتائج بعد. أكمل التصنيف أولاً.</td></tr>
+                {% endfor %}
+
+                {% for fv in unavailable %}
+                <tr class="bg-gov-gray-50">
+                    <td class="px-4 py-3 font-medium text-gov-gray-500">
+                        {{ fv.framework.name }}<br><span class="text-xs">{{ fv.code }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block px-2 py-1 rounded bg-gov-gray-200 text-gov-gray-600 text-xs">غير متاح</span>
+                    </td>
+                    <td class="px-4 py-3 text-gov-gray-500" colspan="3">
+                        الضوابط الرسمية لهذا الإطار لم تُستورد بعد (backlog).
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Phase 3C: proposed/approved framework scopes -->
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">نطاق الأطر (الموافقة)</div>
+        <table class="w-full text-sm">
+            <thead class="text-gov-gray-600">
+                <tr>
+                    <th class="text-right px-4 py-2">الإطار</th>
+                    <th class="text-right px-4 py-2">الحالة</th>
+                    <th class="text-right px-4 py-2">ضوابط رسمية</th>
+                    <th class="text-right px-4 py-2">السبب</th>
+                    {% if can_approve %}<th class="text-right px-4 py-2">إجراء</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gov-gray-100">
+                {% for s in scopes %}
+                <tr>
+                    <td class="px-4 py-3 font-medium text-gov-gray-800">{{ s.framework_version.code }}</td>
+                    <td class="px-4 py-3">
+                        {% if s.status == 'approved' %}<span class="px-2 py-1 rounded bg-gov-green-100 text-gov-green-800 text-xs">معتمد</span>
+                        {% elif s.status == 'rejected' %}<span class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs">مرفوض</span>
+                        {% elif s.status == 'needs_review' %}<span class="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs">يحتاج مراجعة</span>
+                        {% else %}<span class="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">مقترح</span>{% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-gov-gray-600">{{ s.official_count }}</td>
+                    <td class="px-4 py-3 text-gov-gray-600">{{ s.reason }}</td>
+                    {% if can_approve %}
+                    <td class="px-4 py-3">
+                        {% if s.status != 'approved' %}
+                        <form method="post" action="{% url 'compliance:approve_scope' s.id %}" class="inline">
+                            {% csrf_token %}<button class="text-gov-green-700 hover:underline text-xs">اعتماد</button>
+                        </form>
+                        {% endif %}
+                        {% if s.status != 'rejected' %}
+                        <form method="post" action="{% url 'compliance:reject_scope' s.id %}" class="inline ml-2">
+                            {% csrf_token %}<button class="text-red-600 hover:underline text-xs">رفض</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-4 py-4 text-center text-gov-gray-500">لا توجد أطر مقترحة بعد.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <a href="{% url 'compliance:control_plan' %}" class="text-gov-green-700 hover:underline text-sm">عرض خطة الضوابط</a>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-lock"></i>
+        قائمة الضوابط ومتطلبات الأدلة (Control checklist &amp; evidence requirements) ستُولَّد في خطوة لاحقة بعد مراجعة الأطر.
+    </div>
+</div>
+{% endblock %}

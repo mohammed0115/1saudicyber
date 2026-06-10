@@ -1,0 +1,458 @@
+# CyberTrust KSA — Official control dataset (Phase 2J)
+# Source of truth: NCA CSCC official PDF (NOT the legacy 334 Excel).
+framework_version_code: NCA-CSCC-1-2019
+source_document_title: NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019
+expected_control_count: 32
+notes: >-
+  Controls extracted from the official NCA CSCC PDF (pdftotext -raw) with subdomain header tracking and
+  an Appendices cutoff (the "Relationship with ECC" mapping appendix is excluded). Count matches the 32
+  Main Controls declared in the PDF. Domain names are verbatim phrases from the source, ordered per the
+  standard NCA structure. NOT derived from the legacy 334 Excel.
+controls:
+- control_id: 1-1-1
+  external_reference: NCA CSCC 1-1-1
+  domain: Cybersecurity Governance
+  subdomain: ''
+  title: Cybersecurity Risk Management 1-2 To ensure managing cybersecurity risks in a…
+  statement: >-
+    Cybersecurity Risk Management 1-2 To ensure managing cybersecurity risks in a methodological approach
+    in order to protect the organization’s information technology assets as per the organizational policies
+    and procedures and related laws and regulations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Governance /  / 1-1-1
+  tags: []
+- control_id: 1-2-1
+  external_reference: NCA CSCC 1-2-1
+  domain: Cybersecurity Governance
+  subdomain: ''
+  title: Cybersecurity in Information Technology Project Management 1-3 To ensure that…
+  statement: >-
+    Cybersecurity in Information Technology Project Management 1-3 To ensure that cybersecurity requirements
+    are included in project management methodology and procedures in order to protect the confidentiality,
+    integrity and availability of information technology assets as per organization policies, and procedures,
+    and related laws and regulations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Governance /  / 1-2-1
+  tags: []
+- control_id: 1-3-1
+  external_reference: NCA CSCC 1-3-1
+  domain: Cybersecurity Governance
+  subdomain: ''
+  title: 'Document Classification: Open In addition to the subcontrols in ECC control…'
+  statement: >-
+    Document Classification: Open In addition to the subcontrols in ECC control 1-6-3, cybersecurity requirements
+    related to software and application development projects of the organization’s critical systems must
+    include at least the following: Conducting a security source code review before the critical system
+    release. 1-3-2-1 Securing the access, storage, documentation and releases of source code. 1-3-2-2
+    Securing the authenticated Application Programming Interface (API). 1-3-2-3 Secure and trusted migration
+    of applications from testing environments to production environments, along with deletion of any data,
+    IDs or passwords related to the testing environment before the migration. 1-3-2-4
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Governance /  / 1-3-1
+  tags: []
+- control_id: 1-3-2
+  external_reference: NCA CSCC 1-3-2
+  domain: Cybersecurity Governance
+  subdomain: ''
+  title: Periodical Cybersecurity Review and Audit 1-4 To ensure that cybersecurity…
+  statement: >-
+    Periodical Cybersecurity Review and Audit 1-4 To ensure that cybersecurity controls are implemented
+    and in compliance with organizational policies and procedures, as well as related national and international
+    laws, regulations and agreements.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Governance /  / 1-3-2
+  tags: []
+- control_id: 1-4-1
+  external_reference: NCA CSCC 1-4-1
+  domain: Cybersecurity Governance
+  subdomain: ''
+  title: With reference to ECC control 1-8-2, the implementation of CSCC must be…
+  statement: >-
+    With reference to ECC control 1-8-2, the implementation of CSCC must be reviewed by independent parties
+    within the organization, outside the cybersecurity function at least once every three years.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Governance /  / 1-4-1
+  tags: []
+- control_id: 1-4-2
+  external_reference: NCA CSCC 1-4-2
+  domain: Cybersecurity Governance
+  subdomain: ''
+  title: Cybersecurity in Human Resources 1-5 To ensure that cybersecurity risks and…
+  statement: >-
+    Cybersecurity in Human Resources 1-5 To ensure that cybersecurity risks and requirements related to
+    personnel (employees and contractors) are managed efficiently prior to employment, during employment
+    and after termination/separation as per organizational policies and procedures, and related laws and
+    regulations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Governance /  / 1-4-2
+  tags: []
+- control_id: 1-5-1
+  external_reference: NCA CSCC 1-5-1
+  domain: Cybersecurity Governance
+  subdomain: ''
+  title: '22 Document Classification: Open Sharing Indicator: White Cybersecurity Defense…'
+  statement: >-
+    22 Document Classification: Open Sharing Indicator: White Cybersecurity Defense Asset Management 2-1
+    To ensure that the organization has an accurate and detailed inventory of information technology assets
+    in order to support the organization’s cybersecurity and operational requirements to maintain the
+    confidentiality, integrity and availability of information technical assets.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Governance /  / 1-5-1
+  tags: []
+- control_id: 2-1-1
+  external_reference: NCA CSCC 2-1-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Identity and Access Management 2-2 To ensure the secure and restricted logical…
+  statement: >-
+    Identity and Access Management 2-2 To ensure the secure and restricted logical access to information
+    technology assets in order to prevent unauthorized access and allow only authorized access for users
+    which are necessary to accomplish assigned tasks.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-1-1
+  tags: []
+- control_id: 2-2-1
+  external_reference: NCA CSCC 2-2-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: 'Document Classification: Open With reference to ECC subcontrol 2-2-3-5, user…'
+  statement: >-
+    Document Classification: Open With reference to ECC subcontrol 2-2-3-5, user identities and access
+    rights to critical systems must be reviewed at least once every three months.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-2-1
+  tags: []
+- control_id: 2-2-2
+  external_reference: NCA CSCC 2-2-2
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Information System and Information Processing Facilities Protection 2-3 To…
+  statement: >-
+    Information System and Information Processing Facilities Protection 2-3 To ensure the protection of
+    information systems and information processing facilities, (including workstations and infrastructures)
+    against cyber risks.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-2-2
+  tags: []
+- control_id: 2-3-1
+  external_reference: NCA CSCC 2-3-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: '24 Document Classification: Open Sharing Indicator: White Networks Security…'
+  statement: >-
+    24 Document Classification: Open Sharing Indicator: White Networks Security Management 2-4 To ensure
+    the protection of the organization’s network from cyber risks.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-3-1
+  tags: []
+- control_id: 2-4-1
+  external_reference: NCA CSCC 2-4-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Mobile Devices Security 2-5 To ensure the protection of mobile devices…
+  statement: >-
+    Mobile Devices Security 2-5 To ensure the protection of mobile devices (including laptops, smartphones,
+    tablets) from cyber risks and to ensure the secure handling of the organization’s information (including
+    sensitive information) while utilizing Bring Your Own Device (BYOD) policy.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-4-1
+  tags: []
+- control_id: 2-5-1
+  external_reference: NCA CSCC 2-5-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Data and Information Protection 2-6 To Ensure the confidentiality, integrity…
+  statement: >-
+    Data and Information Protection 2-6 To Ensure the confidentiality, integrity and availability of the
+    organization’s data and information as per organizational policies and procedures, and related laws
+    and regulations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-5-1
+  tags: []
+- control_id: 2-6-1
+  external_reference: NCA CSCC 2-6-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Cryptography 2-7 To ensure the proper and efficient use of cryptography to…
+  statement: >-
+    Cryptography 2-7 To ensure the proper and efficient use of cryptography to protect information assets
+    as per organizational policies and procedures, and related laws and regulations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-6-1
+  tags: []
+- control_id: 2-7-1
+  external_reference: NCA CSCC 2-7-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Backup and Recovery Management 2-8 To ensure the protection of the…
+  statement: >-
+    Backup and Recovery Management 2-8 To ensure the protection of the organization’s data and information,
+    including information systems and software configurations from cyber risks as per organizational policies
+    and procedures, and related laws and regulations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-7-1
+  tags: []
+- control_id: 2-8-1
+  external_reference: NCA CSCC 2-8-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: '26 Document Classification: Open Sharing Indicator: White With reference to ECC…'
+  statement: >-
+    26 Document Classification: Open Sharing Indicator: White With reference to ECC subcontrol 2-9-3-3,
+    a periodical test must be conducted at least once every three months in order to determine the efficiency
+    of recovering critical systems backups.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-8-1
+  tags: []
+- control_id: 2-8-2
+  external_reference: NCA CSCC 2-8-2
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Vulnerabilities Management 2-9 To ensure timely detection and effective…
+  statement: >-
+    Vulnerabilities Management 2-9 To ensure timely detection and effective remediation of technical vulnerabilities
+    to prevent or minimize the probability of exploiting these vulnerabilities to launch cyber attacks
+    against the organization.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-8-2
+  tags: []
+- control_id: 2-9-1
+  external_reference: NCA CSCC 2-9-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: With reference to ECC subcontrol 2-10-3-1, vulnerabilities assessments must be…
+  statement: >-
+    With reference to ECC subcontrol 2-10-3-1, vulnerabilities assessments must be conducted on critical
+    systems’ technical components at least once every month.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-9-1
+  tags: []
+- control_id: 2-9-2
+  external_reference: NCA CSCC 2-9-2
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Penetration Testing 2-10 To assess and evaluate the efficiency of the…
+  statement: >-
+    Penetration Testing 2-10 To assess and evaluate the efficiency of the organization’s cybersecurity
+    defense capabilities through simulated cyber attacks to discover unknown weaknesses within the technical
+    infrastructure that may lead to a cyber breach.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-9-2
+  tags: []
+- control_id: 2-10-1
+  external_reference: NCA CSCC 2-10-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: With reference to ECC subcontrol 2-11-3-2, penetration tests must be conducted…
+  statement: >-
+    With reference to ECC subcontrol 2-11-3-2, penetration tests must be conducted on critical systems
+    at least once every six months.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-10-1
+  tags: []
+- control_id: 2-10-2
+  external_reference: NCA CSCC 2-10-2
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Cybersecurity Event Logs and Monitoring Management 2-11 To ensure timely…
+  statement: >-
+    Cybersecurity Event Logs and Monitoring Management 2-11 To ensure timely collection, analysis and
+    monitoring of cybersecurity events for early detection of potential cyber-attacks in order to prevent
+    or minimize the negative impacts on the organization’s operations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-10-2
+  tags: []
+- control_id: 2-11-1
+  external_reference: NCA CSCC 2-11-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: With reference to ECC subcontrol 2-12-3-5, retention period of cybersecurity’s…
+  statement: >-
+    With reference to ECC subcontrol 2-12-3-5, retention period of cybersecurity’s critical systems event
+    logs must be 18 months minimum, in accordance with relevant legislative and regulatory requirements.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-11-1
+  tags: []
+- control_id: 2-11-2
+  external_reference: NCA CSCC 2-11-2
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Web Application Security 2-12 To ensure the protection of Internet-Facing web…
+  statement: >-
+    Web Application Security 2-12 To ensure the protection of Internet-Facing web applications against
+    cyber risk.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-11-2
+  tags: []
+- control_id: 2-12-1
+  external_reference: NCA CSCC 2-12-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: With reference to ECC subcontrol 2-15-3-2, multi-tier architecture principle,…
+  statement: >-
+    With reference to ECC subcontrol 2-15-3-2, multi-tier architecture principle, with mini- mum 3 tiers,
+    must be used.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-12-1
+  tags: []
+- control_id: 2-12-2
+  external_reference: NCA CSCC 2-12-2
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: Application Security 2-13 To ensure the protection of the critical systems’…
+  statement: >-
+    Application Security 2-13 To ensure the protection of the critical systems’ internal applications
+    against cyber risks.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-12-2
+  tags: []
+- control_id: 2-13-1
+  external_reference: NCA CSCC 2-13-1
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: The cybersecurity requirements for critical systems’ internal applications must…
+  statement: >-
+    The cybersecurity requirements for critical systems’ internal applications must be implemented.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-13-1
+  tags: []
+- control_id: 2-13-2
+  external_reference: NCA CSCC 2-13-2
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: '28 Document Classification: Open Sharing Indicator: White The cybersecurity…'
+  statement: >-
+    28 Document Classification: Open Sharing Indicator: White The cybersecurity requirements for critical
+    systems’ internal applications must include at least the following: Adopting multi-tier architecture
+    principle, provided that number of tiers is not less than three. 2-13-3-1 Using secure protocols (e.g.,
+    HTTPS). 2-13-3-2 Outlining the acceptable use policy for users. 2-13-3-3 Secure session management,
+    including session authenticity, session lockout and session timeout. 2-13-3-4
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-13-2
+  tags: []
+- control_id: 2-13-3
+  external_reference: NCA CSCC 2-13-3
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: The cybersecurity requirements for critical systems’ internal applications must…
+  statement: >-
+    The cybersecurity requirements for critical systems’ internal applications must be reviewed periodically.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-13-3
+  tags: []
+- control_id: 2-13-4
+  external_reference: NCA CSCC 2-13-4
+  domain: Cybersecurity Defense
+  subdomain: ''
+  title: 'Document Classification: Open 3 Cybersecurity Resilience Cybersecurity…'
+  statement: >-
+    Document Classification: Open 3 Cybersecurity Resilience Cybersecurity Resilience Aspects of Business
+    Continuity Management (BCM) 3-1 To ensure the inclusion of the cybersecurity resiliency requirements
+    within the organization’s business continuity management and to remediate and minimize the impacts
+    on systems, information processing facilities and critical e-services from disasters caused by cybersecurity
+    incidents.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Defense /  / 2-13-4
+  tags: []
+- control_id: 3-1-1
+  external_reference: NCA CSCC 3-1-1
+  domain: Cybersecurity Resilience
+  subdomain: ''
+  title: '30 Document Classification: Open Sharing Indicator: White 4 Third-Party and…'
+  statement: >-
+    30 Document Classification: Open Sharing Indicator: White 4 Third-Party and Cloud Computing Cybersecurity
+    Third-Party Cybersecurity 4-1 To ensure the protection of assets against cybersecurity risks related
+    to third parties, including outsourcing and managed services as per organizational policies and procedures,
+    and related laws and regulations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Cybersecurity Resilience /  / 3-1-1
+  tags: []
+- control_id: 4-1-1
+  external_reference: NCA CSCC 4-1-1
+  domain: Third-Party and Cloud Computing Cybersecurity
+  subdomain: ''
+  title: Cloud Computing and Hosting Cybersecurity 4-2 To ensure the proper and…
+  statement: >-
+    Cloud Computing and Hosting Cybersecurity 4-2 To ensure the proper and efficient remediation of cyber
+    risks and the implementation of cybersecurity requirements related to hosting and cloud computing
+    as per organizational policies and procedures, and related laws and regulations. It is also to ensure
+    the protection of the organization’s information technology assets hosted on the cloud or processed/
+    managed by third parties.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Third-Party and Cloud Computing Cybersecurity
+    /  / 4-1-1
+  tags: []
+- control_id: 4-2-1
+  external_reference: NCA CSCC 4-2-1
+  domain: Third-Party and Cloud Computing Cybersecurity
+  subdomain: ''
+  title: 'Document Classification: Open Appendices'
+  statement: 'Document Classification: Open Appendices'
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Critical Systems Cybersecurity Controls (CSCC) 1:2019, Third-Party and Cloud Computing Cybersecurity
+    /  / 4-2-1
+  tags: []

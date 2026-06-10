@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}خطة الضوابط - CyberTrust KSA{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gov-green-800">خطة الضوابط (Control Applicability Plan)</h1>
+            <p class="text-gov-gray-600">الضوابط الرسمية المخطّطة تحت الأطر المعتمدة. هذه ليست قائمة أدلة.</p>
+        </div>
+        <a href="{% url 'compliance:applicability_review' %}" class="text-gov-green-700 hover:underline text-sm">مراجعة الأطر</a>
+    </div>
+
+    <!-- approved frameworks + generate-plan button -->
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">الأطر المعتمدة</div>
+        <table class="w-full text-sm">
+            <tbody class="divide-y divide-gov-gray-100">
+                {% for s in approved %}
+                <tr>
+                    <td class="px-4 py-3 font-medium text-gov-gray-800">{{ s.framework_version.code }}</td>
+                    <td class="px-4 py-3 text-gov-gray-500 text-xs">{{ s.framework_version.framework.name }}</td>
+                    {% if can_generate %}
+                    <td class="px-4 py-3 text-left">
+                        <form method="post" action="{% url 'compliance:generate_plan' s.id %}" class="inline">
+                            {% csrf_token %}
+                            <button class="text-gov-green-700 hover:underline text-xs">توليد خطة الضوابط</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr><td class="px-4 py-4 text-center text-gov-gray-500">لا توجد أطر معتمدة بعد.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- planned controls -->
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">
+            الضوابط المخطّطة ({{ plan|length }})
+        </div>
+        <table class="w-full text-sm">
+            <thead class="text-gov-gray-600">
+                <tr>
+                    <th class="text-right px-4 py-2">الضابط</th>
+                    <th class="text-right px-4 py-2">الإطار</th>
+                    <th class="text-right px-4 py-2">المجال</th>
+                    <th class="text-right px-4 py-2">العنوان</th>
+                    <th class="text-right px-4 py-2">القرار</th>
+                    <th class="text-right px-4 py-2">السبب</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gov-gray-100">
+                {% for r in plan %}
+                <tr>
+                    <td class="px-4 py-2 font-mono text-xs">{{ r.control.control_id }}</td>
+                    <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.control.framework_version.code }}</td>
+                    <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.control.domain.name }}</td>
+                    <td class="px-4 py-2 text-gov-gray-700">{{ r.control.title|truncatechars:70 }}</td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-gov-green-100 text-gov-green-800 text-xs">{{ r.get_decision_display }}</span></td>
+                    <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.reason }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-4 py-6 text-center text-gov-gray-500">لا توجد ضوابط مخطّطة بعد. اعتمد إطاراً ثم ولّد الخطة.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-lock"></i>
+        متطلبات الأدلة وقائمة الرفع (Evidence requirements &amp; upload checklist) ستُولَّد في مرحلة لاحقة.
+    </div>
+</div>
+{% endblock %}

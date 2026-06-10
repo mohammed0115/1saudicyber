@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 from .models import Framework, Domain, Control, CompanyControl, Evidence, Assessment
 from ai_engine.services import process_uploaded_file, analyze_evidence
 from ai_engine.models import AIAuditLog
@@ -139,3 +140,152 @@ def upload_evidence(request, control_id):
         messages.error(request, f'Error processing file: {str(e)}')
 
     return redirect('compliance:control_detail', control_id=control_id)
+
+
+# ============================================================
+# Phase 3B — Company Intake Wizard + Applicable Framework Review
+# ============================================================
+from .forms import CompanyIntakeForm
+from .models import CompanyIntakeProfile, FrameworkApplicabilityResult, FrameworkVersion
+from .framework_applicability import evaluate_company, RULES, _is_available
+
+
+@login_required
+def intake_wizard(request):
+    """Create/update the company's intake profile, then evaluate framework applicability.
+
+    Scoped to request.user.company (a user only ever sees their own company's intake).
+    Never creates CompanyControl / Evidence / EvidenceRequirement.
+    """
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+
+    profile = CompanyIntakeProfile.objects.filter(company=company).first()
+    if request.method == 'POST':
+        form = CompanyIntakeForm(request.POST, instance=profile)
+        if form.is_valid():
+            profile = form.save(commit=False)
+            profile.company = company
+            profile.review_status = 'completed'
+            profile.completed_at = timezone.now()
+            profile.save()
+            # Deterministic applicability evaluation (writes FrameworkApplicabilityResult only).
+            evaluate_company(company, apply=True)
+            messages.success(request, 'تم حفظ ملف التصنيف وتحديد الأطر المنطبقة.')
+            return redirect('compliance:applicability_review')
+    else:
+        form = CompanyIntakeForm(instance=profile)
+    return render(request, 'compliance/intake.html', {'form': form, 'company': company,
+                                                       'has_profile': profile is not None})
+
+
+@login_required
+def applicability_review(request):
+    """Show framework applicability + proposed/approved scopes for the user's company."""
+    from django.db.models import Count, Q
+    from .models import CompanyFrameworkScope, Control
+    from .framework_scope import propose_framework_scopes
+
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+
+    # Idempotently sync proposed scopes from applicability results (never clobbers approved/rejected).
+    propose_framework_scopes(company, apply=True)
+
+    results = (FrameworkApplicabilityResult.objects
+               .filter(company=company)
+               .select_related('framework_version', 'framework_version__framework'))
+    scopes = (CompanyFrameworkScope.objects
+              .filter(company=company)
+              .select_related('framework_version', 'framework_version__framework'))
+    # official control count per framework version (for display).
+    counts = {fv: n for fv, n in Control.objects
+              .filter(is_legacy_import=False, framework_version__isnull=False)
+              .values_list('framework_version').annotate(n=Count('id'))}
+    for s in scopes:
+        s.official_count = counts.get(s.framework_version_id, 0)
+
+    unavailable = []
+    for code in ('NCA-OTCC-1-2022', 'NCA-DCC-1-2022'):
+        fv = FrameworkVersion.objects.filter(code=code).first()
+        if fv and not _is_available(fv):
+            unavailable.append(fv)
+    return render(request, 'compliance/applicability_review.html', {
+        'company': company,
+        'results': results,
+        'scopes': scopes,
+        'unavailable': unavailable,
+        'can_approve': request.user.is_staff,
+        'has_profile': CompanyIntakeProfile.objects.filter(company=company).exists(),
+    })
+
+
+def _get_company_scope(request, scope_id):
+    """Fetch a scope scoped to the user's company (tenant isolation) or None."""
+    from .models import CompanyFrameworkScope
+    return CompanyFrameworkScope.objects.filter(id=scope_id, company=request.user.company).first()
+
+
+@login_required
+@require_http_methods(["POST"])
+def approve_framework_scope_view(request, scope_id):
+    """Staff-only: approve a framework scope (scoped to the user's company)."""
+    from .framework_scope import approve_framework_scope
+    if not request.user.is_staff:
+        messages.error(request, 'يتطلّب صلاحية موظّف/مدقّق لاعتماد الإطار.')
+        return redirect('compliance:applicability_review')
+    scope = _get_company_scope(request, scope_id)
+    if scope:
+        approve_framework_scope(scope, user=request.user)
+        messages.success(request, f'تم اعتماد الإطار {scope.framework_version.code}.')
+    return redirect('compliance:applicability_review')
+
+
+@login_required
+@require_http_methods(["POST"])
+def reject_framework_scope_view(request, scope_id):
+    """Staff-only: reject a framework scope."""
+    from .framework_scope import reject_framework_scope
+    if not request.user.is_staff:
+        messages.error(request, 'يتطلّب صلاحية موظّف/مدقّق لرفض الإطار.')
+        return redirect('compliance:applicability_review')
+    scope = _get_company_scope(request, scope_id)
+    if scope:
+        reject_framework_scope(scope, request.POST.get('reason', ''), user=request.user)
+        messages.success(request, f'تم رفض الإطار {scope.framework_version.code}.')
+    return redirect('compliance:applicability_review')
+
+
+@login_required
+@require_http_methods(["POST"])
+def generate_control_plan_view(request, scope_id):
+    """Staff-only: generate the control applicability plan for an approved scope (separate button)."""
+    from .framework_scope import generate_control_applicability_plan
+    if not request.user.is_staff:
+        messages.error(request, 'يتطلّب صلاحية موظّف/مدقّق لتوليد خطة الضوابط.')
+        return redirect('compliance:control_plan')
+    scope = _get_company_scope(request, scope_id)
+    if scope:
+        count, _ = generate_control_applicability_plan(request.user.company, scope, apply=True)
+        messages.success(request, f'تم تخطيط {count} ضابطاً رسمياً لإطار {scope.framework_version.code}.')
+    return redirect('compliance:control_plan')
+
+
+@login_required
+def control_plan(request):
+    """Read-only page: planned controls (ControlApplicabilityResult) for approved frameworks."""
+    from .models import CompanyFrameworkScope, ControlApplicabilityResult
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    approved = (CompanyFrameworkScope.objects.filter(company=company, status='approved')
+                .select_related('framework_version', 'framework_version__framework'))
+    plan = (ControlApplicabilityResult.objects.filter(company=company)
+            .select_related('control', 'control__framework', 'control__domain',
+                            'framework_scope__framework_version'))
+    return render(request, 'compliance/control_plan.html', {
+        'company': company, 'approved': approved, 'plan': plan,
+        'can_generate': request.user.is_staff,
+    })

@@ -44,14 +44,17 @@ def realtime_monitoring(request):
     if not company:
         return render(request, 'dashboard/no_company.html')
 
-    alerts = Alert.objects.filter(company=company).order_by('-created_at')[:50]
+    # Compute severity counts from the unsliced queryset; filtering a sliced
+    # queryset raises "Cannot filter a query once a slice has been taken."
+    company_alerts = Alert.objects.filter(company=company)
+    alerts = company_alerts.order_by('-created_at')[:50]
 
     context = {
         'company': company,
         'alerts': alerts,
-        'critical': alerts.filter(severity='critical').count(),
-        'high': alerts.filter(severity='high').count(),
-        'medium': alerts.filter(severity='medium').count(),
+        'critical': company_alerts.filter(severity='critical').count(),
+        'high': company_alerts.filter(severity='high').count(),
+        'medium': company_alerts.filter(severity='medium').count(),
     }
     return render(request, 'monitoring/realtime.html', context)
 

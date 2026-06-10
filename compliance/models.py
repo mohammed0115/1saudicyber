@@ -80,9 +80,37 @@ class Control(models.Model):
     applies_to_sizes = models.JSONField(default=list, blank=True)
     is_mandatory = models.BooleanField(default=True)
 
+    # ---- Phase 2A: Knowledge-Base provenance (all optional, additive) ----
+    # The legacy `framework` FK is intentionally left untouched; these new
+    # fields let a control be traced to a versioned source without breaking it.
+    framework_version = models.ForeignKey(
+        'FrameworkVersion', on_delete=models.SET_NULL, null=True, blank=True, related_name='controls')
+    source_document = models.ForeignKey(
+        'SourceDocument', on_delete=models.SET_NULL, null=True, blank=True, related_name='controls')
+    source_page = models.PositiveIntegerField(null=True, blank=True)
+    source_reference = models.TextField(blank=True)
+    external_reference = models.CharField(max_length=100, blank=True,
+                                          help_text='e.g. NCA ECC 1-1-1, TPC-01, CT-01')
+    is_legacy_import = models.BooleanField(default=False)
+    import_notes = models.TextField(blank=True)
+
     class Meta:
         db_table = 'controls'
-        unique_together = ['framework', 'control_id']
+        # Phase 2D: identity moved to (framework_version, control_id) for official
+        # controls so that, e.g., legacy NCA_ECC/1-1-1 (fv NULL) and official
+        # NCA-ECC-2-2024/1-1-1 can coexist. Two partial constraints replace the
+        # old unique_together: one guards official rows, one preserves the legacy
+        # guarantee for fv-NULL rows.
+        constraints = [
+            models.UniqueConstraint(
+                fields=['framework_version', 'control_id'],
+                condition=models.Q(framework_version__isnull=False),
+                name='uniq_official_control_per_framework_version'),
+            models.UniqueConstraint(
+                fields=['framework', 'control_id'],
+                condition=models.Q(framework_version__isnull=True),
+                name='uniq_legacy_control_per_framework'),
+        ]
 
     def __str__(self):
         return f"{self.control_id}: {self.title[:60]}"
@@ -233,3 +261,347 @@ class ControlMapping(models.Model):
 
     def __str__(self):
         return f"{self.source_control.control_id} -> {self.target_control.control_id} ({self.mapping_type})"
+
+
+# ============================================================
+# Phase 1 — Source Registry + Framework Versioning (additive only)
+# These models are added ALONGSIDE the existing schema. They do not alter or
+# remove Framework.version, Control, CompanyControl, or Evidence. Controls are
+# NOT linked to FrameworkVersion in Phase 1 (deferred to Phase 2).
+# ============================================================
+
+class SourceDocument(models.Model):
+    """An official (or legacy) source document that controls are derived from.
+
+    The authoritative source of truth for the control library — official
+    PDFs/Word/templates/assessment tools — as opposed to the legacy bootstrap
+    Excel. Used by Framework Versioning so every control can later be traced to
+    a document + page (Phase 2)."""
+    ISSUER_CHOICES = [
+        ('NCA', 'National Cybersecurity Authority'),
+        ('ARAMCO', 'Saudi Aramco'),
+        ('SABIC', 'SABIC'),
+        ('INTERNAL', 'Internal / CyberTrust KSA'),
+        ('LEGACY', 'Legacy / Bootstrap'),
+    ]
+    DOCUMENT_TYPE_CHOICES = [
+        ('standard', 'Standard'),
+        ('guideline', 'Guideline'),
+        ('template', 'Template'),
+        ('assessment_tool', 'Assessment Tool'),
+        ('policy_template', 'Policy Template'),
+        ('procedure_template', 'Procedure Template'),
+        ('bootstrap_excel', 'Bootstrap Excel'),
+        ('srs', 'SRS / System Document'),
+        ('other', 'Other'),
+    ]
+    LANGUAGE_CHOICES = [
+        ('ar', 'Arabic'),
+        ('en', 'English'),
+        ('bilingual', 'Bilingual'),
+        ('unknown', 'Unknown'),
+    ]
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('superseded', 'Superseded'),
+        ('draft', 'Draft'),
+        ('legacy', 'Legacy'),
+        ('unknown', 'Unknown'),
+    ]
+
+    title = models.CharField(max_length=300)
+    issuer = models.CharField(max_length=20, choices=ISSUER_CHOICES)
+    document_type = models.CharField(max_length=30, choices=DOCUMENT_TYPE_CHOICES, default='other')
+    version = models.CharField(max_length=50, blank=True)
+    publication_date = models.DateField(null=True, blank=True)
+    source_url = models.URLField(max_length=500, null=True, blank=True)
+    local_path = models.CharField(max_length=500, null=True, blank=True)
+    file_hash = models.CharField(max_length=128, null=True, blank=True, help_text='e.g. SHA-256')
+    language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, default='unknown')
+    is_current = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unknown')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'source_documents'
+        ordering = ['issuer', 'title', '-version']
+
+    def __str__(self):
+        v = f" {self.version}" if self.version else ''
+        return f"[{self.issuer}] {self.title}{v}"
+
+
+class FrameworkVersion(models.Model):
+    """A specific, versioned edition of a framework (e.g. NCA-ECC-2-2024).
+
+    Lets the platform distinguish ECC 2:2024 from ECC 2018, and treat the legacy
+    334-control Excel as its own non-governing version. Phase 2 will link each
+    Control to a FrameworkVersion; in Phase 1 the link is intentionally absent."""
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('superseded', 'Superseded'),
+        ('draft', 'Draft'),
+        ('legacy', 'Legacy'),
+    ]
+
+    framework = models.ForeignKey(Framework, on_delete=models.CASCADE, related_name='versions')
+    code = models.CharField(max_length=50, unique=True)
+    version_label = models.CharField(max_length=100, blank=True)
+    source_document = models.ForeignKey(
+        SourceDocument, on_delete=models.SET_NULL, null=True, blank=True, related_name='framework_versions')
+    effective_date = models.DateField(null=True, blank=True)
+    retired_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    is_default = models.BooleanField(default=False)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'framework_versions'
+        ordering = ['framework', 'code']
+
+    def __str__(self):
+        return f"{self.code} ({self.get_status_display()})"
+
+
+class ControlVersion(models.Model):
+    """Point-in-time snapshot of a control's text under a given framework version.
+
+    Lets the platform keep history when a control's wording changes across
+    editions (e.g. ECC 2018 -> ECC 2:2024) without mutating the live Control.
+    Additive only — no existing model depends on it."""
+    control = models.ForeignKey(Control, on_delete=models.CASCADE, related_name='versions')
+    framework_version = models.ForeignKey(
+        FrameworkVersion, on_delete=models.SET_NULL, null=True, blank=True, related_name='control_versions')
+    source_document = models.ForeignKey(
+        SourceDocument, on_delete=models.SET_NULL, null=True, blank=True, related_name='control_versions')
+    version_label = models.CharField(max_length=100)
+    control_id_snapshot = models.CharField(max_length=50, blank=True)
+    title_snapshot = models.CharField(max_length=500, blank=True)
+    statement_snapshot = models.TextField(blank=True)
+    effective_date = models.DateField(null=True, blank=True)
+    retired_date = models.DateField(null=True, blank=True)
+    change_summary = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'control_versions'
+        ordering = ['control', '-effective_date', 'version_label']
+
+    def __str__(self):
+        return f"{self.control.control_id} @ {self.version_label}"
+
+
+class ControlApplicabilityTag(models.Model):
+    """A tag describing when a control applies (e.g. cloud, ot_ics, supplier).
+
+    Drives later applicability logic (Phase 4). Phase 2A only defines the model;
+    tags are populated by official import / rules engine in later phases."""
+    SOURCE_CHOICES = [
+        ('manual', 'Manual'),
+        ('official', 'Official'),
+        ('inferred', 'Inferred'),
+        ('legacy_excel', 'Legacy Excel'),
+    ]
+
+    control = models.ForeignKey(Control, on_delete=models.CASCADE, related_name='applicability_tags')
+    tag = models.CharField(max_length=50)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='manual')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'control_applicability_tags'
+        ordering = ['control', 'tag']
+        constraints = [
+            models.UniqueConstraint(fields=['control', 'tag'], name='uniq_control_tag'),
+        ]
+
+    def __str__(self):
+        return f"{self.control.control_id} :: {self.tag} ({self.source})"
+
+
+# ============================================================
+# Phase 3A — Company Intake + Framework Applicability (additive only)
+# Foundation that moves framework selection from manual target_* checkboxes
+# toward a structured, explainable, rule-based applicability model. No evidence
+# / CompanyControl / upload changes here.
+# ============================================================
+
+class CompanyIntakeProfile(models.Model):
+    """Structured intake answers for a company, used to compute framework applicability."""
+    REVIEW_STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('completed', 'Completed'),
+        ('reviewed', 'Reviewed'),
+    ]
+    SABIC_SUPPLIER_TYPES = [
+        ('NC', 'Network Connectivity'),
+        ('CCS', 'Cloud Computing Services'),
+        ('OMS', 'Outsourcing and Managed Services'),
+        ('CS', 'Consultancy Services'),
+        ('SM', 'Software Management'),
+        ('OT', 'OT/ICS Products and Services'),
+    ]
+
+    company = models.OneToOneField(Company, on_delete=models.CASCADE, related_name='intake_profile')
+    sector = models.CharField(max_length=50, blank=True)
+
+    # Boolean intake signals (all optional, default False).
+    is_government_entity = models.BooleanField(default=False)
+    is_critical_system_operator = models.BooleanField(default=False)
+    uses_cloud_services = models.BooleanField(default=False)
+    provides_cloud_services = models.BooleanField(default=False)
+    handles_sensitive_data = models.BooleanField(default=False)
+    handles_personal_data = models.BooleanField(default=False)
+    has_ot_environment = models.BooleanField(default=False)
+    has_remote_work = models.BooleanField(default=False)
+    manages_official_social_media_accounts = models.BooleanField(default=False)
+    works_with_aramco = models.BooleanField(default=False)
+    works_with_sabic = models.BooleanField(default=False)
+
+    aramco_supplier_type = models.CharField(max_length=50, blank=True)
+    sabic_supplier_type = models.CharField(max_length=10, choices=SABIC_SUPPLIER_TYPES, blank=True)
+
+    requested_frameworks = models.JSONField(default=list, blank=True)
+
+    review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, default='draft')
+    reviewed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_intake_profiles')
+    notes = models.TextField(blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'company_intake_profiles'
+
+    def __str__(self):
+        return f"Intake[{self.company.name}] ({self.review_status})"
+
+
+class FrameworkApplicabilityResult(models.Model):
+    """A deterministic, explainable applicability decision for one company + framework version."""
+    DECISION_CHOICES = [
+        ('applicable', 'Applicable'),
+        ('not_applicable', 'Not Applicable'),
+        ('needs_review', 'Needs Review'),
+        ('manually_overridden', 'Manually Overridden'),
+    ]
+    SOURCE_CHOICES = [
+        ('rule', 'Rule Engine'),
+        ('manual', 'Manual'),
+        ('legacy_checkbox', 'Legacy Checkbox'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='applicability_results')
+    framework_version = models.ForeignKey(
+        FrameworkVersion, on_delete=models.CASCADE, related_name='applicability_results')
+    decision = models.CharField(max_length=25, choices=DECISION_CHOICES)
+    reason = models.TextField(blank=True)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='rule')
+    confidence = models.FloatField(default=1.0)
+    overridden_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='overridden_applicability_results')
+    override_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'framework_applicability_results'
+        unique_together = ['company', 'framework_version']
+        ordering = ['company', 'framework_version']
+
+    def __str__(self):
+        return f"{self.company.name} :: {self.framework_version.code} = {self.decision}"
+
+
+# ============================================================
+# Phase 3C — Framework Approval (scope) + Control Applicability planning (additive)
+# Approval/planning layer AFTER applicability and BEFORE evidence checklist.
+# Distinct from legacy CompanyControl (which must NOT be generated here).
+# ============================================================
+
+class CompanyFrameworkScope(models.Model):
+    """Reviewed/approved inclusion of a framework version for a company."""
+    STATUS_CHOICES = [
+        ('proposed', 'Proposed'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('needs_review', 'Needs Review'),
+    ]
+    SOURCE_CHOICES = [
+        ('applicability_result', 'Applicability Result'),
+        ('manual', 'Manual'),
+        ('legacy_checkbox', 'Legacy Checkbox'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='framework_scopes')
+    framework_version = models.ForeignKey(
+        FrameworkVersion, on_delete=models.CASCADE, related_name='company_scopes')
+    applicability_result = models.ForeignKey(
+        'FrameworkApplicabilityResult', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='scopes')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='proposed')
+    source = models.CharField(max_length=25, choices=SOURCE_CHOICES, default='applicability_result')
+    reason = models.TextField(blank=True)
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_scopes')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejected_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rejected_scopes')
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'company_framework_scopes'
+        unique_together = ['company', 'framework_version']
+        ordering = ['company', 'framework_version']
+
+    def __str__(self):
+        return f"{self.company.name} :: {self.framework_version.code} = {self.status}"
+
+
+class ControlApplicabilityResult(models.Model):
+    """Planned (NOT checklist) applicability of an official control under an approved framework scope."""
+    DECISION_CHOICES = [
+        ('applicable', 'Applicable'),
+        ('not_applicable', 'Not Applicable'),
+        ('needs_review', 'Needs Review'),
+        ('manually_overridden', 'Manually Overridden'),
+    ]
+    SOURCE_CHOICES = [
+        ('framework_scope', 'Framework Scope'),
+        ('rule', 'Rule'),
+        ('manual', 'Manual'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='control_applicability')
+    framework_scope = models.ForeignKey(
+        CompanyFrameworkScope, on_delete=models.CASCADE, related_name='control_results')
+    control = models.ForeignKey(Control, on_delete=models.CASCADE, related_name='applicability_results')
+    decision = models.CharField(max_length=25, choices=DECISION_CHOICES, default='applicable')
+    reason = models.TextField(blank=True)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='framework_scope')
+    confidence = models.FloatField(default=1.0)
+    overridden_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='overridden_control_results')
+    override_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'control_applicability_results'
+        unique_together = ['company', 'control']
+        ordering = ['company', 'control']
+
+    def __str__(self):
+        return f"{self.company.name} :: {self.control.control_id} = {self.decision}"
