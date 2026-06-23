@@ -3,6 +3,7 @@ CyberTrust KSA - Django Settings
 AI-Driven NCA Compliance Platform
 """
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -13,6 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+TESTING = any(arg in {'test', 'pytest'} for arg in sys.argv[1:])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -188,8 +190,8 @@ CONTENT_SECURITY_POLICY = (
     "img-src 'self' data:; connect-src 'self'"
 )
 
-# ---- Production security hardening (active when DEBUG is off) ----
-if not DEBUG:
+# ---- Production security hardening (active when DEBUG is off, but never in tests) ----
+if not DEBUG and not TESTING:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
