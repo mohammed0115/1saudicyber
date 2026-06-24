@@ -212,6 +212,10 @@ CONTENT_SECURITY_POLICY = (
 # ---- Production security hardening (active when DEBUG is off, but never in tests) ----
 if not DEBUG and not TESTING:
     SECURE_SSL_REDIRECT = True
+    # The container/LB liveness probe hits /healthz/ over plain HTTP; exempt only that
+    # path from the HTTPS redirect so the healthcheck succeeds behind a TLS-terminating
+    # proxy. All other routes are still force-redirected to HTTPS.
+    SECURE_REDIRECT_EXEMPT = [r'^healthz/?$']
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
