@@ -118,8 +118,10 @@ def auditors_list(request):
     if not services.can_company_assign(company):
         return render(request, 'compliance/subscription_required.html',
                       {'company': company, 'mode': 'assign'})
+    from compliance.workflow_stepper import build_company_workflow_stepper
     return render(request, 'auditors/list.html', {
-        'company': company, 'auditors': services.list_available_auditors()})
+        'company': company, 'auditors': services.list_available_auditors(),
+        'stepper': build_company_workflow_stepper(company)})
 
 
 @login_required

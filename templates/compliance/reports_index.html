@@ -5,6 +5,8 @@
     <h1 class="text-2xl font-bold text-gov-green-800">تقارير الامتثال</h1>
     <p class="text-gov-gray-600">تقارير للقراءة فقط مبنية على الضوابط الرسمية وقرارات المدقّق. لا تغيّر أي قرار.</p>
 
+    {% include "compliance/_workflow_stepper.html" %}
+
     {% if subscription_active %}
     <div class="rounded-lg p-4 text-sm" style="background:#EAF3EF;border:1px solid #CFE3DA;color:#0F5D46;">
         <i class="fas fa-unlock mr-1"></i> التقارير مفعّلة — يمكنك عرض وتنزيل التقارير الكاملة. (Reports unlocked)

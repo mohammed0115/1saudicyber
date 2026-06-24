@@ -548,3 +548,402 @@ class Phase4AFixABackwardCompatTests(TestCase):
         c, item, sub = _company_with_submission()
         analyze_evidence_submission(sub, apply=True)
         self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).exists())
+
+
+# ============================================================
+# Phase 4D — UX loading states, AI advisory UX, auditor nav polish
+# ============================================================
+class Phase4DLoadingStateTests(TestCase):
+    def _staff(self, company):
+        from compliance.tests import _journey_user
+        return _journey_user(company, is_staff=True)
+
+    def test_registration_submit_has_loading_state(self):
+        resp = self.client.get(reverse('core:company_register'))
+        self.assertContains(resp, 'data-busy')
+        self.assertContains(resp, 'جارٍ حفظ البيانات')
+
+    def test_onboarding_completion_has_loading_state(self):
+        self.client.post(reverse('core:company_register'), {
+            'first_name': 'S', 'last_name': 'A', 'email': 'load@co.example',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': '3131313131',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertContains(resp, 'جارٍ تجهيز لوحة الرحلة')
+
+    def test_intake_save_has_loading_state(self):
+        from compliance.tests import _company_with_official_plan, _journey_user
+        c, fv, scope = _company_with_official_plan()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:intake'))
+        self.assertContains(resp, 'جارٍ حفظ البيانات')
+
+    def test_framework_evaluation_has_loading_state(self):
+        from compliance.tests import _company_with_applicability
+        c, fv = _company_with_applicability()
+        self.client.force_login(self._staff(c))
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        self.assertContains(resp, 'data-busy')
+        self.assertContains(resp, 'جارٍ اعتماد الإطار')
+
+    def test_control_plan_generation_has_loading_state(self):
+        from compliance.tests import _company_with_official_plan
+        c, fv, scope = _company_with_official_plan()
+        self.client.force_login(self._staff(c))
+        resp = self.client.get(reverse('compliance:control_plan'))
+        self.assertContains(resp, 'جارٍ توليد خطة الضوابط')
+
+    def test_evidence_checklist_generation_has_loading_state(self):
+        from compliance.tests import _company_with_official_plan
+        c, fv, scope = _company_with_official_plan()
+        self.client.force_login(self._staff(c))
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertContains(resp, 'جارٍ توليد قائمة الأدلة')
+
+    def test_evidence_upload_v2_has_loading_state(self):
+        from compliance.tests import _company_with_checklist, _journey_user
+        from compliance.models import EvidenceChecklistItem
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[item.id]))
+        self.assertContains(resp, 'جارٍ رفع الدليل')
+
+    def test_advisory_analysis_trigger_has_loading_state(self):
+        from compliance.tests import _company_with_submission
+        c, item, sub = _company_with_submission()
+        self.client.force_login(self._staff(c))
+        resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[sub.id]))
+        self.assertContains(resp, 'جارٍ تحليل الدليل استشاريًا')
+
+    def _subscribed_matrix(self):
+        from compliance.tests import _company_with_assessments, _journey_user
+        from billing.subscription_access import activate_company_subscription
+        c, fv, scope = _company_with_assessments()
+        activate_company_subscription(c, 'Plan', days=30)
+        self.client.force_login(_journey_user(c))
+        return self.client.get(reverse('compliance:report_evidence_matrix'))
+
+    def test_report_csv_export_has_loading_state(self):
+        self.assertContains(self._subscribed_matrix(), 'جارٍ تجهيز ملف CSV')
+
+    def test_report_xlsx_export_has_loading_state(self):
+        self.assertContains(self._subscribed_matrix(), 'جارٍ تجهيز ملف Excel')
+
+    def test_auditor_registration_has_loading_state(self):
+        resp = self.client.get(reverse('auditors:register'))
+        self.assertContains(resp, 'جارٍ إرسال طلب التسجيل كمدقق')
+
+    def test_auditor_assignment_has_loading_state(self):
+        from auditors.tests import _company_user, _auditor
+        c, cu = _company_user(subscribe=True)
+        _auditor()
+        self.client.force_login(cu)
+        resp = self.client.get(reverse('auditors:list'))
+        self.assertContains(resp, 'جارٍ إسناد الملف إلى المدقق')
+
+    def test_auditor_accept_reject_has_loading_state(self):
+        from auditors.tests import _auditor, _assignment
+        from compliance.tests import _company_with_assessments
+        u, p = _auditor(status='active')
+        c, fv, scope = _company_with_assessments()
+        a = _assignment(c, p, status='requested')
+        self.client.force_login(u)
+        resp = self.client.get(reverse('auditors:assignment_detail', args=[a.id]))
+        self.assertContains(resp, 'جارٍ تحديث حالة الطلب')
+
+
+class Phase4DAiUxTests(TestCase):
+    def _detail(self, analysis_status=None, error=''):
+        from compliance.tests import _company_with_submission, _journey_user
+        from compliance.models import EvidenceAnalysisResult
+        c, item, sub = _company_with_submission()
+        if analysis_status:
+            EvidenceAnalysisResult.objects.create(
+                company=c, evidence_submission=sub, checklist_item=item,
+                control=item.evidence_requirement.control, status=analysis_status,
+                error_message=error)
+        self.client.force_login(_journey_user(c, is_staff=True))
+        return self.client.get(reverse('compliance:evidence_submission_detail', args=[sub.id]))
+
+    def test_ai_analysis_ui_says_advisory_not_final(self):
+        resp = self._detail()
+        self.assertContains(resp, 'استشاري')
+        self.assertContains(resp, 'لا يُعد قرارًا نهائيًا')
+
+    def test_ai_missing_key_message_is_safe_if_rendered(self):
+        resp = self._detail(analysis_status='needs_human_review', error='SECRET_TRACE_XYZ')
+        self.assertContains(resp, 'تعذر تشغيل التحليل الآلي حاليًا')
+        self.assertNotContains(resp, 'SECRET_TRACE_XYZ')
+
+    def test_no_certification_claims_in_ai_waiting_copy(self):
+        body = self._detail().content.decode()
+        for term in ['certification', 'Certification', 'Certify', 'شهادة رسمية']:
+            self.assertNotIn(term, body)
+
+
+class Phase4DNavigationTests(TestCase):
+    def _auditor_login(self):
+        from auditors.tests import _auditor
+        u, p = _auditor(status='active')
+        self.client.force_login(u)
+        return u, p
+
+    def test_auditor_nav_points_to_new_auditor_dashboard(self):
+        self._auditor_login()
+        resp = self.client.get(reverse('auditors:dashboard'))
+        self.assertContains(resp, reverse('auditors:dashboard'))
+        self.assertContains(resp, 'لوحة المدقق')
+
+    def test_auditor_primary_nav_not_confusing_with_old_portal(self):
+        self._auditor_login()
+        resp = self.client.get(reverse('auditors:dashboard'))
+        self.assertNotContains(resp, 'Auditor Portal')  # old portal link removed from primary nav
+
+    def test_existing_auditor_portal_not_broken_if_present(self):
+        u, p = self._auditor_login()
+        # The old portal URL still resolves and renders (not deleted).
+        resp = self.client.get(reverse('auditor_portal:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+
+
+class Phase4DArabicRtlTests(TestCase):
+    def test_loading_messages_are_arabic(self):
+        resp = self.client.get(reverse('core:company_register'))
+        self.assertContains(resp, 'جارٍ حفظ البيانات')
+
+    def test_loading_overlay_is_rtl_friendly(self):
+        resp = self.client.get(reverse('core:company_register'))
+        self.assertContains(resp, 'ct-busy-overlay')
+        self.assertContains(resp, 'يرجى الانتظار')
+
+    def test_public_and_core_pages_still_arabic_first(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertContains(resp, 'جاهزية الامتثال')
+        self.assertContains(resp, 'dir="rtl"')
+
+
+class Phase4DBackwardCompatTests(TestCase):
+    def setUp(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def test_company_registration_still_works(self):
+        resp = self.client.post(reverse('core:company_register'), {
+            'first_name': 'B', 'last_name': 'C', 'email': 'bc4d@co.example',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': '2424242424',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Company.objects.filter(cr_number='2424242424').exists())
+
+    def test_onboarding_still_works(self):
+        self.client.post(reverse('core:company_register'), {
+            'first_name': 'B', 'last_name': 'C', 'email': 'bc4d2@co.example',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': '2525252525',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+        self.assertEqual(self.client.get(reverse('core:onboarding')).status_code, 200)
+
+    def test_subscription_gated_reports_still_work(self):
+        from auditors.tests import _company_user
+        c, cu = _company_user(subscribe=False)
+        self.client.force_login(cu)
+        self.assertContains(self.client.get(reverse('compliance:report_executive_summary')),
+                            'تفعيل الاشتراك مطلوب')
+
+    def test_auditor_assignment_still_works(self):
+        from auditors.tests import _company_user, _auditor
+        from auditors.models import AuditorAssignment
+        c, cu = _company_user(subscribe=True)
+        _u, p = _auditor()
+        self.client.force_login(cu)
+        self.client.post(reverse('auditors:assign', args=[p.id]))
+        self.assertEqual(AuditorAssignment.objects.filter(company=c, auditor=p).count(), 1)
+
+    def test_reports_still_work(self):
+        from auditors.tests import _company_user
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        self.assertEqual(self.client.get(reverse('compliance:report_executive_summary')).status_code, 200)
+
+    def test_evidence_upload_v2_still_works(self):
+        from compliance.tests import _company_with_submission
+        from compliance.models import EvidenceSubmission
+        c, item, sub = _company_with_submission()
+        self.assertTrue(EvidenceSubmission.objects.filter(id=sub.id).exists())
+
+    def test_advisory_analysis_still_works(self):
+        from compliance.tests import _company_with_submission
+        from compliance.evidence_analysis import analyze_evidence_submission
+        from compliance.models import EvidenceAnalysisResult
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).exists())
+
+    def test_staff_controlassessment_flow_still_works(self):
+        from compliance.tests import _company_with_assessments, _journey_user
+        from compliance.control_assessment import update_assessment_from_auditor_input
+        from compliance.models import ControlAssessment
+        c, fv, scope = _company_with_assessments()
+        a = ControlAssessment.objects.filter(company=c).first()
+        staff = _journey_user(c, email='staff4d@x.com', is_staff=True)
+        update_assessment_from_auditor_input(a, {'status': 'compliant'}, staff)
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'compliant')
+
+
+# ============================================================
+# Phase 4D Addendum — Company Workflow Stepper (read-only)
+# ============================================================
+def _stepper_stage(stepper, key):
+    return next(s for s in stepper['stages'] if s['key'] == key)
+
+
+class CompanyWorkflowStepperServiceTests(TestCase):
+    def _build(self, company):
+        from compliance.workflow_stepper import build_company_workflow_stepper
+        return build_company_workflow_stepper(company)
+
+    def test_stepper_shows_registration_completed_for_company_user(self):
+        from compliance.tests import _company
+        st = self._build(_company())
+        self.assertEqual(_stepper_stage(st, 'registration')['status'], 'completed')
+
+    def test_stepper_shows_onboarding_completed(self):
+        from compliance.tests import _company
+        st = self._build(_company(onboarding_completed=True))
+        self.assertEqual(_stepper_stage(st, 'onboarding')['status'], 'completed')
+
+    def test_stepper_shows_intake_current_when_missing(self):
+        from compliance.tests import _company
+        st = self._build(_company(onboarding_completed=True))
+        self.assertEqual(_stepper_stage(st, 'intake')['status'], 'current')
+
+    def test_stepper_shows_framework_steps_after_applicability(self):
+        from compliance.tests import _company_with_applicability
+        c, fv = _company_with_applicability()
+        self.assertEqual(_stepper_stage(self._build(c), 'applicability')['status'], 'completed')
+
+    def test_stepper_shows_evidence_steps_after_checklist(self):
+        from compliance.tests import _company_with_checklist
+        c, fv, scope = _company_with_checklist()
+        self.assertEqual(_stepper_stage(self._build(c), 'checklist')['status'], 'completed')
+
+    def test_stepper_shows_upload_completed_after_submission(self):
+        from compliance.tests import _company_with_submission
+        c, item, sub = _company_with_submission()
+        self.assertEqual(_stepper_stage(self._build(c), 'upload')['status'], 'completed')
+
+    def test_stepper_shows_ai_analysis_step_as_advisory(self):
+        from compliance.tests import _company
+        st = self._build(_company())
+        self.assertEqual(_stepper_stage(st, 'analysis')['title'], 'التحليل الاستشاري')
+
+    def test_stepper_shows_subscription_locked_when_inactive(self):
+        from compliance.tests import _company
+        st = self._build(_company())
+        self.assertEqual(_stepper_stage(st, 'reports')['status'], 'locked')
+        self.assertEqual(_stepper_stage(st, 'subscription')['status'], 'needs_action')
+
+    def test_stepper_unlocks_reports_when_subscription_active(self):
+        from compliance.tests import _company_with_assessments
+        from billing.subscription_access import activate_company_subscription
+        c, fv, scope = _company_with_assessments()
+        activate_company_subscription(c, 'Plan', days=30)
+        self.assertNotEqual(_stepper_stage(self._build(c), 'reports')['status'], 'locked')
+
+    def test_stepper_shows_auditor_assignment_step(self):
+        from compliance.tests import _company
+        st = self._build(_company())
+        self.assertEqual(_stepper_stage(st, 'download_assign')['title'], 'تنزيل التقرير أو إسناده لمدقق')
+
+    def test_stepper_tenant_scoped(self):
+        from compliance.tests import _company_with_checklist, _company
+        a, fv, scope = _company_with_checklist()
+        b = _company()
+        self.assertEqual(_stepper_stage(self._build(a), 'checklist')['status'], 'completed')
+        self.assertNotEqual(_stepper_stage(self._build(b), 'checklist')['status'], 'completed')
+
+    def test_stepper_does_not_create_records(self):
+        from compliance.tests import _company_with_assessments
+        from compliance.models import CompanyIntakeProfile, EvidenceSubmission, ControlAssessment
+        from auditors.models import AuditorAssignment
+        from billing.models import CompanySubscription
+        c, fv, scope = _company_with_assessments()
+        counts = lambda: (CompanyIntakeProfile.objects.count(), EvidenceSubmission.objects.count(),
+                          ControlAssessment.objects.count(), AuditorAssignment.objects.count(),
+                          CompanySubscription.objects.count())
+        before = counts()
+        self._build(c)
+        self.assertEqual(before, counts())
+
+    def test_stepper_does_not_change_subscription(self):
+        from compliance.tests import _company
+        from billing.models import CompanySubscription
+        from billing.subscription_access import company_has_active_subscription
+        c = _company()
+        self._build(c)
+        self.assertFalse(company_has_active_subscription(c))
+        self.assertEqual(CompanySubscription.objects.count(), 0)
+
+    def test_stepper_does_not_change_controlassessment(self):
+        from compliance.tests import _company_with_assessments
+        from compliance.models import ControlAssessment
+        c, fv, scope = _company_with_assessments()
+        before = {a.id: a.status for a in ControlAssessment.objects.filter(company=c)}
+        self._build(c)
+        after = {a.id: a.status for a in ControlAssessment.objects.filter(company=c)}
+        self.assertEqual(before, after)
+
+    def test_stepper_does_not_use_companycontrol(self):
+        from compliance.tests import _company_with_assessments
+        from compliance.models import CompanyControl
+        before = CompanyControl.objects.count()
+        c, fv, scope = _company_with_assessments()
+        self._build(c)
+        self.assertEqual(CompanyControl.objects.count(), before)
+
+
+class CompanyWorkflowStepperViewTests(TestCase):
+    def _login(self, company):
+        from compliance.tests import _journey_user
+        self.client.force_login(_journey_user(company))
+
+    def test_company_workflow_stepper_renders_on_dashboard(self):
+        from compliance.tests import _company
+        c = _company()
+        self._login(c)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, 'مسار عمل الشركة')
+
+    def test_company_workflow_stepper_is_arabic_rtl(self):
+        from compliance.tests import _company
+        c = _company()
+        self._login(c)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, 'ct-workflow-stepper')
+        self.assertContains(resp, 'dir="rtl"')
+
+    def test_mobile_or_vertical_stepper_markup_exists(self):
+        from compliance.tests import _company
+        c = _company()
+        self._login(c)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, 'ct-stepper-vertical')
+
+    def test_next_recommended_action_visible(self):
+        from compliance.tests import _company
+        c = _company()
+        self._login(c)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, 'الخطوة التالية:')
+
+    def test_stepper_loading_action_has_data_busy(self):
+        from compliance.tests import _company
+        c = _company()
+        self._login(c)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, 'جارٍ فتح الخطوة')

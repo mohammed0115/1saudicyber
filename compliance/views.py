@@ -155,6 +155,7 @@ def journey_dashboard(request):
     from .user_journey import (build_company_journey_status,
                                get_next_recommended_action, calculate_journey_progress)
     from billing.subscription_access import company_has_active_subscription
+    from .workflow_stepper import build_company_workflow_stepper
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
@@ -165,6 +166,7 @@ def journey_dashboard(request):
         'progress': calculate_journey_progress(company),
         'is_staff': request.user.is_staff,
         'subscription_active': company_has_active_subscription(company),
+        'stepper': build_company_workflow_stepper(company),
     })
 
 
@@ -333,8 +335,10 @@ def evidence_checklist(request):
                              'evidence_requirement__control__framework_version',
                              'control_applicability_result')
              .prefetch_related('submissions'))
+    from .workflow_stepper import build_company_workflow_stepper
     return render(request, 'compliance/evidence_checklist.html', {
         'company': company, 'items': items, 'can_generate': request.user.is_staff,
+        'stepper': build_company_workflow_stepper(company),
     })
 
 
@@ -556,12 +560,14 @@ def reports_index(request):
     from .reporting import get_approved_framework_versions
     from .models import ControlAssessment
     from billing.subscription_access import company_has_active_subscription
+    from .workflow_stepper import build_company_workflow_stepper
     reviewed_count = (ControlAssessment.objects.filter(company=company)
                       .exclude(status='not_reviewed').count())
     return render(request, 'compliance/reports_index.html', {
         'company': company, 'frameworks': get_approved_framework_versions(company),
         'reviewed_assessment_count': reviewed_count,
-        'subscription_active': company_has_active_subscription(company)})
+        'subscription_active': company_has_active_subscription(company),
+        'stepper': build_company_workflow_stepper(company)})
 
 
 @login_required

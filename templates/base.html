@@ -99,8 +99,8 @@
                             <i class="fas fa-radar mr-1"></i> Monitoring
                         </a>
                         {% if user.role == 'auditor' %}
-                        <a href="{% url 'auditor_portal:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
-                            <i class="fas fa-clipboard-check mr-1"></i> Auditor Portal
+                        <a href="{% url 'auditors:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
+                            <i class="fas fa-user-shield mr-1"></i> لوحة المدقق
                         </a>
                         {% endif %}
                     </div>

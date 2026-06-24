@@ -17,7 +17,7 @@
         {% endfor %}
     {% endif %}
 
-    <form method="post" class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-5">
+    <form method="post" data-busy="جارٍ حفظ البيانات..." class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-5">
         {% csrf_token %}
         {% if form.non_field_errors %}
             <div class="text-red-600 text-sm">{{ form.non_field_errors }}</div>

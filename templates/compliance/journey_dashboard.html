@@ -8,6 +8,8 @@
         <p class="text-gov-gray-600">نظرة عامة على مراحل عمل {{ company.name }} من البداية إلى التقارير. هذه الصفحة للعرض فقط.</p>
     </div>
 
+    {% include "compliance/_workflow_stepper.html" %}
+
     <!-- Progress + next recommended action -->
     <div class="grid md:grid-cols-3 gap-4">
         <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 md:col-span-1">

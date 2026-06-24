@@ -19,9 +19,9 @@
         <div class="flex justify-between items-center">
             <h2 class="font-bold text-gov-green-800">التحليل الاستشاري (AI)</h2>
             {% if can_analyze %}
-            <form method="post" action="{% url 'compliance:analyze_submission' submission.id %}">
+            <form method="post" action="{% url 'compliance:analyze_submission' submission.id %}" data-busy="جارٍ تحليل الدليل استشاريًا...">
                 {% csrf_token %}
-                <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-3 py-1.5 rounded text-xs">تشغيل التحليل</button>
+                <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-3 py-1.5 rounded text-xs">تشغيل التحليل الاستشاري</button>
             </form>
             {% endif %}
         </div>
@@ -32,7 +32,9 @@
             {% if analysis.potential_gaps %}<p><span class="text-gov-gray-500">فجوات محتملة:</span> {{ analysis.potential_gaps }}</p>{% endif %}
             {% if analysis.risk_flags %}<p><span class="text-gov-gray-500">إشارات خطر:</span> {{ analysis.risk_flags|join:", " }}</p>{% endif %}
             {% if analysis.confidence is not None %}<p><span class="text-gov-gray-500">الثقة:</span> {{ analysis.confidence }}</p>{% endif %}
-            {% if analysis.error_message %}<p class="text-amber-700"><span class="text-gov-gray-500">ملاحظة:</span> {{ analysis.error_message }}</p>{% endif %}
+            {% if analysis.status == 'failed' or analysis.status == 'needs_human_review' or analysis.status == 'skipped' %}
+            <p class="text-amber-700">تعذر تشغيل التحليل الآلي حاليًا، ويمكن للمدقق متابعة المراجعة يدويًا.</p>
+            {% endif %}
             {% if analysis.extracted_text %}
             <details class="mt-2"><summary class="cursor-pointer text-gov-gray-600">معاينة النص المُستخرَج{% if analysis.extracted_text_truncated %} (مقتطع){% endif %}</summary>
             <pre class="text-xs bg-gov-gray-50 p-2 rounded mt-1 whitespace-pre-wrap max-h-48 overflow-auto">{{ analysis.extracted_text|truncatechars:2000 }}</pre></details>
@@ -42,7 +44,7 @@
         {% endif %}
         <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded p-2 text-xs mt-2">
             <i class="fas fa-triangle-exclamation"></i>
-            التحليل الآلي استشاري فقط. القرار النهائي للامتثال يجب أن يتّخذه مدقّق بشري.
+            التحليل الآلي استشاري فقط — التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا. القرار النهائي للامتثال يجب أن يتّخذه مدقّق بشري.
         </div>
     </div>
 
