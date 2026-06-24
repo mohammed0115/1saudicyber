@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}مسار الامتثال - CyberTrust KSA{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gov-green-800">مسار الامتثال (Compliance Journey)</h1>
+        <p class="text-gov-gray-600">نظرة عامة على مراحل عمل {{ company.name }} من البداية إلى التقارير. هذه الصفحة للعرض فقط.</p>
+    </div>
+
+    <!-- Progress + next recommended action -->
+    <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 md:col-span-1">
+            <p class="text-gov-gray-500 text-sm">نسبة الإنجاز</p>
+            <p class="text-3xl font-bold text-gov-green-800">{{ progress.percentage }}%</p>
+            <p class="text-xs text-gov-gray-500 mt-1">{{ progress.completed }} من {{ progress.total }} مراحل مكتملة</p>
+            <div class="w-full bg-gov-gray-200 rounded-full h-2 mt-3">
+                <div class="bg-gov-green-600 h-2 rounded-full" style="width: {{ progress.percentage }}%"></div>
+            </div>
+        </div>
+        <div class="bg-gov-green-50 rounded-xl p-5 shadow-sm border border-gov-green-200 md:col-span-2">
+            <p class="text-gov-green-700 text-sm"><i class="fas fa-arrow-right mr-1"></i> الخطوة التالية الموصى بها</p>
+            <p class="text-lg font-semibold text-gov-green-900 mt-1">{{ next_action.message }}</p>
+            <a href="{% url next_action.action_url_name %}"
+               class="inline-block mt-3 bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
+                {{ next_action.action_label }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Workflow stages -->
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">مراحل العمل</div>
+        <ul class="divide-y divide-gov-gray-100">
+            {% for s in stages %}
+            <li class="px-4 py-3 flex items-center justify-between gap-4">
+                <div class="flex items-start gap-3 min-w-0">
+                    <span class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
+                        {% if s.status == 'completed' %}bg-gov-green-100 text-gov-green-800
+                        {% elif s.status == 'in_progress' %}bg-blue-100 text-blue-800
+                        {% elif s.status == 'needs_attention' %}bg-amber-100 text-amber-800
+                        {% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">{{ s.order }}</span>
+                    <div class="min-w-0">
+                        <p class="font-medium text-gov-gray-800">{{ s.title }}</p>
+                        <p class="text-xs text-gov-gray-500">{{ s.explanation }}</p>
+                        <p class="text-xs text-gov-gray-400 mt-0.5">{{ s.metric }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <span class="px-2 py-0.5 rounded text-xs font-medium
+                        {% if s.status == 'completed' %}bg-gov-green-100 text-gov-green-800
+                        {% elif s.status == 'in_progress' %}bg-blue-100 text-blue-800
+                        {% elif s.status == 'needs_attention' %}bg-amber-100 text-amber-800
+                        {% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">
+                        {% if s.status == 'completed' %}مكتملة
+                        {% elif s.status == 'in_progress' %}قيد التنفيذ
+                        {% elif s.status == 'needs_attention' %}بحاجة لاهتمام
+                        {% else %}لم تبدأ{% endif %}
+                    </span>
+                    <a href="{% url s.action_url_name %}" class="text-gov-green-700 hover:underline text-xs whitespace-nowrap">{{ s.action_label }}</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm">
+        <i class="fas fa-info-circle"></i>
+        القرار النهائي للامتثال يتّخذه المدقّق فقط. التحليل الآلي استشاري، والضوابط غير المُراجَعة لا تُحتسب كمطابِقة.
+    </div>
+</div>
+{% endblock %}

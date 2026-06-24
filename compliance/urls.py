@@ -4,6 +4,9 @@ from . import views
 app_name = 'compliance'
 
 urlpatterns = [
+    # Phase 3I — read-only journey dashboard / overview
+    path('dashboard/', views.journey_dashboard, name='dashboard'),
+
     path('controls/', views.controls_list, name='controls_list'),
     path('controls/<int:control_id>/', views.control_detail, name='control_detail'),
     path('controls/<int:control_id>/upload/', views.upload_evidence, name='upload_evidence'),

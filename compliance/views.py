@@ -143,6 +143,30 @@ def upload_evidence(request, control_id):
 
 
 # ============================================================
+# Phase 3I — Journey dashboard (read-only overview + next step)
+# ============================================================
+@login_required
+def journey_dashboard(request):
+    """Read-only end-to-end workflow overview for the user's company.
+
+    Tenant-scoped; never writes, never creates CompanyControl, never lets AI
+    decide compliance. Pure status/navigation hardening.
+    """
+    from .user_journey import (build_company_journey_status,
+                               get_next_recommended_action, calculate_journey_progress)
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'compliance/journey_dashboard.html', {
+        'company': company,
+        'stages': build_company_journey_status(company),
+        'next_action': get_next_recommended_action(company),
+        'progress': calculate_journey_progress(company),
+        'is_staff': request.user.is_staff,
+    })
+
+
+# ============================================================
 # Phase 3B — Company Intake Wizard + Applicable Framework Review
 # ============================================================
 from .forms import CompanyIntakeForm
@@ -506,8 +530,12 @@ def reports_index(request):
     if not company:
         return render(request, 'dashboard/no_company.html')
     from .reporting import get_approved_framework_versions
+    from .models import ControlAssessment
+    reviewed_count = (ControlAssessment.objects.filter(company=company)
+                      .exclude(status='not_reviewed').count())
     return render(request, 'compliance/reports_index.html', {
-        'company': company, 'frameworks': get_approved_framework_versions(company)})
+        'company': company, 'frameworks': get_approved_framework_versions(company),
+        'reviewed_assessment_count': reviewed_count})
 
 
 @login_required

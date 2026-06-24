@@ -3211,3 +3211,282 @@ class Phase3HBackwardCompatTests(TestCase):
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regh@x.com',
                 'password': 'longenough12', 'target_nca': 'on'})
         self.assertEqual(resp.status_code, 302)
+
+
+# ============================================================
+# Phase 3I — Dashboard & user-journey hardening (read-only UX)
+# ============================================================
+from compliance.user_journey import (
+    build_company_journey_status, get_next_recommended_action, calculate_journey_progress,
+)
+
+
+def _stage(stages, key):
+    return next(s for s in stages if s['key'] == key)
+
+
+def _journey_user(company, **kw):
+    from core.models import User
+    n = User.objects.count() + 1
+    defaults = dict(email=f'journey{n}@x.com', password='longenough12',
+                    company=company, role='company_admin')
+    defaults.update(kw)
+    return User.objects.create_user(**defaults)
+
+
+class JourneyServiceTests(TestCase):
+    def test_journey_status_no_intake(self):
+        c = _company()
+        self.assertEqual(_stage(build_company_journey_status(c), 'intake')['status'], 'not_started')
+        self.assertEqual(get_next_recommended_action(c)['message'], 'Complete intake profile')
+
+    def test_journey_status_with_intake(self):
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, review_status='completed')
+        self.assertEqual(_stage(build_company_journey_status(c), 'intake')['status'], 'completed')
+
+    def test_journey_status_with_approved_framework(self):
+        c, fv, scope = _company_with_official_plan()
+        self.assertEqual(_stage(build_company_journey_status(c), 'framework_approval')['status'], 'completed')
+
+    def test_journey_status_with_control_plan(self):
+        c, fv, scope = _company_with_official_plan()
+        self.assertEqual(_stage(build_company_journey_status(c), 'control_plan')['status'], 'completed')
+
+    def test_journey_status_with_evidence_checklist(self):
+        c, fv, scope = _company_with_checklist()
+        self.assertEqual(_stage(build_company_journey_status(c), 'evidence_checklist')['status'], 'completed')
+
+    def test_journey_status_with_submissions(self):
+        c, item, sub = _company_with_submission()
+        self.assertEqual(_stage(build_company_journey_status(c), 'evidence_upload')['status'], 'completed')
+
+    def test_journey_status_with_analysis(self):
+        from compliance.evidence_analysis import analyze_evidence_submission
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertEqual(_stage(build_company_journey_status(c), 'ai_analysis')['status'], 'completed')
+
+    def test_journey_status_with_assessments(self):
+        c, fv, scope = _company_with_assessments()
+        st = _stage(build_company_journey_status(c), 'auditor_review')['status']
+        self.assertNotEqual(st, 'not_started')  # assessments exist (all not_reviewed yet)
+        # After a real auditor decision, reports become meaningful.
+        a = ControlAssessment.objects.filter(company=c).first(); a.status = 'compliant'; a.save()
+        self.assertEqual(_stage(build_company_journey_status(c), 'reports')['status'], 'completed')
+
+    def test_next_action_progresses_in_correct_order(self):
+        from compliance.evidence_analysis import analyze_evidence_submission
+        # 1) No intake.
+        bare = _company()
+        self.assertEqual(get_next_recommended_action(bare)['message'], 'Complete intake profile')
+        # 2) Intake exists but no approved scope.
+        CompanyIntakeProfile.objects.create(company=bare, review_status='completed')
+        self.assertEqual(get_next_recommended_action(bare)['message'],
+                         'Review and approve applicable frameworks')
+        # 3) Approved scope + control plan, no checklist.
+        c, fv, scope = _company_with_official_plan()
+        self.assertEqual(get_next_recommended_action(c)['message'], 'Generate evidence checklist')
+        # 4) Checklist exists, no submissions.
+        generate_evidence_requirements(apply=True)
+        generate_evidence_checklist_for_company(c, apply=True)
+        self.assertEqual(get_next_recommended_action(c)['message'], 'Upload evidence')
+        # 5) Submission exists, no analysis.
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        sub = _submission(c, item)
+        self.assertEqual(get_next_recommended_action(c)['message'], 'Run advisory analysis')
+        # 6) Analysis exists, no assessments.
+        analyze_evidence_submission(sub, apply=True)
+        self.assertEqual(get_next_recommended_action(c)['message'], 'Start auditor review')
+        # 7) Assessments exist.
+        create_assessments_for_company(c, apply=True)
+        self.assertEqual(get_next_recommended_action(c)['message'], 'View reports')
+
+    def test_journey_uses_official_controls_only(self):
+        c, fv, scope = _company_with_official_plan()
+        before = _stage(build_company_journey_status(c), 'control_plan')['metric']
+        fw = fv.framework
+        legacy = Control.objects.create(
+            framework=fw, domain=Domain.objects.filter(framework=fw).first(),
+            control_id='LEG-J', title='legacy', description='d')  # is_legacy_import default
+        ControlApplicabilityResult.objects.create(
+            company=c, control=legacy, framework_scope=scope, decision='applicable', source='manual')
+        after = _stage(build_company_journey_status(c), 'control_plan')['metric']
+        self.assertEqual(before, after)  # legacy applicable control not counted
+
+    def test_journey_does_not_use_companycontrol(self):
+        c, fv, scope = _company_with_assessments()
+        before = CompanyControl.objects.count()
+        build_company_journey_status(c)
+        get_next_recommended_action(c)
+        calculate_journey_progress(c)
+        self.assertEqual(CompanyControl.objects.count(), before)
+
+    def test_journey_does_not_create_records(self):
+        c, fv, scope = _company_with_assessments()
+        from core.models import Company
+        counts = lambda: (
+            ControlAssessment.objects.count(), EvidenceSubmission.objects.count(),
+            EvidenceChecklistItem.objects.count(), ControlApplicabilityResult.objects.count(),
+            CompanyControl.objects.count(), Company.objects.count(),
+        )
+        before = counts()
+        build_company_journey_status(c)
+        get_next_recommended_action(c)
+        calculate_journey_progress(c)
+        self.assertEqual(before, counts())
+
+
+class JourneyDashboardViewTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_assessments()
+        self.user = _journey_user(self.c)
+
+    def test_dashboard_requires_login(self):
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_dashboard_shows_workflow_steps(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Intake Profile')
+        self.assertContains(resp, 'Auditor Review')
+        self.assertContains(resp, 'Reports')
+
+    def test_dashboard_shows_next_recommended_action(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, 'الخطوة التالية الموصى بها')
+
+    def test_dashboard_tenant_scoped(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, self.c.name)
+
+    def test_user_cannot_view_other_company_dashboard(self):
+        other = _company(name='OtherCo')
+        other_user = _journey_user(other)
+        self.client.force_login(other_user)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        # Sees only their own company's status, never the first company's data.
+        self.assertContains(resp, other.name)
+
+    def test_dashboard_links_to_core_pages(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:dashboard'))
+        for name in ['compliance:intake', 'compliance:control_plan',
+                     'compliance:evidence_checklist', 'compliance:auditor_review_queue',
+                     'compliance:reports_index']:
+            self.assertContains(resp, reverse(name))
+
+    def test_dashboard_does_not_modify_assessments(self):
+        before = {a.id: a.status for a in ControlAssessment.objects.filter(company=self.c)}
+        self.client.force_login(self.user)
+        self.client.get(reverse('compliance:dashboard'))
+        after = {a.id: a.status for a in ControlAssessment.objects.filter(company=self.c)}
+        self.assertEqual(before, after)
+
+    def test_dashboard_does_not_modify_reports(self):
+        from compliance.reporting import build_executive_summary
+        before = build_executive_summary(self.c)['counts']
+        self.client.force_login(self.user)
+        self.client.get(reverse('compliance:dashboard'))
+        after = build_executive_summary(self.c)['counts']
+        self.assertEqual(before, after)
+
+
+class JourneyEmptyStateTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def test_control_plan_empty_state(self):
+        c = _company()
+        user = _journey_user(c)
+        self.client.force_login(user)
+        resp = self.client.get(reverse('compliance:control_plan'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Start with framework review')
+
+    def test_evidence_checklist_empty_state(self):
+        c = _company()
+        user = _journey_user(c)
+        self.client.force_login(user)
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Generate checklist after control plan')
+
+    def test_auditor_review_empty_state(self):
+        c = _company()
+        user = _journey_user(c)
+        self.client.force_login(user)
+        resp = self.client.get(reverse('compliance:auditor_review_queue'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Generate assessments from approved official controls')
+
+    def test_reports_empty_state(self):
+        c = _company()
+        user = _journey_user(c)
+        self.client.force_login(user)
+        resp = self.client.get(reverse('compliance:reports_index'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Reports will be meaningful after auditor assessments')
+
+
+class Phase3IBackwardCompatTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def test_intake_still_works(self):
+        c = _company()
+        user = _journey_user(c)
+        self.client.force_login(user)
+        resp = self.client.get(reverse('compliance:intake'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_evidence_upload_v2_still_works(self):
+        c, item, sub = _company_with_submission()
+        self.assertTrue(EvidenceSubmission.objects.filter(id=sub.id).exists())
+
+    def test_evidence_analysis_still_works(self):
+        from compliance.evidence_analysis import analyze_evidence_submission
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).exists())
+
+    def test_auditor_assessment_still_works(self):
+        from core.models import User
+        c, fv, scope = _company_with_assessments()
+        a = ControlAssessment.objects.filter(company=c).first()
+        u = _journey_user(c, email='aud3i@x.com', is_staff=True)
+        update_assessment_from_auditor_input(a, {'status': 'compliant'}, u)
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'compliant')
+
+    def test_reports_still_work(self):
+        c, fv, scope = _company_with_assessments()
+        user = _journey_user(c)
+        self.client.force_login(user)
+        resp = self.client.get(reverse('compliance:report_executive_summary'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_old_upload_evidence_flow_still_works(self):
+        company, control = _company_with_control()
+        user = _journey_user(company)
+        self.client.force_login(user)
+        with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[control.id]),
+                                    {'evidence_file': _SUF('p.txt', b'ok')})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Evidence.objects.count(), 1)
+
+    def test_registration_flow_still_works(self):
+        fw, dom = _fw_dom()
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), {
+                'company_name': 'RegI', 'cr_number': '5050501234', 'sector': 'technology',
+                'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regi@x.com',
+                'password': 'longenough12', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)

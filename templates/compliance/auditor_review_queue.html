@@ -17,6 +17,13 @@
     {% if messages %}{% for m in messages %}
     <div class="bg-gov-green-50 border border-gov-green-200 text-gov-green-800 rounded-lg p-3">{{ m }}</div>
     {% endfor %}{% endif %}
+    {% if not assessments %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-circle-info mr-1"></i>
+        لا تقييمات بعد. أنشئ التقييمات من الضوابط الرسمية المعتمدة. (No assessments yet. Generate assessments from approved official controls.)
+        <a href="{% url 'compliance:control_plan' %}" class="underline font-medium ml-1">خطة الضوابط</a>
+    </div>
+    {% endif %}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
         <table class="w-full text-sm">
             <thead class="text-gov-gray-600"><tr>

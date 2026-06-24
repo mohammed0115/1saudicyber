@@ -22,6 +22,14 @@
     <div class="bg-gov-green-50 border border-gov-green-200 text-gov-green-800 rounded-lg p-3">{{ m }}</div>
     {% endfor %}{% endif %}
 
+    {% if not items %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-circle-info mr-1"></i>
+        لا توجد عناصر قائمة بعد. ولّد القائمة بعد خطة الضوابط. (No checklist items yet. Generate checklist after control plan.)
+        <a href="{% url 'compliance:control_plan' %}" class="underline font-medium ml-1">خطة الضوابط</a>
+    </div>
+    {% endif %}
+
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
         <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">
             العناصر المخطّطة ({{ items|length }})

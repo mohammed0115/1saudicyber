@@ -11,6 +11,14 @@
         <a href="{% url 'compliance:applicability_review' %}" class="text-gov-green-700 hover:underline text-sm">مراجعة الأطر</a>
     </div>
 
+    {% if not approved %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-circle-info mr-1"></i>
+        لا توجد أطر معتمدة بعد. ابدأ بمراجعة الأطر. (No approved frameworks yet. Start with framework review.)
+        <a href="{% url 'compliance:applicability_review' %}" class="underline font-medium ml-1">مراجعة الأطر</a>
+    </div>
+    {% endif %}
+
     <!-- approved frameworks + generate-plan button -->
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
         <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">الأطر المعتمدة</div>
