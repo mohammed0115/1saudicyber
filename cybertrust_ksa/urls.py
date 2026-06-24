@@ -3,8 +3,20 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
+
+
+def healthz(request):
+    """Lightweight liveness probe for load balancers / Docker healthcheck.
+
+    Unauthenticated and intentionally minimal: returns only {"status": "ok"} and
+    never exposes settings, versions, or other sensitive information.
+    """
+    return JsonResponse({'status': 'ok'})
+
 
 urlpatterns = [
+    path('healthz/', healthz, name='healthz'),
     path('admin/', admin.site.urls),
     path('api/v1/', include('api.urls')),
     path('', include('core.urls')),

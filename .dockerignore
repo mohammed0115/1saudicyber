@@ -1,0 +1,34 @@
+# Keep secrets, local data, and bulky/dev-only paths OUT of the build context.
+
+# Secrets / local config
+.env
+*.env
+!deployment/docker/env.example
+
+# Local database (dev only) — never ship it
+db.sqlite3
+*.sqlite3
+
+# Collected/served artifacts and user uploads (use volumes instead)
+staticfiles/
+media/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python caches / build
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# VCS / editor / OS
+.git/
+.gitignore
+.DS_Store
+.agents/
+
+# Logs
+*.log

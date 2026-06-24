@@ -220,3 +220,18 @@ class RegisterViewTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         company = Company.objects.get(cr_number='4444444444')
         self.assertEqual(CompanyControl.objects.filter(company=company).count(), 5)
+
+
+class HealthCheckTests(TestCase):
+    """Phase 3L — the Docker/LB liveness probe is public, minimal, and leak-free."""
+
+    def test_healthz_returns_ok_without_login(self):
+        resp = self.client.get(reverse('healthz'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {'status': 'ok'})
+
+    def test_healthz_exposes_no_sensitive_info(self):
+        from django.conf import settings as dj_settings
+        body = self.client.get('/healthz/').content.decode()
+        self.assertNotIn(dj_settings.SECRET_KEY, body)
+        self.assertEqual(body.strip(), '{"status": "ok"}')

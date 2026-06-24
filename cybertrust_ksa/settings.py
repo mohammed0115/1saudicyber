@@ -14,6 +14,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+# CSRF trusted origins (scheme + host), e.g. "https://app.example.sa". Empty by default
+# so local development is unaffected; set via env for HTTPS deployments.
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
 TESTING = any(arg in {'test', 'pytest'} for arg in sys.argv[1:])
 
 INSTALLED_APPS = [
@@ -70,12 +73,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cybertrust_ksa.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database: SQLite by default (local dev / tests). When POSTGRES_DB is provided
+# (e.g. the Docker deployment), use PostgreSQL via the standard Django pattern.
+# Additive and opt-in: with no POSTGRES_DB set, behavior is unchanged.
+if os.getenv('POSTGRES_DB'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB'),
+            'USER': os.getenv('POSTGRES_USER', 'cybertrust'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'HOST': os.getenv('POSTGRES_HOST', 'db'),
+            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '60')),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_USER_MODEL = 'core.User'
 LOGIN_URL = '/login/'
