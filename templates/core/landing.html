@@ -1,52 +1,55 @@
 {% extends "base.html" %}
-{% block title %}CyberTrust KSA - AI-Powered Cybersecurity Compliance{% endblock %}
+{% block title %}CyberTrust KSA — منصة جاهزية الامتثال السيبراني{% endblock %}
 
 {% block body %}
-<!-- Hero Section -->
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+
+<!-- Hero -->
 <section class="gradient-gov relative overflow-hidden">
     <div class="absolute inset-0 opacity-10">
         <svg width="100%" height="100%"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)"/></svg>
     </div>
     <nav class="relative z-10 max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center gap-3">
             <i class="fas fa-shield-halved text-white text-3xl"></i>
             <span class="text-white font-bold text-2xl">CyberTrust KSA</span>
         </div>
-        <div class="flex items-center space-x-4">
-            <a href="{% url 'core:login' %}" class="text-gov-green-200 hover:text-white font-medium transition">Login</a>
-            <a href="{% url 'core:get_started' %}" class="bg-white text-gov-green-800 px-5 py-2.5 rounded-lg font-semibold hover:bg-gov-green-50 transition shadow-lg">Get Started</a>
+        <div class="flex items-center gap-4">
+            <a href="{% url 'core:login' %}" class="text-gov-green-200 hover:text-white font-medium transition">تسجيل الدخول</a>
+            <a href="{% url 'core:get_started' %}" class="bg-white text-gov-green-800 px-5 py-2.5 rounded-lg font-semibold hover:bg-gov-green-50 transition shadow-lg">ابدأ الآن</a>
         </div>
     </nav>
 
-    <div class="relative z-10 max-w-7xl mx-auto px-4 py-20 lg:py-32">
+    <div class="relative z-10 max-w-7xl mx-auto px-4 py-20 lg:py-28">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
             <div>
                 <div class="inline-flex items-center bg-gov-green-700/50 rounded-full px-4 py-2 mb-6">
-                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></span>
-                    <span class="text-green-200 text-sm font-medium">AI-Powered Compliance Engine</span>
+                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse ms-2"></span>
+                    <span class="text-green-200 text-sm font-medium">منصة جاهزية الامتثال السيبراني</span>
                 </div>
-                <h1 class="text-4xl lg:text-6xl font-bold text-white leading-tight mb-6">
-                    Continuous Cybersecurity<br>
-                    <span class="text-green-300">Compliance</span> for KSA
+                <h1 class="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6">
+                    جاهزية الامتثال السيبراني المستمرة
+                    <br><span class="text-green-300">للسوق السعودي</span>
                 </h1>
-                <p class="text-gov-green-200 text-lg mb-8 leading-relaxed">
-                    The first AI-driven platform that automates NCA, Aramco, and SABIC compliance assessments. 
-                    From classification to certification — powered by intelligent analysis.
+                <p class="text-gov-green-200 text-lg mb-3 leading-relaxed">
+                    منصّة CyberTrust KSA لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات،
+                    وإعداد تقارير الامتثال وفق أطر NCA وAramco وSABIC. القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص.
                 </p>
+                <p class="text-gov-green-300/80 text-sm mb-8">Compliance &amp; audit readiness for Saudi enterprises and public-sector entities.</p>
                 <div class="flex flex-wrap gap-4">
                     <a href="{% url 'core:get_started' %}" class="bg-white text-gov-green-800 px-8 py-3.5 rounded-lg font-bold text-lg hover:bg-green-50 transition shadow-xl">
-                        Start Free Assessment <i class="fas fa-arrow-right ml-2"></i>
+                        ابدأ تقييم الامتثال
                     </a>
                     <a href="#process" class="border-2 border-gov-green-300 text-gov-green-100 px-8 py-3.5 rounded-lg font-semibold hover:bg-gov-green-700/50 transition">
-                        How It Works
+                        كيف تعمل المنصّة
                     </a>
                 </div>
             </div>
             <div class="hidden lg:block">
-                <div class="glass-card rounded-2xl p-8 shadow-2xl">
+                <div class="glass-card rounded-2xl p-8 shadow-2xl text-right">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="font-bold text-gov-green-800 text-lg">Compliance Score</h3>
-                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Live</span>
+                        <h3 class="font-bold text-gov-green-800 text-lg">مؤشّر الجاهزية</h3>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">مباشر</span>
                     </div>
                     <div class="grid grid-cols-3 gap-4 mb-6">
                         <div class="text-center p-4 bg-gov-green-50 rounded-xl">
@@ -63,8 +66,8 @@
                         </div>
                     </div>
                     <div class="flex items-center text-sm text-gov-gray-500">
-                        <i class="fas fa-robot text-gov-green-600 mr-2"></i>
-                        AI analyzed 334 controls across 3 frameworks
+                        <i class="fas fa-layer-group text-gov-green-600 ms-2"></i>
+                        تغطية لـ 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC
                     </div>
                 </div>
             </div>
@@ -72,78 +75,39 @@
     </div>
 </section>
 
-<!-- ROI Metrics -->
+<!-- Metrics -->
 <section class="py-16 bg-white border-b">
     <div class="max-w-7xl mx-auto px-4">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div class="text-center">
-                <div class="text-4xl font-bold text-gov-green-800">75%</div>
-                <div class="text-gov-gray-600 mt-2">Faster Assessments</div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl font-bold text-gov-green-800">60%</div>
-                <div class="text-gov-gray-600 mt-2">Cost Reduction</div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl font-bold text-gov-green-800">334</div>
-                <div class="text-gov-gray-600 mt-2">Controls Mapped</div>
-            </div>
-            <div class="text-center">
-                <div class="text-4xl font-bold text-gov-green-800">24/7</div>
-                <div class="text-gov-gray-600 mt-2">Continuous Monitoring</div>
-            </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div><div class="text-4xl font-bold text-gov-green-800">75%</div><div class="text-gov-gray-600 mt-2">إنجاز أسرع للتقييم</div></div>
+            <div><div class="text-4xl font-bold text-gov-green-800">60%</div><div class="text-gov-gray-600 mt-2">خفض في الكلفة</div></div>
+            <div><div class="text-4xl font-bold text-gov-green-800">417</div><div class="text-gov-gray-600 mt-2">ضابطًا رسميًا مهيكلًا</div></div>
+            <div><div class="text-4xl font-bold text-gov-green-800">24/7</div><div class="text-gov-gray-600 mt-2">مراقبة مستمرة</div></div>
         </div>
     </div>
 </section>
 
-<!-- 5-Step Process -->
+<!-- Process / stepper -->
 <section id="process" class="py-20 bg-gov-gray-50">
     <div class="max-w-7xl mx-auto px-4">
         <div class="text-center mb-16">
-            <h2 class="text-3xl lg:text-4xl font-bold text-gov-green-800 mb-4">5-Step Continuous Compliance</h2>
-            <p class="text-gov-gray-600 text-lg max-w-2xl mx-auto">From registration to certification — our AI engine guides you through every step.</p>
+            <h2 class="text-3xl lg:text-4xl font-bold text-gov-green-800 mb-4">مسار الامتثال في خمس خطوات</h2>
+            <p class="text-gov-gray-600 text-lg max-w-2xl mx-auto">من التسجيل إلى تقارير الجاهزية والامتثال — رحلة منظّمة وواضحة خطوة بخطوة.</p>
         </div>
         <div class="grid md:grid-cols-5 gap-6">
+            {% for s in "12345" %}
             <div class="text-center group">
                 <div class="w-16 h-16 bg-gov-green-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition shadow-lg">
-                    <i class="fas fa-building text-white text-xl"></i>
+                    <i class="fas {% if forloop.counter == 1 %}fa-building{% elif forloop.counter == 2 %}fa-clipboard-check{% elif forloop.counter == 3 %}fa-file-upload{% elif forloop.counter == 4 %}fa-magnifying-glass-chart{% else %}fa-user-shield{% endif %} text-white text-xl"></i>
                 </div>
-                <div class="bg-gov-green-800 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">1</div>
-                <h3 class="font-bold text-gov-green-800 mb-2">Register</h3>
-                <p class="text-sm text-gov-gray-600">Company profile & vendor targets</p>
+                <div class="bg-gov-green-800 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">{{ forloop.counter }}</div>
+                {% if forloop.counter == 1 %}<h3 class="font-bold text-gov-green-800 mb-2">التسجيل</h3><p class="text-sm text-gov-gray-600">ملف الشركة وأهداف الامتثال</p>
+                {% elif forloop.counter == 2 %}<h3 class="font-bold text-gov-green-800 mb-2">التصنيف</h3><p class="text-sm text-gov-gray-600">تحديد الأطر المنطبقة وخطة الضوابط</p>
+                {% elif forloop.counter == 3 %}<h3 class="font-bold text-gov-green-800 mb-2">رفع الأدلة</h3><p class="text-sm text-gov-gray-600">تنظيم الأدلة وتحليل استشاري مساعد</p>
+                {% elif forloop.counter == 4 %}<h3 class="font-bold text-gov-green-800 mb-2">تحليل الفجوات</h3><p class="text-sm text-gov-gray-600">قياس الجاهزية وتحديد الفجوات</p>
+                {% else %}<h3 class="font-bold text-gov-green-800 mb-2">مراجعة المدقّق</h3><p class="text-sm text-gov-gray-600">القرار النهائي للامتثال يتّخذه المدقّق</p>{% endif %}
             </div>
-            <div class="text-center group">
-                <div class="w-16 h-16 bg-gov-green-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition shadow-lg">
-                    <i class="fas fa-robot text-white text-xl"></i>
-                </div>
-                <div class="bg-gov-green-800 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">2</div>
-                <h3 class="font-bold text-gov-green-800 mb-2">AI Classify</h3>
-                <p class="text-sm text-gov-gray-600">Smart risk & control mapping</p>
-            </div>
-            <div class="text-center group">
-                <div class="w-16 h-16 bg-gov-green-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition shadow-lg">
-                    <i class="fas fa-file-upload text-white text-xl"></i>
-                </div>
-                <div class="bg-gov-green-800 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">3</div>
-                <h3 class="font-bold text-gov-green-800 mb-2">Upload Evidence</h3>
-                <p class="text-sm text-gov-gray-600">OCR + AI document analysis</p>
-            </div>
-            <div class="text-center group">
-                <div class="w-16 h-16 bg-gov-green-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition shadow-lg">
-                    <i class="fas fa-magnifying-glass-chart text-white text-xl"></i>
-                </div>
-                <div class="bg-gov-green-800 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">4</div>
-                <h3 class="font-bold text-gov-green-800 mb-2">Gap Analysis</h3>
-                <p class="text-sm text-gov-gray-600">Predictive risk scoring</p>
-            </div>
-            <div class="text-center group">
-                <div class="w-16 h-16 bg-gov-green-800 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition shadow-lg">
-                    <i class="fas fa-certificate text-white text-xl"></i>
-                </div>
-                <div class="bg-gov-green-800 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">5</div>
-                <h3 class="font-bold text-gov-green-800 mb-2">Certify</h3>
-                <p class="text-sm text-gov-gray-600">Auditor review & certification</p>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </section>
@@ -151,46 +115,44 @@
 <!-- Frameworks -->
 <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl lg:text-4xl font-bold text-gov-green-800 mb-4">Supported Frameworks</h2>
-            <p class="text-gov-gray-600 text-lg">One platform for all Saudi cybersecurity compliance requirements</p>
+        <div class="text-center mb-12">
+            <h2 class="text-3xl lg:text-4xl font-bold text-gov-green-800 mb-4">الأطر المدعومة</h2>
+            <p class="text-gov-gray-600 text-lg">منصّة واحدة لمتطلبات الامتثال السيبراني في السوق السعودي</p>
         </div>
         <div class="grid md:grid-cols-3 gap-8">
             <div class="border border-gov-gray-200 rounded-2xl p-8 hover:shadow-xl transition group">
                 <div class="w-14 h-14 bg-gov-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-gov-green-800 transition">
-                    <i class="fas fa-landmark text-gov-green-800 text-2xl group-hover:text-white transition"></i>
-                </div>
+                    <i class="fas fa-landmark text-gov-green-800 text-2xl group-hover:text-white transition"></i></div>
                 <h3 class="text-xl font-bold text-gov-green-800 mb-3">NCA ECC</h3>
-                <p class="text-gov-gray-600 mb-4">National Cybersecurity Authority Essential Cybersecurity Controls for government entities and critical infrastructure.</p>
-                <div class="text-sm text-gov-green-700 font-medium">114+ Controls</div>
+                <p class="text-gov-gray-600 mb-4">الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني للجهات الحكومية والبنى التحتية الحرجة.</p>
+                <div class="text-sm text-gov-green-700 font-medium">108 ضوابط (ECC) — إجمالي أطر NCA 231 ضابطًا</div>
             </div>
             <div class="border border-gov-gray-200 rounded-2xl p-8 hover:shadow-xl transition group">
                 <div class="w-14 h-14 bg-gov-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-gov-green-800 transition">
-                    <i class="fas fa-oil-well text-gov-green-800 text-2xl group-hover:text-white transition"></i>
-                </div>
+                    <i class="fas fa-oil-well text-gov-green-800 text-2xl group-hover:text-white transition"></i></div>
                 <h3 class="text-xl font-bold text-gov-green-800 mb-3">Aramco SACS-002</h3>
-                <p class="text-gov-gray-600 mb-4">Saudi Aramco Third Party Cybersecurity Standard for all vendors and suppliers in the oil & gas ecosystem.</p>
-                <div class="text-sm text-gov-green-700 font-medium">92+ Controls</div>
+                <p class="text-gov-gray-600 mb-4">معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة لجميع الموردين ومزوّدي الخدمات.</p>
+                <div class="text-sm text-gov-green-700 font-medium">92 ضابطًا</div>
             </div>
             <div class="border border-gov-gray-200 rounded-2xl p-8 hover:shadow-xl transition group">
                 <div class="w-14 h-14 bg-gov-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-gov-green-800 transition">
-                    <i class="fas fa-industry text-gov-green-800 text-2xl group-hover:text-white transition"></i>
-                </div>
+                    <i class="fas fa-industry text-gov-green-800 text-2xl group-hover:text-white transition"></i></div>
                 <h3 class="text-xl font-bold text-gov-green-800 mb-3">SABIC CyberTrust</h3>
-                <p class="text-gov-gray-600 mb-4">SABIC Cybersecurity Trust Standard for petrochemical industry suppliers and service providers.</p>
-                <div class="text-sm text-gov-green-700 font-medium">94+ Controls</div>
+                <p class="text-gov-gray-600 mb-4">معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات.</p>
+                <div class="text-sm text-gov-green-700 font-medium">94 ضابطًا</div>
             </div>
         </div>
+        <p class="text-center text-gov-gray-500 text-sm mt-8">إجمالي التغطية: 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC.</p>
     </div>
 </section>
 
 <!-- CTA -->
 <section class="gradient-gov py-20">
     <div class="max-w-4xl mx-auto px-4 text-center">
-        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Achieve Compliance?</h2>
-        <p class="text-gov-green-200 text-lg mb-8">Join Saudi enterprises using AI to accelerate their cybersecurity certification journey.</p>
-        <a href="{% url 'core:register' %}" class="inline-block bg-white text-gov-green-800 px-10 py-4 rounded-lg font-bold text-lg hover:bg-green-50 transition shadow-xl">
-            Register Your Company <i class="fas fa-arrow-right ml-2"></i>
+        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">جاهزون لرفع جاهزية الامتثال؟</h2>
+        <p class="text-gov-green-200 text-lg mb-8">انضم إلى الشركات والجهات في السعودية التي تنظّم أدلّتها وتُعدّ تقارير جاهزيتها للمراجعة.</p>
+        <a href="{% url 'core:get_started' %}" class="inline-block bg-white text-gov-green-800 px-10 py-4 rounded-lg font-bold text-lg hover:bg-green-50 transition shadow-xl">
+            سجّل شركتك
         </a>
     </div>
 </section>
@@ -200,32 +162,34 @@
     <div class="max-w-7xl mx-auto px-4">
         <div class="grid md:grid-cols-3 gap-8">
             <div>
-                <div class="flex items-center space-x-3 mb-4">
+                <div class="flex items-center gap-3 mb-4">
                     <i class="fas fa-shield-halved text-white text-2xl"></i>
                     <span class="text-white font-bold text-xl">CyberTrust KSA</span>
                 </div>
-                <p class="text-sm">AI-Powered Continuous Cybersecurity Compliance Platform for the Kingdom of Saudi Arabia.</p>
+                <p class="text-sm">منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية.</p>
             </div>
             <div>
-                <h4 class="text-white font-semibold mb-4">Frameworks</h4>
+                <h4 class="text-white font-semibold mb-4">الأطر</h4>
                 <ul class="space-y-2 text-sm">
-                    <li>NCA Essential Cybersecurity Controls</li>
+                    <li>الضوابط الأساسية NCA ECC</li>
                     <li>Aramco SACS-002</li>
-                    <li>SABIC CyberTrust Standard</li>
+                    <li>معيار SABIC CyberTrust</li>
                 </ul>
             </div>
             <div>
-                <h4 class="text-white font-semibold mb-4">Platform</h4>
+                <h4 class="text-white font-semibold mb-4">المنصّة</h4>
                 <ul class="space-y-2 text-sm">
-                    <li><a href="{% url 'core:register' %}" class="hover:text-white transition">Register</a></li>
-                    <li><a href="{% url 'core:login' %}" class="hover:text-white transition">Login</a></li>
-                    <li><a href="#process" class="hover:text-white transition">How It Works</a></li>
+                    <li><a href="{% url 'core:get_started' %}" class="hover:text-white transition">سجّل شركتك</a></li>
+                    <li><a href="{% url 'core:login' %}" class="hover:text-white transition">تسجيل الدخول</a></li>
+                    <li><a href="#process" class="hover:text-white transition">كيف تعمل المنصّة</a></li>
                 </ul>
             </div>
         </div>
         <div class="border-t border-gov-green-800 mt-8 pt-8 text-center text-sm">
-            <p>&copy; 2024 CyberTrust KSA. All rights reserved. Aligned with Saudi Vision 2030.</p>
+            <p>&copy; 2024 CyberTrust KSA — جميع الحقوق محفوظة. متوافقة مع رؤية المملكة 2030.</p>
         </div>
     </div>
 </footer>
+
+</div>
 {% endblock %}

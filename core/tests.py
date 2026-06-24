@@ -411,3 +411,140 @@ class Phase4ABackwardCompatTests(TestCase):
         a.refresh_from_db()
         self.assertEqual(a.status, 'compliant')
         self.assertEqual(build_executive_summary(c)['counts']['compliant'], 1)
+
+
+# ============================================================
+# Phase 4A-FIX-A — Arabic localization + public content correction + stepper
+# ============================================================
+class Phase4AFixALocalizationTests(TestCase):
+    def _reg(self):  # register a company so onboarding/journey pages are reachable
+        return self.client.post(reverse('core:company_register'), {
+            'first_name': 'S', 'last_name': 'A', 'email': 'fixa@co.example',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': '1717171717',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+
+    # --- Arabic / RTL ---
+    def test_public_landing_contains_arabic_primary_copy(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'جاهزية الامتثال')
+
+    def test_public_landing_uses_rtl_or_rtl_friendly_markup(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertContains(resp, 'dir="rtl"')
+
+    def test_get_started_contains_company_arabic_cta(self):
+        resp = self.client.get(reverse('core:get_started'))
+        self.assertContains(resp, 'إنشاء حساب شركة')
+
+    def test_company_registration_contains_arabic_labels(self):
+        resp = self.client.get(reverse('core:company_register'))
+        self.assertContains(resp, 'بيانات المستخدم')
+        self.assertContains(resp, 'بيانات الشركة')
+        self.assertContains(resp, 'أهداف الامتثال')
+
+    def test_onboarding_contains_arabic_steps(self):
+        self._reg()
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertContains(resp, 'مراحل رحلتك')
+
+    def test_subscription_required_contains_arabic_message(self):
+        from compliance.tests import _company_with_assessments, _journey_user
+        c, fv, scope = _company_with_assessments()
+        self.client.force_login(_journey_user(c))  # unsubscribed
+        resp = self.client.get(reverse('compliance:report_executive_summary'))
+        self.assertContains(resp, 'تفعيل الاشتراك مطلوب')
+
+    # --- Stepper (workflow) ---
+    def test_registration_uses_stepper(self):
+        resp = self.client.get(reverse('core:company_register'))
+        self.assertContains(resp, 'ct-step')
+        self.assertContains(resp, 'data-step-pill')
+
+    # --- Content correctness ---
+    def test_public_landing_does_not_show_legacy_334_as_current_official_count(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertNotContains(resp, '334')
+
+    def test_public_landing_shows_417_official_controls(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertContains(resp, '417')
+
+    def test_nca_ecc_count_is_108_or_nca_total_is_231(self):
+        resp = self.client.get(reverse('core:landing'))
+        body = resp.content.decode()
+        self.assertTrue('108' in body or '231' in body)
+
+    def test_aramco_count_is_92(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertContains(resp, '92')
+
+    def test_sabic_count_is_94(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertContains(resp, '94')
+
+    def test_public_copy_does_not_claim_certification_granting(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        for term in ['certification', 'Certification', 'Certify', 'certify', 'منح شهادة', 'إصدار شهادة']:
+            self.assertNotIn(term, body)
+
+
+class Phase4AFixABackwardCompatTests(TestCase):
+    def setUp(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def test_company_registration_still_works(self):
+        resp = self.client.post(reverse('core:company_register'), {
+            'first_name': 'B', 'last_name': 'C', 'email': 'bcfa@co.example',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': '1818181818',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Company.objects.filter(cr_number='1818181818').exists())
+
+    def test_onboarding_still_works(self):
+        self.client.post(reverse('core:company_register'), {
+            'first_name': 'B', 'last_name': 'C', 'email': 'bcfa2@co.example',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': '1919191919',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+        self.assertEqual(self.client.get(reverse('core:onboarding')).status_code, 200)
+
+    def test_subscription_gated_reports_still_work(self):
+        from compliance.tests import _company_with_assessments, _journey_user
+        from billing.subscription_access import activate_company_subscription
+        c, fv, scope = _company_with_assessments()
+        user = _journey_user(c)
+        self.client.force_login(user)
+        # unsubscribed -> gated
+        self.assertContains(self.client.get(reverse('compliance:report_executive_summary')),
+                            'تفعيل الاشتراك مطلوب')
+        # subscribed -> full report
+        activate_company_subscription(c, 'Plan', days=30)
+        self.assertNotContains(self.client.get(reverse('compliance:report_executive_summary')),
+                               'تفعيل الاشتراك مطلوب')
+
+    def test_reports_still_work(self):
+        from compliance.tests import _company_with_assessments, _journey_user
+        from billing.subscription_access import activate_company_subscription
+        c, fv, scope = _company_with_assessments()
+        activate_company_subscription(c, 'Plan', days=30)
+        self.client.force_login(_journey_user(c))
+        self.assertEqual(self.client.get(reverse('compliance:report_executive_summary')).status_code, 200)
+
+    def test_evidence_upload_v2_still_works(self):
+        from compliance.tests import _company_with_submission
+        from compliance.models import EvidenceSubmission
+        c, item, sub = _company_with_submission()
+        self.assertTrue(EvidenceSubmission.objects.filter(id=sub.id).exists())
+
+    def test_advisory_analysis_still_works(self):
+        from compliance.tests import _company_with_submission
+        from compliance.evidence_analysis import analyze_evidence_submission
+        from compliance.models import EvidenceAnalysisResult
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).exists())
