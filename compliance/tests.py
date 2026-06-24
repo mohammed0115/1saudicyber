@@ -3490,3 +3490,353 @@ class Phase3IBackwardCompatTests(TestCase):
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regi@x.com',
                 'password': 'longenough12', 'target_nca': 'on'})
         self.assertEqual(resp.status_code, 302)
+
+
+# ============================================================
+# Phase 3J — Security, tenant isolation, and QA hardening
+# ============================================================
+def _full_pipeline(fv_code='ARAMCO-SACS-002'):
+    """Company carried end-to-end: approved scope + plan + checklist + assessments +
+    one evidence submission + advisory analysis. Returns (company, fv, item, submission)."""
+    from compliance.evidence_analysis import analyze_evidence_submission
+    c, fv, scope = _company_with_assessments(fv_code)
+    item = EvidenceChecklistItem.objects.filter(company=c).first()
+    sub = _submission(c, item)
+    analyze_evidence_submission(sub, apply=True)
+    return c, fv, item, sub
+
+
+class SecurityHelperTests(TestCase):
+    def test_get_company_object_or_none_is_tenant_safe(self):
+        from compliance.security import get_company_object_or_none
+        a, fv, item, sub = _full_pipeline()
+        b, *_ = _full_pipeline('SABIC-CYBERTRUST-1-0')
+        b_item = EvidenceChecklistItem.objects.filter(company=b).first()
+        # Own object found; other company's object is never returned.
+        self.assertEqual(get_company_object_or_none(EvidenceChecklistItem, a, id=item.id), item)
+        self.assertIsNone(get_company_object_or_none(EvidenceChecklistItem, a, id=b_item.id))
+        self.assertIsNone(get_company_object_or_none(EvidenceChecklistItem, None, id=item.id))
+
+
+class SecurityAuthTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.item, self.sub = _full_pipeline()
+        self.assessment = ControlAssessment.objects.filter(company=self.c).first()
+
+    def test_all_core_compliance_pages_require_login(self):
+        names = ['controls_list', 'intake', 'applicability_review', 'control_plan',
+                 'evidence_checklist', 'auditor_review_queue', 'reports_index',
+                 'report_executive_summary', 'report_gap_analysis', 'report_evidence_matrix',
+                 'dashboard']
+        for n in names:
+            resp = self.client.get(reverse(f'compliance:{n}'))
+            self.assertEqual(resp.status_code, 302, n)
+            self.assertIn('/login', resp.url, n)
+
+    def test_report_exports_require_login(self):
+        for n in ['export_evidence_matrix_csv', 'export_evidence_matrix_xlsx']:
+            resp = self.client.get(reverse(f'compliance:{n}'))
+            self.assertEqual(resp.status_code, 302, n)
+            self.assertIn('/login', resp.url, n)
+
+    def test_dashboard_requires_login(self):
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_upload_v2_requires_login(self):
+        resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[self.item.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_auditor_update_requires_login(self):
+        resp = self.client.post(reverse('compliance:auditor_review_detail', args=[self.assessment.id]),
+                                {'status': 'compliant'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+        self.assessment.refresh_from_db()
+        self.assertEqual(self.assessment.status, 'not_reviewed')  # not mutated
+
+    def test_analysis_trigger_requires_login(self):
+        resp = self.client.post(reverse('compliance:analyze_submission', args=[self.sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+
+class SecurityTenantIsolationTests(TestCase):
+    def setUp(self):
+        # Company A = ARAMCO framework; Company B = SABIC framework (distinct codes).
+        self.c, self.fv, self.item, self.sub = _full_pipeline('ARAMCO-SACS-002')
+        self.user = _journey_user(self.c)
+        self.other, self.ofv, self.oitem, self.osub = _full_pipeline('SABIC-CYBERTRUST-1-0')
+        self.oassessment = ControlAssessment.objects.filter(company=self.other).first()
+        self.client.force_login(self.user)
+
+    def test_user_cannot_access_other_company_control_plan(self):
+        resp = self.client.get(reverse('compliance:control_plan'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'SABIC-CYBERTRUST-1-0')
+
+    def test_user_cannot_access_other_company_evidence_checklist(self):
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'SABIC-CYBERTRUST-1-0')
+
+    def test_user_cannot_upload_to_other_company_checklist_item(self):
+        before = EvidenceSubmission.objects.filter(checklist_item=self.oitem).count()
+        resp = self.client.post(reverse('compliance:evidence_upload_v2', args=[self.oitem.id]),
+                                {'uploaded_file': _SUF('x.txt', b'data'), 'notes': ''})
+        self.assertEqual(resp.status_code, 302)  # redirected, not allowed
+        after = EvidenceSubmission.objects.filter(checklist_item=self.oitem).count()
+        self.assertEqual(before, after)  # nothing created on B's item
+
+    def test_user_cannot_view_other_company_submission(self):
+        resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[self.osub.id]))
+        self.assertEqual(resp.status_code, 302)  # tenant-scoped redirect
+
+    def test_user_cannot_view_other_company_analysis(self):
+        # Analysis is surfaced via the submission detail; B's submission is not reachable.
+        self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=self.osub).exists())
+        resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[self.osub.id]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_user_cannot_view_other_company_assessment(self):
+        resp = self.client.get(reverse('compliance:auditor_review_detail', args=[self.oassessment.id]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_user_cannot_view_other_company_reports(self):
+        resp = self.client.get(reverse('compliance:report_framework', args=[self.ofv.id]))
+        self.assertEqual(resp.status_code, 302)  # B's framework not approved for A
+
+    def test_user_cannot_export_other_company_evidence_matrix(self):
+        resp = self.client.get(reverse('compliance:export_evidence_matrix_csv'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn(b'SABIC-CYBERTRUST-1-0', resp.content)
+
+    def test_dashboard_does_not_leak_other_company_counts(self):
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        a_controls = ControlApplicabilityResult.objects.filter(
+            company=self.c, decision='applicable',
+            control__framework_version__isnull=False, control__is_legacy_import=False).count()
+        total = ControlApplicabilityResult.objects.filter(decision='applicable').count()
+        self.assertGreater(total, a_controls)  # B contributes controls that must NOT show
+        self.assertContains(resp, f"{a_controls} ضابط منطبق")  # A-only metric
+
+
+class SecurityStaffOnlyTests(TestCase):
+    def setUp(self):
+        from compliance.framework_scope import propose_framework_scopes
+        self.propose = propose_framework_scopes
+
+    def _nonstaff(self, company):
+        u = _journey_user(company, role='company_admin')
+        self.assertFalse(u.is_staff)
+        self.client.force_login(u)
+        return u
+
+    def test_non_staff_cannot_generate_framework_scopes(self):
+        c, fv = _company_with_applicability()
+        self.propose(c, apply=True)
+        scope = CompanyFrameworkScope.objects.filter(company=c, status='proposed').first()
+        self._nonstaff(c)
+        resp = self.client.post(reverse('compliance:approve_scope', args=[scope.id]))
+        self.assertEqual(resp.status_code, 302)
+        scope.refresh_from_db()
+        self.assertNotEqual(scope.status, 'approved')
+
+    def test_non_staff_cannot_generate_control_plan(self):
+        c, fv, scope = _company_with_official_plan()
+        before = ControlApplicabilityResult.objects.filter(company=c).count()
+        self._nonstaff(c)
+        resp = self.client.post(reverse('compliance:generate_plan', args=[scope.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(ControlApplicabilityResult.objects.filter(company=c).count(), before)
+
+    def test_non_staff_cannot_generate_evidence_checklist(self):
+        c, fv, scope = _company_with_official_plan()  # plan exists, no checklist yet
+        self.assertEqual(EvidenceChecklistItem.objects.filter(company=c).count(), 0)
+        self._nonstaff(c)
+        resp = self.client.post(reverse('compliance:generate_evidence_checklist'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(EvidenceChecklistItem.objects.filter(company=c).count(), 0)
+
+    def test_non_staff_cannot_trigger_analysis(self):
+        c, item, sub = _company_with_submission()
+        self._nonstaff(c)
+        resp = self.client.post(reverse('compliance:analyze_submission', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).exists())
+
+    def test_non_staff_cannot_generate_assessments(self):
+        c, fv, scope = _company_with_checklist()  # no assessments yet
+        self.assertEqual(ControlAssessment.objects.filter(company=c).count(), 0)
+        self._nonstaff(c)
+        resp = self.client.post(reverse('compliance:generate_assessments'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(ControlAssessment.objects.filter(company=c).count(), 0)
+
+    def test_non_staff_cannot_update_control_assessment(self):
+        c, fv, scope = _company_with_assessments()
+        a = ControlAssessment.objects.filter(company=c).first()
+        self._nonstaff(c)
+        resp = self.client.post(reverse('compliance:auditor_review_detail', args=[a.id]),
+                                {'status': 'compliant'})
+        self.assertEqual(resp.status_code, 302)
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'not_reviewed')  # decision unchanged
+
+
+class SecurityUploadSafetyTests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_checklist()
+        self.item = EvidenceChecklistItem.objects.filter(company=self.c).first()
+        self.user = _journey_user(self.c)
+        self.client.force_login(self.user)
+
+    def test_upload_v2_rejects_disallowed_extension(self):
+        before = EvidenceSubmission.objects.filter(checklist_item=self.item).count()
+        resp = self.client.post(reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+                                {'uploaded_file': _SUF('malware.exe', b'MZ'), 'notes': ''})
+        self.assertEqual(resp.status_code, 200)  # re-render with form error
+        self.assertEqual(EvidenceSubmission.objects.filter(checklist_item=self.item).count(), before)
+
+    def test_upload_v2_rejects_large_file(self):
+        before = EvidenceSubmission.objects.filter(checklist_item=self.item).count()
+        with mock.patch('compliance.forms.EVIDENCE_V2_MAX_SIZE', 8):  # 8-byte cap
+            resp = self.client.post(reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+                                    {'uploaded_file': _SUF('big.txt', b'way too many bytes'), 'notes': ''})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(EvidenceSubmission.objects.filter(checklist_item=self.item).count(), before)
+
+    def test_upload_v2_records_checksum(self):
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+                         {'uploaded_file': _SUF('ok.txt', b'evidence'), 'notes': ''})
+        sub = EvidenceSubmission.objects.filter(checklist_item=self.item).latest('uploaded_at')
+        self.assertEqual(len(sub.file_hash), 64)  # sha256 hexdigest
+
+    def test_upload_v2_does_not_create_legacy_evidence(self):
+        before = Evidence.objects.count()
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+                         {'uploaded_file': _SUF('ok.txt', b'evidence'), 'notes': ''})
+        self.assertEqual(Evidence.objects.count(), before)  # no legacy Evidence rows
+
+    def test_upload_v2_does_not_create_companycontrol(self):
+        before = CompanyControl.objects.count()
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+                         {'uploaded_file': _SUF('ok.txt', b'evidence'), 'notes': ''})
+        self.assertEqual(CompanyControl.objects.count(), before)
+
+
+class SecurityAIReportingTests(TestCase):
+    def test_ai_analysis_does_not_create_controlassessment(self):
+        from compliance.evidence_analysis import analyze_evidence_submission
+        c, item, sub = _company_with_submission()
+        before = ControlAssessment.objects.count()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertEqual(ControlAssessment.objects.count(), before)
+
+    def test_ai_analysis_does_not_set_compliant_status(self):
+        from compliance.evidence_analysis import analyze_evidence_submission
+        c, fv, item, sub = _full_pipeline()
+        analyze_evidence_submission(sub, apply=True)
+        # No assessment is flipped to a compliant state by analysis.
+        self.assertEqual(ControlAssessment.objects.filter(company=c, status='compliant').count(), 0)
+
+    def test_reports_use_controlassessment_not_ai(self):
+        from compliance.reporting import build_executive_summary
+        c, fv, item, sub = _full_pipeline()
+        # Auditor marks one control compliant; reports must reflect the AUDITOR decision.
+        a = ControlAssessment.objects.filter(company=c).first(); a.status = 'compliant'; a.save()
+        s = build_executive_summary(c)
+        self.assertEqual(s['counts']['compliant'],
+                         ControlAssessment.objects.filter(company=c, status='compliant').count())
+
+    def test_reports_do_not_use_legacy_controls(self):
+        from compliance.reporting import build_framework_gap_analysis
+        c, fv, scope = _company_with_assessments()
+        fw = fv.framework
+        Control.objects.create(framework=fw, domain=Domain.objects.filter(framework=fw).first(),
+                               control_id='LEG-3J', title='legacy', description='d')
+        gap = build_framework_gap_analysis(c)
+        ids = [g['control_id'] for f in gap for g in f['gaps']]
+        self.assertNotIn('LEG-3J', ids)
+
+    def test_reports_do_not_create_or_update_records(self):
+        from compliance.reporting import (build_executive_summary, build_framework_gap_analysis,
+                                          build_evidence_matrix)
+        c, fv, scope = _company_with_assessments()
+        before = {a.id: a.status for a in ControlAssessment.objects.filter(company=c)}
+        cc_before = CompanyControl.objects.count()
+        build_executive_summary(c); build_framework_gap_analysis(c); build_evidence_matrix(c)
+        after = {a.id: a.status for a in ControlAssessment.objects.filter(company=c)}
+        self.assertEqual(before, after)
+        self.assertEqual(CompanyControl.objects.count(), cc_before)
+
+    def test_unreviewed_controls_not_counted_as_compliant(self):
+        from compliance.reporting import build_executive_summary
+        c, fv, scope = _company_with_assessments()  # all not_reviewed
+        s = build_executive_summary(c)
+        self.assertEqual(s['counts']['compliant'], 0)
+        self.assertEqual(s['compliance_percentage'], 0.0)
+
+
+class Phase3JBackwardCompatTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def test_intake_still_works(self):
+        c = _company()
+        self.client.force_login(_journey_user(c))
+        self.assertEqual(self.client.get(reverse('compliance:intake')).status_code, 200)
+
+    def test_old_upload_evidence_flow_still_works(self):
+        company, control = _company_with_control()
+        self.client.force_login(_journey_user(company))
+        with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[control.id]),
+                                    {'evidence_file': _SUF('p.txt', b'ok')})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Evidence.objects.count(), 1)
+
+    def test_evidence_upload_v2_still_works(self):
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                                {'uploaded_file': _SUF('ok.txt', b'evidence'), 'notes': ''})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(EvidenceSubmission.objects.filter(checklist_item=item).exists())
+
+    def test_evidence_analysis_still_works(self):
+        from compliance.evidence_analysis import analyze_evidence_submission
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).exists())
+
+    def test_auditor_assessment_still_works(self):
+        c, fv, scope = _company_with_assessments()
+        a = ControlAssessment.objects.filter(company=c).first()
+        u = _journey_user(c, email='aud3j@x.com', is_staff=True)
+        update_assessment_from_auditor_input(a, {'status': 'compliant'}, u)
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'compliant')
+
+    def test_reports_still_work(self):
+        c, fv, scope = _company_with_assessments()
+        self.client.force_login(_journey_user(c))
+        self.assertEqual(self.client.get(reverse('compliance:report_executive_summary')).status_code, 200)
+
+    def test_dashboard_still_works(self):
+        c, fv, scope = _company_with_assessments()
+        self.client.force_login(_journey_user(c))
+        self.assertEqual(self.client.get(reverse('compliance:dashboard')).status_code, 200)
+
+    def test_registration_flow_still_works(self):
+        fw, dom = _fw_dom()
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), {
+                'company_name': 'RegJ', 'cr_number': '4040401234', 'sector': 'technology',
+                'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regj@x.com',
+                'password': 'longenough12', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)

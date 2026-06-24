@@ -249,7 +249,8 @@ def applicability_review(request):
 def _get_company_scope(request, scope_id):
     """Fetch a scope scoped to the user's company (tenant isolation) or None."""
     from .models import CompanyFrameworkScope
-    return CompanyFrameworkScope.objects.filter(id=scope_id, company=request.user.company).first()
+    from .security import get_company_object_or_none
+    return get_company_object_or_none(CompanyFrameworkScope, request.user.company, id=scope_id)
 
 
 @login_required
@@ -358,7 +359,8 @@ def generate_evidence_checklist_view(request):
 def _company_checklist_item(request, item_id):
     """Fetch a checklist item scoped to the user's company (tenant isolation) or None."""
     from .models import EvidenceChecklistItem
-    return EvidenceChecklistItem.objects.filter(id=item_id, company=request.user.company).first()
+    from .security import get_company_object_or_none
+    return get_company_object_or_none(EvidenceChecklistItem, request.user.company, id=item_id)
 
 
 @login_required
