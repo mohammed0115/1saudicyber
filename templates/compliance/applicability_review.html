@@ -100,7 +100,7 @@
                     {% if can_approve %}
                     <td class="px-4 py-3">
                         {% if s.status != 'approved' %}
-                        <form method="post" action="{% url 'compliance:approve_scope' s.id %}" class="inline">
+                        <form method="post" action="{% url 'compliance:approve_scope' s.id %}" class="inline" data-busy="جارٍ اعتماد الإطار وتجهيز النطاق...">
                             {% csrf_token %}<button class="text-gov-green-700 hover:underline text-xs">اعتماد</button>
                         </form>
                         {% endif %}

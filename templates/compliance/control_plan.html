@@ -30,7 +30,7 @@
                     <td class="px-4 py-3 text-gov-gray-500 text-xs">{{ s.framework_version.framework.name }}</td>
                     {% if can_generate %}
                     <td class="px-4 py-3 text-left">
-                        <form method="post" action="{% url 'compliance:generate_plan' s.id %}" class="inline">
+                        <form method="post" action="{% url 'compliance:generate_plan' s.id %}" class="inline" data-busy="جارٍ توليد خطة الضوابط...">
                             {% csrf_token %}
                             <button class="text-gov-green-700 hover:underline text-xs">توليد خطة الضوابط</button>
                         </form>

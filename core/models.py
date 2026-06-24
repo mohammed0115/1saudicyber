@@ -109,7 +109,12 @@ class Company(models.Model):
     contact_email = models.EmailField()
     contact_phone = models.CharField(max_length=20, blank=True)
     city = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True, default='SA')
+    description = models.TextField(blank=True)
     website = models.URLField(blank=True)
+
+    # Phase 4A — self-service onboarding state (additive, defaults preserve old rows).
+    onboarding_completed = models.BooleanField(default=False)
 
     risk_level = models.CharField(max_length=20, blank=True, choices=[
         ('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical'),

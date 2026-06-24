@@ -235,3 +235,179 @@ class HealthCheckTests(TestCase):
         body = self.client.get('/healthz/').content.decode()
         self.assertNotIn(dj_settings.SECRET_KEY, body)
         self.assertEqual(body.strip(), '{"status": "ok"}')
+
+
+# ============================================================
+# Phase 4A — Self-service company registration + onboarding
+# ============================================================
+class Phase4ARegistrationOnboardingTests(TestCase):
+    def _payload(self, **over):
+        d = {
+            'first_name': 'Sara', 'last_name': 'Ali',
+            'email': 'sara@co.example', 'phone': '0500000000',
+            'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة الاختبار', 'company_name': 'Test Co',
+            'cr_number': '1212121212', 'sector': 'technology', 'size': 'small',
+            'city': 'Riyadh', 'country': 'SA', 'description': 'وصف',
+            'target_nca': 'on',
+        }
+        d.update(over)
+        return d
+
+    # --- Registration / Onboarding ---
+    def test_company_self_registration_creates_user(self):
+        resp = self.client.post(reverse('core:company_register'), self._payload())
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(User.objects.filter(email='sara@co.example').exists())
+
+    def test_company_self_registration_creates_company(self):
+        self.client.post(reverse('core:company_register'), self._payload())
+        self.assertTrue(Company.objects.filter(cr_number='1212121212').exists())
+
+    def test_company_linkage_is_correct(self):
+        self.client.post(reverse('core:company_register'), self._payload())
+        u = User.objects.get(email='sara@co.example')
+        self.assertIsNotNone(u.company)
+        self.assertEqual(u.company.cr_number, '1212121212')
+        self.assertEqual(u.role, 'company_admin')
+
+    def test_registered_user_reaches_onboarding(self):
+        resp = self.client.post(reverse('core:company_register'), self._payload())
+        self.assertEqual(resp.url, reverse('core:onboarding'))
+        follow = self.client.get(reverse('core:onboarding'))
+        self.assertEqual(follow.status_code, 200)
+        self.assertContains(follow, 'مرحبًا بك في CyberTrust')
+
+    def test_onboarding_completion_redirects_to_journey(self):
+        self.client.post(reverse('core:company_register'), self._payload())
+        resp = self.client.post(reverse('core:onboarding_complete'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('compliance:dashboard'))
+        self.assertTrue(Company.objects.get(cr_number='1212121212').onboarding_completed)
+
+    def test_old_registration_flow_still_works(self):
+        from unittest import mock
+        with mock.patch('core.views.classify_company', return_value={'error': 'skip'}):
+            resp = self.client.post(reverse('core:register'), {
+                'company_name': 'Legacy Co', 'cr_number': '9090909090', 'sector': 'technology',
+                'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'legacy@x.com',
+                'password': 'longenough12', 'target_nca': 'on'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Company.objects.filter(cr_number='9090909090').exists())
+
+    def test_registration_rejects_password_mismatch(self):
+        resp = self.client.post(reverse('core:company_register'),
+                                self._payload(password_confirm='different12345'))
+        self.assertEqual(resp.status_code, 200)  # re-render with error
+        self.assertFalse(Company.objects.filter(cr_number='1212121212').exists())
+
+    def test_registration_requires_a_goal(self):
+        resp = self.client.post(reverse('core:company_register'),
+                                self._payload(target_nca='', target_aramco='', target_sabic=''))
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(User.objects.filter(email='sara@co.example').exists())
+
+    # --- Tenant / Security ---
+    def test_protected_onboarding_requires_login(self):
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_onboarding_complete_requires_login(self):
+        resp = self.client.post(reverse('core:onboarding_complete'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_onboarding_shows_only_own_company(self):
+        self.client.post(reverse('core:company_register'), self._payload())
+        Company.objects.create(name='OtherCorp ZZZ', cr_number='7777777777',
+                               sector='technology', size='small', contact_email='o@x.com')
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertContains(resp, 'شركة الاختبار')
+        self.assertNotContains(resp, 'OtherCorp ZZZ')
+
+    def test_no_cross_company_leakage_on_dashboard(self):
+        self.client.post(reverse('core:company_register'), self._payload())
+        Company.objects.create(name='OtherCorp ZZZ', cr_number='7777777777',
+                               sector='technology', size='small', contact_email='o@x.com')
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'OtherCorp ZZZ')
+
+    # --- UX / Flow rendering ---
+    def test_get_started_page_renders_with_company_option(self):
+        resp = self.client.get(reverse('core:get_started'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, reverse('core:company_register'))
+        self.assertContains(resp, 'شركة / جهة طالبة امتثال')
+
+    def test_registration_page_renders(self):
+        resp = self.client.get(reverse('core:company_register'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'سجّل شركتك في CyberTrust')
+
+    def test_onboarding_page_renders(self):
+        self.client.post(reverse('core:company_register'), self._payload())
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertContains(resp, 'مراحل رحلتك')
+
+    def test_loading_overlay_present_and_render_intact(self):
+        # The calm loading overlay markup is present and does not break the page.
+        resp = self.client.get(reverse('core:company_register'))
+        self.assertContains(resp, 'ct-busy-overlay')
+        self.assertContains(resp, 'data-busy')
+
+    def test_auditor_placeholder_renders(self):
+        resp = self.client.get(reverse('core:auditor_register'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'مسار المدقّق')
+
+
+class Phase4ABackwardCompatTests(TestCase):
+    """The new fields/flow must not break the existing compliance journey."""
+    def setUp(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _registered_client(self):
+        self.client.post(reverse('core:company_register'), {
+            'first_name': 'B', 'last_name': 'C', 'email': 'bc4a@co.example',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'BC Co', 'cr_number': '1313131313',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+
+    def test_journey_pages_still_work_for_registered_company(self):
+        self._registered_client()
+        for name in ['compliance:intake', 'compliance:applicability_review',
+                     'compliance:control_plan', 'compliance:evidence_checklist',
+                     'compliance:auditor_review_queue', 'compliance:reports_index']:
+            self.assertEqual(self.client.get(reverse(name)).status_code, 200, name)
+
+    def test_evidence_upload_v2_still_works(self):
+        from compliance.tests import _company_with_submission
+        from compliance.models import EvidenceSubmission
+        c, item, sub = _company_with_submission()
+        self.assertTrue(EvidenceSubmission.objects.filter(id=sub.id).exists())
+
+    def test_evidence_analysis_still_works(self):
+        from compliance.tests import _company_with_submission
+        from compliance.evidence_analysis import analyze_evidence_submission
+        from compliance.models import EvidenceAnalysisResult
+        c, item, sub = _company_with_submission()
+        analyze_evidence_submission(sub, apply=True)
+        self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=sub).exists())
+
+    def test_auditor_assessment_and_reports_still_work(self):
+        from compliance.tests import _company_with_assessments
+        from compliance.control_assessment import update_assessment_from_auditor_input
+        from compliance.reporting import build_executive_summary
+        from compliance.models import ControlAssessment
+        c, fv, scope = _company_with_assessments()
+        a = ControlAssessment.objects.filter(company=c).first()
+        u = User.objects.create_user(email='aud4a@x.com', password='longenough12',
+                                     company=c, is_staff=True)
+        update_assessment_from_auditor_input(a, {'status': 'compliant'}, u)
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'compliant')
+        self.assertEqual(build_executive_summary(c)['counts']['compliant'], 1)

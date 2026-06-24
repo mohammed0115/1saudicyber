@@ -48,6 +48,61 @@ class CompanyRegistrationForm(forms.Form):
         return cleaned
 
 
+class SelfServiceRegistrationForm(forms.Form):
+    """Phase 4A — Arabic-first self-service company registration.
+
+    Additive: does not replace CompanyRegistrationForm. Reuses the same
+    validation rules (CR = 10 digits + unique, unique email, password >= 12,
+    at least one compliance goal) and adds password confirmation.
+    """
+    # بيانات المستخدم
+    first_name = forms.CharField(max_length=30, label='الاسم الأول')
+    last_name = forms.CharField(max_length=30, label='اسم العائلة')
+    email = forms.EmailField(label='البريد الإلكتروني')
+    phone = forms.CharField(max_length=20, required=False, label='رقم الجوال')
+    password = forms.CharField(widget=forms.PasswordInput, min_length=12, label='كلمة المرور')
+    password_confirm = forms.CharField(widget=forms.PasswordInput, label='تأكيد كلمة المرور')
+
+    # بيانات الشركة
+    company_name_ar = forms.CharField(max_length=255, label='اسم الشركة بالعربية')
+    company_name = forms.CharField(max_length=255, required=False, label='اسم الشركة بالإنجليزية')
+    cr_number = forms.CharField(max_length=20, label='رقم السجل التجاري')
+    sector = forms.ChoiceField(choices=Company.SECTOR_CHOICES, label='القطاع / نوع الجهة')
+    size = forms.ChoiceField(choices=Company.SIZE_CHOICES, label='حجم الشركة')
+    city = forms.CharField(max_length=100, required=False, label='المدينة')
+    country = forms.CharField(max_length=100, required=False, initial='SA', label='الدولة')
+    description = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False,
+                                 label='وصف مختصر')
+
+    # أهداف الامتثال
+    target_nca = forms.BooleanField(required=False, label='نحتاج الامتثال لـ NCA')
+    target_aramco = forms.BooleanField(required=False, label='نحتاج الامتثال لـ Aramco')
+    target_sabic = forms.BooleanField(required=False, label='نحتاج الامتثال لـ SABIC')
+
+    def clean_cr_number(self):
+        cr = (self.cleaned_data.get('cr_number') or '').strip()
+        if not cr.isdigit() or len(cr) != 10:
+            raise forms.ValidationError('رقم السجل التجاري يجب أن يكون 10 أرقام بالضبط.')
+        if Company.objects.filter(cr_number=cr).exists():
+            raise forms.ValidationError('توجد شركة مسجّلة بنفس رقم السجل التجاري.')
+        return cr
+
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip().lower()
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('يوجد حساب مسجّل بهذا البريد الإلكتروني.')
+        return email
+
+    def clean(self):
+        cleaned = super().clean()
+        pw, pw2 = cleaned.get('password'), cleaned.get('password_confirm')
+        if pw and pw2 and pw != pw2:
+            self.add_error('password_confirm', 'كلمتا المرور غير متطابقتين.')
+        if not (cleaned.get('target_nca') or cleaned.get('target_aramco') or cleaned.get('target_sabic')):
+            raise forms.ValidationError('اختر هدف امتثال واحدًا على الأقل (NCA أو Aramco أو SABIC).')
+        return cleaned
+
+
 class LoginForm(forms.Form):
     username = forms.EmailField(label="Email")
     password = forms.CharField(widget=forms.PasswordInput)

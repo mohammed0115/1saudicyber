@@ -9,7 +9,9 @@
             <p class="text-gov-gray-600">مهام أدلة مخطّطة للضوابط الرسمية المنطبقة. هذه خطة — لا رفع ملفات هنا.</p>
         </div>
         {% if can_generate %}
-        <form method="post" action="{% url 'compliance:generate_evidence_checklist' %}">
+        <form method="post" action="{% url 'compliance:generate_evidence_checklist' %}" data-busy="جارٍ توليد قائمة الأدلة...">
+
+
             {% csrf_token %}
             <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
                 توليد قائمة الأدلة

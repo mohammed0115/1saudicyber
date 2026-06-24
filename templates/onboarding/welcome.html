@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}التهيئة - CyberTrust{% endblock %}
+
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div style="max-width:820px;margin:0 auto;padding:8px 4px 24px;">
+
+    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:28px;
+                box-shadow:0 2px 10px rgba(31,41,51,0.05);margin-bottom:20px;">
+      <p style="color:#1F6B63;font-weight:600;margin:0 0 6px;">مرحبًا بك في CyberTrust</p>
+      <h1 style="color:#1F2933;font-size:1.6rem;font-weight:700;margin:0 0 8px;">
+        أهلًا، {{ company.name_ar|default:company.name }}
+      </h1>
+      <p style="color:#667085;font-size:.96rem;margin:0;">
+        تم إنشاء حساب شركتك بنجاح. هذه نظرة سريعة على رحلة الامتثال. ابدأ بإكمال ملف التصنيف،
+        ثم راجع الأطر المنطبقة، وستتولّى لوحة الرحلة إرشادك خطوة بخطوة.
+      </p>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:24px 28px;
+                box-shadow:0 2px 10px rgba(31,41,51,0.05);margin-bottom:20px;">
+      <h2 style="color:#0F5D46;font-weight:700;font-size:1.05rem;margin:0 0 16px;">مراحل رحلتك</h2>
+      <ol style="list-style:none;margin:0;padding:0;display:grid;gap:10px;">
+        {% for step in "12345678" %}
+        <li style="display:flex;align-items:flex-start;gap:12px;">
+          <span style="flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#F4F1EA;color:#0F5D46;
+                       display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;">{{ forloop.counter }}</span>
+          <div>
+            {% if forloop.counter == 1 %}<p style="margin:0;color:#1F2933;font-weight:600;">ملف التصنيف (Intake)</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">أجب عن أسئلة التصنيف لحساب الأطر المنطبقة.</p>
+            {% elif forloop.counter == 2 %}<p style="margin:0;color:#1F2933;font-weight:600;">مراجعة الأطر</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">اطّلع على الأطر المقترحة لشركتك.</p>
+            {% elif forloop.counter == 3 %}<p style="margin:0;color:#1F2933;font-weight:600;">اعتماد النطاق</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">يعتمد المدقّق/الموظّف الأطر المنطبقة.</p>
+            {% elif forloop.counter == 4 %}<p style="margin:0;color:#1F2933;font-weight:600;">خطة الضوابط</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">الضوابط الرسمية المنطبقة تحت الأطر المعتمدة.</p>
+            {% elif forloop.counter == 5 %}<p style="margin:0;color:#1F2933;font-weight:600;">قائمة الأدلة ورفعها</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">خطّط الأدلة وارفعها لكل ضابط.</p>
+            {% elif forloop.counter == 6 %}<p style="margin:0;color:#1F2933;font-weight:600;">التحليل الاستشاري</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">تحليل مساعد للأدلة — لا يتّخذ قرار الامتثال.</p>
+            {% elif forloop.counter == 7 %}<p style="margin:0;color:#1F2933;font-weight:600;">مراجعة المدقّق</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">القرار النهائي للامتثال يتّخذه المدقّق.</p>
+            {% else %}<p style="margin:0;color:#1F2933;font-weight:600;">التقارير</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">تقارير الامتثال وتحليل الفجوات.</p>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+      <a href="{% url 'compliance:intake' %}"
+         style="background:#0F5D46;color:#fff;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">
+        ابدأ ملف التصنيف
+      </a>
+      <form method="post" action="{% url 'core:onboarding_complete' %}" data-busy="جارٍ تجهيز لوحة الرحلة..." style="display:inline;">
+        {% csrf_token %}
+        <button type="submit"
+                style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:12px 22px;border:1px solid #D8E1DD;border-radius:10px;cursor:pointer;">
+          الانتقال إلى لوحة الرحلة
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

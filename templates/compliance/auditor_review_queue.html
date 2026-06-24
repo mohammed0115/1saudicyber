@@ -8,7 +8,9 @@
             <p class="text-gov-gray-600">القرار النهائي للامتثال يتّخذه المدقّق. التحليل الآلي استشاري فقط.</p>
         </div>
         {% if can_assess %}
-        <form method="post" action="{% url 'compliance:generate_assessments' %}">
+        <form method="post" action="{% url 'compliance:generate_assessments' %}" data-busy="جارٍ إنشاء التقييمات...">
+
+
             {% csrf_token %}
             <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">إنشاء تقييمات الضوابط</button>
         </form>

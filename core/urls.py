@@ -7,6 +7,14 @@ app_name = 'core'
 urlpatterns = [
     path('', views.landing_page, name='landing'),
     path('register/', views.register_company, name='register'),
+
+    # Phase 4A — self-service registration + onboarding (additive; legacy register/ kept)
+    path('get-started/', views.get_started, name='get_started'),
+    path('get-started/company/', views.company_self_register, name='company_register'),
+    path('get-started/auditor/', views.auditor_interest, name='auditor_register'),
+    path('onboarding/', views.onboarding, name='onboarding'),
+    path('onboarding/complete/', views.onboarding_complete, name='onboarding_complete'),
+
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('account/delete/', views.delete_company_data, name='delete_company_data'),

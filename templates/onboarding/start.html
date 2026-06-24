@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}ابدأ مع CyberTrust{% endblock %}
+
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#F7F9F8;">
+  <div style="max-width:920px;margin:0 auto;padding:48px 20px;">
+    <div style="text-align:center;margin-bottom:36px;">
+      <p style="color:#1F6B63;font-weight:600;letter-spacing:.04em;margin:0 0 8px;">منصّة الامتثال السيبراني</p>
+      <h1 style="color:#1F2933;font-size:1.9rem;font-weight:700;margin:0 0 10px;">ابدأ رحلتك مع CyberTrust</h1>
+      <p style="color:#667085;font-size:1rem;margin:0;max-width:560px;margin-inline:auto;">
+        اختر نوع الحساب المناسب لك للبدء. تجربة منظّمة ورسمية تأخذك خطوة بخطوة نحو الامتثال.
+      </p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+      <!-- Company / entity -->
+      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:28px;
+                  box-shadow:0 2px 10px rgba(31,41,51,0.05);display:flex;flex-direction:column;">
+        <div style="width:46px;height:46px;border-radius:12px;background:#F4F1EA;display:flex;
+                    align-items:center;justify-content:center;margin-bottom:16px;">
+          <i class="fas fa-building" style="color:#0F5D46;font-size:1.25rem;"></i>
+        </div>
+        <h2 style="color:#1F2933;font-size:1.2rem;font-weight:700;margin:0 0 8px;">شركة / جهة طالبة امتثال</h2>
+        <p style="color:#667085;font-size:.92rem;margin:0 0 20px;flex:1;">
+          سجّل شركتك وابدأ رحلة الامتثال: التصنيف، الأطر المنطبقة، خطة الضوابط، الأدلة، والتقارير.
+        </p>
+        <a href="{% url 'core:company_register' %}"
+           style="display:inline-block;text-align:center;background:#0F5D46;color:#fff;font-weight:600;
+                  padding:11px 18px;border-radius:10px;text-decoration:none;">إنشاء حساب شركة</a>
+      </div>
+
+      <!-- Auditor (placeholder) -->
+      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:28px;
+                  box-shadow:0 2px 10px rgba(31,41,51,0.05);display:flex;flex-direction:column;">
+        <div style="width:46px;height:46px;border-radius:12px;background:#F4F1EA;display:flex;
+                    align-items:center;justify-content:center;margin-bottom:16px;">
+          <i class="fas fa-user-shield" style="color:#1F6B63;font-size:1.25rem;"></i>
+        </div>
+        <h2 style="color:#1F2933;font-size:1.2rem;font-weight:700;margin:0 0 8px;">مدقّق / Auditor</h2>
+        <p style="color:#667085;font-size:.92rem;margin:0 0 20px;flex:1;">
+          مسار المدقّقين قيد التهيئة. سجّل اهتمامك الآن وسنعلمك عند توفّر تدفّق المدقّق الكامل.
+        </p>
+        <a href="{% url 'core:auditor_register' %}"
+           style="display:inline-block;text-align:center;background:#FFFFFF;color:#1F2933;font-weight:600;
+                  padding:11px 18px;border-radius:10px;text-decoration:none;border:1px solid #D8E1DD;">تعرّف على مسار المدقّق</a>
+      </div>
+    </div>
+
+    <p style="text-align:center;color:#667085;font-size:.9rem;margin-top:28px;">
+      لديك حساب بالفعل؟
+      <a href="{% url 'core:login' %}" style="color:#0F5D46;font-weight:600;text-decoration:none;">تسجيل الدخول</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

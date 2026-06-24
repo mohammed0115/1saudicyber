@@ -196,6 +196,80 @@ def logout_view(request):
     return redirect('core:landing')
 
 
+# ============================================================
+# Phase 4A — Self-service company registration + onboarding (additive).
+# Does NOT replace register_company; never creates CompanyControl; tenant-safe.
+# ============================================================
+def get_started(request):
+    """Entry experience: choose 'company' or 'auditor'. Read-only, public."""
+    return render(request, 'onboarding/start.html')
+
+
+def auditor_interest(request):
+    """Auditor onboarding placeholder (no auditor workflow in Phase 4A)."""
+    return render(request, 'onboarding/auditor.html')
+
+
+@require_http_methods(["GET", "POST"])
+def company_self_register(request):
+    """Self-service company registration → creates User + Company, logs in,
+    routes to onboarding. Additive; no CompanyControl, no destructive change."""
+    from .forms import SelfServiceRegistrationForm
+    if request.user.is_authenticated:
+        return redirect('core:onboarding')
+    if request.method == 'POST':
+        form = SelfServiceRegistrationForm(request.POST)
+        if form.is_valid():
+            d = form.cleaned_data
+            with transaction.atomic():
+                company = Company.objects.create(
+                    name=d.get('company_name') or d['company_name_ar'],
+                    name_ar=d['company_name_ar'],
+                    cr_number=d['cr_number'],
+                    sector=d['sector'],
+                    size=d['size'],
+                    city=d.get('city', ''),
+                    country=d.get('country') or 'SA',
+                    description=d.get('description', ''),
+                    contact_email=d['email'],
+                    contact_phone=d.get('phone', ''),
+                    target_nca=d.get('target_nca', False),
+                    target_aramco=d.get('target_aramco', False),
+                    target_sabic=d.get('target_sabic', False),
+                )
+                user = User.objects.create_user(
+                    username=d['email'], email=d['email'], password=d['password'],
+                    first_name=d['first_name'], last_name=d['last_name'],
+                    phone=d.get('phone', ''), company=company, role='company_admin',
+                )
+            login(request, user)
+            messages.success(request, 'تم إنشاء حساب شركتك بنجاح. مرحبًا بك في CyberTrust.')
+            return redirect('core:onboarding')
+        return render(request, 'onboarding/register.html', {'form': form})
+    return render(request, 'onboarding/register.html', {'form': SelfServiceRegistrationForm()})
+
+
+@login_required
+def onboarding(request):
+    """Welcome + onboarding steps for the user's own company (tenant-scoped)."""
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'onboarding/welcome.html', {'company': company})
+
+
+@login_required
+@require_http_methods(["POST"])
+def onboarding_complete(request):
+    """Mark onboarding complete for the user's own company, then enter the journey."""
+    company = request.user.company
+    if company and not company.onboarding_completed:
+        company.onboarding_completed = True
+        company.save(update_fields=['onboarding_completed', 'updated_at'])
+    messages.success(request, 'تم إكمال التهيئة. هذه لوحة رحلة الامتثال الخاصة بك.')
+    return redirect('compliance:dashboard')
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def delete_company_data(request):

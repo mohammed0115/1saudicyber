@@ -144,6 +144,35 @@
     {% endif %}
     {% endblock %}
 
+    <!-- Phase 4A — calm, enterprise loading overlay (only shows for forms with data-busy) -->
+    <div id="ct-busy-overlay" aria-live="polite" aria-hidden="true"
+         style="display:none;position:fixed;inset:0;z-index:60;background:rgba(31,41,51,0.45);
+                align-items:center;justify-content:center;">
+        <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;padding:28px 36px;
+                    box-shadow:0 8px 30px rgba(31,41,51,0.12);text-align:center;min-width:240px;">
+            <div style="margin:0 auto 14px;width:38px;height:38px;border-radius:50%;
+                        border:3px solid #D8E1DD;border-top-color:#0F5D46;animation:ct-spin 0.9s linear infinite;"></div>
+            <p id="ct-busy-msg" style="color:#1F2933;font-size:0.95rem;margin:0;">جارٍ المعالجة...</p>
+            <p style="color:#667085;font-size:0.8rem;margin:6px 0 0;">يرجى الانتظار، قد تستغرق هذه الخطوة لحظات.</p>
+        </div>
+    </div>
+    <style>@keyframes ct-spin{to{transform:rotate(360deg)}}</style>
+    <script>
+    (function () {
+        var overlay = document.getElementById('ct-busy-overlay');
+        var msg = document.getElementById('ct-busy-msg');
+        document.querySelectorAll('form[data-busy]').forEach(function (f) {
+            f.addEventListener('submit', function () {
+                // Respect native HTML5 validation: only show once the form actually submits.
+                if (f.checkValidity && !f.checkValidity()) { return; }
+                msg.textContent = f.getAttribute('data-busy') || 'جارٍ المعالجة...';
+                overlay.style.display = 'flex';
+                overlay.setAttribute('aria-hidden', 'false');
+            });
+        });
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
