@@ -13,7 +13,7 @@
       <h1 style="color:#1F2933;font-size:1.45rem;font-weight:700;margin:0 0 10px;">تفعيل الاشتراك مطلوب لتنزيل التقارير</h1>
       <p style="color:#667085;font-size:.98rem;margin:0 0 8px;">
         يمكنك إكمال رحلة الامتثال ورفع الأدلة، لكن
-        {% if mode == 'export' %}تنزيل ملفات التقارير{% else %}عرض التقارير الكاملة{% endif %}
+        {% if mode == 'export' %}تنزيل ملفات التقارير{% elif mode == 'assign' %}إسناد الملف إلى مدقق داخل المنصة{% else %}عرض التقارير الكاملة{% endif %}
         يتطلب اشتراكًا فعالًا.
       </p>
       <p style="color:#667085;font-size:.92rem;margin:0 0 24px;">

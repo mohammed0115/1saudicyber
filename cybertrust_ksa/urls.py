@@ -24,6 +24,7 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('ai/', include('ai_engine.urls')),
     path('auditor/', include('auditor_portal.urls')),
+    path('auditors/', include('auditors.urls')),
     path('monitoring/', include('monitoring.urls')),
 ]
 

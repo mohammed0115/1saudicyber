@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}لوحة المدقّق - CyberTrust{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div style="max-width:880px;margin:0 auto;padding:8px 4px 24px;">
+    <h1 style="color:#1F2933;font-size:1.5rem;font-weight:700;margin:0 0 4px;">لوحة المدقّق</h1>
+    <p style="color:#667085;font-size:.95rem;margin:0 0 18px;">الطلبات المُسندة إليك فقط. القرار النهائي للامتثال يبقى لفريق المنصّة المختص.</p>
+
+    {% if not profile.is_active_auditor %}
+      <div style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;border-radius:12px;padding:18px;font-size:.95rem;">
+        <i class="fas fa-hourglass-half ms-1"></i> حسابك ({{ profile.get_status_display }}) لا يتيح الوصول إلى بيانات الشركات. سيتم إشعارك عند تفعيل الحساب.
+      </div>
+    {% else %}
+      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;overflow:hidden;">
+        <div style="padding:12px 16px;background:#EAF3EF;color:#0F5D46;font-weight:700;">الطلبات المُسندة</div>
+        <table style="width:100%;font-size:.9rem;border-collapse:collapse;">
+          <thead style="color:#667085;"><tr>
+            <th style="text-align:right;padding:10px 16px;">الشركة</th>
+            <th style="text-align:right;padding:10px 16px;">النطاق</th>
+            <th style="text-align:right;padding:10px 16px;">الحالة</th>
+            <th style="text-align:right;padding:10px 16px;"></th>
+          </tr></thead>
+          <tbody>
+          {% for a in assignments %}
+            <tr style="border-top:1px solid #EEF2F0;">
+              <td style="padding:10px 16px;color:#1F2933;">{{ a.company.name_ar|default:a.company.name }}</td>
+              <td style="padding:10px 16px;color:#667085;">{{ a.get_scope_display }}</td>
+              <td style="padding:10px 16px;"><span style="background:#F4F1EA;color:#1F2933;border-radius:6px;padding:2px 8px;font-size:.8rem;">{{ a.get_status_display }}</span></td>
+              <td style="padding:10px 16px;"><a href="{% url 'auditors:assignment_detail' a.id %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">عرض</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" style="padding:18px 16px;text-align:center;color:#667085;">لا توجد طلبات مُسندة إليك بعد.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

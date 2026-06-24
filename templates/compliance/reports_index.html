@@ -9,11 +9,26 @@
     <div class="rounded-lg p-4 text-sm" style="background:#EAF3EF;border:1px solid #CFE3DA;color:#0F5D46;">
         <i class="fas fa-unlock mr-1"></i> التقارير مفعّلة — يمكنك عرض وتنزيل التقارير الكاملة. (Reports unlocked)
     </div>
+    <!-- Phase 4C — two auditor options for a subscribed company -->
+    <div class="grid md:grid-cols-2 gap-4">
+        <a href="{% url 'compliance:report_evidence_matrix' %}" data-busy="جارٍ تجهيز التقرير..."
+           class="block bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-file-arrow-down text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">تنزيل التقرير لمشاركته مع مدقق خارجي</h2>
+            <p class="text-gov-gray-500 text-sm mt-1">صدّر التقرير (CSV/Excel) وشاركه مع مدقّق خارج المنصّة.</p>
+        </a>
+        <a href="{% url 'auditors:list' %}" data-busy="جارٍ فتح قائمة المدقّقين..."
+           class="block bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-user-shield text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">إسناد الملف إلى مدقق داخل المنصة</h2>
+            <p class="text-gov-gray-500 text-sm mt-1">اطلب مراجعة من مدقّق معتمد داخل CyberTrust.</p>
+        </a>
+    </div>
     {% else %}
     <div class="rounded-lg p-4 text-sm" style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;">
         <i class="fas fa-lock mr-1"></i>
-        التقارير تتطلب اشتراكًا فعّالًا. (Reports require active subscription) —
-        يمكنك إكمال الرحلة ورفع الأدلة، لكن عرض/تنزيل التقارير الكاملة يتطلب تفعيل الاشتراك.
+        يتطلب تنزيل التقارير أو إسناد الملف إلى مدقق تفعيل الاشتراك. (Subscription required) —
+        يمكنك إكمال الرحلة ورفع الأدلة، لكن تنزيل التقارير الكاملة وإسناد المدقّق يتطلب تفعيل الاشتراك.
         <a href="{% url 'compliance:report_executive_summary' %}" class="underline font-medium mr-1">طلب تفعيل الاشتراك</a>
     </div>
     {% endif %}
