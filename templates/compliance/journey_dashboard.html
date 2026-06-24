@@ -64,6 +64,15 @@
         </ul>
     </div>
 
+    <div class="rounded-lg p-3 text-sm flex items-center justify-between gap-3"
+         style="{% if subscription_active %}background:#EAF3EF;border:1px solid #CFE3DA;color:#0F5D46;{% else %}background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;{% endif %}">
+        <span>
+            <i class="fas {% if subscription_active %}fa-unlock{% else %}fa-lock{% endif %} mr-1"></i>
+            {% if subscription_active %}التقارير مفعّلة (Reports unlocked){% else %}التقارير تتطلب اشتراكًا فعّالًا (Reports require active subscription){% endif %}
+        </span>
+        <a href="{% url 'compliance:reports_index' %}" class="underline whitespace-nowrap">التقارير</a>
+    </div>
+
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm">
         <i class="fas fa-info-circle"></i>
         القرار النهائي للامتثال يتّخذه المدقّق فقط. التحليل الآلي استشاري، والضوابط غير المُراجَعة لا تُحتسب كمطابِقة.

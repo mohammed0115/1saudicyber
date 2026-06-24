@@ -5,8 +5,10 @@
     <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gov-green-800">مصفوفة الأدلة — {{ company.name }}</h1>
         <div class="flex gap-2">
-            <a href="{% url 'compliance:export_evidence_matrix_csv' %}" class="text-gov-green-700 hover:underline text-sm">CSV</a>
-            <a href="{% url 'compliance:export_evidence_matrix_xlsx' %}" class="text-gov-green-700 hover:underline text-sm">Excel</a>
+            <a href="{% url 'compliance:export_evidence_matrix_csv' %}" data-busy="جارٍ تجهيز ملف CSV..." class="text-gov-green-700 hover:underline text-sm">
+                <i class="fas fa-file-csv mr-1"></i>CSV</a>
+            <a href="{% url 'compliance:export_evidence_matrix_xlsx' %}" data-busy="جارٍ تجهيز ملف Excel..." class="text-gov-green-700 hover:underline text-sm">
+                <i class="fas fa-file-excel mr-1"></i>Excel</a>
         </div>
     </div>
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-x-auto">

@@ -4,6 +4,20 @@
 <div class="max-w-4xl mx-auto space-y-6">
     <h1 class="text-2xl font-bold text-gov-green-800">تقارير الامتثال</h1>
     <p class="text-gov-gray-600">تقارير للقراءة فقط مبنية على الضوابط الرسمية وقرارات المدقّق. لا تغيّر أي قرار.</p>
+
+    {% if subscription_active %}
+    <div class="rounded-lg p-4 text-sm" style="background:#EAF3EF;border:1px solid #CFE3DA;color:#0F5D46;">
+        <i class="fas fa-unlock mr-1"></i> التقارير مفعّلة — يمكنك عرض وتنزيل التقارير الكاملة. (Reports unlocked)
+    </div>
+    {% else %}
+    <div class="rounded-lg p-4 text-sm" style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;">
+        <i class="fas fa-lock mr-1"></i>
+        التقارير تتطلب اشتراكًا فعّالًا. (Reports require active subscription) —
+        يمكنك إكمال الرحلة ورفع الأدلة، لكن عرض/تنزيل التقارير الكاملة يتطلب تفعيل الاشتراك.
+        <a href="{% url 'compliance:report_executive_summary' %}" class="underline font-medium mr-1">طلب تفعيل الاشتراك</a>
+    </div>
+    {% endif %}
+
     {% if not reviewed_assessment_count %}
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
         <i class="fas fa-circle-info mr-1"></i>

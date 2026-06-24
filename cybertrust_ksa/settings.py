@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'auditor_portal',
     'monitoring',
     'api',
+    'billing',
 ]
 
 MIDDLEWARE = [

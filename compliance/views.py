@@ -154,6 +154,7 @@ def journey_dashboard(request):
     """
     from .user_journey import (build_company_journey_status,
                                get_next_recommended_action, calculate_journey_progress)
+    from billing.subscription_access import company_has_active_subscription
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
@@ -163,6 +164,7 @@ def journey_dashboard(request):
         'next_action': get_next_recommended_action(company),
         'progress': calculate_journey_progress(company),
         'is_staff': request.user.is_staff,
+        'subscription_active': company_has_active_subscription(company),
     })
 
 
@@ -526,6 +528,26 @@ def generate_assessments_view(request):
 # ============================================================
 # Phase 3H — Read-only compliance reports + gap analysis + exports
 # ============================================================
+# Phase 4B — report access is gated behind an active subscription (view + export).
+# Report CALCULATIONS are unchanged; this only controls access to the output.
+def _require_full_reports(request, company):
+    """Return a subscription-required response if the company may not view full reports."""
+    from billing.subscription_access import can_view_full_reports
+    if can_view_full_reports(company):
+        return None
+    return render(request, 'compliance/subscription_required.html',
+                  {'company': company, 'mode': 'view'})
+
+
+def _require_report_export(request, company):
+    """Return a subscription-required response if the company may not export reports."""
+    from billing.subscription_access import can_export_reports
+    if can_export_reports(company):
+        return None
+    return render(request, 'compliance/subscription_required.html',
+                  {'company': company, 'mode': 'export'})
+
+
 @login_required
 def reports_index(request):
     company = request.user.company
@@ -533,11 +555,13 @@ def reports_index(request):
         return render(request, 'dashboard/no_company.html')
     from .reporting import get_approved_framework_versions
     from .models import ControlAssessment
+    from billing.subscription_access import company_has_active_subscription
     reviewed_count = (ControlAssessment.objects.filter(company=company)
                       .exclude(status='not_reviewed').count())
     return render(request, 'compliance/reports_index.html', {
         'company': company, 'frameworks': get_approved_framework_versions(company),
-        'reviewed_assessment_count': reviewed_count})
+        'reviewed_assessment_count': reviewed_count,
+        'subscription_active': company_has_active_subscription(company)})
 
 
 @login_required
@@ -545,6 +569,9 @@ def report_executive_summary(request):
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
+    gate = _require_full_reports(request, company)
+    if gate:
+        return gate
     from .reporting import build_executive_summary
     return render(request, 'compliance/report_executive_summary.html',
                   {'company': company, 'summary': build_executive_summary(company)})
@@ -555,6 +582,9 @@ def report_gap_analysis(request):
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
+    gate = _require_full_reports(request, company)
+    if gate:
+        return gate
     from .reporting import build_framework_gap_analysis
     return render(request, 'compliance/report_gap_analysis.html',
                   {'company': company, 'frameworks': build_framework_gap_analysis(company)})
@@ -565,6 +595,9 @@ def report_evidence_matrix(request):
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
+    gate = _require_full_reports(request, company)
+    if gate:
+        return gate
     from .reporting import build_evidence_matrix
     return render(request, 'compliance/report_evidence_matrix.html',
                   {'company': company, 'rows': build_evidence_matrix(company)})
@@ -576,6 +609,9 @@ def report_framework(request, framework_version_id):
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
+    gate = _require_full_reports(request, company)
+    if gate:
+        return gate
     from .reporting import (get_approved_framework_versions, build_framework_gap_analysis,
                             build_evidence_matrix)
     fv = next((f for f in get_approved_framework_versions(company) if f.id == framework_version_id), None)
@@ -598,6 +634,9 @@ def export_evidence_matrix_csv(request):
     company = request.user.company
     if not company:
         return redirect('compliance:reports_index')
+    gate = _require_report_export(request, company)
+    if gate:
+        return gate
     resp = HttpResponse(content_type='text/csv')
     resp['Content-Disposition'] = 'attachment; filename="evidence_matrix.csv"'
     w = csv.writer(resp)
@@ -618,6 +657,9 @@ def export_evidence_matrix_xlsx(request):
     company = request.user.company
     if not company:
         return redirect('compliance:reports_index')
+    gate = _require_report_export(request, company)
+    if gate:
+        return gate
     try:
         from openpyxl import Workbook
     except Exception:

@@ -3105,7 +3105,9 @@ class ReportingServiceTests(TestCase):
 class ReportViewTests(TestCase):
     def setUp(self):
         from core.models import User
+        from billing.subscription_access import activate_company_subscription
         self.c, self.fv, self.scope = _company_with_assessments()
+        activate_company_subscription(self.c, 'Test Plan', days=30)  # Phase 4B: reports gated
         self.user = User.objects.create_user(email='rep@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
 
@@ -3147,7 +3149,9 @@ class ReportViewTests(TestCase):
 class ReportExportTests(TestCase):
     def setUp(self):
         from core.models import User
+        from billing.subscription_access import activate_company_subscription
         self.c, self.fv, self.scope = _company_with_assessments()
+        activate_company_subscription(self.c, 'Test Plan', days=30)  # Phase 4B: exports gated
         self.user = User.objects.create_user(email='exp@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
         self.client.force_login(self.user)
@@ -3565,8 +3569,10 @@ class SecurityAuthTests(TestCase):
 
 class SecurityTenantIsolationTests(TestCase):
     def setUp(self):
+        from billing.subscription_access import activate_company_subscription
         # Company A = ARAMCO framework; Company B = SABIC framework (distinct codes).
         self.c, self.fv, self.item, self.sub = _full_pipeline('ARAMCO-SACS-002')
+        activate_company_subscription(self.c, 'Test Plan', days=30)  # Phase 4B: reports gated
         self.user = _journey_user(self.c)
         self.other, self.ofv, self.oitem, self.osub = _full_pipeline('SABIC-CYBERTRUST-1-0')
         self.oassessment = ControlAssessment.objects.filter(company=self.other).first()

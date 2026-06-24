@@ -161,13 +161,27 @@
     (function () {
         var overlay = document.getElementById('ct-busy-overlay');
         var msg = document.getElementById('ct-busy-msg');
+        function show(text) {
+            msg.textContent = text || 'جارٍ المعالجة...';
+            overlay.style.display = 'flex';
+            overlay.setAttribute('aria-hidden', 'false');
+        }
         document.querySelectorAll('form[data-busy]').forEach(function (f) {
             f.addEventListener('submit', function () {
                 // Respect native HTML5 validation: only show once the form actually submits.
                 if (f.checkValidity && !f.checkValidity()) { return; }
-                msg.textContent = f.getAttribute('data-busy') || 'جارٍ المعالجة...';
-                overlay.style.display = 'flex';
-                overlay.setAttribute('aria-hidden', 'false');
+                show(f.getAttribute('data-busy'));
+            });
+        });
+        // Links (e.g. report exports/downloads) show a brief, calm preparing state.
+        document.querySelectorAll('a[data-busy]').forEach(function (a) {
+            a.addEventListener('click', function () {
+                show(a.getAttribute('data-busy'));
+                // Downloads do not navigate away; hide the overlay shortly after.
+                setTimeout(function () {
+                    overlay.style.display = 'none';
+                    overlay.setAttribute('aria-hidden', 'true');
+                }, 2500);
             });
         });
     })();
