@@ -40,6 +40,9 @@
       <p style="color:#667085;font-size:.82rem;margin:0 0 10px;">ملخّص مصفوفة الأدلة: {{ context.matrix_rows|length }} ضابطًا (عرض مختصر، للقراءة فقط).</p>
       <a href="{% url 'risk:auditor_view' assignment.id %}" data-busy="جارٍ تحميل سجل المخاطر..."
          style="color:#0F5D46;text-decoration:none;font-weight:600;font-size:.85rem;">عرض سجل المخاطر (للقراءة فقط)</a>
+      <span style="color:#D8E1DD;">·</span>
+      <a href="{% url 'monitoring:auditor_view' assignment.id %}" data-busy="جارٍ تحميل المراقبة..."
+         style="color:#0F5D46;text-decoration:none;font-weight:600;font-size:.85rem;">عرض المراقبة (للقراءة فقط)</a>
     </div>
     {% endif %}
   </div>

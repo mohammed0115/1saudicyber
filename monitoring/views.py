@@ -1,7 +1,7 @@
 """
 Monitoring Views - Continuous compliance hub, alerts, reports
 """
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import ComplianceScore, Alert, MonthlyReport, CertificateTracker
@@ -111,3 +111,67 @@ def event_stream(request):
     resp['Cache-Control'] = 'no-cache'
     resp['X-Accel-Buffering'] = 'no'
     return resp
+
+
+# ============================================================
+# Phase 5B — Continuous Monitoring Foundation (read-only surfaces)
+# ============================================================
+@login_required
+def monitoring_overview(request):
+    """Company-scoped continuous-monitoring dashboard (counters)."""
+    from .continuous import summarize_company_monitoring
+    from .models import MonitoringCheck, MonitoringFinding
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'monitoring/overview.html', {
+        'company': company,
+        'summary': summarize_company_monitoring(company),
+        'checks': MonitoringCheck.objects.filter(company=company).select_related('control')[:50],
+        'findings': MonitoringFinding.objects.filter(
+            company=company).select_related('monitoring_run')[:50],
+    })
+
+
+@login_required
+def checks_list(request):
+    from .models import MonitoringCheck
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'monitoring/checks_list.html', {
+        'company': company,
+        'checks': MonitoringCheck.objects.filter(company=company).select_related(
+            'control', 'framework_version')})
+
+
+@login_required
+def findings_list(request):
+    from .models import MonitoringFinding
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'monitoring/findings_list.html', {
+        'company': company,
+        'findings': MonitoringFinding.objects.filter(company=company).select_related('monitoring_run')})
+
+
+@login_required
+def auditor_monitoring_view(request, assignment_id):
+    """Read-only monitoring summary for an auditor's accepted assignment (active auditor only)."""
+    from auditors import services as auditor_services
+    from .continuous import summarize_company_monitoring
+    from .models import MonitoringFinding
+    from django.contrib import messages
+    assignment = auditor_services.get_assignment_for_user(request.user, assignment_id)
+    if assignment is None:
+        messages.error(request, 'الطلب غير موجود أو لا يخصّك.')
+        return redirect('auditors:dashboard')
+    if not auditor_services.auditor_can_view_company_context(assignment):
+        messages.error(request, 'لا يمكن عرض بيانات الشركة قبل تفعيل الحساب وقبول الإسناد.')
+        return redirect('auditors:dashboard')
+    company = assignment.company
+    return render(request, 'monitoring/auditor_view.html', {
+        'company': company, 'assignment': assignment,
+        'summary': summarize_company_monitoring(company),
+        'findings': MonitoringFinding.objects.filter(company=company)[:50]})

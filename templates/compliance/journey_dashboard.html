@@ -75,6 +75,19 @@
         <a href="{% url 'compliance:reports_index' %}" class="underline whitespace-nowrap">التقارير</a>
     </div>
 
+    <!-- Phase 5B — Continuous Monitoring summary + link (informational) -->
+    <div class="bg-white rounded-lg border border-gov-gray-100 shadow-sm p-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-4 flex-wrap text-sm">
+            <span class="font-semibold text-gov-green-800">المراقبة المستمرة</span>
+            <span class="text-gov-gray-600">فحوص نشطة: <strong>{{ monitoring_summary.active_checks }}</strong></span>
+            <span class="text-amber-700">مستحقّة الآن: <strong>{{ monitoring_summary.due }}</strong></span>
+            <span class="text-gov-green-700">نتائج مفتوحة: <strong>{{ monitoring_summary.open_findings }}</strong></span>
+            <span class="text-gov-gray-500">آخر نتيجة: {{ monitoring_summary.last_result }}</span>
+        </div>
+        <a href="{% url 'monitoring:overview' %}" data-busy="جارٍ تحميل المراقبة..."
+           class="text-gov-green-700 hover:underline text-sm whitespace-nowrap">فتح المراقبة</a>
+    </div>
+
     <!-- Phase 5A — Risk register summary + link -->
     <div class="bg-white rounded-lg border border-gov-gray-100 shadow-sm p-4 flex items-center justify-between gap-3">
         <div class="flex items-center gap-4 flex-wrap text-sm">
