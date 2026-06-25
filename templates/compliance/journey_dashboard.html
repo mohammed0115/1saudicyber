@@ -4,11 +4,12 @@
 {% block content %}
 <div class="max-w-5xl mx-auto space-y-6">
     <div>
-        <h1 class="text-2xl font-bold text-gov-green-800">مسار الامتثال (Compliance Journey)</h1>
+        <h1 class="text-2xl font-bold text-gov-green-800">مسار الامتثال</h1>
         <p class="text-gov-gray-600">نظرة عامة على مراحل عمل {{ company.name }} من البداية إلى التقارير. هذه الصفحة للعرض فقط.</p>
     </div>
 
-    {% include "compliance/_workflow_stepper.html" %}
+    {# Phase UX-WIZARD-A — target compliance journey wizard (5 stages / 16 substeps) #}
+    {% include "components/journey_wizard.html" with journey=journey %}
 
     <!-- Progress + next recommended action -->
     <div class="grid md:grid-cols-3 gap-4">
@@ -100,6 +101,13 @@
         <a href="{% url 'risk:list' %}" data-busy="جارٍ تحميل سجل المخاطر..."
            class="text-gov-green-700 hover:underline text-sm whitespace-nowrap">فتح السجل</a>
     </div>
+
+    <details class="bg-white rounded-lg border border-gov-gray-100 shadow-sm">
+        <summary class="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gov-green-800">عرض المسار التفصيلي</summary>
+        <div class="px-4 pb-4">
+            {% include "compliance/_workflow_stepper.html" %}
+        </div>
+    </details>
 
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm">
         <i class="fas fa-info-circle"></i>

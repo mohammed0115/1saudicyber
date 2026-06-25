@@ -3846,3 +3846,108 @@ class Phase3JBackwardCompatTests(TestCase):
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'regj@x.com',
                 'password': 'longenough12', 'target_nca': 'on'})
         self.assertEqual(resp.status_code, 302)
+
+
+# ============================================================
+# Phase UX-WIZARD-A — Compliance Journey Stepper/Wizard
+# ============================================================
+from compliance.journey import build_company_compliance_journey, STATUSES as _WIZARD_STATUSES
+
+
+def _wstep(journey, key):
+    return next(s for s in journey['steps'] if s['key'] == key)
+
+
+class CompanyJourneyWizardBuilderTests(TestCase):
+    def test_builder_returns_five_main_stages(self):
+        c = _company()
+        j = build_company_compliance_journey(c)
+        self.assertEqual(len(j['stages']), 5)
+        self.assertEqual([s['title'] for s in j['stages']],
+                         ['البدء والتصنيف', 'الأطر والضوابط', 'الأدلة والتحليل',
+                          'الفجوات والمعالجة', 'المراجعة والتقارير والمراقبة'])
+
+    def test_builder_includes_sixteen_substeps(self):
+        j = build_company_compliance_journey(_company())
+        self.assertEqual(len(j['steps']), 16)
+        total = sum(len(st['steps']) for st in j['stages'])
+        self.assertEqual(total, 16)
+
+    def test_statuses_are_valid(self):
+        j = build_company_compliance_journey(_company())
+        self.assertTrue(all(s['status'] in _WIZARD_STATUSES for s in j['steps']))
+
+    def test_current_and_next_action_present(self):
+        j = build_company_compliance_journey(_company())
+        self.assertEqual(sum(1 for s in j['steps'] if s['status'] == 'current'), 1)
+        self.assertTrue(j['next_action']['title'])
+
+    def test_unfinished_features_shown_as_planned_truthfully(self):
+        j = build_company_compliance_journey(_company())
+        self.assertEqual(_wstep(j, 'ocr_extraction')['status'], 'planned')
+        self.assertEqual(_wstep(j, 'rule_engine')['status'], 'planned')
+        self.assertFalse(_wstep(j, 'ocr_extraction')['is_available'])
+
+    def test_reports_locked_without_subscription(self):
+        j = build_company_compliance_journey(_company())
+        self.assertEqual(_wstep(j, 'reports')['status'], 'locked')
+
+    def test_monitoring_foundation_step_present(self):
+        j = build_company_compliance_journey(_company())
+        self.assertEqual(_wstep(j, 'monitoring')['title'], 'المراقبة المستمرة')
+
+    def test_builder_is_tenant_scoped(self):
+        from compliance.tests import _company_with_submission
+        a, item, sub = _company_with_submission()  # has evidence
+        b = _company()
+        self.assertEqual(_wstep(build_company_compliance_journey(a), 'evidence_upload')['status'], 'completed')
+        self.assertNotEqual(_wstep(build_company_compliance_journey(b), 'evidence_upload')['status'], 'completed')
+
+    def test_builder_does_not_write(self):
+        from compliance.models import ControlAssessment, EvidenceSubmission
+        from risk.models import RiskItem
+        c, fv, scope = _company_with_assessments()
+        counts = lambda: (ControlAssessment.objects.count(), EvidenceSubmission.objects.count(),
+                          RiskItem.objects.count())
+        before = counts()
+        build_company_compliance_journey(c)
+        self.assertEqual(before, counts())
+
+
+class CompanyJourneyWizardViewTests(TestCase):
+    def setUp(self):
+        self.c = _company()
+        self.client.force_login(_journey_user(self.c))
+
+    def test_dashboard_renders_wizard(self):
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'مسار جاهزية الامتثال')
+        self.assertContains(resp, 'ct-journey-wizard')
+
+    def test_wizard_shows_arabic_stage_and_step_labels(self):
+        resp = self.client.get(reverse('compliance:dashboard'))
+        for label in ['البدء والتصنيف', 'التصنيف الذكي', 'مكتبة الضوابط',
+                      'النتيجة النهائية بعد المراجعة', 'المراقبة المستمرة']:
+            self.assertContains(resp, label)
+
+    def test_wizard_has_mobile_accordion_markup(self):
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, 'ct-stage')           # collapsible stage (mobile-friendly)
+        self.assertContains(resp, 'ct-step-card')
+
+    def test_no_old_brand_or_legacy_count_or_certification(self):
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        for bad in ['CyberTrust KSA', '334', 'شهادة رسمية', 'اعتماد رسمي',
+                    'certification', 'Certification', 'مطابق 100']:
+            self.assertNotIn(bad, body)
+
+    def test_no_english_in_parentheses_in_wizard_heading(self):
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertNotIn('مسار الامتثال (Compliance Journey)', body)
+
+    def test_dashboard_requires_login(self):
+        self.client.logout()
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)

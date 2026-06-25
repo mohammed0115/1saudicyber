@@ -1,0 +1,21 @@
+{% comment %}Expects `step`. One substep card.{% endcomment %}
+<div class="ct-step-card rounded-xl border p-4 flex flex-col h-full"
+     style="background:#FFFFFF;border-color:#D9E2DE;{% if step.status == 'current' %}box-shadow:0 0 0 2px #0F5D46;{% endif %}">
+  <div class="flex items-start justify-between gap-2 mb-2">
+    <h4 class="font-semibold text-sm" style="color:#111827;">{{ step.title }}</h4>
+    {% include "components/status_badge.html" with status=step.status %}
+  </div>
+  <p class="text-xs mb-3 flex-1" style="color:#6B7280;">{{ step.description }}</p>
+  {% if step.is_advisory %}
+  <p class="text-[0.7rem] mb-2" style="color:#8A5A12;"><i class="fas fa-circle-info"></i> استشاري — لا يُعد قرارًا نهائيًا.</p>
+  {% endif %}
+  {% if step.is_available and step.url_name and step.action_label %}
+  <a href="{% url step.url_name %}" data-busy="جارٍ فتح الخطوة..."
+     class="ct-step-action inline-block text-center rounded-lg text-xs font-medium px-3 py-2"
+     style="{% if step.status == 'current' %}background:#0F5D46;color:#fff;{% else %}background:#F7F9F8;border:1px solid #D9E2DE;color:#0F5D46;{% endif %}">
+    {{ step.action_label }}
+  </a>
+  {% else %}
+  <span class="text-[0.7rem]" style="color:#9aa4b2;">غير متاح بعد</span>
+  {% endif %}
+</div>

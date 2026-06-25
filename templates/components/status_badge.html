@@ -1,0 +1,18 @@
+{% load i18n %}{% comment %}Expects `status`. Bilingual-ready (Arabic default msgid).{% endcomment %}
+<span class="ct-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+      style="{% if status == 'completed' %}background:#E7F2EC;border:1px solid #CFE3DA;color:#0F5D46;
+             {% elif status == 'current' %}background:#0F5D46;color:#fff;
+             {% elif status == 'needs_action' %}background:#FBF0DC;border:1px solid #E6D7B8;color:#8A5A12;
+             {% elif status == 'locked' %}background:#F0F2F1;border:1px solid #D9E2DE;color:#6B7280;
+             {% elif status == 'optional' %}background:#EAF1EF;border:1px solid #D9E2DE;color:#1F6B63;
+             {% else %}background:#F0F2F1;border:1px solid #D9E2DE;color:#6B7280;{% endif %}">
+  <i class="fas {% if status == 'completed' %}fa-circle-check{% elif status == 'current' %}fa-location-arrow{% elif status == 'needs_action' %}fa-circle-exclamation{% elif status == 'locked' %}fa-lock{% elif status == 'optional' %}fa-circle-dot{% else %}fa-clock{% endif %} text-[0.65rem]"></i>
+  {% if status == 'completed' %}{% trans "مكتمل" %}
+  {% elif status == 'current' %}{% trans "الخطوة الحالية" %}
+  {% elif status == 'needs_action' %}{% trans "يحتاج إجراء" %}
+  {% elif status == 'locked' %}{% trans "مقفل" %}
+  {% elif status == 'planned' %}{% trans "قيد التجهيز" %}
+  {% elif status == 'not_available' %}{% trans "غير متاح حاليًا" %}
+  {% elif status == 'optional' %}{% trans "اختياري" %}
+  {% else %}{{ status }}{% endif %}
+</span>

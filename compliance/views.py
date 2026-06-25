@@ -158,11 +158,13 @@ def journey_dashboard(request):
     from .workflow_stepper import build_company_workflow_stepper
     from risk.services import risk_dashboard_counts
     from monitoring.continuous import summarize_company_monitoring
+    from .journey import build_company_compliance_journey
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
     return render(request, 'compliance/journey_dashboard.html', {
         'company': company,
+        'journey': build_company_compliance_journey(company, request.user),
         'stages': build_company_journey_status(company),
         'next_action': get_next_recommended_action(company),
         'progress': calculate_journey_progress(company),
