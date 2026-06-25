@@ -1,4 +1,6 @@
 # CyberTrust KSA — Current System Audit
+> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. The internal Django project package name remains `cybertrust_ksa` (former internal project name: CyberTrust KSA); it is technical-only and intentionally unchanged.
+
 
 **Status:** Ready for UAT (after deployment setup) · **Last reviewed:** Phase 3K
 

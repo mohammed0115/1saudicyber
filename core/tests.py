@@ -276,7 +276,7 @@ class Phase4ARegistrationOnboardingTests(TestCase):
         self.assertEqual(resp.url, reverse('core:onboarding'))
         follow = self.client.get(reverse('core:onboarding'))
         self.assertEqual(follow.status_code, 200)
-        self.assertContains(follow, 'مرحبًا بك في CyberTrust')
+        self.assertContains(follow, 'مرحبًا بك في 1SaudiCyber')
 
     def test_onboarding_completion_redirects_to_journey(self):
         self.client.post(reverse('core:company_register'), self._payload())
@@ -344,7 +344,7 @@ class Phase4ARegistrationOnboardingTests(TestCase):
     def test_registration_page_renders(self):
         resp = self.client.get(reverse('core:company_register'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'سجّل شركتك في CyberTrust')
+        self.assertContains(resp, 'سجّل شركتك في 1SaudiCyber')
 
     def test_onboarding_page_renders(self):
         self.client.post(reverse('core:company_register'), self._payload())
@@ -947,3 +947,96 @@ class CompanyWorkflowStepperViewTests(TestCase):
         self._login(c)
         resp = self.client.get(reverse('compliance:dashboard'))
         self.assertContains(resp, 'جارٍ فتح الخطوة')
+
+
+# ============================================================
+# Phase 4D-FIX-B — Brand/domain rename to 1saudicyber.com
+# ============================================================
+class Phase4DFixBBrandingTests(TestCase):
+    def _register(self, cr='2727272727', email='brand@co.example'):
+        return self.client.post(reverse('core:company_register'), {
+            'first_name': 'S', 'last_name': 'A', 'email': email,
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': cr,
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+
+    def test_public_brand_uses_1saudicyber(self):
+        self.assertContains(self.client.get(reverse('core:landing')), '1SaudiCyber')
+
+    def test_landing_no_longer_shows_old_cybertrust_brand_as_primary(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertNotContains(resp, 'CyberTrust KSA')  # old brand label gone
+
+    def test_footer_uses_1saudicyber_domain(self):
+        self.assertContains(self.client.get(reverse('core:landing')), '1saudicyber.com')
+
+    def test_get_started_uses_1saudicyber_brand(self):
+        self.assertContains(self.client.get(reverse('core:get_started')), '1SaudiCyber')
+
+    def test_onboarding_uses_1saudicyber_brand(self):
+        self._register()
+        self.assertContains(self.client.get(reverse('core:onboarding')), '1SaudiCyber')
+
+    def test_auditor_pages_use_1saudicyber_brand_if_brand_visible(self):
+        self.assertContains(self.client.get(reverse('auditors:register')), '1SaudiCyber')
+
+    def test_docs_or_env_examples_include_1saudicyber_domain_if_tested(self):
+        from django.conf import settings as dj
+        path = dj.BASE_DIR / 'deployment' / 'docker' / 'env.example'
+        text = path.read_text(encoding='utf-8')
+        self.assertIn('1saudicyber.com', text)
+
+    def test_no_legacy_334_reintroduced(self):
+        self.assertNotContains(self.client.get(reverse('core:landing')), '334')
+
+    def test_no_certification_claims_reintroduced(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        for term in ['certification', 'Certification', 'Certify', 'شهادة رسمية']:
+            self.assertNotIn(term, body)
+
+    def test_public_pages_remain_arabic_rtl(self):
+        resp = self.client.get(reverse('core:landing'))
+        self.assertContains(resp, 'dir="rtl"')
+        self.assertContains(resp, 'جاهزية الامتثال')
+
+    # --- Backward compatibility ---
+    def test_company_registration_still_works(self):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_framework_versions', stdout=StringIO())
+        resp = self._register(cr='2828282828', email='brand2@co.example')
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Company.objects.filter(cr_number='2828282828').exists())
+
+    def test_onboarding_still_works(self):
+        self._register(cr='2929292929', email='brand3@co.example')
+        self.assertEqual(self.client.get(reverse('core:onboarding')).status_code, 200)
+
+    def test_subscription_gated_reports_still_work(self):
+        from auditors.tests import _company_user
+        c, cu = _company_user(subscribe=False)
+        self.client.force_login(cu)
+        self.assertContains(self.client.get(reverse('compliance:report_executive_summary')),
+                            'تفعيل الاشتراك مطلوب')
+
+    def test_auditor_assignment_still_works(self):
+        from auditors.tests import _company_user, _auditor
+        from auditors.models import AuditorAssignment
+        c, cu = _company_user(subscribe=True)
+        _u, p = _auditor()
+        self.client.force_login(cu)
+        self.client.post(reverse('auditors:assign', args=[p.id]))
+        self.assertEqual(AuditorAssignment.objects.filter(company=c, auditor=p).count(), 1)
+
+    def test_workflow_stepper_still_works(self):
+        from compliance.tests import _company
+        c = _company()
+        from compliance.tests import _journey_user
+        self.client.force_login(_journey_user(c))
+        self.assertContains(self.client.get(reverse('compliance:dashboard')), 'مسار عمل الشركة')
+
+    def test_reports_still_work(self):
+        from auditors.tests import _company_user
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        self.assertEqual(self.client.get(reverse('compliance:report_executive_summary')).status_code, 200)

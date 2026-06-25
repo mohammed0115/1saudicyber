@@ -1,4 +1,6 @@
 # CyberTrust KSA — Release Readiness Summary
+> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. The internal Django project package name remains `cybertrust_ksa` (former internal project name: CyberTrust KSA); it is technical-only and intentionally unchanged.
+
 
 **Overall status: Ready for internal UAT after deployment setup.**
 This is **not** a production go-live sign-off — Docker/deployment configuration (Phase 3L) is not done yet.
