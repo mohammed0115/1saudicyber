@@ -1,0 +1,3 @@
+Cloud Security Controls (UAT sample — not a real document)
+Shared-responsibility model. Encryption in transit and at rest. Key management. Logging and monitoring.
+Provider assurance review. Data residency considerations for KSA.

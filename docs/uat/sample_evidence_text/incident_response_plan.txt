@@ -1,0 +1,3 @@
+Incident Response Plan (UAT sample — not a real document)
+Phases: prepare, detect, analyze, contain, eradicate, recover, lessons-learned.
+Severity levels and escalation. Reporting to authorities where required. Tested annually.

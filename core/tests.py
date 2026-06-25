@@ -1040,3 +1040,66 @@ class Phase4DFixBBrandingTests(TestCase):
         c, cu = _company_user(subscribe=True)
         self.client.force_login(cu)
         self.assertEqual(self.client.get(reverse('compliance:report_executive_summary')).status_code, 200)
+
+
+# ============================================================
+# Phase 4E — UAT demo seed command (safe, local-only)
+# ============================================================
+class SeedUatDemoDataTests(TestCase):
+    def _run(self, *args):
+        from io import StringIO
+        from django.core.management import call_command
+        out = StringIO()
+        call_command('seed_uat_demo_data', *args, stdout=out, stderr=out)
+        return out.getvalue()
+
+    def test_seed_uat_demo_data_dry_run_does_not_write(self):
+        before = (Company.objects.count(), User.objects.count())
+        out = self._run()  # default = dry-run
+        self.assertIn('DRY-RUN', out)
+        self.assertEqual((Company.objects.count(), User.objects.count()), before)
+
+    def test_seed_uat_demo_data_apply_creates_sample_company(self):
+        self._run('--apply')
+        self.assertTrue(Company.objects.filter(cr_number='1010123456').exists())
+        self.assertTrue(User.objects.filter(email='client@1saudicyber.local').exists())
+        from auditors.models import AuditorProfile
+        self.assertTrue(AuditorProfile.objects.filter(user__email='auditor@1saudicyber.local',
+                                                      status='active').exists())
+
+    def test_seed_uat_demo_data_idempotent(self):
+        self._run('--apply')
+        self._run('--apply')
+        self.assertEqual(Company.objects.filter(cr_number='1010123456').count(), 1)
+        self.assertEqual(User.objects.filter(email='client@1saudicyber.local').count(), 1)
+
+    def test_seed_uat_demo_data_does_not_create_companycontrol(self):
+        from compliance.models import CompanyControl
+        before = CompanyControl.objects.count()
+        self._run('--apply')
+        self.assertEqual(CompanyControl.objects.count(), before)
+
+    def test_seed_uat_demo_data_does_not_import_otcc_dcc(self):
+        from compliance.models import Control
+        self._run('--apply')
+        self.assertFalse(Control.objects.filter(control_id__icontains='OTCC').exists())
+        self.assertFalse(Control.objects.filter(control_id__icontains='DCC').exists())
+        # And no compliance decisions were fabricated.
+        from compliance.models import ControlAssessment
+        self.assertEqual(ControlAssessment.objects.count(), 0)
+
+    def test_seed_uat_demo_data_requires_or_handles_password_safely(self):
+        import os
+        from unittest import mock
+        # No UAT_DEMO_PASSWORD env -> apply still works using a documented LOCAL-ONLY default + warning.
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('UAT_DEMO_PASSWORD', None)
+            out = self._run('--apply')
+        self.assertIn('UAT_DEMO_PASSWORD not set', out)
+        self.assertTrue(User.objects.filter(email='client@1saudicyber.local').exists())
+
+    def test_seed_uat_demo_data_subscribe_flag_activates_subscription(self):
+        from billing.subscription_access import company_has_active_subscription
+        self._run('--apply', '--subscribe')
+        c = Company.objects.get(cr_number='1010123456')
+        self.assertTrue(company_has_active_subscription(c))

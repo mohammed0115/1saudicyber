@@ -1,0 +1,3 @@
+Remote Work Policy (UAT sample — not a real document)
+Approved devices, VPN/MFA, endpoint protection, acceptable use, and data handling for remote workers.
+Awareness training required. Periodic compliance checks.

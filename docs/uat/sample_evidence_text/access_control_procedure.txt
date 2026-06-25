@@ -1,0 +1,3 @@
+Access Control Procedure (UAT sample — not a real document)
+Least-privilege and role-based access. Joiner/mover/leaver process. MFA for privileged and remote access.
+Quarterly access reviews. Unique IDs; no shared accounts.
