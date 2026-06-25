@@ -4,10 +4,10 @@
 {% block content %}
 <div class="max-w-3xl mx-auto space-y-6">
     <div>
-        <h1 class="text-2xl font-bold text-gov-green-800">تصنيف الشركة (Intake)</h1>
+        <h1 class="text-2xl font-bold text-gov-green-800">تصنيف الشركة</h1>
         <p class="text-gov-gray-600">
-            أجب عن الأسئلة التالية لتحديد أطر الامتثال المنطبقة على شركتك.
-            هذه بيانات عمل (Business intake) وليست إعدادات نظام.
+            أجب عن الأسئلة التالية لتحديد أطر الامتثال المناسبة لشركتك.
+            تُستخدم هذه البيانات لتجهيز التصنيف الأولي وخطة الضوابط.
         </p>
     </div>
 
@@ -24,9 +24,9 @@
         {% endif %}
         {% for field in form %}
         <div class="border-b border-gov-gray-100 pb-4">
-            <label class="flex items-start gap-3 cursor-pointer">
-                <span class="pt-0.5">{{ field }}</span>
-                <span>
+            <label class="flex items-start gap-3 cursor-pointer text-right">
+                <span class="pt-0.5 shrink-0">{{ field }}</span>
+                <span class="min-w-0">
                     <span class="block text-sm font-medium text-gov-gray-800">{{ field.label }}</span>
                     {% if field.help_text %}
                         <span class="block text-xs text-gov-gray-500 mt-1">{{ field.help_text }}</span>

@@ -3951,3 +3951,56 @@ class CompanyJourneyWizardViewTests(TestCase):
         resp = self.client.get(reverse('compliance:dashboard'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/login', resp.url)
+
+
+# ============================================================
+# UX-1B-RTL-FIX-A — Arabic shell + RTL layout hardening
+# ============================================================
+class ArabicShellRtlTests(TestCase):
+    def setUp(self):
+        self.c = _company()
+        self.client.force_login(_journey_user(self.c))
+
+    def test_html_renders_rtl_in_arabic_default(self):
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertContains(resp, 'dir="rtl"')
+        self.assertContains(resp, 'lang="ar"')
+
+    def test_nav_labels_are_arabic(self):
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        for label in ['لوحة التحكم', 'مسار الامتثال', 'الأطر', 'الأدلة', 'التقارير', 'المراقبة', 'تسجيل الخروج']:
+            self.assertIn(label, body)
+
+    def test_english_nav_labels_not_shown(self):
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        # The old English nav link labels must be gone (icon + label pattern).
+        for bad in ['</i> Dashboard', '</i> Controls', '</i> Monitoring',
+                    '</i> Reports', '</i> Evidence', '</i> Logout']:
+            self.assertNotIn(bad, body)
+
+    def test_intake_copy_has_no_english_parentheticals(self):
+        resp = self.client.get(reverse('compliance:intake'))
+        self.assertEqual(resp.status_code, 200)
+        body = resp.content.decode()
+        self.assertNotIn('(Intake)', body)
+        self.assertNotIn('Business intake', body)
+        self.assertIn('تصنيف الشركة', body)
+
+    def test_mobile_nav_and_overflow_guard_present(self):
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertIn('fa-bars', body)              # mobile hamburger
+        self.assertIn('overflow-x-hidden', body)    # horizontal-overflow safety layer
+
+    def test_no_old_brand_count_or_certification(self):
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        for bad in ['CyberTrust KSA', '334', 'شهادة رسمية', 'اعتماد رسمي', 'certification']:
+            self.assertNotIn(bad, body)
+
+    def test_dashboard_and_journey_still_render(self):
+        self.assertContains(self.client.get(reverse('compliance:dashboard')), 'مسار جاهزية الامتثال')
+
+    def test_intake_requires_login(self):
+        self.client.logout()
+        resp = self.client.get(reverse('compliance:intake'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
