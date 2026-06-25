@@ -37,7 +37,9 @@
         <div><span style="color:#667085;font-size:.82rem;">فجوات</span><div style="font-weight:700;color:#1F2933;">{{ context.summary.gaps }}</div></div>
         <div><span style="color:#667085;font-size:.82rem;">غير مُراجَعة</span><div style="font-weight:700;color:#1F2933;">{{ context.summary.counts.not_reviewed }}</div></div>
       </div>
-      <p style="color:#667085;font-size:.82rem;margin:0;">ملخّص مصفوفة الأدلة: {{ context.matrix_rows|length }} ضابطًا (عرض مختصر، للقراءة فقط).</p>
+      <p style="color:#667085;font-size:.82rem;margin:0 0 10px;">ملخّص مصفوفة الأدلة: {{ context.matrix_rows|length }} ضابطًا (عرض مختصر، للقراءة فقط).</p>
+      <a href="{% url 'risk:auditor_view' assignment.id %}" data-busy="جارٍ تحميل سجل المخاطر..."
+         style="color:#0F5D46;text-decoration:none;font-weight:600;font-size:.85rem;">عرض سجل المخاطر (للقراءة فقط)</a>
     </div>
     {% endif %}
   </div>

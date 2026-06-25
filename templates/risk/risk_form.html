@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'edit' %}تعديل الخطر{% else %}خطر جديد{% endif %} - 1SaudiCyber{% endblock %}
+{% block extra_head %}
+<style>
+.ct-form input, .ct-form select, .ct-form textarea{width:100%;box-sizing:border-box;border:1px solid #D8E1DD;
+  border-radius:10px;padding:9px 11px;font-size:.92rem;color:#1F2933;background:#fff;font-family:inherit;}
+.ct-form input:focus,.ct-form select:focus,.ct-form textarea:focus{outline:none;border-color:#1F6B63;box-shadow:0 0 0 3px rgba(31,107,99,.12);}
+.ct-form label{display:block;font-size:.85rem;font-weight:600;color:#1F2933;margin:0 0 5px;}
+</style>
+{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gov-green-800 mb-4">{% if mode == 'edit' %}تعديل الخطر{% else %}خطر جديد{% endif %}</h1>
+    <form method="post" class="ct-form bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6 space-y-4"
+          data-busy="جارٍ حفظ الخطر...">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-red-700 text-xs mt-1">{{ field.errors|striptags }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <div class="flex gap-3 items-center pt-2">
+        <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2 rounded-lg text-sm">حفظ الخطر</button>
+        <a href="{% url 'risk:list' %}" class="text-gov-gray-500 text-sm">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}مخاطر الشركة (للقراءة) - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto space-y-5">
+    <a href="{% url 'auditors:assignment_detail' assignment.id %}" class="text-gov-gray-500 text-sm">← تفاصيل الطلب</a>
+    <h1 class="text-2xl font-bold text-gov-green-800">سجل مخاطر {{ company.name_ar|default:company.name }} (للقراءة فقط)</h1>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-gov-green-800">{{ counts.open }}</div><div class="text-xs text-gov-gray-500 mt-1">مفتوحة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-red-700">{{ counts.high_critical }}</div><div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-amber-700">{{ counts.overdue_tasks }}</div><div class="text-xs text-gov-gray-500 mt-1">مهام متأخرة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-gov-green-700">{{ counts.mitigated }}</div><div class="text-xs text-gov-gray-500 mt-1">مُعالَجة</div></div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gov-green-50 text-gov-green-800"><tr>
+          <th class="text-right px-4 py-2">الخطر</th><th class="text-right px-4 py-2">الخطورة</th>
+          <th class="text-right px-4 py-2">الحالة</th><th class="text-right px-4 py-2">الدرجة</th>
+        </tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+        {% for r in risks %}
+          <tr><td class="px-4 py-2">{{ r.title }}</td><td class="px-4 py-2 text-xs">{{ r.severity_label_ar }}</td>
+          <td class="px-4 py-2 text-xs">{{ r.get_status_display }}</td><td class="px-4 py-2">{{ r.inherent_score }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="px-4 py-5 text-center text-gov-gray-500">لا توجد مخاطر مسجّلة.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-gov-gray-500">عرض للقراءة فقط. لا يمكن للمدقّق تعديل المخاطر أو قرارات الامتثال.</p>
+  </div>
+</div>
+{% endblock %}

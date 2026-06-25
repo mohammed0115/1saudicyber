@@ -20,6 +20,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('api.urls')),
     path('', include('core.urls')),
+    path('compliance/risks/', include('risk.urls')),
     path('compliance/', include('compliance.urls')),
     path('dashboard/', include('dashboard.urls')),
     path('ai/', include('ai_engine.urls')),

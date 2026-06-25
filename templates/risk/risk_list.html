@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}سجل المخاطر - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gov-green-800">سجل المخاطر وخطة المعالجة</h1>
+        <p class="text-gov-gray-600">إدارة مخاطر شركتك ومهام المعالجة. القرار النهائي للامتثال يبقى للمدقّق.</p>
+      </div>
+      <a href="{% url 'risk:create' %}" data-busy="جارٍ تحميل النموذج..."
+         class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">خطر جديد</a>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-gov-green-800">{{ counts.open }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مخاطر مفتوحة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-red-700">{{ counts.high_critical }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة مفتوحة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-amber-700">{{ counts.overdue_tasks }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مهام متأخرة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-gov-green-700">{{ counts.mitigated }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مُعالَجة/مغلقة</div></div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gov-green-50 text-gov-green-800"><tr>
+          <th class="text-right px-4 py-2">الخطر</th><th class="text-right px-4 py-2">التصنيف</th>
+          <th class="text-right px-4 py-2">الدرجة</th><th class="text-right px-4 py-2">الخطورة</th>
+          <th class="text-right px-4 py-2">الحالة</th><th class="text-right px-4 py-2">المالك</th>
+          <th class="text-right px-4 py-2"></th>
+        </tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+        {% for r in risks %}
+          <tr>
+            <td class="px-4 py-2 text-gov-gray-800">{{ r.title }}</td>
+            <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.get_category_display }}</td>
+            <td class="px-4 py-2">{{ r.inherent_score }}</td>
+            <td class="px-4 py-2"><span class="px-2 py-0.5 rounded text-xs
+              {% if r.severity == 'critical' %}bg-red-100 text-red-800
+              {% elif r.severity == 'high' %}bg-orange-100 text-orange-800
+              {% elif r.severity == 'medium' %}bg-amber-100 text-amber-800
+              {% else %}bg-gov-green-100 text-gov-green-800{% endif %}">{{ r.severity_label_ar }}</span></td>
+            <td class="px-4 py-2 text-xs">{{ r.get_status_display }}</td>
+            <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.owner_name|default:"—" }}</td>
+            <td class="px-4 py-2"><a href="{% url 'risk:detail' r.id %}" class="text-gov-green-700 hover:underline text-xs">عرض</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="px-4 py-6 text-center text-gov-gray-500">لا توجد مخاطر بعد. أنشئ خطرًا جديدًا أو من فجوة/تحليل.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

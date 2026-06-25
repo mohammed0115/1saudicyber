@@ -39,6 +39,8 @@
             <details class="mt-2"><summary class="cursor-pointer text-gov-gray-600">معاينة النص المُستخرَج{% if analysis.extracted_text_truncated %} (مقتطع){% endif %}</summary>
             <pre class="text-xs bg-gov-gray-50 p-2 rounded mt-1 whitespace-pre-wrap max-h-48 overflow-auto">{{ analysis.extracted_text|truncatechars:2000 }}</pre></details>
             {% endif %}
+            <p class="mt-2"><a href="{% url 'risk:create' %}?analysis_id={{ analysis.id }}" data-busy="جارٍ تحميل النموذج..."
+               class="text-gov-green-700 hover:underline text-xs">إنشاء خطر من نتيجة التحليل</a></p>
         {% else %}
             <p class="text-gov-gray-500">لا يوجد تحليل بعد.</p>
         {% endif %}

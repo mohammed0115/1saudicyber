@@ -75,6 +75,19 @@
         <a href="{% url 'compliance:reports_index' %}" class="underline whitespace-nowrap">التقارير</a>
     </div>
 
+    <!-- Phase 5A — Risk register summary + link -->
+    <div class="bg-white rounded-lg border border-gov-gray-100 shadow-sm p-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-4 flex-wrap text-sm">
+            <span class="font-semibold text-gov-green-800">سجل المخاطر وخطة المعالجة</span>
+            <span class="text-gov-gray-600">مفتوحة: <strong>{{ risk_counts.open }}</strong></span>
+            <span class="text-red-700">عالية/حرجة: <strong>{{ risk_counts.high_critical }}</strong></span>
+            <span class="text-amber-700">مهام متأخرة: <strong>{{ risk_counts.overdue_tasks }}</strong></span>
+            <span class="text-gov-green-700">مُعالَجة: <strong>{{ risk_counts.mitigated }}</strong></span>
+        </div>
+        <a href="{% url 'risk:list' %}" data-busy="جارٍ تحميل سجل المخاطر..."
+           class="text-gov-green-700 hover:underline text-sm whitespace-nowrap">فتح السجل</a>
+    </div>
+
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm">
         <i class="fas fa-info-circle"></i>
         القرار النهائي للامتثال يتّخذه المدقّق فقط. التحليل الآلي استشاري، والضوابط غير المُراجَعة لا تُحتسب كمطابِقة.

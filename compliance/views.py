@@ -156,6 +156,7 @@ def journey_dashboard(request):
                                get_next_recommended_action, calculate_journey_progress)
     from billing.subscription_access import company_has_active_subscription
     from .workflow_stepper import build_company_workflow_stepper
+    from risk.services import risk_dashboard_counts
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
@@ -167,6 +168,7 @@ def journey_dashboard(request):
         'is_staff': request.user.is_staff,
         'subscription_active': company_has_active_subscription(company),
         'stepper': build_company_workflow_stepper(company),
+        'risk_counts': risk_dashboard_counts(company),
     })
 
 

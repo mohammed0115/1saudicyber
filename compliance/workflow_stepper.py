@@ -37,8 +37,10 @@ def _flags(company):
                          EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
                          ControlAssessment)
     from auditors.models import AuditorAssignment
+    from risk.services import has_open_high_critical
     q = lambda m, **kw: m.objects.filter(company=company, **kw).exists()
     return {
+        'risk_open_high_critical': has_open_high_critical(company),
         'registration': True,  # a company user always has a company
         'onboarding': bool(getattr(company, 'onboarding_completed', False)),
         'intake': q(CompanyIntakeProfile),
@@ -68,6 +70,7 @@ _STAGE_DEFS = [
     ('upload', 'رفع الأدلة', 'evidence', 'compliance:evidence_checklist', 'ارفع الأدلة'),
     ('analysis', 'التحليل الاستشاري', 'evidence', 'compliance:evidence_checklist', 'التحليل الاستشاري'),
     ('auditor_review', 'مراجعة المدقق', 'review', 'compliance:auditor_review_queue', 'مراجعة المدقق'),
+    ('risk_register', 'سجل المخاطر والمعالجة', 'review', 'risk:list', 'إدارة المخاطر والمعالجة'),
     ('subscription', 'تفعيل الاشتراك', 'review', 'compliance:reports_index', 'فعّل الاشتراك لتنزيل التقارير'),
     ('reports', 'التقارير', 'reports', 'compliance:reports_index', 'عرض التقارير'),
     ('download_assign', 'تنزيل التقرير أو إسناده لمدقق', 'reports', 'compliance:reports_index', 'تنزيل التقرير أو إسناد الملف'),
@@ -90,7 +93,10 @@ def build_company_workflow_stepper(company, user=None):
         completed = bool(f.get(key, False))
         locked = (key in _SUBSCRIPTION_LOCKED) and not sub_active
 
-        if key == 'subscription':
+        if key == 'risk_register':
+            # Read-only & advisory: needs attention only when open high/critical risks exist.
+            status = NEEDS_ACTION if f['risk_open_high_critical'] else COMPLETED
+        elif key == 'subscription':
             status = COMPLETED if sub_active else NEEDS_ACTION
         elif completed:
             status = COMPLETED
