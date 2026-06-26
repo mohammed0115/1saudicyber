@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
+from django.utils.translation import gettext as _
 from .models import Framework, Domain, Control, CompanyControl, Evidence, Assessment
 from ai_engine.services import process_uploaded_file, analyze_evidence
 from ai_engine.models import AIAuditLog
@@ -19,7 +20,7 @@ def controls_list(request):
     """Display all applicable controls for the user's company."""
     company = request.user.company
     if not company:
-        messages.error(request, 'No company associated with your account.')
+        messages.error(request, _('لا توجد شركة مرتبطة بحسابك.'))
         return redirect('dashboard:main')
 
     # Get applicable frameworks
@@ -89,7 +90,7 @@ def upload_evidence(request, control_id):
 
     uploaded_file = request.FILES.get('evidence_file')
     if not uploaded_file:
-        messages.error(request, 'Please select a file to upload.')
+        messages.error(request, _('يرجى اختيار ملف للرفع.'))
         return redirect('compliance:control_detail', control_id=control_id)
 
     # Determine file type
@@ -130,7 +131,7 @@ def upload_evidence(request, control_id):
         try:
             from monitoring.tasks import analyze_evidence_async
             analyze_evidence_async.delay(evidence.id)
-            messages.success(request, 'Evidence uploaded. AI analysis is running in the background.')
+            messages.success(request, _('تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا.'))
         except Exception:
             result = process_evidence_pipeline(evidence.id)
             messages.success(request, f'Evidence analyzed. AI Verdict: {result.get("verdict", "pending")}')

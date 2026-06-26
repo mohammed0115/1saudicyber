@@ -86,8 +86,14 @@
                     </details>
                 </div>
 
-                {# Account + mobile hamburger #}
+                {# Account + language switcher + mobile hamburger #}
                 <div class="flex items-center gap-3 shrink-0">
+                    <form action="{% url 'set_language' %}" method="post" class="hidden sm:flex items-center gap-1 text-xs">
+                        {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+                        <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">العربية</button>
+                        <span class="text-gov-green-400">|</span>
+                        <button type="submit" name="language" value="en" class="px-1 {% if LANGUAGE_CODE != 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">English</button>
+                    </form>
                     <span class="hidden sm:inline text-gov-green-200 text-sm truncate max-w-[140px]">{{ user.get_full_name|default:user.username }}</span>
                     <a href="{% url 'core:logout' %}" class="text-gov-green-200 hover:text-white text-sm whitespace-nowrap"><i class="fas fa-sign-out-alt"></i> {% trans "تسجيل الخروج" %}</a>
                     <details class="md:hidden relative">
@@ -104,6 +110,12 @@
                             <a href="{% url 'monitoring:overview' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراقبة" %}</a>
                             <a href="{% url 'compliance:controls_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
                             {% if user.role == 'auditor' %}<a href="{% url 'auditors:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "لوحة المدقق" %}</a>{% endif %}
+                            <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-2 px-3 py-2 border-t border-gov-green-700 mt-1">
+                                {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+                                <button type="submit" name="language" value="ar" class="text-sm {% if LANGUAGE_CODE == 'ar' %}text-white font-bold{% else %}text-gov-green-100{% endif %}">العربية</button>
+                                <span class="text-gov-green-400">|</span>
+                                <button type="submit" name="language" value="en" class="text-sm {% if LANGUAGE_CODE != 'ar' %}text-white font-bold{% else %}text-gov-green-100{% endif %}">English</button>
+                            </form>
                         </div>
                     </details>
                 </div>

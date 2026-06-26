@@ -1,0 +1,173 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-26 15:16+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+#: compliance/views.py:23
+msgid "لا توجد شركة مرتبطة بحسابك."
+msgstr ""
+
+#: compliance/views.py:93
+msgid "يرجى اختيار ملف للرفع."
+msgstr ""
+
+#: compliance/views.py:134
+msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
+msgstr ""
+
+#: core/views.py:114
+msgid "تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي."
+msgstr ""
+
+#: core/views.py:140
+msgid "بيانات الدخول غير صحيحة. حاول مرة أخرى."
+msgstr ""
+
+#: core/views.py:171
+msgid "تم تفعيل التحقق بخطوتين."
+msgstr ""
+
+#: templates/base.html:72 templates/base.html:102
+msgid "لوحة التحكم"
+msgstr ""
+
+#: templates/base.html:73 templates/base.html:103
+msgid "مسار الامتثال"
+msgstr ""
+
+#: templates/base.html:74 templates/base.html:105
+msgid "الأطر"
+msgstr ""
+
+#: templates/base.html:75 templates/base.html:107
+msgid "الأدلة"
+msgstr ""
+
+#: templates/base.html:76 templates/base.html:109
+msgid "التقارير"
+msgstr ""
+
+#: templates/base.html:77 templates/base.html:110
+msgid "المراقبة"
+msgstr ""
+
+#: templates/base.html:79
+msgid "المزيد"
+msgstr ""
+
+#: templates/base.html:81 templates/base.html:111
+msgid "الضوابط"
+msgstr ""
+
+#: templates/base.html:82 templates/base.html:106
+msgid "خطة الضوابط"
+msgstr ""
+
+#: templates/base.html:83 templates/base.html:108
+msgid "المراجعة"
+msgstr ""
+
+#: templates/base.html:84 templates/base.html:112
+msgid "لوحة المدقق"
+msgstr ""
+
+#: templates/base.html:98
+msgid "تسجيل الخروج"
+msgstr ""
+
+#: templates/base.html:104
+msgid "التصنيف"
+msgstr ""
+
+#: templates/components/journey_wizard.html:7
+msgid "مسار جاهزية الامتثال"
+msgstr ""
+
+#: templates/components/journey_wizard.html:9
+msgid ""
+"اتبع الخطوات التالية لتحديد الأطر المطلوبة، تقييم الضوابط، رفع الأدلة، "
+"معالجة الفجوات، وتجهيز التقارير."
+msgstr ""
+
+#: templates/components/journey_wizard.html:14
+msgid "نسبة الإنجاز"
+msgstr ""
+
+#: templates/components/journey_wizard.html:19
+msgid "المرحلة الحالية:"
+msgstr ""
+
+#: templates/components/journey_wizard.html:22
+msgid "الخطوة التالية الموصى بها"
+msgstr ""
+
+#: templates/components/status_badge.html:11
+msgid "مكتمل"
+msgstr ""
+
+#: templates/components/status_badge.html:12
+msgid "الخطوة الحالية"
+msgstr ""
+
+#: templates/components/status_badge.html:13
+msgid "يحتاج إجراء"
+msgstr ""
+
+#: templates/components/status_badge.html:14
+msgid "مقفل"
+msgstr ""
+
+#: templates/components/status_badge.html:15
+msgid "قيد التجهيز"
+msgstr ""
+
+#: templates/components/status_badge.html:16
+msgid "غير متاح حاليًا"
+msgstr ""
+
+#: templates/components/status_badge.html:17
+msgid "اختياري"
+msgstr ""
+
+#: templates/core/login.html:3 templates/core/login.html:36
+msgid "تسجيل الدخول"
+msgstr ""
+
+#: templates/core/login.html:21
+msgid "مرحبًا بعودتك"
+msgstr ""
+
+#: templates/core/login.html:22
+msgid "سجّل الدخول إلى لوحة الامتثال الخاصة بك"
+msgstr ""
+
+#: templates/core/login.html:28
+msgid "البريد الإلكتروني"
+msgstr ""
+
+#: templates/core/login.html:32
+msgid "كلمة المرور"
+msgstr ""
+
+#: templates/core/login.html:39
+msgid "ليس لديك حساب؟"
+msgstr ""
+
+#: templates/core/login.html:39
+msgid "ابدأ الآن"
+msgstr ""

@@ -17,6 +17,7 @@ def healthz(request):
 
 urlpatterns = [
     path('healthz/', healthz, name='healthz'),
+    path('i18n/', include('django.conf.urls.i18n')),  # set_language (bilingual switcher)
     path('admin/', admin.site.urls),
     path('api/v1/', include('api.urls')),
     path('', include('core.urls')),

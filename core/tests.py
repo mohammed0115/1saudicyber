@@ -1170,3 +1170,78 @@ class ArabicResidueCleanupTests(TestCase):
             body = self.client.get(reverse(name)).content.decode()
             self.assertNotIn('CyberTrust KSA', body)
             self.assertNotIn('334', body)
+
+
+# ============================================================
+# UX-1C — Bilingual language switcher + English catalogs
+# ============================================================
+class BilingualSwitcherTests(TestCase):
+    def _login_company(self):
+        from compliance.tests import _company, _journey_user
+        c = _company()
+        self.client.force_login(_journey_user(c))
+        return c
+
+    def test_set_language_route_exists(self):
+        resp = self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        self.assertEqual(resp.status_code, 302)
+
+    def test_arabic_is_default_shell(self):
+        self._login_company()
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertIn('lang="ar"', body)
+        self.assertIn('dir="rtl"', body)
+        self.assertIn('لوحة التحكم', body)
+
+    def test_english_mode_switches_shell(self):
+        self._login_company()
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertIn('lang="en"', body)
+        self.assertIn('dir="ltr"', body)
+        self.assertIn('Dashboard', body)
+        self.assertNotIn('لوحة التحكم', body)
+
+    def test_switcher_present_desktop_and_mobile(self):
+        self._login_company()
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        # set_language form appears at least twice (desktop nav + mobile hamburger)
+        self.assertGreaterEqual(body.count(reverse('set_language')), 2)
+        self.assertIn('English', body)
+        self.assertIn('العربية', body)
+
+    def _login_messages(self):
+        from django.contrib.messages import get_messages
+        resp = self.client.post(reverse('core:login'),
+                                {'username': 'no@x.com', 'password': 'wrongwrong'})
+        return [m.message for m in get_messages(resp.wsgi_request)]
+
+    def test_login_invalid_message_arabic_by_default(self):
+        self.assertIn('بيانات الدخول غير صحيحة. حاول مرة أخرى.', self._login_messages())
+
+    def test_login_invalid_message_english_in_english_mode(self):
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        self.assertIn('Invalid credentials. Please try again.', self._login_messages())
+
+    def test_anonymous_login_page_has_switcher(self):
+        body = self.client.get(reverse('core:login')).content.decode()
+        self.assertIn(reverse('set_language'), body)
+        self.assertIn('English', body)
+        self.assertIn('العربية', body)
+
+    def test_no_old_brand_count_or_cert_in_shell(self):
+        self._login_company()
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertNotIn('CyberTrust KSA', body)
+        self.assertNotIn('334', body)
+
+    def test_journey_wizard_still_renders(self):
+        self._login_company()
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'ct-journey-wizard')
+
+    def test_monitoring_route_renders_or_redirects(self):
+        self._login_company()
+        resp = self.client.get('/monitoring/continuous/')
+        self.assertIn(resp.status_code, (200, 302))

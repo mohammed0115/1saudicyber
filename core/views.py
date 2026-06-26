@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
+from django.utils.translation import gettext as _
 from .models import Company, User
 from .forms import CompanyRegistrationForm
 from ai_engine.services import classify_company
@@ -110,7 +111,7 @@ def register_company(request):
         send_verification_email(user)
 
         login(request, user)
-        messages.success(request, 'Company registered successfully! AI classification in progress.')
+        messages.success(request, _('تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي.'))
         return redirect('dashboard:main')
 
     return render(request, 'core/register.html', {
@@ -136,7 +137,7 @@ def login_view(request):
             next_url = request.GET.get('next', '/dashboard/')
             return redirect(next_url)
         else:
-            messages.error(request, 'Invalid credentials. Please try again.')
+            messages.error(request, _('بيانات الدخول غير صحيحة. حاول مرة أخرى.'))
     return render(request, 'core/login.html')
 
 
@@ -167,7 +168,7 @@ def mfa_setup(request):
         if verify_totp(request.user, request.POST.get('code', '')):
             request.user.mfa_enabled = True
             request.user.save(update_fields=['mfa_enabled'])
-            messages.success(request, 'Multi-factor authentication enabled.')
+            messages.success(request, _('تم تفعيل التحقق بخطوتين.'))
             return redirect('dashboard:main')
         messages.error(request, 'Invalid code. Please re-scan and try again.')
     uri = mfa_provisioning_uri(request.user)

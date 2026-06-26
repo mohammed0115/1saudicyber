@@ -118,7 +118,7 @@ USE_I18N = True
 USE_TZ = True
 
 LANGUAGES = [
-    ('ar', 'Arabic'),
+    ('ar', 'العربية'),
     ('en', 'English'),
 ]
 LOCALE_PATHS = [BASE_DIR / 'locale']
