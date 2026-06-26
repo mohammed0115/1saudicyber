@@ -1103,3 +1103,70 @@ class SeedUatDemoDataTests(TestCase):
         self._run('--apply', '--subscribe')
         c = Company.objects.get(cr_number='1010123456')
         self.assertTrue(company_has_active_subscription(c))
+
+
+# ============================================================
+# UX-1B-CLEANUP-A — Arabic UI residue sweep
+# ============================================================
+class ArabicResidueCleanupTests(TestCase):
+    def _reg_company_user(self):
+        self.client.post(reverse('core:company_register'), {
+            'first_name': 'S', 'last_name': 'A', 'email': 'res@co.example', 'phone': '',
+            'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': '3434343434',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+
+    def test_onboarding_welcome_uses_clean_intake_label(self):
+        self._reg_company_user()
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'ملف التصنيف')
+        self.assertNotContains(resp, '(Intake)')
+        self.assertNotContains(resp, 'ملف التصنيف (Intake)')
+
+    def test_evidence_checklist_heading_has_no_parenthetical(self):
+        from compliance.tests import _company_with_official_plan, _journey_user
+        c, fv, scope = _company_with_official_plan()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertContains(resp, 'قائمة الأدلة المخطّطة')
+        self.assertNotContains(resp, '(Evidence Checklist)')
+
+    def test_control_plan_heading_has_no_parenthetical(self):
+        from compliance.tests import _company_with_official_plan, _journey_user
+        c, fv, scope = _company_with_official_plan()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:control_plan'))
+        self.assertContains(resp, 'خطة الضوابط')
+        self.assertNotContains(resp, '(Control Applicability Plan)')
+
+    def test_reports_index_has_no_english_parentheticals(self):
+        from compliance.tests import _company_with_assessments, _journey_user
+        from billing.subscription_access import activate_company_subscription
+        c, fv, scope = _company_with_assessments()
+        self.client.force_login(_journey_user(c))
+        # unsubscribed
+        body = self.client.get(reverse('compliance:reports_index')).content.decode()
+        self.assertNotIn('(Subscription required)', body)
+        # subscribed
+        activate_company_subscription(c, 'Plan', days=30)
+        body2 = self.client.get(reverse('compliance:reports_index')).content.decode()
+        self.assertNotIn('(Reports unlocked)', body2)
+
+    def test_journey_dashboard_has_no_english_parentheticals(self):
+        from compliance.tests import _company, _journey_user
+        c = _company()
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertNotIn('(Reports unlocked)', body)
+        self.assertNotIn('(Reports require active subscription)', body)
+        self.assertNotIn('مسار الامتثال (Compliance Journey)', body)
+
+    def test_no_old_brand_or_count_in_common_pages(self):
+        from compliance.tests import _company, _journey_user
+        c = _company()
+        self.client.force_login(_journey_user(c))
+        for name in ['compliance:dashboard', 'compliance:intake']:
+            body = self.client.get(reverse(name)).content.decode()
+            self.assertNotIn('CyberTrust KSA', body)
+            self.assertNotIn('334', body)
