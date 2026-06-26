@@ -160,6 +160,7 @@ def journey_dashboard(request):
     from risk.services import risk_dashboard_counts
     from monitoring.continuous import summarize_company_monitoring
     from .journey import build_company_compliance_journey
+    from .smart_classification import classify_company
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
@@ -174,6 +175,25 @@ def journey_dashboard(request):
         'stepper': build_company_workflow_stepper(company),
         'risk_counts': risk_dashboard_counts(company),
         'monitoring_summary': summarize_company_monitoring(company),
+        'classification': classify_company(company),
+    })
+
+
+@login_required
+def classification_summary(request):
+    """Phase 6A — advisory Smart Classification summary for the user's own company.
+
+    Read-only and tenant-scoped: deterministic advisory classification only. Never
+    writes, never creates CompanyControl/applicability rows, never runs AI, and
+    never issues a final compliance decision.
+    """
+    from .smart_classification import classify_company
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'compliance/classification.html', {
+        'company': company,
+        'classification': classify_company(company),
     })
 
 

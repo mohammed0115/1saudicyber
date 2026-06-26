@@ -11,6 +11,38 @@
     {# Phase UX-WIZARD-A — target compliance journey wizard (5 stages / 16 substeps) #}
     {% include "components/journey_wizard.html" with journey=journey %}
 
+    {# Phase 6A — advisory Smart Classification summary card (read-only) #}
+    {% if classification %}
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <p class="text-gov-green-700 text-sm font-semibold"><i class="fas fa-wand-magic-sparkles mr-1"></i> التصنيف الذكي</p>
+                <p class="text-gov-gray-600 text-sm mt-1">تصنيف أولي استشاري بناءً على بيانات الشركة. لا يُعد قرارًا نهائيًا.</p>
+            </div>
+            <a href="{% url 'compliance:classification' %}"
+               class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm shrink-0">عرض التصنيف</a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">مستوى المخاطر</p>
+                <p class="font-bold text-gov-gray-800">{{ classification.risk_level_ar }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">الأطر المقترحة</p>
+                <p class="font-bold text-gov-gray-800">{{ classification.recommended_count }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">عدد الضوابط المتوقع</p>
+                <p class="font-bold text-gov-gray-800">{{ classification.total_expected_controls }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">ثقة التصنيف</p>
+                <p class="font-bold text-gov-gray-800">{{ classification.overall_confidence }}%</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Progress + next recommended action -->
     <div class="grid md:grid-cols-3 gap-4">
         <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 md:col-span-1">

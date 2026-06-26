@@ -13,6 +13,8 @@ urlpatterns = [
 
     # Phase 3B — Company Intake Wizard + Framework Applicability review
     path('intake/', views.intake_wizard, name='intake'),
+    # Phase 6A — advisory Smart Classification summary (read-only)
+    path('classification/', views.classification_summary, name='classification'),
     path('intake/review/', views.applicability_review, name='applicability_review'),
 
     # Phase 3C — Framework approval (scope) + control applicability plan

@@ -4004,3 +4004,180 @@ class ArabicShellRtlTests(TestCase):
         resp = self.client.get(reverse('compliance:intake'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/login', resp.url)
+
+
+# ============================================================
+# Phase 6A — Smart Classification Engine Foundation
+# ============================================================
+class SmartClassificationServiceTests(TestCase):
+    def _classify(self, **company_kw):
+        from compliance.smart_classification import classify_company
+        return classify_company(_company(**company_kw))
+
+    def _status(self, result, code):
+        return {r.code: r.status for r in result.recommendations}[code]
+
+    def test_ksa_company_gets_ecc_required(self):
+        r = self._classify(target_nca=True)
+        self.assertEqual(self._status(r, 'NCA-ECC-2-2024'), 'required')
+
+    def test_ecc_required_for_ksa_default_even_without_target(self):
+        r = self._classify(target_nca=False, country='SA')
+        self.assertIn(self._status(r, 'NCA-ECC-2-2024'), ('required', 'recommended'))
+
+    def test_cloud_intake_recommends_ccc(self):
+        from compliance.smart_classification import classify_company
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)
+        r = classify_company(c)
+        self.assertEqual({x.code: x.status for x in r.recommendations}['NCA-CCC-2-2024'], 'recommended')
+
+    def test_critical_systems_intake_recommends_cscc(self):
+        from compliance.smart_classification import classify_company
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, is_critical_system_operator=True)
+        r = classify_company(c)
+        self.assertEqual({x.code: x.status for x in r.recommendations}['NCA-CSCC-1-2019'], 'recommended')
+
+    def test_aramco_readiness_recommends_sacs002(self):
+        r = self._classify(target_aramco=True)
+        self.assertEqual(self._status(r, 'ARAMCO-SACS-002'), 'required')
+
+    def test_sabic_readiness_recommends_sabic(self):
+        r = self._classify(target_sabic=True)
+        self.assertEqual(self._status(r, 'SABIC-CYBERTRUST-1-0'), 'required')
+
+    def test_telework_intake_recommends_tcc(self):
+        from compliance.smart_classification import classify_company
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, has_remote_work=True)
+        r = classify_company(c)
+        self.assertEqual({x.code: x.status for x in r.recommendations}['NCA-TCC-1-2021'], 'recommended')
+
+    def test_social_media_intake_recommends_osmacc(self):
+        from compliance.smart_classification import classify_company
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, manages_official_social_media_accounts=True)
+        r = classify_company(c)
+        self.assertEqual({x.code: x.status for x in r.recommendations}['NCA-OSMACC-1-2021'], 'recommended')
+
+    def test_unindicated_framework_not_called_impossible(self):
+        # No signals -> SABIC is 'not_indicated', with a non-judgmental Arabic reason.
+        r = self._classify()
+        rec = {x.code: x for x in r.recommendations}['SABIC-CYBERTRUST-1-0']
+        self.assertEqual(rec.status, 'not_indicated')
+        self.assertIn('بناءً على البيانات المتاحة', rec.reason_ar)
+
+    def test_incomplete_profile_lists_missing_inputs_and_lowers_confidence(self):
+        r = self._classify()  # no intake profile
+        self.assertFalse(r.has_intake)
+        self.assertTrue(r.missing_inputs)
+        self.assertLessEqual(r.overall_confidence, 60)
+
+    def test_deterministic_same_input_same_output(self):
+        from compliance.smart_classification import classify_company
+        c = _company(target_nca=True)
+        a = classify_company(c); b = classify_company(c)
+        self.assertEqual([(x.code, x.status, x.confidence) for x in a.recommendations],
+                         [(x.code, x.status, x.confidence) for x in b.recommendations])
+
+
+class SmartClassificationCountTests(TestCase):
+    def test_official_total_is_417_not_334(self):
+        from compliance.smart_classification import OFFICIAL_TOTAL, OFFICIAL_FRAMEWORKS
+        self.assertEqual(OFFICIAL_TOTAL, 417)
+        self.assertNotIn(334, [f['expected'] for f in OFFICIAL_FRAMEWORKS])
+
+    def test_per_framework_expected_counts(self):
+        from compliance.smart_classification import _FW
+        self.assertEqual(_FW['NCA-ECC-2-2024']['expected'], 108)
+        self.assertEqual(_FW['NCA-CSCC-1-2019']['expected'], 32)
+        self.assertEqual(_FW['NCA-CCC-2-2024']['expected'], 55)
+        self.assertEqual(_FW['NCA-TCC-1-2021']['expected'], 21)
+        self.assertEqual(_FW['NCA-OSMACC-1-2021']['expected'], 15)
+        self.assertEqual(_FW['ARAMCO-SACS-002']['expected'], 92)
+        self.assertEqual(_FW['SABIC-CYBERTRUST-1-0']['expected'], 94)
+
+    def test_count_helper_prefers_db_else_expected(self):
+        from compliance.smart_classification import official_control_count
+        # Fresh DB: no official controls imported -> falls back to expected, never 334.
+        self.assertEqual(official_control_count('NCA-ECC-2-2024'), 108)
+
+
+class SmartClassificationUITests(TestCase):
+    def test_summary_renders_for_company_user(self):
+        c = _company(target_nca=True)
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:classification'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'التصنيف الذكي')
+        self.assertContains(resp, 'تصنيف أولي استشاري')
+        self.assertContains(resp, 'مستوى المخاطر')
+
+    def test_summary_has_no_certification_or_final_decision_wording(self):
+        c = _company(target_nca=True)
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:classification')).content.decode()
+        for bad in ('معتمد رسميًا', 'مؤهل رسميًا', 'تم إصدار شهادة', 'قرار نهائي', 'CyberTrust KSA', '334'):
+            self.assertNotIn(bad, body)
+
+    def test_dashboard_shows_classification_card(self):
+        c = _company(target_nca=True)
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertIn('التصنيف الذكي', body)
+        self.assertIn(reverse('compliance:classification'), body)
+
+    def test_english_mode_renders_smart_classification(self):
+        c = _company(target_nca=True)
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('compliance:classification')).content.decode()
+        self.assertIn('Smart Classification', body)
+        self.assertIn('Risk level', body)
+
+
+class SmartClassificationJourneyTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def test_step_needs_action_without_intake(self):
+        from compliance.journey import build_company_compliance_journey
+        c = _company()
+        j = build_company_compliance_journey(c)
+        step = {s['key']: s for s in j['steps']}['smart_classification']
+        self.assertNotEqual(step['status'], 'completed')
+
+    def test_step_completed_once_intake_profile_exists(self):
+        from compliance.journey import build_company_compliance_journey
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)
+        j = build_company_compliance_journey(c)
+        step = {s['key']: s for s in j['steps']}['smart_classification']
+        self.assertEqual(step['status'], 'completed')
+
+    def test_planned_steps_remain_not_completed(self):
+        from compliance.journey import build_company_compliance_journey
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)
+        j = build_company_compliance_journey(c)
+        steps = {s['key']: s for s in j['steps']}
+        for k in ('ocr_extraction', 'rule_engine'):
+            self.assertNotEqual(steps[k]['status'], 'completed')
+
+
+class SmartClassificationSecurityTests(TestCase):
+    def test_anonymous_redirected(self):
+        resp = self.client.get(reverse('compliance:classification'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_user_sees_only_own_company_classification(self):
+        c1 = _company(name='Alpha', target_nca=True)
+        c2 = _company(name='Beta', target_aramco=True)
+        CompanyIntakeProfile.objects.create(company=c2, works_with_aramco=True)
+        self.client.force_login(_journey_user(c1))
+        # The view always classifies request.user.company (c1); c2 data never leaks.
+        from compliance.smart_classification import classify_company
+        r1 = classify_company(c1)
+        self.assertFalse(r1.has_intake)  # c1 has no intake; c2's intake does not bleed in

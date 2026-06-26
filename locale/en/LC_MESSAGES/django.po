@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 15:16+0300\n"
+"POT-Creation-Date: 2026-06-26 16:01+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
 #: compliance/views.py:23
 msgid "لا توجد شركة مرتبطة بحسابك."
 msgstr "No company is associated with your account."
@@ -27,6 +28,7 @@ msgstr "Please select a file to upload."
 #: compliance/views.py:134
 msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
 msgstr "Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
 
 #: core/views.py:114
 msgid "تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي."
@@ -91,6 +93,58 @@ msgstr "Log out"
 #: templates/base.html:104
 msgid "التصنيف"
 msgstr "Intake"
+
+#: templates/compliance/classification.html:3
+#: templates/compliance/classification.html:9
+msgid "التصنيف الذكي"
+msgstr "Smart Classification"
+
+#: templates/compliance/classification.html:12
+msgid "تصنيف أولي استشاري بناءً على بيانات الشركة."
+msgstr "An advisory preliminary classification based on company data."
+
+#: templates/compliance/classification.html:13
+msgid "هذا التصنيف استشاري ولا يُعد قرارًا نهائيًا أو شهادة."
+msgstr "This classification is advisory and is not a final decision or a certificate."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+
+#: templates/compliance/classification.html:20
+msgid "مستوى المخاطر"
+msgstr "Risk level"
+
+#: templates/compliance/classification.html:26
+#: templates/compliance/classification.html:41
+msgid "الأطر المقترحة"
+msgstr "Recommended frameworks"
+
+#: templates/compliance/classification.html:30
+#: templates/compliance/classification.html:57
+msgid "عدد الضوابط المتوقع"
+msgstr "Expected control count"
+
+#: templates/compliance/classification.html:34
+msgid "ثقة التصنيف"
+msgstr "Classification confidence"
+
+#: templates/compliance/classification.html:46
+msgid "سبب التصنيف"
+msgstr "Reason"
+
+#: templates/compliance/classification.html:66
+msgid "البيانات الناقصة"
+msgstr "Missing inputs"
+
+#: templates/compliance/classification.html:76
+msgid "الخطوة التالية"
+msgstr "Next step"
+
+#: templates/compliance/classification.html:81
+msgid "إكمال ملف التصنيف"
+msgstr "Complete the intake profile"
+
+#: templates/compliance/classification.html:84
+msgid "العودة إلى لوحة الرحلة"
+msgstr "Back to the journey dashboard"
 
 #: templates/components/journey_wizard.html:7
 msgid "مسار جاهزية الامتثال"

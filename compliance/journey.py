@@ -75,6 +75,7 @@ def _signals(company):
     assessments = ControlAssessment.objects.filter(company=company)
     return {
         'intake': q(CompanyIntakeProfile) or bool(getattr(company, 'onboarding_completed', False)),
+        'intake_profile': q(CompanyIntakeProfile),
         'applicability': q(FrameworkApplicabilityResult),
         'approved_scope': q(CompanyFrameworkScope, status='approved'),
         'control_plan': q(ControlApplicabilityResult, decision='applicable',
@@ -98,7 +99,9 @@ def _completed(key, f):
     return {
         'company_registration': True,
         'company_profile': f['intake'],
-        'smart_classification': f['applicability'],
+        # Phase 6A: Smart Classification is computable once an intake profile exists
+        # (advisory). Still completed when deterministic applicability has been run.
+        'smart_classification': f['applicability'] or f['intake_profile'],
         'control_library': True,
         'applicability': f['control_plan'],
         'assessment_creation': f['assessments'],
