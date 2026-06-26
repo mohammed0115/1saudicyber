@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 16:01+0300\n"
+"POT-Creation-Date: 2026-06-26 16:36+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,6 +51,7 @@ msgid "مسار الامتثال"
 msgstr ""
 
 #: templates/base.html:74 templates/base.html:105
+#: templates/compliance/applicability_preview.html:25
 msgid "الأطر"
 msgstr ""
 
@@ -94,6 +95,73 @@ msgstr ""
 msgid "التصنيف"
 msgstr ""
 
+#: templates/compliance/applicability_preview.html:3
+#: templates/compliance/applicability_preview.html:9
+#: templates/compliance/applicability_preview.html:52
+msgid "قابلية تطبيق الضوابط"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:11
+msgid "تحليل استشاري لقابلية تطبيق الضوابط بناءً على بيانات الشركة."
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:16
+msgid "هذا التحليل لا يقرر الامتثال أو عدم الامتثال."
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:17
+msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:26
+msgid "إجمالي الضوابط"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:27
+msgid "قابلة للتطبيق"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:28
+msgid "غير قابلة للتطبيق"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:29
+msgid "تحتاج بيانات إضافية"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:30
+msgid "مستوى الثقة"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:57
+msgid "سبب القرار"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:68
+msgid ""
+"تعرض هذه الصفحة ملخصًا على مستوى الأطر. سيظهر تفصيل الضوابط بعد استيراد مكتبة "
+"الضوابط الرسمية."
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:75
+#: templates/compliance/classification.html:66
+msgid "البيانات الناقصة"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:85
+#: templates/compliance/classification.html:76
+msgid "الخطوة التالية"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:90
+msgid "عرض التصنيف الذكي"
+msgstr ""
+
+#: templates/compliance/applicability_preview.html:93
+#: templates/compliance/classification.html:84
+msgid "العودة إلى لوحة الرحلة"
+msgstr ""
+
 #: templates/compliance/classification.html:3
 #: templates/compliance/classification.html:9
 msgid "التصنيف الذكي"
@@ -129,20 +197,8 @@ msgstr ""
 msgid "سبب التصنيف"
 msgstr ""
 
-#: templates/compliance/classification.html:66
-msgid "البيانات الناقصة"
-msgstr ""
-
-#: templates/compliance/classification.html:76
-msgid "الخطوة التالية"
-msgstr ""
-
 #: templates/compliance/classification.html:81
 msgid "إكمال ملف التصنيف"
-msgstr ""
-
-#: templates/compliance/classification.html:84
-msgid "العودة إلى لوحة الرحلة"
 msgstr ""
 
 #: templates/components/journey_wizard.html:7

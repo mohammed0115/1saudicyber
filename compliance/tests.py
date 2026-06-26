@@ -4181,3 +4181,188 @@ class SmartClassificationSecurityTests(TestCase):
         from compliance.smart_classification import classify_company
         r1 = classify_company(c1)
         self.assertFalse(r1.has_intake)  # c1 has no intake; c2's intake does not bleed in
+
+
+# ============================================================
+# Phase 6B — Applicability Engine Foundation
+# ============================================================
+class ApplicabilityEngineServiceTests(TestCase):
+    def _eval(self, **kw):
+        from compliance.applicability_engine import evaluate_company_applicability
+        return evaluate_company_applicability(_company(**kw))
+
+    def _sum(self, preview, code):
+        return {s.framework_code: s for s in preview.summaries}[code]
+
+    def test_ecc_applicable_for_nca_readiness(self):
+        p = self._eval(target_nca=True)
+        self.assertEqual(self._sum(p, 'NCA-ECC-2-2024').status, 'applicable')
+
+    def test_cscc_applicable_for_critical_systems(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, is_critical_system_operator=True)
+        p = evaluate_company_applicability(c)
+        self.assertEqual({s.framework_code: s for s in p.summaries}['NCA-CSCC-1-2019'].status, 'applicable')
+
+    def test_ccc_applicable_for_cloud(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)
+        p = evaluate_company_applicability(c)
+        self.assertEqual({s.framework_code: s for s in p.summaries}['NCA-CCC-2-2024'].status, 'applicable')
+
+    def test_tcc_applicable_for_remote_work(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, has_remote_work=True)
+        p = evaluate_company_applicability(c)
+        self.assertEqual({s.framework_code: s for s in p.summaries}['NCA-TCC-1-2021'].status, 'applicable')
+
+    def test_osmacc_applicable_for_social_media(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, manages_official_social_media_accounts=True)
+        p = evaluate_company_applicability(c)
+        self.assertEqual({s.framework_code: s for s in p.summaries}['NCA-OSMACC-1-2021'].status, 'applicable')
+
+    def test_aramco_applicable_for_relationship(self):
+        p = self._eval(target_aramco=True)
+        self.assertEqual(self._sum(p, 'ARAMCO-SACS-002').status, 'applicable')
+
+    def test_sabic_applicable_for_relationship(self):
+        p = self._eval(target_sabic=True)
+        self.assertEqual(self._sum(p, 'SABIC-CYBERTRUST-1-0').status, 'applicable')
+
+    def test_missing_intake_yields_needs_more_information(self):
+        # No intake profile -> not-indicated frameworks are needs_more_information (not flat not_applicable).
+        p = self._eval()
+        self.assertEqual(self._sum(p, 'NCA-TCC-1-2021').status, 'needs_more_information')
+        self.assertFalse(p.has_intake)
+
+    def test_not_indicated_with_intake_is_not_applicable(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)  # no telework
+        p = evaluate_company_applicability(c)
+        self.assertEqual({s.framework_code: s for s in p.summaries}['NCA-TCC-1-2021'].status, 'not_applicable')
+
+    def test_deterministic_repeated_results(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        c = _company(target_nca=True)
+        a = evaluate_company_applicability(c); b = evaluate_company_applicability(c)
+        self.assertEqual([(s.framework_code, s.status, s.applicable_count) for s in a.summaries],
+                         [(s.framework_code, s.status, s.applicable_count) for s in b.summaries])
+
+    def test_engine_does_not_write(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        from compliance.models import ControlApplicabilityResult, ControlAssessment, CompanyControl
+        c = _company(target_nca=True)
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)
+        counts = lambda: (ControlApplicabilityResult.objects.count(), ControlAssessment.objects.count(),
+                          CompanyControl.objects.count())
+        before = counts()
+        evaluate_company_applicability(c)
+        self.assertEqual(before, counts())
+
+    def test_no_compliance_status_strings_in_results(self):
+        p = self._eval(target_nca=True)
+        for s in p.summaries:
+            self.assertIn(s.status, ('applicable', 'not_applicable', 'needs_more_information'))
+
+
+class ApplicabilityCountTests(TestCase):
+    def test_official_total_417_no_334(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        p = evaluate_company_applicability(_company(target_nca=True))
+        self.assertEqual(p.total_controls, 417)
+        self.assertNotEqual(p.total_controls, 334)
+
+    def test_per_framework_totals_match(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        p = evaluate_company_applicability(_company(target_nca=True))
+        totals = {s.framework_code: s.total_controls for s in p.summaries}
+        self.assertEqual(totals['NCA-ECC-2-2024'], 108)
+        self.assertEqual(totals['ARAMCO-SACS-002'], 92)
+        self.assertEqual(totals['SABIC-CYBERTRUST-1-0'], 94)
+        self.assertEqual(totals['NCA-CCC-2-2024'], 55)
+
+
+class ApplicabilityUITests(TestCase):
+    def _login(self, **kw):
+        c = _company(**kw)
+        self.client.force_login(_journey_user(c))
+        return c
+
+    def test_page_renders_with_arabic_labels(self):
+        self._login(target_nca=True)
+        resp = self.client.get(reverse('compliance:applicability_preview'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'قابلية تطبيق الضوابط')
+        self.assertContains(resp, 'إجمالي الضوابط')
+        self.assertContains(resp, 'تحتاج بيانات إضافية')
+
+    def test_disclaimers_present(self):
+        self._login(target_nca=True)
+        body = self.client.get(reverse('compliance:applicability_preview')).content.decode()
+        self.assertIn('لا يقرر الامتثال أو عدم الامتثال', body)
+        self.assertIn('تعتمد على الأدلة ومراجعة المدقق', body)
+
+    def test_no_compliance_or_verdict_or_cert_wording(self):
+        self._login(target_nca=True)
+        body = self.client.get(reverse('compliance:applicability_preview')).content.decode()
+        for bad in ('متوافق', 'غير متوافق', 'Noncompliance', 'تم إصدار شهادة', 'قرار نهائي', '334', 'CyberTrust KSA'):
+            self.assertNotIn(bad, body)
+
+    def test_dashboard_card_present(self):
+        self._login(target_nca=True)
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertIn('قابلية تطبيق الضوابط', body)
+        self.assertIn(reverse('compliance:applicability_preview'), body)
+
+    def test_english_mode_renders(self):
+        self._login(target_nca=True)
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('compliance:applicability_preview')).content.decode()
+        self.assertIn('Control applicability', body)
+        self.assertIn('Total controls', body)
+
+
+class ApplicabilityJourneyTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _step(self, company, key):
+        from compliance.journey import build_company_compliance_journey
+        j = build_company_compliance_journey(company)
+        return {s['key']: s for s in j['steps']}[key]
+
+    def test_applicability_step_needs_action_without_intake(self):
+        self.assertNotEqual(self._step(_company(), 'applicability')['status'], 'completed')
+
+    def test_applicability_step_completed_with_intake(self):
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)
+        self.assertEqual(self._step(c, 'applicability')['status'], 'completed')
+
+    def test_downstream_steps_remain_not_completed(self):
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)
+        for k in ('ocr_extraction', 'rule_engine', 'final_verdict'):
+            self.assertNotEqual(self._step(c, k)['status'], 'completed')
+
+
+class ApplicabilitySecurityTests(TestCase):
+    def test_anonymous_redirected(self):
+        resp = self.client.get(reverse('compliance:applicability_preview'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_only_own_company_evaluated(self):
+        from compliance.applicability_engine import evaluate_company_applicability
+        c1 = _company(name='Alpha', target_nca=True)
+        c2 = _company(name='Beta')
+        CompanyIntakeProfile.objects.create(company=c2, has_remote_work=True)
+        self.client.force_login(_journey_user(c1))
+        p1 = evaluate_company_applicability(c1)
+        self.assertFalse(p1.has_intake)  # c2's intake never bleeds into c1

@@ -43,6 +43,34 @@
     </div>
     {% endif %}
 
+    {# Phase 6B — advisory control-applicability preview card (read-only) #}
+    {% if applicability %}
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <p class="text-gov-green-700 text-sm font-semibold"><i class="fas fa-list-check mr-1"></i> قابلية تطبيق الضوابط</p>
+                <p class="text-gov-gray-600 text-sm mt-1">تحليل استشاري لقابلية تطبيق الضوابط بناءً على بيانات الشركة. لا يقرر الامتثال.</p>
+            </div>
+            <a href="{% url 'compliance:applicability_preview' %}"
+               class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm shrink-0">عرض قابلية التطبيق</a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">إجمالي الضوابط</p>
+                <p class="font-bold text-gov-gray-800">{{ applicability.total_controls }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">قابلة للتطبيق</p>
+                <p class="font-bold text-gov-green-700">{{ applicability.total_applicable }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">مستوى الثقة</p>
+                <p class="font-bold text-gov-gray-800">{{ applicability.overall_confidence }}%</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Progress + next recommended action -->
     <div class="grid md:grid-cols-3 gap-4">
         <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 md:col-span-1">

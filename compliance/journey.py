@@ -103,7 +103,9 @@ def _completed(key, f):
         # (advisory). Still completed when deterministic applicability has been run.
         'smart_classification': f['applicability'] or f['intake_profile'],
         'control_library': True,
-        'applicability': f['control_plan'],
+        # Phase 6B: an advisory applicability preview is computable once an intake
+        # profile exists; still completed when the persisted control plan is generated.
+        'applicability': f['control_plan'] or f['intake_profile'],
         'assessment_creation': f['assessments'],
         'evidence_upload': f['submissions'],
         'ai_analysis': f['analysis'],

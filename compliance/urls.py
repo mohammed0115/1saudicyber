@@ -15,6 +15,8 @@ urlpatterns = [
     path('intake/', views.intake_wizard, name='intake'),
     # Phase 6A — advisory Smart Classification summary (read-only)
     path('classification/', views.classification_summary, name='classification'),
+    # Phase 6B — advisory control-applicability preview (read-only)
+    path('applicability/', views.applicability_preview, name='applicability_preview'),
     path('intake/review/', views.applicability_review, name='applicability_review'),
 
     # Phase 3C — Framework approval (scope) + control applicability plan

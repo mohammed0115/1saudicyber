@@ -161,6 +161,7 @@ def journey_dashboard(request):
     from monitoring.continuous import summarize_company_monitoring
     from .journey import build_company_compliance_journey
     from .smart_classification import classify_company
+    from .applicability_engine import evaluate_company_applicability
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
@@ -176,6 +177,25 @@ def journey_dashboard(request):
         'risk_counts': risk_dashboard_counts(company),
         'monitoring_summary': summarize_company_monitoring(company),
         'classification': classify_company(company),
+        'applicability': evaluate_company_applicability(company),
+    })
+
+
+@login_required
+def applicability_preview(request):
+    """Phase 6B — advisory control-applicability preview for the user's own company.
+
+    Read-only and tenant-scoped: deterministic scope-based applicability only. Never
+    writes, never creates CompanyControl / ControlApplicabilityResult / Assessment
+    rows, never runs AI, never produces a compliance status or a final verdict.
+    """
+    from .applicability_engine import evaluate_company_applicability
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'compliance/applicability_preview.html', {
+        'company': company,
+        'preview': evaluate_company_applicability(company),
     })
 
 
