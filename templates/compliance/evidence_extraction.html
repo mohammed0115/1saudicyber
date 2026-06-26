@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "استخراج النص من الدليل" %} - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div style="max-width:920px;margin:0 auto;padding:8px 4px 28px;">
+
+    <div style="margin-bottom:14px;">
+      <p style="color:#1F6B63;font-weight:600;margin:0 0 4px;">{% trans "استخراج النص من الدليل" %}</p>
+      <h1 style="color:#1F2933;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;">{{ submission.original_filename }}</h1>
+      <p style="color:#667085;font-size:.9rem;margin:0;">{{ submission.checklist_item.title }}</p>
+    </div>
+
+    {# Disclaimer #}
+    <div style="background:#FBF6EC;border:1px solid #E6D7B8;border-radius:12px;padding:12px 16px;margin-bottom:18px;color:#7A5B16;font-size:.9rem;">
+      <i class="fas fa-circle-info ms-1"></i> {% trans "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال." %}
+    </div>
+
+    {# Metadata strip #}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;">
+      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:14px;">
+        <p style="color:#667085;font-size:.8rem;margin:0 0 4px;">{% trans "حالة الاستخراج" %}</p>
+        <p style="margin:0;font-weight:700;color:{% if extraction.status == 'extracted' %}#0F5D46{% elif extraction.status == 'no_text_extracted' %}#7A5B16{% else %}#9B2C2C{% endif %};">{{ extraction.status_ar }}</p>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:14px;">
+        <p style="color:#667085;font-size:.8rem;margin:0 0 4px;">{% trans "طريقة الاستخراج" %}</p>
+        <p style="margin:0;font-weight:600;color:#1F2933;">{{ extraction.extraction_method|default:"—" }}</p>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:14px;">
+        <p style="color:#667085;font-size:.8rem;margin:0 0 4px;">{% trans "عدد الأحرف" %}</p>
+        <p style="margin:0;font-weight:600;color:#1F2933;">{{ extraction.char_count }}</p>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:14px;">
+        <p style="color:#667085;font-size:.8rem;margin:0 0 4px;">{% trans "عدد الصفحات" %}</p>
+        <p style="margin:0;font-weight:600;color:#1F2933;">{{ extraction.page_count|default:"—" }}</p>
+      </div>
+    </div>
+
+    {# Warnings #}
+    {% if extraction.warnings %}
+    <div style="background:#FFF8F0;border:1px solid #E6D7B8;border-radius:12px;padding:14px 16px;margin-bottom:18px;">
+      <h2 style="color:#7A5B16;font-weight:700;font-size:.95rem;margin:0 0 6px;">{% trans "تنبيهات" %}</h2>
+      <ul style="margin:0;padding-inline-start:18px;color:#7A5B16;font-size:.88rem;">
+        {% for w in extraction.warnings %}<li style="margin:3px 0;">{{ w }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {# Extracted text or no-text message #}
+    {% if extraction.has_text %}
+    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:18px;">
+      <h2 style="color:#0F5D46;font-weight:700;font-size:1rem;margin:0 0 10px;">{% trans "النص المستخرج" %}</h2>
+      <pre style="white-space:pre-wrap;word-break:break-word;font-family:inherit;color:#1F2933;font-size:.88rem;line-height:1.7;margin:0;max-height:520px;overflow:auto;">{{ extraction.extracted_text }}</pre>
+    </div>
+    {% else %}
+    <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:18px;color:#667085;">
+      {% trans "تعذر استخراج نص كافٍ من هذا الملف." %}
+    </div>
+    {% endif %}
+
+    <a href="{% url 'compliance:evidence_submission_detail' submission.id %}"
+       style="background:#0F5D46;color:#fff;font-weight:600;padding:11px 22px;border-radius:10px;text-decoration:none;">
+      {% trans "العودة إلى تفاصيل الدليل" %}</a>
+  </div>
+</div>
+{% endblock %}

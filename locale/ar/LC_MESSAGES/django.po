@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 16:36+0300\n"
+"POT-Creation-Date: 2026-06-26 17:07+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -199,6 +199,47 @@ msgstr ""
 
 #: templates/compliance/classification.html:81
 msgid "إكمال ملف التصنيف"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:3
+#: templates/compliance/evidence_extraction.html:9
+msgid "استخراج النص من الدليل"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:16
+msgid "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال."
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:22
+msgid "حالة الاستخراج"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:26
+msgid "طريقة الاستخراج"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:30
+msgid "عدد الأحرف"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:34
+msgid "عدد الصفحات"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:42
+msgid "تنبيهات"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:52
+msgid "النص المستخرج"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:57
+msgid "تعذر استخراج نص كافٍ من هذا الملف."
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:63
+msgid "العودة إلى تفاصيل الدليل"
 msgstr ""
 
 #: templates/components/journey_wizard.html:7

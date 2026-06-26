@@ -40,8 +40,8 @@ _STEP_DEFS = [
 
     ('evidence_upload', 'رفع الأدلة', 'evidence', 'required', 'compliance:evidence_checklist',
      'رفع الأدلة', 'رفع الأدلة المرتبطة بعناصر قائمة الأدلة.'),
-    ('ocr_extraction', 'استخراج النص / OCR', 'evidence', 'planned', None,
-     '', 'استخراج النص من المستندات — قيد التجهيز (غير مفعّل بعد).'),
+    ('ocr_extraction', 'استخراج النص من الأدلة', 'evidence', 'extraction', 'compliance:evidence_checklist',
+     'استخراج النص', 'استخراج النص القابل للقراءة من المستندات (OCR للصور مُخطّط لاحقًا).'),
     ('ai_analysis', 'التحليل الاستشاري للذكاء الاصطناعي', 'evidence', 'optional', 'compliance:evidence_checklist',
      'إدارة الأدلة', 'تحليل استشاري مساعد للأدلة — لا يُعد قرارًا نهائيًا.'),
     ('rule_engine', 'محرك القواعد', 'evidence', 'planned', None,
@@ -61,6 +61,17 @@ _STEP_DEFS = [
     ('monitoring', 'المراقبة المستمرة', 'review', 'optional', 'monitoring:overview',
      'فتح المراقبة', 'فحوص المراقبة الدورية لصحّة الضوابط (الأساس متاح).'),
 ]
+
+
+def _extractable_evidence_q():
+    """Q matching submissions whose file type supports safe local text extraction
+    (Phase 6C). Used only as a fast type heuristic — no file is parsed here."""
+    from django.db.models import Q
+    from .evidence_extraction import EXTRACTABLE_EXTS
+    q = Q()
+    for ext in EXTRACTABLE_EXTS:
+        q |= Q(file_type__iexact=ext)
+    return q
 
 
 def _signals(company):
@@ -84,6 +95,8 @@ def _signals(company):
         'reviewed': assessments.exclude(status='not_reviewed').exists(),
         'all_reviewed': assessments.exists() and not assessments.filter(status='not_reviewed').exists(),
         'submissions': q(EvidenceSubmission),
+        'has_extractable_evidence': EvidenceSubmission.objects.filter(company=company).filter(
+            _extractable_evidence_q()).exists(),
         'analysis': q(EvidenceAnalysisResult),
         'risks': q(RiskItem),
         'remediation': q(RemediationTask),
@@ -108,6 +121,10 @@ def _completed(key, f):
         'applicability': f['control_plan'] or f['intake_profile'],
         'assessment_creation': f['assessments'],
         'evidence_upload': f['submissions'],
+        # Phase 6C: text-extraction step completes once at least one uploaded
+        # evidence file is of a safely text-extractable type. OCR (scanned
+        # images) stays planned and is not counted here.
+        'ocr_extraction': f['has_extractable_evidence'],
         'ai_analysis': f['analysis'],
         'gap_risk': f['risks'],
         'remediation': f['remediation'],
@@ -129,6 +146,16 @@ def build_company_compliance_journey(company, user=None):
             status = 'completed'
         elif kind == 'planned':
             status = 'planned'
+        elif kind == 'extraction':
+            # Phase 6C: text extraction is available. Completed when an
+            # extractable-type evidence file exists; needs_action when evidence
+            # exists but none is text-extractable; planned before any upload.
+            if completed:
+                status = 'completed'
+            elif f['submissions']:
+                status = 'needs_action'
+            else:
+                status = 'planned'
         elif kind == 'gated' and not f['subscription']:
             status = 'locked'
         elif kind == 'partial' and not completed:

@@ -182,6 +182,26 @@ def journey_dashboard(request):
 
 
 @login_required
+def evidence_extraction_preview(request, submission_id):
+    """Phase 6C — read-only text-extraction preview for one evidence submission.
+
+    Tenant-scoped: extracts readable text only (no OCR, no AI, no compliance
+    judgment). Read-only — never writes, never leaks the file path, never
+    evaluates evidence sufficiency.
+    """
+    from .models import EvidenceSubmission
+    from .evidence_extraction import extract_text_from_evidence
+    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
+    if sub is None:
+        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    return render(request, 'compliance/evidence_extraction.html', {
+        'submission': sub,
+        'extraction': extract_text_from_evidence(sub),
+    })
+
+
+@login_required
 def applicability_preview(request):
     """Phase 6B — advisory control-applicability preview for the user's own company.
 

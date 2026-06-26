@@ -50,6 +50,9 @@
         </div>
     </div>
 
-    <a href="{% url 'compliance:evidence_submission_list' submission.checklist_item.id %}" class="text-gov-green-700 hover:underline text-sm">رجوع للقائمة</a>
+    <div class="flex flex-wrap gap-4 items-center">
+        <a href="{% url 'compliance:evidence_extraction' submission.id %}" class="text-gov-green-700 hover:underline text-sm"><i class="fas fa-file-lines mr-1"></i> استخراج النص من الدليل</a>
+        <a href="{% url 'compliance:evidence_submission_list' submission.checklist_item.id %}" class="text-gov-green-700 hover:underline text-sm">رجوع للقائمة</a>
+    </div>
 </div>
 {% endblock %}

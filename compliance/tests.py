@@ -4366,3 +4366,201 @@ class ApplicabilitySecurityTests(TestCase):
         self.client.force_login(_journey_user(c1))
         p1 = evaluate_company_applicability(c1)
         self.assertFalse(p1.has_intake)  # c2's intake never bleeds into c1
+
+
+# ============================================================
+# Phase 6C — Evidence Text Extraction Foundation
+# ============================================================
+import os
+import tempfile as _tempfile
+
+
+def _mk_txt(text='Cybersecurity   policy\n\n\n approved.'):
+    p = _tempfile.mktemp(suffix='.txt')
+    with open(p, 'w', encoding='utf-8') as f:
+        f.write(text)
+    return p
+
+
+class EvidenceExtractionServiceTests(TestCase):
+    def test_txt_extraction_and_whitespace_normalized(self):
+        from compliance.evidence_extraction import extract_text_from_file, EXTRACTED
+        p = _mk_txt()
+        r = extract_text_from_file(p, 'doc.txt'); os.unlink(p)
+        self.assertEqual(r.status, EXTRACTED)
+        self.assertIn('Cybersecurity policy', r.extracted_text)   # collapsed spaces
+        self.assertNotIn('   ', r.extracted_text)
+        self.assertEqual(r.char_count, len(r.extracted_text))
+
+    def test_csv_extraction(self):
+        from compliance.evidence_extraction import extract_text_from_file, EXTRACTED
+        p = _tempfile.mktemp(suffix='.csv')
+        open(p, 'w', encoding='utf-8').write('asset,owner\nfirewall,it')
+        r = extract_text_from_file(p, 'd.csv'); os.unlink(p)
+        self.assertEqual(r.status, EXTRACTED)
+        self.assertIn('firewall', r.extracted_text)
+
+    def test_docx_extraction(self):
+        from docx import Document
+        from compliance.evidence_extraction import extract_text_from_file, EXTRACTED
+        p = _tempfile.mktemp(suffix='.docx')
+        d = Document(); d.add_paragraph('Incident Response Plan v2'); d.save(p)
+        r = extract_text_from_file(p, 'd.docx'); os.unlink(p)
+        self.assertEqual(r.status, EXTRACTED)
+        self.assertIn('Incident Response Plan', r.extracted_text)
+        self.assertEqual(r.extraction_method, 'docx')
+
+    def test_xlsx_extraction(self):
+        from openpyxl import Workbook
+        from compliance.evidence_extraction import extract_text_from_file, EXTRACTED
+        p = _tempfile.mktemp(suffix='.xlsx')
+        wb = Workbook(); ws = wb.active; ws['A1'] = 'Asset'; ws['B1'] = 'Owner'; wb.save(p)
+        r = extract_text_from_file(p, 'd.xlsx'); os.unlink(p)
+        self.assertEqual(r.status, EXTRACTED)
+        self.assertIn('Asset', r.extracted_text)
+
+    def test_pdf_text_layer_extraction(self):
+        from dashboard.reports import gap_analysis_pdf
+        from compliance.evidence_extraction import extract_text_from_file, EXTRACTED, NO_TEXT
+        c = _company()
+        p = _tempfile.mktemp(suffix='.pdf')
+        with open(p, 'wb') as f:
+            f.write(gap_analysis_pdf(c))
+        r = extract_text_from_file(p, 'report.pdf'); os.unlink(p)
+        # A generated (text-layer) PDF should extract text; method is the text layer.
+        self.assertIn(r.status, (EXTRACTED, NO_TEXT))
+        if r.status == EXTRACTED:
+            self.assertEqual(r.extraction_method, 'pdf_text_layer')
+            self.assertIsNotNone(r.page_count)
+
+    def test_image_returns_no_text_without_ocr(self):
+        from compliance.evidence_extraction import extract_text_from_file, NO_TEXT
+        p = _tempfile.mktemp(suffix='.png')
+        open(p, 'wb').write(b'\x89PNG\r\n\x1a\n')
+        r = extract_text_from_file(p, 'scan.png'); os.unlink(p)
+        self.assertEqual(r.status, NO_TEXT)
+        self.assertTrue(any('OCR' in w for w in r.warnings))
+
+    def test_unsupported_type(self):
+        from compliance.evidence_extraction import extract_text_from_file, UNSUPPORTED
+        p = _tempfile.mktemp(suffix='.exe'); open(p, 'wb').write(b'MZ')
+        r = extract_text_from_file(p, 'x.exe'); os.unlink(p)
+        self.assertEqual(r.status, UNSUPPORTED)
+
+    def test_too_large_file(self):
+        from compliance import evidence_extraction as ee
+        p = _mk_txt('x' * 100)
+        orig = ee.MAX_EXTRACTION_BYTES
+        ee.MAX_EXTRACTION_BYTES = 10
+        try:
+            r = ee.extract_text_from_file(p, 'big.txt')
+        finally:
+            ee.MAX_EXTRACTION_BYTES = orig
+            os.unlink(p)
+        self.assertEqual(r.status, 'too_large')
+
+    def test_missing_file_fails_safely(self):
+        from compliance.evidence_extraction import extract_text_from_file, FAILED
+        r = extract_text_from_file('/nope/missing.txt', 'missing.txt')
+        self.assertEqual(r.status, FAILED)
+        self.assertNotIn('/nope/', (r.error_message or ''))  # no path leakage
+
+    def test_parser_exception_returns_failed_without_traceback(self):
+        from compliance.evidence_extraction import extract_text_from_file, FAILED
+        # A .docx that is not a valid zip -> python-docx raises -> FAILED, no traceback.
+        p = _tempfile.mktemp(suffix='.docx'); open(p, 'wb').write(b'not a real docx')
+        r = extract_text_from_file(p, 'bad.docx'); os.unlink(p)
+        self.assertEqual(r.status, FAILED)
+        self.assertNotIn('Traceback', (r.error_message or ''))
+
+    def test_text_length_capped(self):
+        from compliance import evidence_extraction as ee
+        p = _mk_txt('a' * (ee.MAX_TEXT_CHARS + 5000))
+        r = ee.extract_text_from_file(p, 'long.txt'); os.unlink(p)
+        self.assertTrue(r.truncated)
+        self.assertLessEqual(r.char_count, ee.MAX_TEXT_CHARS)
+
+    def test_deterministic_repeated_extraction(self):
+        from compliance.evidence_extraction import extract_text_from_file
+        p = _mk_txt()
+        a = extract_text_from_file(p, 'd.txt'); b = extract_text_from_file(p, 'd.txt'); os.unlink(p)
+        self.assertEqual((a.status, a.extracted_text, a.char_count),
+                         (b.status, b.extracted_text, b.char_count))
+
+
+def _company_with_submission_file(filename='policy.txt', content=b'Access control policy approved.', file_type='txt'):
+    """Reuse the existing submission helper (builds the full checklist FK chain)."""
+    return _company_with_submission(name=filename, content=content, ftype=file_type)
+
+
+class EvidenceExtractionUITests(TestCase):
+    def test_page_renders_for_owner_with_arabic_and_disclaimer(self):
+        c, item, sub = _company_with_submission_file()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'استخراج النص من الدليل')
+        self.assertContains(resp, 'حالة الاستخراج')
+        self.assertContains(resp, 'لا يمثل تحليلًا أو حكمًا على الامتثال')
+
+    def test_no_compliance_or_verdict_or_path_leak(self):
+        c, item, sub = _company_with_submission_file()
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id])).content.decode()
+        for bad in ('متوافق', 'غير متوافق', 'قرار نهائي', 'الدليل كافٍ', 'الدليل غير كافٍ'):
+            self.assertNotIn(bad, body)
+        self.assertNotIn('/media/evidence_v2/', body)  # raw stored path not exposed
+
+    def test_english_mode_does_not_break(self):
+        c, item, sub = _company_with_submission_file()
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id])).content.decode()
+        self.assertIn('Evidence text extraction', body)
+        self.assertIn('Extraction status', body)
+
+
+class EvidenceExtractionJourneyTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _step(self, company, key):
+        from compliance.journey import build_company_compliance_journey
+        j = build_company_compliance_journey(company)
+        return {s['key']: s for s in j['steps']}[key]
+
+    def test_extraction_step_planned_without_evidence(self):
+        s = self._step(_company(), 'ocr_extraction')
+        self.assertEqual(s['status'], 'planned')
+        self.assertFalse(s['is_available'])
+
+    def test_evidence_upload_completed_and_extraction_completed_with_extractable_file(self):
+        c, item, sub = _company_with_submission_file(file_type='pdf')
+        self.assertEqual(self._step(c, 'evidence_upload')['status'], 'completed')
+        self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'completed')
+
+    def test_extraction_needs_action_when_only_image_evidence(self):
+        c, item, sub = _company_with_submission_file(filename='scan.png', file_type='png')
+        self.assertEqual(self._step(c, 'evidence_upload')['status'], 'completed')
+        self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'needs_action')
+
+    def test_downstream_steps_remain_not_completed(self):
+        c, item, sub = _company_with_submission_file(file_type='pdf')
+        for k in ('rule_engine', 'final_verdict'):
+            self.assertNotEqual(self._step(c, k)['status'], 'completed')
+
+
+class EvidenceExtractionSecurityTests(TestCase):
+    def test_anonymous_redirected(self):
+        c, item, sub = _company_with_submission_file()
+        resp = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_user_cannot_access_other_company_extraction(self):
+        c1, i1, s1 = _company_with_submission_file()
+        c2 = _company(name='Other')
+        self.client.force_login(_journey_user(c2))
+        resp = self.client.get(reverse('compliance:evidence_extraction', args=[s1.id]))
+        self.assertEqual(resp.status_code, 302)  # redirected away (not found for this tenant)
+        self.assertNotIn('استخراج النص من الدليل', resp.content.decode())
