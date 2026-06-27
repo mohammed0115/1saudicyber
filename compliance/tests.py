@@ -5481,3 +5481,169 @@ class Phase7AEndToEndUATTests(TestCase):
         c = _company()
         self.client.force_login(_journey_user(c))
         self.assertIn(self.client.get('/monitoring/continuous/').status_code, (200, 302))
+
+
+# ============================================================
+# Phase 7B — Report Finalization Integration
+# ============================================================
+def _company_with_verdict(fv='NCA-ECC-2-2024', status='final_c', subscribe=True):
+    """Company + submission with a recorded auditor verdict (and optional subscription)."""
+    from compliance.evidence_extraction import save_extraction_for_submission
+    from compliance.rule_engine import evaluate_submission_rules
+    from compliance.auditor_verdict import record_auditor_final_verdict
+    from billing.subscription_access import activate_company_subscription
+    from core.models import User
+    c, item, sub = _company_with_submission(fv_code=fv, name='p.txt',
+                                            content=b'access control policy approved.', ftype='txt')
+    save_extraction_for_submission(sub)
+    _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+    evaluate_submission_rules(sub)
+    staff = _staff_user(email=f'staff7b{User.objects.filter(is_staff=True).count()}@x.com')
+    record_auditor_final_verdict(sub, staff, status=status, rationale='reviewed ok', confidence=88)
+    if subscribe:
+        activate_company_subscription(c, 'Plan', days=30)
+    return c, item, sub
+
+
+class ReportFinalizationServiceTests(TestCase):
+    def test_counts_total_reviewed_pending(self):
+        from compliance.report_finalization import build_auditor_reviewed_report
+        c, item, sub = _company_with_verdict()
+        r = build_auditor_reviewed_report(c)
+        self.assertEqual(r.total_submissions, 1)
+        self.assertEqual(r.reviewed_count, 1)
+        self.assertEqual(r.pending_count, 0)
+        self.assertTrue(r.has_verdicts)
+
+    def test_status_and_framework_counts(self):
+        from compliance.report_finalization import build_auditor_reviewed_report
+        c, item, sub = _company_with_verdict(status='final_c')
+        r = build_auditor_reviewed_report(c)
+        self.assertEqual(r.status_counts.get('final_c'), 1)
+        self.assertEqual(r.framework_counts.get('nca'), 1)
+
+    def test_aramco_status_mapped(self):
+        from compliance.report_finalization import build_auditor_reviewed_report
+        c, item, sub = _company_with_verdict(fv='ARAMCO-SACS-002', status='final_compliance')
+        r = build_auditor_reviewed_report(c)
+        self.assertEqual(r.status_counts.get('final_compliance'), 1)
+        self.assertEqual(r.framework_counts.get('aramco_sabic'), 1)
+
+    def test_excludes_raw_text_and_paths(self):
+        from compliance.report_finalization import build_auditor_reviewed_report
+        c, item, sub = _company_with_verdict()
+        r = build_auditor_reviewed_report(c)
+        row = r.rows[0]
+        blob = str(row)
+        self.assertNotIn('/media/', blob)
+        self.assertNotIn('access control policy approved', blob)  # raw extracted text excluded
+
+    def test_does_not_write_assessment_or_company_control(self):
+        from compliance.report_finalization import build_auditor_reviewed_report
+        from compliance.models import ControlAssessment, CompanyControl
+        c, item, sub = _company_with_verdict()
+        before = (ControlAssessment.objects.count(), CompanyControl.objects.count())
+        build_auditor_reviewed_report(c)
+        self.assertEqual(before, (ControlAssessment.objects.count(), CompanyControl.objects.count()))
+
+    def test_deterministic(self):
+        from compliance.report_finalization import build_auditor_reviewed_report
+        c, item, sub = _company_with_verdict()
+        a = build_auditor_reviewed_report(c); b = build_auditor_reviewed_report(c)
+        self.assertEqual((a.total_submissions, a.reviewed_count, a.status_counts),
+                         (b.total_submissions, b.reviewed_count, b.status_counts))
+
+
+class ReportFinalizationUITests(TestCase):
+    def test_empty_state_when_no_verdict(self):
+        from billing.subscription_access import activate_company_subscription
+        c = _company()
+        activate_company_subscription(c, 'Plan', days=30)
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:auditor_reviewed_report')).content.decode()
+        self.assertIn('لا توجد قرارات مدقق نهائية بعد', body)
+        self.assertIn('لا يُعد شهادة امتثال رسمية', body)
+
+    def test_renders_rows_after_verdict(self):
+        c, item, sub = _company_with_verdict()
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:auditor_reviewed_report')).content.decode()
+        self.assertIn('تقرير مراجعة امتثال داخلي', body)
+        self.assertIn('ملخص قرارات المدقق', body)
+        self.assertIn('الحالة بعد مراجعة المدقق', body)
+
+    def test_no_certification_or_334(self):
+        c, item, sub = _company_with_verdict()
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:auditor_reviewed_report')).content.decode()
+        # Positive certification CLAIMS must be absent. (The mandated disclaimer legitimately
+        # negates "شهادة امتثال رسمية"/"اعتماد", so those phrases are not blanket-forbidden.)
+        for bad in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك',
+                    'certified by NCA', 'official accreditation', '334', '/media/'):
+            self.assertNotIn(bad, body)
+        # And the required negation disclaimer IS present.
+        self.assertIn('لا يُعد شهادة امتثال رسمية', body)
+
+    def test_subscription_gate_preserved(self):
+        # Unsubscribed company hits the subscription-required gate, not the report.
+        c, item, sub = _company_with_verdict(subscribe=False)
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:auditor_reviewed_report')).content.decode()
+        self.assertNotIn('تفاصيل القرارات', body)  # report body not shown
+
+    def test_english_mode_does_not_break(self):
+        c, item, sub = _company_with_verdict()
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('compliance:auditor_reviewed_report')).content.decode()
+        self.assertIn('Internal compliance review report', body)
+        self.assertIn('Status after auditor review', body)
+
+
+class ReportFinalizationJourneyTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _step(self, company, key):
+        from compliance.journey import build_company_compliance_journey
+        return {s['key']: s for s in build_company_compliance_journey(company)['steps']}[key]
+
+    def test_reports_locked_without_subscription(self):
+        c, item, sub = _company_with_verdict(subscribe=False)
+        self.assertEqual(self._step(c, 'reports')['status'], 'locked')
+
+    def test_reports_not_completed_with_subscription_but_no_verdict(self):
+        from billing.subscription_access import activate_company_subscription
+        c = _company()
+        activate_company_subscription(c, 'Plan', days=30)
+        self.assertNotEqual(self._step(c, 'reports')['status'], 'completed')
+
+    def test_reports_completed_with_subscription_and_verdict(self):
+        c, item, sub = _company_with_verdict(subscribe=True)
+        self.assertEqual(self._step(c, 'reports')['status'], 'completed')
+
+    def test_monitoring_unchanged(self):
+        c, item, sub = _company_with_verdict(subscribe=True)
+        self.assertNotEqual(self._step(c, 'monitoring')['status'], 'completed')
+
+
+class ReportFinalizationSecurityTests(TestCase):
+    def test_anonymous_redirected(self):
+        resp = self.client.get(reverse('compliance:auditor_reviewed_report'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_company_sees_only_own_rows(self):
+        from compliance.report_finalization import build_auditor_reviewed_report
+        c1, i1, s1 = _company_with_verdict()
+        c2, i2, s2 = _company_with_verdict(status='final_nc')
+        r1 = build_auditor_reviewed_report(c1)
+        self.assertEqual(r1.reviewed_count, 1)
+        self.assertTrue(all(row.submission_id == s1.id for row in r1.rows))
+
+    def test_verdict_still_not_certificate(self):
+        # Regression: recording a verdict + report does not create any certificate artifact.
+        c, item, sub = _company_with_verdict()
+        from compliance.models import AuditorFinalVerdict
+        v = AuditorFinalVerdict.objects.get(submission=sub)
+        self.assertNotIn('شهادة', v.status_ar)

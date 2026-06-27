@@ -56,6 +56,8 @@ urlpatterns = [
 
     # Phase 3H — read-only compliance reports + gap analysis + exports
     path('reports/', views.reports_index, name='reports_index'),
+    # Phase 7B — internal auditor-reviewed report (subscription-gated)
+    path('reports/auditor-reviewed/', views.auditor_reviewed_report, name='auditor_reviewed_report'),
     path('reports/executive-summary/', views.report_executive_summary, name='report_executive_summary'),
     path('reports/gap-analysis/', views.report_gap_analysis, name='report_gap_analysis'),
     path('reports/evidence-matrix/', views.report_evidence_matrix, name='report_evidence_matrix'),

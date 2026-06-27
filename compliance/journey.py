@@ -134,7 +134,9 @@ def _completed(key, f):
         # Phase 6F: auditor-review/final-verdict steps reflect a recorded human verdict.
         'auditor_review': f['auditor_verdict_exists'],
         'final_verdict': f['auditor_verdict_exists'],
-        'reports': f['subscription'] and f['reviewed'],
+        # Phase 7B: reports complete only when an active subscription AND a recorded
+        # auditor final verdict exist (the internal auditor-reviewed report is available).
+        'reports': f['subscription'] and f['auditor_verdict_exists'],
         'monitoring': f['monitoring_checks'],
     }.get(key, False)
 

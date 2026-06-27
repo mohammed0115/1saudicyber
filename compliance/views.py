@@ -790,6 +790,27 @@ def reports_index(request):
 
 
 @login_required
+def auditor_reviewed_report(request):
+    """Phase 7B — internal auditor-reviewed report (subscription-gated, company-scoped).
+
+    Read-only aggregation of AuditorFinalVerdict records. Internal review report —
+    NOT a certificate or official accreditation. Preserves the existing report
+    subscription gate; never finalizes/recalculates compliance numbers.
+    """
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    gate = _require_full_reports(request, company)
+    if gate:
+        return gate
+    from .report_finalization import build_auditor_reviewed_report
+    return render(request, 'compliance/auditor_reviewed_report.html', {
+        'company': company,
+        'report': build_auditor_reviewed_report(company),
+    })
+
+
+@login_required
 def report_executive_summary(request):
     company = request.user.company
     if not company:
