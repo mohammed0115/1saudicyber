@@ -206,6 +206,31 @@ def extract_text_from_file(file_path, filename, content_type=None) -> Extraction
                             warnings=warnings, truncated=truncated)
 
 
+def save_extraction_for_submission(submission):
+    """Run extraction for an EvidenceSubmission and persist the result (upsert).
+
+    Read-only with respect to the file; the only DB write is the single
+    EvidenceTextExtraction row (created or updated — never duplicated). Returns
+    the persisted EvidenceTextExtraction instance.
+    """
+    from .models import EvidenceTextExtraction
+    result = extract_text_from_evidence(submission)
+    obj, _ = EvidenceTextExtraction.objects.update_or_create(
+        submission=submission,
+        defaults=dict(
+            status=result.status,
+            extracted_text=result.extracted_text,
+            char_count=result.char_count,
+            page_count=result.page_count,
+            extraction_method=result.extraction_method or '',
+            warnings=list(result.warnings or []),
+            error_message=result.error_message or '',
+            truncated=result.truncated,
+        ),
+    )
+    return obj
+
+
 def extract_text_from_evidence(evidence) -> ExtractionResult:
     """Extract text from an EvidenceSubmission (or legacy Evidence) instance (read-only)."""
     file_field = getattr(evidence, 'uploaded_file', None) or getattr(evidence, 'file', None)

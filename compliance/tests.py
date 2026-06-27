@@ -4494,17 +4494,30 @@ def _company_with_submission_file(filename='policy.txt', content=b'Access contro
 
 
 class EvidenceExtractionUITests(TestCase):
-    def test_page_renders_for_owner_with_arabic_and_disclaimer(self):
+    def test_not_attempted_state_does_not_imply_success(self):
         c, item, sub = _company_with_submission_file()
         self.client.force_login(_journey_user(c))
         resp = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'استخراج النص من الدليل')
-        self.assertContains(resp, 'حالة الاستخراج')
+        self.assertContains(resp, 'لم يتم تشغيل استخراج النص بعد.')
+        self.assertContains(resp, 'تشغيل استخراج النص')           # run button
         self.assertContains(resp, 'لا يمثل تحليلًا أو حكمًا على الامتثال')
+        self.assertNotContains(resp, 'حالة الاستخراج')            # no result metadata yet
+
+    def test_extracted_state_shows_stored_result(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission_file()
+        save_extraction_for_submission(sub)
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id]))
+        self.assertContains(resp, 'حالة الاستخراج')
+        self.assertContains(resp, 'النص المستخرج')
 
     def test_no_compliance_or_verdict_or_path_leak(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
         c, item, sub = _company_with_submission_file()
+        save_extraction_for_submission(sub)
         self.client.force_login(_journey_user(c))
         body = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id])).content.decode()
         for bad in ('متوافق', 'غير متوافق', 'قرار نهائي', 'الدليل كافٍ', 'الدليل غير كافٍ'):
@@ -4517,7 +4530,58 @@ class EvidenceExtractionUITests(TestCase):
         self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
         body = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id])).content.decode()
         self.assertIn('Evidence text extraction', body)
-        self.assertIn('Extraction status', body)
+        self.assertIn('Run text extraction', body)
+
+
+class EvidenceExtractionPersistenceTests(TestCase):
+    def test_run_action_persists_one_result_for_owner(self):
+        from compliance.models import EvidenceTextExtraction
+        c, item, sub = _company_with_submission_file()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.post(reverse('compliance:run_evidence_extraction', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        ext = EvidenceTextExtraction.objects.get(submission=sub)
+        self.assertEqual(ext.status, 'extracted')
+        self.assertGreater(ext.char_count, 0)
+
+    def test_rerun_updates_not_duplicates(self):
+        from compliance.models import EvidenceTextExtraction
+        c, item, sub = _company_with_submission_file()
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('compliance:run_evidence_extraction', args=[sub.id]))
+        self.client.post(reverse('compliance:run_evidence_extraction', args=[sub.id]))
+        self.assertEqual(EvidenceTextExtraction.objects.filter(submission=sub).count(), 1)
+
+    def test_warnings_stored_safely_and_no_path(self):
+        from compliance.models import EvidenceTextExtraction
+        c, item, sub = _company_with_submission_file(filename='scan.png', file_type='png')
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('compliance:run_evidence_extraction', args=[sub.id]))
+        ext = EvidenceTextExtraction.objects.get(submission=sub)
+        self.assertEqual(ext.status, 'no_text_extracted')
+        self.assertIsInstance(ext.warnings, list)
+        self.assertNotIn('/media/', (ext.error_message or ''))
+
+    def test_run_action_get_not_allowed(self):
+        c, item, sub = _company_with_submission_file()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:run_evidence_extraction', args=[sub.id]))
+        self.assertEqual(resp.status_code, 405)
+
+    def test_run_action_anonymous_redirected(self):
+        c, item, sub = _company_with_submission_file()
+        resp = self.client.post(reverse('compliance:run_evidence_extraction', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_run_action_cross_company_blocked(self):
+        from compliance.models import EvidenceTextExtraction
+        c1, i1, s1 = _company_with_submission_file()
+        c2 = _company(name='Other2')
+        self.client.force_login(_journey_user(c2))
+        resp = self.client.post(reverse('compliance:run_evidence_extraction', args=[s1.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(EvidenceTextExtraction.objects.filter(submission=s1).exists())
 
 
 class EvidenceExtractionJourneyTests(TestCase):
@@ -4534,18 +4598,30 @@ class EvidenceExtractionJourneyTests(TestCase):
         self.assertEqual(s['status'], 'planned')
         self.assertFalse(s['is_available'])
 
-    def test_evidence_upload_completed_and_extraction_completed_with_extractable_file(self):
+    def test_extractable_file_without_extraction_is_needs_action(self):
+        # Truthfulness gate: extractable by type but no extraction run yet.
         c, item, sub = _company_with_submission_file(file_type='pdf')
-        self.assertEqual(self._step(c, 'evidence_upload')['status'], 'completed')
-        self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'completed')
-
-    def test_extraction_needs_action_when_only_image_evidence(self):
-        c, item, sub = _company_with_submission_file(filename='scan.png', file_type='png')
         self.assertEqual(self._step(c, 'evidence_upload')['status'], 'completed')
         self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'needs_action')
 
+    def test_completed_only_after_successful_extraction(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission_file(file_type='txt',
+                                                     content=b'Access control policy approved.')
+        self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'needs_action')
+        save_extraction_for_submission(sub)  # persists status=extracted, char_count>0
+        self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'completed')
+
+    def test_no_text_result_keeps_needs_action(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission_file(filename='scan.png', file_type='png')
+        save_extraction_for_submission(sub)  # status=no_text_extracted
+        self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'needs_action')
+
     def test_downstream_steps_remain_not_completed(self):
-        c, item, sub = _company_with_submission_file(file_type='pdf')
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission_file(file_type='txt')
+        save_extraction_for_submission(sub)
         for k in ('rule_engine', 'final_verdict'):
             self.assertNotEqual(self._step(c, k)['status'], 'completed')
 

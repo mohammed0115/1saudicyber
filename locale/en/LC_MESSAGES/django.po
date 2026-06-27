@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 17:07+0300\n"
+"POT-Creation-Date: 2026-06-27 09:00+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,6 +28,7 @@ msgstr "Please select a file to upload."
 #: compliance/views.py:134
 msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
 msgstr "Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
@@ -178,6 +179,7 @@ msgid "هذا التصنيف استشاري ولا يُعد قرارًا نها�
 msgstr "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 
 #: templates/compliance/classification.html:20
@@ -215,35 +217,47 @@ msgstr "Evidence text extraction"
 msgid "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال."
 msgstr "This extraction is not an analysis or a compliance judgment."
 
-#: templates/compliance/evidence_extraction.html:22
+#: templates/compliance/evidence_extraction.html:23
+msgid "إعادة استخراج النص"
+msgstr "Re-run text extraction"
+
+#: templates/compliance/evidence_extraction.html:23
+msgid "تشغيل استخراج النص"
+msgstr "Run text extraction"
+
+#: templates/compliance/evidence_extraction.html:30
+msgid "لم يتم تشغيل استخراج النص بعد."
+msgstr "Text extraction has not been run yet."
+
+#: templates/compliance/evidence_extraction.html:37
 msgid "حالة الاستخراج"
 msgstr "Extraction status"
 
-#: templates/compliance/evidence_extraction.html:26
+#: templates/compliance/evidence_extraction.html:41
 msgid "طريقة الاستخراج"
 msgstr "Extraction method"
 
-#: templates/compliance/evidence_extraction.html:30
+#: templates/compliance/evidence_extraction.html:45
 msgid "عدد الأحرف"
 msgstr "Character count"
 
-#: templates/compliance/evidence_extraction.html:34
+#: templates/compliance/evidence_extraction.html:49
 msgid "عدد الصفحات"
 msgstr "Page count"
 
-#: templates/compliance/evidence_extraction.html:42
+#: templates/compliance/evidence_extraction.html:56
 msgid "تنبيهات"
 msgstr "Warnings"
 
-#: templates/compliance/evidence_extraction.html:52
+#: templates/compliance/evidence_extraction.html:65
 msgid "النص المستخرج"
 msgstr "Extracted text"
 
-#: templates/compliance/evidence_extraction.html:57
+#: templates/compliance/evidence_extraction.html:70
 msgid "تعذر استخراج نص كافٍ من هذا الملف."
 msgstr "Could not extract sufficient text from this file."
 
-#: templates/compliance/evidence_extraction.html:63
+#: templates/compliance/evidence_extraction.html:77
 msgid "العودة إلى تفاصيل الدليل"
 msgstr "Back to evidence details"
 

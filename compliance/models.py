@@ -834,3 +834,53 @@ class ControlAssessment(models.Model):
 
     def __str__(self):
         return f"{self.company.name} :: {self.control.control_id} = {self.status}"
+
+
+class EvidenceTextExtraction(models.Model):
+    """Phase 6C-FIX-A — persisted result of a safe, read-only text-extraction
+    attempt for one EvidenceSubmission.
+
+    Makes the journey "text extraction" step truthful: it is only "completed"
+    when an actual successful extraction (status='extracted', char_count>0) has
+    been recorded. Stores no compliance/sufficiency judgment — extraction only.
+    """
+    STATUS_CHOICES = [
+        ('extracted', 'Extracted'),
+        ('no_text_extracted', 'No Text Extracted'),
+        ('unsupported_type', 'Unsupported Type'),
+        ('too_large', 'Too Large'),
+        ('failed', 'Failed'),
+    ]
+    submission = models.OneToOneField(
+        'compliance.EvidenceSubmission', on_delete=models.CASCADE, related_name='text_extraction')
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES)
+    extracted_text = models.TextField(blank=True)
+    char_count = models.PositiveIntegerField(default=0)
+    page_count = models.PositiveIntegerField(null=True, blank=True)
+    extraction_method = models.CharField(max_length=64, blank=True)
+    warnings = models.JSONField(default=list, blank=True)
+    error_message = models.TextField(blank=True)
+    truncated = models.BooleanField(default=False)
+    extracted_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'evidence_text_extractions'
+
+    STATUS_AR = {
+        'extracted': 'تم الاستخراج',
+        'no_text_extracted': 'تعذّر استخراج نص كافٍ',
+        'unsupported_type': 'نوع ملف غير مدعوم',
+        'too_large': 'الملف كبير جدًا',
+        'failed': 'فشل الاستخراج',
+    }
+
+    def __str__(self):
+        return f"Extraction[{self.submission_id}] = {self.status}"
+
+    @property
+    def has_text(self):
+        return self.status == 'extracted' and self.char_count > 0
+
+    @property
+    def status_ar(self):
+        return self.STATUS_AR.get(self.status, self.status)

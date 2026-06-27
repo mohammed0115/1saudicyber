@@ -5,8 +5,21 @@ from .models import (
     CompanyIntakeProfile, FrameworkApplicabilityResult,
     CompanyFrameworkScope, ControlApplicabilityResult,
     EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
-    ControlAssessment,
+    ControlAssessment, EvidenceTextExtraction,
 )
+
+
+@admin.register(EvidenceTextExtraction)
+class EvidenceTextExtractionAdmin(admin.ModelAdmin):
+    """Read-only: extraction is computed by the service, never edited by hand."""
+    list_display = ('submission', 'status', 'char_count', 'page_count', 'extraction_method', 'extracted_at')
+    list_filter = ('status', 'extraction_method')
+    search_fields = ('submission__original_filename',)
+    readonly_fields = ('submission', 'status', 'extracted_text', 'char_count', 'page_count',
+                       'extraction_method', 'warnings', 'error_message', 'truncated', 'extracted_at')
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(Framework)

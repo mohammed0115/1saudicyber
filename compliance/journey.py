@@ -63,22 +63,11 @@ _STEP_DEFS = [
 ]
 
 
-def _extractable_evidence_q():
-    """Q matching submissions whose file type supports safe local text extraction
-    (Phase 6C). Used only as a fast type heuristic — no file is parsed here."""
-    from django.db.models import Q
-    from .evidence_extraction import EXTRACTABLE_EXTS
-    q = Q()
-    for ext in EXTRACTABLE_EXTS:
-        q |= Q(file_type__iexact=ext)
-    return q
-
-
 def _signals(company):
     from .models import (CompanyIntakeProfile, FrameworkApplicabilityResult,
                          CompanyFrameworkScope, ControlApplicabilityResult,
                          EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
-                         ControlAssessment)
+                         EvidenceTextExtraction, ControlAssessment)
     from risk.models import RiskItem, RemediationTask
     from auditors.models import AuditorAssignment
     from monitoring.models import MonitoringCheck
@@ -95,8 +84,9 @@ def _signals(company):
         'reviewed': assessments.exclude(status='not_reviewed').exists(),
         'all_reviewed': assessments.exists() and not assessments.filter(status='not_reviewed').exists(),
         'submissions': q(EvidenceSubmission),
-        'has_extractable_evidence': EvidenceSubmission.objects.filter(company=company).filter(
-            _extractable_evidence_q()).exists(),
+        # Phase 6C-FIX-A: truthful — only a PERSISTED successful extraction counts.
+        'text_extracted': EvidenceTextExtraction.objects.filter(
+            submission__company=company, status='extracted', char_count__gt=0).exists(),
         'analysis': q(EvidenceAnalysisResult),
         'risks': q(RiskItem),
         'remediation': q(RemediationTask),
@@ -121,10 +111,10 @@ def _completed(key, f):
         'applicability': f['control_plan'] or f['intake_profile'],
         'assessment_creation': f['assessments'],
         'evidence_upload': f['submissions'],
-        # Phase 6C: text-extraction step completes once at least one uploaded
-        # evidence file is of a safely text-extractable type. OCR (scanned
-        # images) stays planned and is not counted here.
-        'ocr_extraction': f['has_extractable_evidence'],
+        # Phase 6C-FIX-A: text-extraction step completes ONLY when an actual
+        # successful extraction (status=extracted, char_count>0) is persisted —
+        # never from a file-type heuristic. OCR (scanned images) stays planned.
+        'ocr_extraction': f['text_extracted'],
         'ai_analysis': f['analysis'],
         'gap_risk': f['risks'],
         'remediation': f['remediation'],

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-26 17:07+0300\n"
+"POT-Creation-Date: 2026-06-27 09:00+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -210,35 +210,47 @@ msgstr ""
 msgid "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال."
 msgstr ""
 
-#: templates/compliance/evidence_extraction.html:22
-msgid "حالة الاستخراج"
+#: templates/compliance/evidence_extraction.html:23
+msgid "إعادة استخراج النص"
 msgstr ""
 
-#: templates/compliance/evidence_extraction.html:26
-msgid "طريقة الاستخراج"
+#: templates/compliance/evidence_extraction.html:23
+msgid "تشغيل استخراج النص"
 msgstr ""
 
 #: templates/compliance/evidence_extraction.html:30
+msgid "لم يتم تشغيل استخراج النص بعد."
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:37
+msgid "حالة الاستخراج"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:41
+msgid "طريقة الاستخراج"
+msgstr ""
+
+#: templates/compliance/evidence_extraction.html:45
 msgid "عدد الأحرف"
 msgstr ""
 
-#: templates/compliance/evidence_extraction.html:34
+#: templates/compliance/evidence_extraction.html:49
 msgid "عدد الصفحات"
 msgstr ""
 
-#: templates/compliance/evidence_extraction.html:42
+#: templates/compliance/evidence_extraction.html:56
 msgid "تنبيهات"
 msgstr ""
 
-#: templates/compliance/evidence_extraction.html:52
+#: templates/compliance/evidence_extraction.html:65
 msgid "النص المستخرج"
 msgstr ""
 
-#: templates/compliance/evidence_extraction.html:57
+#: templates/compliance/evidence_extraction.html:70
 msgid "تعذر استخراج نص كافٍ من هذا الملف."
 msgstr ""
 
-#: templates/compliance/evidence_extraction.html:63
+#: templates/compliance/evidence_extraction.html:77
 msgid "العودة إلى تفاصيل الدليل"
 msgstr ""
 

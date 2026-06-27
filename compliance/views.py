@@ -183,22 +183,45 @@ def journey_dashboard(request):
 
 @login_required
 def evidence_extraction_preview(request, submission_id):
-    """Phase 6C — read-only text-extraction preview for one evidence submission.
+    """Phase 6C / 6C-FIX-A — text-extraction preview for one evidence submission.
 
-    Tenant-scoped: extracts readable text only (no OCR, no AI, no compliance
-    judgment). Read-only — never writes, never leaks the file path, never
-    evaluates evidence sufficiency.
+    Tenant-scoped and read-only: shows the PERSISTED extraction result if one
+    exists, otherwise a truthful "not attempted yet" state with a run button.
+    No OCR, no AI, no compliance judgment; never leaks the file path.
     """
     from .models import EvidenceSubmission
-    from .evidence_extraction import extract_text_from_evidence
     sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
     if sub is None:
         messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
         return redirect('compliance:evidence_checklist')
     return render(request, 'compliance/evidence_extraction.html', {
         'submission': sub,
-        'extraction': extract_text_from_evidence(sub),
+        'extraction': getattr(sub, 'text_extraction', None),
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def run_evidence_extraction(request, submission_id):
+    """Phase 6C-FIX-A — run + persist a safe text-extraction attempt (owner-only).
+
+    POST only, CSRF-protected, tenant-scoped. The only write is the single
+    EvidenceTextExtraction row (upsert). No OCR, no AI, no external calls.
+    """
+    from .models import EvidenceSubmission
+    from .evidence_extraction import save_extraction_for_submission
+    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
+    if sub is None:
+        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    obj = save_extraction_for_submission(sub)
+    if obj.has_text:
+        messages.success(request, 'تم استخراج النص من الدليل.')
+    elif obj.status == 'failed':
+        messages.error(request, 'تعذر تنفيذ الاستخراج بأمان.')
+    else:
+        messages.warning(request, 'تعذر استخراج نص كافٍ من هذا الملف.')
+    return redirect('compliance:evidence_extraction', submission_id=sub.id)
 
 
 @login_required

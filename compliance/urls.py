@@ -35,6 +35,8 @@ urlpatterns = [
     path('evidence-submissions/<int:submission_id>/', views.evidence_submission_detail, name='evidence_submission_detail'),
     # Phase 6C — read-only text-extraction preview
     path('evidence-submissions/<int:submission_id>/extraction/', views.evidence_extraction_preview, name='evidence_extraction'),
+    # Phase 6C-FIX-A — run + persist a text-extraction attempt (POST, owner-only)
+    path('evidence-submissions/<int:submission_id>/extract-text/', views.run_evidence_extraction, name='run_evidence_extraction'),
 
     # Phase 3F — advisory analysis trigger (staff-only)
     path('evidence-submissions/<int:submission_id>/analyze/', views.analyze_submission_view, name='analyze_submission'),
