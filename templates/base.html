@@ -122,6 +122,22 @@
             </div>
         </div>
     </nav>
+    {% else %}
+    <!-- Public (anonymous) header: brand + language switcher -->
+    <nav class="bg-gov-green-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 gap-3">
+                <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0">
+                    <i class="fas fa-shield-halved text-white text-xl"></i>
+                    <span class="text-white font-bold text-lg">1SaudiCyber</span>
+                </a>
+                <div class="flex items-center gap-3">
+                    {% include "components/language_switcher.html" %}
+                    <a href="{% url 'core:login' %}" class="text-gov-green-200 hover:text-white text-sm">{% trans "تسجيل الدخول" %}</a>
+                </div>
+            </div>
+        </div>
+    </nav>
     {% endif %}
 
     <!-- Messages -->

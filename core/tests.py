@@ -1325,3 +1325,49 @@ class Phase8CPublicUXTrustTests(TestCase):
         self.assertIn('مؤشرات توضيحية', body)
         self.assertIn('417', body)        # official total still shown
         self.assertNotIn('>334<', body)   # legacy total not a displayed figure
+
+
+# ============================================================
+# Phase 8C-FIX-C — Public language switcher coverage
+# ============================================================
+class Phase8CFixCLanguageSwitcherTests(TestCase):
+    PUBLIC = ['core:landing', 'core:login', 'core:get_started',
+              'core:company_register', 'core:auditor_register']
+
+    def _body(self, name):
+        return self.client.get(reverse(name)).content.decode()
+
+    def test_landing_has_language_switcher(self):
+        b = self._body('core:landing')
+        self.assertIn(reverse('set_language'), b)
+        self.assertIn('name="language" value="ar"', b)
+        self.assertIn('name="language" value="en"', b)
+
+    def test_login_still_has_switcher_exactly_once(self):
+        b = self._body('core:login')
+        self.assertEqual(b.count('name="language" value="ar"'), 1)  # no duplicate
+
+    def test_all_public_pages_have_one_switcher(self):
+        for name in self.PUBLIC:
+            b = self._body(name)
+            self.assertEqual(b.count('name="language" value="ar"'), 1, f'{name} switcher count')
+            self.assertIn(reverse('set_language'), b)
+
+    def test_switcher_posts_to_i18n_set_language(self):
+        b = self._body('core:get_started')
+        self.assertIn('action="%s"' % reverse('set_language'), b)
+        self.assertEqual(reverse('set_language'), '/i18n/setlang/')
+        self.assertIn('name="next"', b)  # returns to current page
+
+    def test_switcher_works_in_english_mode(self):
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        b = self._body('core:landing')
+        self.assertIn('lang="en"', b)
+        self.assertIn('name="language" value="ar"', b)  # switcher still offers Arabic
+
+    def test_no_unsafe_accreditation_wording_introduced(self):
+        for name in self.PUBLIC:
+            b = self._body(name)
+            for bad in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك',
+                        'official accreditation', 'certified by NCA', 'اعتماد حكومي'):
+                self.assertNotIn(bad, b, f'{bad} in {name}')
