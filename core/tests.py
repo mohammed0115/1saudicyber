@@ -1371,3 +1371,62 @@ class Phase8CFixCLanguageSwitcherTests(TestCase):
             for bad in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك',
                         'official accreditation', 'certified by NCA', 'اعتماد حكومي'):
                 self.assertNotIn(bad, b, f'{bad} in {name}')
+
+
+# ============================================================
+# Phase 8C-FIX-D — Remove public template comment leakage
+# ============================================================
+class Phase8CFixDCommentLeakTests(TestCase):
+    PUBLIC = ['core:landing', 'core:login', 'core:get_started',
+              'core:company_register', 'core:auditor_register']
+    LEAKS = ['Phase 8C-FIX-C', 'reusable public Arabic/English language switcher',
+             'Posts to Django i18n set_language', 'RTL/LTR safe']
+
+    def _body(self, name):
+        return self.client.get(reverse(name)).content.decode()
+
+    def test_no_implementation_comment_leak_on_public_pages(self):
+        for name in self.PUBLIC:
+            b = self._body(name)
+            for leak in self.LEAKS:
+                self.assertNotIn(leak, b, f'leak "{leak}" on {name}')
+
+    def test_switcher_still_present_once_per_public_page(self):
+        for name in self.PUBLIC:
+            b = self._body(name)
+            self.assertEqual(b.count('name="language" value="ar"'), 1, f'{name} switcher count')
+            self.assertIn(reverse('set_language'), b)
+
+    def test_login_no_duplicate_switcher(self):
+        self.assertEqual(self._body('core:login').count('name="language" value="ar"'), 1)
+
+    def test_no_unsafe_accreditation_wording(self):
+        for name in self.PUBLIC:
+            b = self._body(name)
+            for bad in ('معتمد من NCA', 'official accreditation', 'certified by NCA',
+                        'اعتماد رسمي', 'شهادة رسمية'):
+                self.assertNotIn(bad, b, f'{bad} in {name}')
+
+
+class Phase8CLanguageButtonFunctionalTests(TestCase):
+    """Ensure the language-change button actually toggles + persists the language."""
+    def test_button_toggles_ar_en_and_persists(self):
+        setlang = reverse('set_language')
+        landing = reverse('core:landing')
+        # default Arabic
+        self.assertIn('lang="ar"', self.client.get(landing).content.decode())
+        # click English -> redirects back, page now English (LTR)
+        r = self.client.post(setlang, {'language': 'en', 'next': '/'})
+        self.assertEqual(r.status_code, 302)
+        b_en = self.client.get(landing).content.decode()
+        self.assertIn('lang="en"', b_en)
+        # persists to another page (login shows English copy)
+        lg = self.client.get(reverse('core:login')).content.decode()
+        self.assertIn('lang="en"', lg)
+        self.assertIn('Sign in', lg)
+        self.assertNotIn('مرحبًا بعودتك', lg)
+        # click Arabic -> back to Arabic (RTL)
+        self.client.post(setlang, {'language': 'ar', 'next': '/'})
+        b_ar = self.client.get(landing).content.decode()
+        self.assertIn('lang="ar"', b_ar)
+        self.assertIn('dir="rtl"', b_ar)

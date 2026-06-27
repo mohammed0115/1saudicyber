@@ -1,6 +1,4 @@
-{# Phase 8C-FIX-C — reusable public Arabic/English language switcher.
-   Posts to Django i18n set_language and returns to the current page.
-   Styled for the dark brand header (light text on green). RTL/LTR safe. #}
+{# Public Arabic/English language switcher (posts to i18n set_language). #}
 <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1 text-xs">
   {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
   <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">العربية</button>
