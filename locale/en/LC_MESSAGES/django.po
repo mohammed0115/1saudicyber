@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-27 14:08+0300\n"
+"POT-Creation-Date: 2026-06-27 23:27+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,18 +36,61 @@ msgstr "Evidence uploaded. Advisory analysis is running and is not a final decis
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
 
-#: core/views.py:114
+#: core/views.py:125
 msgid "تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي."
 msgstr "Company registered successfully. Preparing the initial classification."
 
-#: core/views.py:140
+#: core/views.py:151
 msgid "بيانات الدخول غير صحيحة. حاول مرة أخرى."
 msgstr "Invalid credentials. Please try again."
 
-#: core/views.py:171
+#: core/views.py:182
 msgid "تم تفعيل التحقق بخطوتين."
 msgstr "Multi-factor authentication enabled."
+
+#: templates/ai_engine/gap_analysis_advisory.html:3
+#: templates/ai_engine/gap_analysis_advisory.html:9
+msgid "تحليل الفجوات الاستشاري"
+msgstr "Advisory gap analysis"
+
+#: templates/ai_engine/gap_analysis_advisory.html:15
+msgid ""
+"تحليل الفجوات هنا استشاري ويساعدك على فهم جاهزيتك، ولا يُعد قرارًا نهائيًا أو "
+"شهادة امتثال رسمية."
+msgstr ""
+"This analysis assists the auditor and is not a final decision or compliance "
+"certificate.This analysis assists the auditor and is not a final decision or "
+"compliance certificate.This analysis assists the auditor and is not a final "
+"decision or compliance certificate.This analysis assists the auditor and is "
+"not a final decision or compliance certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.Evidence uploaded. "
+"Advisory analysis is running and is not a final decision."
+
+#: templates/ai_engine/gap_analysis_advisory.html:16
+#: templates/compliance/applicability_preview.html:17
+#: templates/compliance/evidence_ai_analysis.html:17
+msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
+msgstr "The final result depends on evidence and auditor review."
+
+#: templates/ai_engine/gap_analysis_advisory.html:20
+msgid ""
+"للاطّلاع على تقارير الجاهزية وتحليل الفجوات التفصيلي، استخدم صفحة التقارير "
+"ولوحة مسار الامتثال."
+msgstr ""
+
+#: templates/ai_engine/gap_analysis_advisory.html:22 templates/base.html:76
+#: templates/base.html:109
+msgid "التقارير"
+msgstr "Reports"
+
+#: templates/ai_engine/gap_analysis_advisory.html:23
+msgid "لوحة مسار الامتثال"
+msgstr "Compliance journey dashboard"
 
 #: templates/base.html:72 templates/base.html:102
 msgid "لوحة التحكم"
@@ -65,10 +108,6 @@ msgstr "Frameworks"
 #: templates/base.html:75 templates/base.html:107
 msgid "الأدلة"
 msgstr "Evidence"
-
-#: templates/base.html:76 templates/base.html:109
-msgid "التقارير"
-msgstr "Reports"
 
 #: templates/base.html:77 templates/base.html:110
 msgid "المراقبة"
@@ -102,6 +141,21 @@ msgstr "Log out"
 msgid "التصنيف"
 msgstr "Intake"
 
+#: templates/base.html:136 templates/core/landing.html:20
+#: templates/core/login.html:3 templates/core/login.html:31
+msgid "تسجيل الدخول"
+msgstr "Sign in"
+
+#: templates/base.html:165 templates/core/privacy.html:3
+#: templates/core/privacy.html:7 templates/core/terms.html:37
+msgid "سياسة الخصوصية"
+msgstr "Privacy Policy"
+
+#: templates/base.html:167 templates/core/privacy.html:40
+#: templates/core/terms.html:3 templates/core/terms.html:7
+msgid "شروط الاستخدام"
+msgstr "Terms of Use"
+
 #: templates/compliance/applicability_preview.html:3
 #: templates/compliance/applicability_preview.html:9
 #: templates/compliance/applicability_preview.html:52
@@ -115,11 +169,6 @@ msgstr "An advisory analysis of control applicability based on company data."
 #: templates/compliance/applicability_preview.html:16
 msgid "هذا التحليل لا يقرر الامتثال أو عدم الامتثال."
 msgstr "This analysis does not decide compliance or non-compliance."
-
-#: templates/compliance/applicability_preview.html:17
-#: templates/compliance/evidence_ai_analysis.html:17
-msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
-msgstr "The final result depends on evidence and auditor review."
 
 #: templates/compliance/applicability_preview.html:26
 msgid "إجمالي الضوابط"
@@ -202,6 +251,8 @@ msgstr ""
 #: templates/compliance/auditor_reviewed_report.html:22
 msgid "لا توجد قرارات مدقق نهائية بعد. يرجى إكمال مراجعة الأدلة أولًا."
 msgstr "There are no final auditor decisions yet. Please complete the evidence review first."
+"There are no final auditor decisions yet. Please complete the evidence "
+"review first."
 
 #: templates/compliance/auditor_reviewed_report.html:29
 msgid "إجمالي الأدلة"
@@ -263,14 +314,15 @@ msgstr "Auditor final verdict"
 msgid "هذا القرار يمثل مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية."
 msgstr "This decision is an internal platform review and is not an official compliance certificate."
 "This decision is an internal platform review and is not an official "
-"compliance certificate.This analysis assists the auditor and is not a final "
-"decision or compliance certificate.This analysis assists the auditor and is "
-"not a final decision or compliance certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.Evidence uploaded. "
-"Advisory analysis is running and is not a final decision."
+"compliance certificate.This decision is an internal platform review and is "
+"not an official compliance certificate.This analysis assists the auditor and "
+"is not a final decision or compliance certificate.This analysis assists the "
+"auditor and is not a final decision or compliance certificate.This "
+"classification is advisory and is not a final decision or a certificate.This "
+"classification is advisory and is not a final decision or a certificate.This "
+"classification is advisory and is not a final decision or a certificate.This "
+"classification is advisory and is not a final decision or a certificate."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
 
 #: templates/compliance/auditor_verdict.html:25
 msgid "مقترح — بانتظار مراجعة المدقق"
@@ -337,6 +389,7 @@ msgstr "This classification is advisory and is not a final decision or a certifi
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 
 #: templates/compliance/classification.html:20
@@ -371,12 +424,13 @@ msgstr "This analysis assists the auditor and is not a final decision or complia
 "This analysis assists the auditor and is not a final decision or compliance "
 "certificate.This analysis assists the auditor and is not a final decision or "
 "compliance certificate.This analysis assists the auditor and is not a final "
-"decision or compliance certificate.This classification is advisory and is "
-"not a final decision or a certificate.This classification is advisory and is "
-"not a final decision or a certificate.This classification is advisory and is "
-"not a final decision or a certificate.This classification is advisory and is "
-"not a final decision or a certificate.Evidence uploaded. Advisory analysis "
-"is running and is not a final decision."
+"decision or compliance certificate.This analysis assists the auditor and is "
+"not a final decision or compliance certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.Evidence uploaded. "
+"Advisory analysis is running and is not a final decision."
 
 #: templates/compliance/evidence_ai_analysis.html:23
 msgid "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري."
@@ -384,7 +438,8 @@ msgstr "Readable text must be extracted from the evidence before running the adv
 "Readable text must be extracted from the evidence before running the "
 "advisory analysis.Readable text must be extracted from the evidence before "
 "running the advisory analysis.Readable text must be extracted from the "
-"evidence before running the advisory analysis."
+"evidence before running the advisory analysis.Readable text must be "
+"extracted from the evidence before running the advisory analysis."
 
 #: templates/compliance/evidence_ai_analysis.html:27
 #: templates/compliance/evidence_extraction.html:3
@@ -478,13 +533,14 @@ msgstr "Rule engine"
 msgid "هذه نتيجة نظامية مقترحة وليست قرارًا نهائيًا."
 msgstr "This is a system-suggested result, not a final decision."
 "This is a system-suggested result, not a final decision.This is a system-"
-"suggested result, not a final decision.This classification is advisory and "
-"is not a final decision or a certificate.This classification is advisory and "
-"is not a final decision or a certificate.This classification is advisory and "
-"is not a final decision or a certificate.This classification is advisory and "
-"is not a final decision or a certificate.This classification is advisory and "
-"is not a final decision or a certificate.Evidence uploaded. Advisory "
-"analysis is running and is not a final decision."
+"suggested result, not a final decision.This is a system-suggested result, "
+"not a final decision.This classification is advisory and is not a final "
+"decision or a certificate.This classification is advisory and is not a final "
+"decision or a certificate.This classification is advisory and is not a final "
+"decision or a certificate.This classification is advisory and is not a final "
+"decision or a certificate.This classification is advisory and is not a final "
+"decision or a certificate.Evidence uploaded. Advisory analysis is running "
+"and is not a final decision."
 
 #: templates/compliance/evidence_rule_evaluation.html:17
 msgid "النتيجة النهائية تعتمد على مراجعة المدقق."
@@ -565,30 +621,76 @@ msgstr "Not available yet"
 msgid "اختياري"
 msgstr "Optional"
 
-#: templates/core/login.html:3 templates/core/login.html:36
-msgid "تسجيل الدخول"
-msgstr "Sign in"
+#: templates/core/landing.html:3 templates/core/landing.html:30
+msgid "منصة جاهزية الامتثال السيبراني"
+msgstr "Cybersecurity compliance readiness platform"
 
-#: templates/core/login.html:21
+#: templates/core/landing.html:21 templates/core/login.html:34
+msgid "ابدأ الآن"
+msgstr "Get started"
+
+#: templates/core/landing.html:33
+msgid "جاهزية الامتثال السيبراني المستمرة"
+msgstr "Continuous cybersecurity compliance readiness"
+
+#: templates/core/landing.html:34
+msgid "للسوق السعودي"
+msgstr "for the Saudi market"
+
+#: templates/core/landing.html:43
+msgid "ابدأ تقييم الامتثال"
+msgstr "Start your compliance assessment"
+
+#: templates/core/landing.html:46
+msgid "كيف تعمل المنصّة"
+msgstr "How the platform works"
+
+#: templates/core/landing.html:84
+msgid "إنجاز أسرع للتقييم"
+msgstr "Faster assessment"
+
+#: templates/core/landing.html:85
+msgid "خفض في الكلفة"
+msgstr "Cost reduction"
+
+#: templates/core/landing.html:86
+msgid "ضابطًا رسميًا مهيكلًا"
+msgstr "structured official controls"
+
+#: templates/core/landing.html:87
+msgid "جاهزية للمراقبة المستمرة"
+msgstr "Continuous monitoring readiness"
+
+#: templates/core/landing.html:87
+msgid "أساس تقني عند ربط مصادر البيانات المناسبة"
+msgstr "Technical foundation once data sources are connected"
+
+#: templates/core/landing.html:89
+msgid ""
+"مؤشرات توضيحية تعتمد على نضج بيانات العميل واكتمال الأدلة، وليست نتائج "
+"مضمونة."
+msgstr ""
+
+#: templates/core/login.html:16
 msgid "مرحبًا بعودتك"
 msgstr "Welcome back"
 
-#: templates/core/login.html:22
+#: templates/core/login.html:17
 msgid "سجّل الدخول إلى لوحة الامتثال الخاصة بك"
 msgstr "Sign in to your compliance dashboard"
 
-#: templates/core/login.html:28
+#: templates/core/login.html:23
 msgid "البريد الإلكتروني"
 msgstr "Email"
 
-#: templates/core/login.html:32
+#: templates/core/login.html:27
 msgid "كلمة المرور"
 msgstr "Password"
 
-#: templates/core/login.html:39
+#: templates/core/login.html:34
 msgid "ليس لديك حساب؟"
 msgstr "Don't have an account?"
 
-#: templates/core/login.html:39
-msgid "ابدأ الآن"
-msgstr "Get started"
+#: templates/core/privacy.html:8 templates/core/terms.html:8
+msgid "آخر تحديث:"
+msgstr "Last updated:"

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "سياسة الخصوصية" %} - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div style="max-width:820px;margin:0 auto;padding:24px 16px 36px;color:#1F2933;line-height:1.95;">
+    <h1 style="font-size:1.6rem;font-weight:700;margin:0 0 6px;">{% trans "سياسة الخصوصية" %}</h1>
+    <p style="color:#667085;font-size:.9rem;margin:0 0 20px;">{% trans "آخر تحديث:" %} {% now "Y-m-d" %}</p>
+
+    <p>تشرح هذه السياسة كيف تتعامل منصّة <strong>1SaudiCyber</strong> مع بياناتك عند استخدام خدمات
+       جاهزية ومراجعة الامتثال السيبراني داخل المنصّة.</p>
+
+    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#0F5D46;">البيانات التي نجمعها</h2>
+    <ul style="padding-inline-start:20px;margin:0;">
+      <li>بيانات الحساب: الاسم، البريد الإلكتروني، رقم الجوال (اختياري).</li>
+      <li>بيانات الشركة: الاسم، رقم السجل التجاري، القطاع، الحجم، وأهداف الامتثال.</li>
+      <li>الأدلة والمستندات التي ترفعها لأغراض المراجعة الداخلية.</li>
+      <li>بيانات استخدام تقنية أساسية لتشغيل المنصّة وتأمينها.</li>
+    </ul>
+
+    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#0F5D46;">كيف نستخدم البيانات</h2>
+    <ul style="padding-inline-start:20px;margin:0;">
+      <li>تقديم خدمات جاهزية ومراجعة الامتثال داخل المنصّة.</li>
+      <li>تحليل استشاري مساعد ولا يُعد قرارًا نهائيًا.</li>
+      <li>تحسين جودة الخدمة وأمن المعلومات.</li>
+    </ul>
+
+    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#0F5D46;">حماية البيانات ومشاركتها</h2>
+    <p>نطبّق ضوابط تقنية وتنظيمية معقولة لحماية بياناتك، ولا نشاركها مع أطراف خارجية إلا بموافقتك أو
+       عند وجود التزام نظامي. تبقى بيانات كل شركة معزولة عن غيرها داخل المنصّة.</p>
+
+    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#0F5D46;">حقوقك</h2>
+    <p>يمكنك طلب الاطّلاع على بياناتك أو تصحيحها أو حذف حساب شركتك وبياناته من إعدادات الحساب.</p>
+
+    <div style="background:#FBF6EC;border:1px solid #E6D7B8;border-radius:12px;padding:14px 16px;margin-top:22px;color:#7A5B16;font-size:.92rem;">
+      توضيح مهم: تقدّم 1SaudiCyber خدمات جاهزية ومراجعة داخلية للامتثال، ولا تُصدر شهادة امتثال رسمية
+      ولا تمنح اعتمادًا من أي جهة حكومية أو تنظيمية.
+    </div>
+
+    <p style="margin-top:22px;"><a href="{% url 'core:terms' %}" style="color:#0F5D46;font-weight:600;">{% trans "شروط الاستخدام" %}</a></p>
+  </div>
+</div>
+{% endblock %}

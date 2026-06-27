@@ -15,6 +15,10 @@ urlpatterns = [
     path('onboarding/', views.onboarding, name='onboarding'),
     path('onboarding/complete/', views.onboarding_complete, name='onboarding_complete'),
 
+    # Phase 8D-2-FIX-A — public legal pages
+    path('privacy/', views.privacy_policy, name='privacy'),
+    path('terms/', views.terms_of_use, name='terms'),
+
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('account/delete/', views.delete_company_data, name='delete_company_data'),

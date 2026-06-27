@@ -42,21 +42,15 @@ class PerFrameworkGapAnalysisTests(TestCase):
             email='g@x.com', password='longenough12', company=self.company, role='company_admin')
         self.client.force_login(self.user)
 
-    def test_one_row_per_targeted_framework(self):
-        fake = {'compliance_score': 40, 'overall_risk_score': 60, 'critical_gaps': [],
-                'top_priorities_en': [], 'predicted_audit_outcome_en': 'x',
-                'predicted_audit_outcome_ar': 'x'}
-        with mock.patch('ai_engine.views.generate_gap_analysis', return_value=fake):
+    def test_gap_analysis_is_safe_advisory_no_ai_no_rows(self):
+        """Phase 8D-2-FIX-A: /ai/gap-analysis/ no longer triggers AI on GET (that caused
+        an HTTP 500). It now renders a safe, read-only advisory page and creates NO
+        GapAnalysis rows and makes NO AI call. The detailed per-framework analysis lives
+        in the official compliance reports."""
+        # If the view tried to call AI, this patch would make it explode — proving no call.
+        with mock.patch('ai_engine.views.generate_gap_analysis',
+                        side_effect=AssertionError('AI must NOT be called on gap-analysis GET')):
             resp = self.client.get('/ai/gap-analysis/')
         self.assertEqual(resp.status_code, 200)
-
-        rows = {g.framework_code: g for g in GapAnalysis.objects.filter(company=self.company)}
-        # Two targeted frameworks -> exactly two rows (the bug saved only NCA).
-        self.assertEqual(set(rows), {'NCA_ECC', 'ARAMCO_SACS002'})
-        # Per-framework counts are real, not shared.
-        self.assertEqual(rows['NCA_ECC'].total_controls, 3)
-        self.assertEqual(rows['NCA_ECC'].compliant_count, 2)
-        self.assertAlmostEqual(rows['NCA_ECC'].compliance_score, 2 / 3 * 100, places=1)
-        self.assertEqual(rows['ARAMCO_SACS002'].total_controls, 2)
-        self.assertEqual(rows['ARAMCO_SACS002'].compliant_count, 0)
-        self.assertEqual(rows['ARAMCO_SACS002'].compliance_score, 0.0)
+        self.assertContains(resp, 'استشاري')
+        self.assertEqual(GapAnalysis.objects.filter(company=self.company).count(), 0)

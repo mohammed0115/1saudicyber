@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-27 14:08+0300\n"
+"POT-Creation-Date: 2026-06-27 23:27+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,16 +30,48 @@ msgstr ""
 msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
 msgstr ""
 
-#: core/views.py:114
+#: core/views.py:125
 msgid "تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي."
 msgstr ""
 
-#: core/views.py:140
+#: core/views.py:151
 msgid "بيانات الدخول غير صحيحة. حاول مرة أخرى."
 msgstr ""
 
-#: core/views.py:171
+#: core/views.py:182
 msgid "تم تفعيل التحقق بخطوتين."
+msgstr ""
+
+#: templates/ai_engine/gap_analysis_advisory.html:3
+#: templates/ai_engine/gap_analysis_advisory.html:9
+msgid "تحليل الفجوات الاستشاري"
+msgstr ""
+
+#: templates/ai_engine/gap_analysis_advisory.html:15
+msgid ""
+"تحليل الفجوات هنا استشاري ويساعدك على فهم جاهزيتك، ولا يُعد قرارًا نهائيًا أو "
+"شهادة امتثال رسمية."
+msgstr ""
+
+#: templates/ai_engine/gap_analysis_advisory.html:16
+#: templates/compliance/applicability_preview.html:17
+#: templates/compliance/evidence_ai_analysis.html:17
+msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
+msgstr ""
+
+#: templates/ai_engine/gap_analysis_advisory.html:20
+msgid ""
+"للاطّلاع على تقارير الجاهزية وتحليل الفجوات التفصيلي، استخدم صفحة التقارير "
+"ولوحة مسار الامتثال."
+msgstr ""
+
+#: templates/ai_engine/gap_analysis_advisory.html:22 templates/base.html:76
+#: templates/base.html:109
+msgid "التقارير"
+msgstr ""
+
+#: templates/ai_engine/gap_analysis_advisory.html:23
+msgid "لوحة مسار الامتثال"
 msgstr ""
 
 #: templates/base.html:72 templates/base.html:102
@@ -57,10 +89,6 @@ msgstr ""
 
 #: templates/base.html:75 templates/base.html:107
 msgid "الأدلة"
-msgstr ""
-
-#: templates/base.html:76 templates/base.html:109
-msgid "التقارير"
 msgstr ""
 
 #: templates/base.html:77 templates/base.html:110
@@ -95,6 +123,21 @@ msgstr ""
 msgid "التصنيف"
 msgstr ""
 
+#: templates/base.html:136 templates/core/landing.html:20
+#: templates/core/login.html:3 templates/core/login.html:31
+msgid "تسجيل الدخول"
+msgstr ""
+
+#: templates/base.html:165 templates/core/privacy.html:3
+#: templates/core/privacy.html:7 templates/core/terms.html:37
+msgid "سياسة الخصوصية"
+msgstr ""
+
+#: templates/base.html:167 templates/core/privacy.html:40
+#: templates/core/terms.html:3 templates/core/terms.html:7
+msgid "شروط الاستخدام"
+msgstr ""
+
 #: templates/compliance/applicability_preview.html:3
 #: templates/compliance/applicability_preview.html:9
 #: templates/compliance/applicability_preview.html:52
@@ -107,11 +150,6 @@ msgstr ""
 
 #: templates/compliance/applicability_preview.html:16
 msgid "هذا التحليل لا يقرر الامتثال أو عدم الامتثال."
-msgstr ""
-
-#: templates/compliance/applicability_preview.html:17
-#: templates/compliance/evidence_ai_analysis.html:17
-msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
 msgstr ""
 
 #: templates/compliance/applicability_preview.html:26
@@ -511,30 +549,76 @@ msgstr ""
 msgid "اختياري"
 msgstr ""
 
-#: templates/core/login.html:3 templates/core/login.html:36
-msgid "تسجيل الدخول"
+#: templates/core/landing.html:3 templates/core/landing.html:30
+msgid "منصة جاهزية الامتثال السيبراني"
 msgstr ""
 
-#: templates/core/login.html:21
+#: templates/core/landing.html:21 templates/core/login.html:34
+msgid "ابدأ الآن"
+msgstr ""
+
+#: templates/core/landing.html:33
+msgid "جاهزية الامتثال السيبراني المستمرة"
+msgstr ""
+
+#: templates/core/landing.html:34
+msgid "للسوق السعودي"
+msgstr ""
+
+#: templates/core/landing.html:43
+msgid "ابدأ تقييم الامتثال"
+msgstr ""
+
+#: templates/core/landing.html:46
+msgid "كيف تعمل المنصّة"
+msgstr ""
+
+#: templates/core/landing.html:84
+msgid "إنجاز أسرع للتقييم"
+msgstr ""
+
+#: templates/core/landing.html:85
+msgid "خفض في الكلفة"
+msgstr ""
+
+#: templates/core/landing.html:86
+msgid "ضابطًا رسميًا مهيكلًا"
+msgstr ""
+
+#: templates/core/landing.html:87
+msgid "جاهزية للمراقبة المستمرة"
+msgstr ""
+
+#: templates/core/landing.html:87
+msgid "أساس تقني عند ربط مصادر البيانات المناسبة"
+msgstr ""
+
+#: templates/core/landing.html:89
+msgid ""
+"مؤشرات توضيحية تعتمد على نضج بيانات العميل واكتمال الأدلة، وليست نتائج "
+"مضمونة."
+msgstr ""
+
+#: templates/core/login.html:16
 msgid "مرحبًا بعودتك"
 msgstr ""
 
-#: templates/core/login.html:22
+#: templates/core/login.html:17
 msgid "سجّل الدخول إلى لوحة الامتثال الخاصة بك"
 msgstr ""
 
-#: templates/core/login.html:28
+#: templates/core/login.html:23
 msgid "البريد الإلكتروني"
 msgstr ""
 
-#: templates/core/login.html:32
+#: templates/core/login.html:27
 msgid "كلمة المرور"
 msgstr ""
 
-#: templates/core/login.html:39
+#: templates/core/login.html:34
 msgid "ليس لديك حساب؟"
 msgstr ""
 
-#: templates/core/login.html:39
-msgid "ابدأ الآن"
+#: templates/core/privacy.html:8 templates/core/terms.html:8
+msgid "آخر تحديث:"
 msgstr ""

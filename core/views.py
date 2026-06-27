@@ -14,6 +14,16 @@ from .forms import SECTOR_CHOICES_AR as _SECTOR_AR, SIZE_CHOICES_AR as _SIZE_AR
 from ai_engine.services import classify_company
 
 
+def privacy_policy(request):
+    """Phase 8D-2-FIX-A — public privacy policy page (Arabic-first, no login)."""
+    return render(request, 'core/privacy.html')
+
+
+def terms_of_use(request):
+    """Phase 8D-2-FIX-A — public terms of use page (Arabic-first, no login)."""
+    return render(request, 'core/terms.html')
+
+
 def landing_page(request):
     """Phase 0: Landing page with platform overview."""
     from compliance.models import Control

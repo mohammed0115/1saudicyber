@@ -162,6 +162,9 @@
     <footer class="bg-gov-green-950 text-gov-green-200 py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm">
             <p>&copy; {% now "Y" %} 1SaudiCyber (1saudicyber.com). AI-Powered Cybersecurity Compliance Platform.</p>
+            <p class="mt-1"><a href="{% url 'core:privacy' %}" class="hover:text-white">{% trans "سياسة الخصوصية" %}</a>
+               <span class="mx-2 text-gov-green-600">|</span>
+               <a href="{% url 'core:terms' %}" class="hover:text-white">{% trans "شروط الاستخدام" %}</a></p>
             <p class="mt-1 text-gov-green-400">Aligned with NCA ECC, Aramco SACS-002, SABIC CyberTrust Standards</p>
         </div>
     </footer>

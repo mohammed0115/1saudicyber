@@ -1430,3 +1430,89 @@ class Phase8CLanguageButtonFunctionalTests(TestCase):
         b_ar = self.client.get(landing).content.decode()
         self.assertIn('lang="ar"', b_ar)
         self.assertIn('dir="rtl"', b_ar)
+
+
+# ============================================================
+# Phase 8D-2-FIX-A — Critical Manus blockers
+# ============================================================
+class Phase8D2FixACriticalBlockerTests(TestCase):
+    # --- 1) gap-analysis must never 500 ---
+    def test_gap_analysis_anonymous_redirects_not_500(self):
+        resp = self.client.get(reverse('ai_engine:gap_analysis'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_gap_analysis_authorized_no_500_and_advisory(self):
+        from compliance.tests import _company, _journey_user
+        c = _company()
+        self.client.force_login(_journey_user(c, email='gap8d@x.com'))
+        resp = self.client.get(reverse('ai_engine:gap_analysis'))
+        self.assertEqual(resp.status_code, 200)
+        body = resp.content.decode()
+        self.assertIn('استشاري', body)
+        self.assertIn('لا يُعد قرارًا نهائيًا', body)
+        for bad in ('شهادة امتثال رسمية', 'اعتماد رسمي', 'معتمد من NCA'):
+            # only allowed inside negation; assert no positive standalone claim
+            self.assertNotIn('نمنح ' + bad, body)
+
+    # --- 2) legal pages ---
+    def test_privacy_page_200(self):
+        r = self.client.get(reverse('core:privacy'))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'سياسة الخصوصية')
+
+    def test_terms_page_200(self):
+        r = self.client.get(reverse('core:terms'))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'شروط الاستخدام')
+
+    def test_footer_has_legal_links_on_landing(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        self.assertIn(reverse('core:privacy'), body)
+        self.assertIn(reverse('core:terms'), body)
+
+    def test_legal_pages_no_unsafe_claims(self):
+        for name in ('core:privacy', 'core:terms'):
+            body = self.client.get(reverse(name)).content.decode()
+            for bad in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك',
+                        'official accreditation', 'certified by NCA', 'اعتماد حكومي'):
+                self.assertNotIn(bad, body, f'{bad} in {name}')
+
+    # --- 3) classification disclaimer exactly once ---
+    def test_classification_disclaimer_exactly_once(self):
+        from compliance.tests import _company, _journey_user
+        c = _company(target_nca=True)
+        self.client.force_login(_journey_user(c, email='cls8d@x.com'))
+        body = self.client.get(reverse('compliance:classification')).content.decode()
+        self.assertEqual(body.count('لا يُعد قرارًا نهائيًا أو شهادة'), 1)
+
+    # --- 4/5) landing language + lang/dir consistency ---
+    def test_landing_arabic_lang_dir(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        self.assertIn('lang="ar"', body)
+        self.assertIn('dir="rtl"', body)
+        self.assertNotIn('dir="ltr"', body)  # inner div no longer hardcoded ltr/rtl mismatch
+
+    def test_landing_english_lang_dir_and_switch(self):
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('core:landing')).content.decode()
+        self.assertIn('lang="en"', body)
+        self.assertIn('dir="ltr"', body)
+        self.assertNotIn('dir="rtl"', body)   # consistent: no leftover rtl in english mode
+        self.assertIn('Start your compliance assessment', body)  # key string translated
+
+    def test_landing_switch_returns_to_landing_and_persists(self):
+        r = self.client.post(reverse('set_language'), {'language': 'en', 'next': reverse('core:landing')})
+        self.assertEqual(r.status_code, 302)
+        # persists to another public page
+        self.assertIn('lang="en"', self.client.get(reverse('core:login')).content.decode())
+
+    def test_landing_no_internal_leak(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        for leak in ('Phase 8C-FIX-C', 'reusable public', 'Posts to Django', 'RTL/LTR safe'):
+            self.assertNotIn(leak, body)
+
+    def test_landing_417_not_334(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        self.assertIn('417', body)
+        self.assertNotIn('>334<', body)

@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block title %}1SaudiCyber — منصة جاهزية الامتثال السيبراني{% endblock %}
+{% load i18n %}
+{% block title %}1SaudiCyber — {% trans "منصة جاهزية الامتثال السيبراني" %}{% endblock %}
 
 {% block body %}
-<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+<div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
 
 <!-- Hero -->
 <section class="gradient-gov relative overflow-hidden">
@@ -16,8 +17,8 @@
         </div>
         <div class="flex items-center gap-4">
             {% include "components/language_switcher.html" %}
-            <a href="{% url 'core:login' %}" class="text-gov-green-200 hover:text-white font-medium transition">تسجيل الدخول</a>
-            <a href="{% url 'core:get_started' %}" class="bg-white text-gov-green-800 px-5 py-2.5 rounded-lg font-semibold hover:bg-gov-green-50 transition shadow-lg">ابدأ الآن</a>
+            <a href="{% url 'core:login' %}" class="text-gov-green-200 hover:text-white font-medium transition">{% trans "تسجيل الدخول" %}</a>
+            <a href="{% url 'core:get_started' %}" class="bg-white text-gov-green-800 px-5 py-2.5 rounded-lg font-semibold hover:bg-gov-green-50 transition shadow-lg">{% trans "ابدأ الآن" %}</a>
         </div>
     </nav>
 
@@ -26,11 +27,11 @@
             <div>
                 <div class="inline-flex items-center bg-gov-green-700/50 rounded-full px-4 py-2 mb-6">
                     <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse ms-2"></span>
-                    <span class="text-green-200 text-sm font-medium">منصة جاهزية الامتثال السيبراني</span>
+                    <span class="text-green-200 text-sm font-medium">{% trans "منصة جاهزية الامتثال السيبراني" %}</span>
                 </div>
                 <h1 class="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6">
-                    جاهزية الامتثال السيبراني المستمرة
-                    <br><span class="text-green-300">للسوق السعودي</span>
+                    {% trans "جاهزية الامتثال السيبراني المستمرة" %}
+                    <br><span class="text-green-300">{% trans "للسوق السعودي" %}</span>
                 </h1>
                 <p class="text-gov-green-200 text-lg mb-3 leading-relaxed">
                     منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات،
@@ -39,10 +40,10 @@
                 <p class="text-gov-green-300/80 text-sm mb-8">Compliance &amp; audit readiness for Saudi enterprises and public-sector entities.</p>
                 <div class="flex flex-wrap gap-4">
                     <a href="{% url 'core:get_started' %}" class="bg-white text-gov-green-800 px-8 py-3.5 rounded-lg font-bold text-lg hover:bg-green-50 transition shadow-xl">
-                        ابدأ تقييم الامتثال
+                        {% trans "ابدأ تقييم الامتثال" %}
                     </a>
                     <a href="#process" class="border-2 border-gov-green-300 text-gov-green-100 px-8 py-3.5 rounded-lg font-semibold hover:bg-gov-green-700/50 transition">
-                        كيف تعمل المنصّة
+                        {% trans "كيف تعمل المنصّة" %}
                     </a>
                 </div>
             </div>
@@ -80,12 +81,12 @@
 <section class="py-16 bg-white border-b">
     <div class="max-w-7xl mx-auto px-4">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div><div class="text-4xl font-bold text-gov-green-800">75%</div><div class="text-gov-gray-600 mt-2">إنجاز أسرع للتقييم</div></div>
-            <div><div class="text-4xl font-bold text-gov-green-800">60%</div><div class="text-gov-gray-600 mt-2">خفض في الكلفة</div></div>
-            <div><div class="text-4xl font-bold text-gov-green-800">417</div><div class="text-gov-gray-600 mt-2">ضابطًا رسميًا مهيكلًا</div></div>
-            <div><div class="text-2xl font-bold text-gov-green-800 leading-tight pt-2">جاهزية للمراقبة المستمرة</div><div class="text-gov-gray-600 mt-2">أساس تقني عند ربط مصادر البيانات المناسبة</div></div>
+            <div><div class="text-4xl font-bold text-gov-green-800">75%</div><div class="text-gov-gray-600 mt-2">{% trans "إنجاز أسرع للتقييم" %}</div></div>
+            <div><div class="text-4xl font-bold text-gov-green-800">60%</div><div class="text-gov-gray-600 mt-2">{% trans "خفض في الكلفة" %}</div></div>
+            <div><div class="text-4xl font-bold text-gov-green-800">417</div><div class="text-gov-gray-600 mt-2">{% trans "ضابطًا رسميًا مهيكلًا" %}</div></div>
+            <div><div class="text-2xl font-bold text-gov-green-800 leading-tight pt-2">{% trans "جاهزية للمراقبة المستمرة" %}</div><div class="text-gov-gray-600 mt-2">{% trans "أساس تقني عند ربط مصادر البيانات المناسبة" %}</div></div>
         </div>
-        <p class="text-center text-gov-gray-500 text-sm mt-6">مؤشرات توضيحية تعتمد على نضج بيانات العميل واكتمال الأدلة، وليست نتائج مضمونة.</p>
+        <p class="text-center text-gov-gray-500 text-sm mt-6">{% trans "مؤشرات توضيحية تعتمد على نضج بيانات العميل واكتمال الأدلة، وليست نتائج مضمونة." %}</p>
     </div>
 </section>
 
@@ -188,6 +189,11 @@
             </div>
         </div>
         <div class="border-t border-gov-green-800 mt-8 pt-8 text-center text-sm">
+            <p class="mb-2">
+                <a href="{% url 'core:privacy' %}" class="hover:text-white transition">سياسة الخصوصية</a>
+                <span class="mx-2 text-gov-green-600">|</span>
+                <a href="{% url 'core:terms' %}" class="hover:text-white transition">شروط الاستخدام</a>
+            </p>
             <p>&copy; {% now "Y" %} 1SaudiCyber (1saudicyber.com) — جميع الحقوق محفوظة. متوافقة مع رؤية المملكة 2030.</p>
         </div>
     </div>
