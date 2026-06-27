@@ -52,8 +52,8 @@ _STEP_DEFS = [
     ('remediation', 'خطة المعالجة', 'gaps', 'optional', 'risk:list',
      'إدارة المعالجة', 'مهام معالجة المخاطر والفجوات.'),
 
-    ('auditor_review', 'مراجعة المدقق', 'review', 'required', 'compliance:auditor_review_queue',
-     'قائمة المراجعة', 'مراجعة المدقّق للضوابط واتخاذ القرار.'),
+    ('auditor_review', 'مراجعة المدقق', 'review', 'auditor_review', 'compliance:auditor_review_queue',
+     'قائمة المراجعة', 'مراجعة المدقّق للأدلة وتسجيل القرار النهائي (مراجعة بشرية).'),
     ('final_verdict', 'النتيجة النهائية بعد المراجعة', 'review', 'partial', 'compliance:auditor_review_queue',
      'عرض التقييمات', 'القرار النهائي للمدقّق على كل الضوابط المنطبقة.'),
     ('reports', 'التقارير', 'review', 'gated', 'compliance:reports_index',
@@ -68,7 +68,7 @@ def _signals(company):
                          CompanyFrameworkScope, ControlApplicabilityResult,
                          EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
                          EvidenceTextExtraction, EvidenceAIAnalysis, EvidenceRuleEvaluation,
-                         ControlAssessment)
+                         AuditorFinalVerdict, ControlAssessment)
     from risk.models import RiskItem, RemediationTask
     from auditors.models import AuditorAssignment
     from monitoring.models import MonitoringCheck
@@ -95,6 +95,9 @@ def _signals(company):
         # Phase 6E: rule-engine step — only a completed suggestion counts.
         'rule_eval_completed': EvidenceRuleEvaluation.objects.filter(
             submission__company=company, status='completed').exists(),
+        # Phase 6F: a recorded human auditor final verdict on any submission.
+        'auditor_verdict_exists': AuditorFinalVerdict.objects.filter(
+            submission__company=company).exists(),
         'risks': q(RiskItem),
         'remediation': q(RemediationTask),
         'assignment_accepted': AuditorAssignment.objects.filter(
@@ -128,8 +131,9 @@ def _completed(key, f):
         'rule_engine': f['rule_eval_completed'],
         'gap_risk': f['risks'],
         'remediation': f['remediation'],
-        'auditor_review': f['reviewed'] or f['assignment_accepted'],
-        'final_verdict': f['all_reviewed'],
+        # Phase 6F: auditor-review/final-verdict steps reflect a recorded human verdict.
+        'auditor_review': f['auditor_verdict_exists'],
+        'final_verdict': f['auditor_verdict_exists'],
         'reports': f['subscription'] and f['reviewed'],
         'monitoring': f['monitoring_checks'],
     }.get(key, False)
@@ -173,6 +177,15 @@ def build_company_compliance_journey(company, user=None):
             if completed:
                 status = 'completed'
             elif f['ai_analysis_completed']:
+                status = 'needs_action'
+            else:
+                status = 'planned'
+        elif kind == 'auditor_review':
+            # Phase 6F: human verdict. completed = a recorded auditor verdict exists;
+            # needs_action = a rule suggestion exists but no verdict; planned otherwise.
+            if completed:
+                status = 'completed'
+            elif f['rule_eval_completed']:
                 status = 'needs_action'
             else:
                 status = 'planned'

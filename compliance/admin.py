@@ -6,6 +6,7 @@ from .models import (
     CompanyFrameworkScope, ControlApplicabilityResult,
     EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
     ControlAssessment, EvidenceTextExtraction, EvidenceAIAnalysis, EvidenceRuleEvaluation,
+    AuditorFinalVerdict,
 )
 
 
@@ -45,6 +46,19 @@ class EvidenceRuleEvaluationAdmin(admin.ModelAdmin):
     readonly_fields = ('submission', 'status', 'suggested_status', 'confidence', 'rationale',
                        'rule_signals', 'missing_requirements', 'framework_type', 'error_message',
                        'evaluated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(AuditorFinalVerdict)
+class AuditorFinalVerdictAdmin(admin.ModelAdmin):
+    """Read-only audit view: verdicts are recorded via the review workflow, not the admin."""
+    list_display = ('submission', 'status', 'reviewer', 'confidence', 'framework_type', 'reviewed_at')
+    list_filter = ('status', 'framework_type')
+    search_fields = ('submission__original_filename', 'reviewer__email')
+    readonly_fields = ('submission', 'reviewer', 'status', 'confidence', 'rationale',
+                       'required_actions', 'framework_type', 'source_rule_evaluation', 'reviewed_at')
 
     def has_add_permission(self, request):
         return False

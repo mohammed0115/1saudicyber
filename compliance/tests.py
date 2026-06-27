@@ -5111,3 +5111,208 @@ class RuleEngineSecurityTests(TestCase):
         self.client.force_login(_journey_user(c))
         resp = self.client.get(reverse('compliance:run_evidence_rule_evaluation', args=[sub.id]))
         self.assertEqual(resp.status_code, 405)
+
+
+# ============================================================
+# Phase 6F — Auditor Final Verdict Workflow
+# ============================================================
+def _staff_user(email='staff6f@x.com'):
+    from core.models import User
+    return User.objects.create_user(email=email, password='longenough12', is_staff=True)
+
+
+def _assigned_auditor_user(company, email='aud6f@x.com'):
+    from core.models import User
+    from auditors.models import AuditorProfile, AuditorAssignment
+    u = User.objects.create_user(email=email, password='longenough12')
+    p = AuditorProfile.objects.create(user=u, full_name='Auditor', status='active')
+    AuditorAssignment.objects.create(company=company, auditor=p, status='accepted')
+    return u
+
+
+class AuditorVerdictServiceTests(TestCase):
+    def _sub(self, fv_code='NCA-ECC-2-2024'):
+        return _company_with_submission(fv_code=fv_code)
+
+    def test_staff_can_record_verdict(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = self._sub()
+        v = record_auditor_final_verdict(sub, _staff_user(), status='final_c',
+                                         rationale='تمت المراجعة.', confidence=85)
+        self.assertEqual(v.status, 'final_c')
+        self.assertEqual(v.confidence, 85)
+        self.assertEqual(v.reviewer.is_staff, True)
+
+    def test_assigned_auditor_can_record(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = self._sub()
+        u = _assigned_auditor_user(c)
+        v = record_auditor_final_verdict(sub, u, status='final_pc', rationale='جزئي.')
+        self.assertEqual(v.status, 'final_pc')
+
+    def test_company_user_cannot_record(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict, VerdictError
+        c, item, sub = self._sub()
+        u = _journey_user(c)
+        with self.assertRaises(VerdictError):
+            record_auditor_final_verdict(sub, u, status='final_c', rationale='x')
+
+    def test_rationale_required(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict, VerdictError
+        c, item, sub = self._sub()
+        with self.assertRaises(VerdictError):
+            record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='   ')
+
+    def test_invalid_status_rejected(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict, VerdictError
+        c, item, sub = self._sub()
+        with self.assertRaises(VerdictError):
+            record_auditor_final_verdict(sub, _staff_user(), status='compliant', rationale='x')
+
+    def test_aramco_status_vocabulary(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = self._sub(fv_code='ARAMCO-SACS-002')
+        v = record_auditor_final_verdict(sub, _staff_user(), status='final_compliance', rationale='ok')
+        self.assertEqual(v.framework_type, 'aramco_sabic')
+        # NCA status invalid for an Aramco submission
+        from compliance.auditor_verdict import VerdictError
+        with self.assertRaises(VerdictError):
+            record_auditor_final_verdict(sub, _staff_user('s2@x.com'), status='final_c', rationale='x')
+
+    def test_confidence_clamped(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = self._sub()
+        v = record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='x', confidence=900)
+        self.assertEqual(v.confidence, 100)
+
+    def test_rerun_updates_same_verdict(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        from compliance.models import AuditorFinalVerdict
+        c, item, sub = self._sub()
+        s = _staff_user()
+        record_auditor_final_verdict(sub, s, status='final_c', rationale='one')
+        record_auditor_final_verdict(sub, s, status='final_nc', rationale='two')
+        self.assertEqual(AuditorFinalVerdict.objects.filter(submission=sub).count(), 1)
+        self.assertEqual(AuditorFinalVerdict.objects.get(submission=sub).status, 'final_nc')
+
+    def test_does_not_touch_reports_or_company_control(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        from compliance.models import CompanyControl, ControlAssessment
+        c, item, sub = self._sub()
+        before = (CompanyControl.objects.count(), ControlAssessment.objects.count())
+        record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='x')
+        self.assertEqual(before, (CompanyControl.objects.count(), ControlAssessment.objects.count()))
+
+
+class AuditorVerdictUITests(TestCase):
+    def test_owner_sees_readonly_message(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:auditor_verdict', args=[sub.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'قرار المدقق النهائي')
+        self.assertContains(resp, 'يمكنك عرض القرار، ولا تملك صلاحية تعديله')
+        self.assertContains(resp, 'لا يُعد شهادة امتثال رسمية')
+
+    def test_staff_sees_form_and_can_post(self):
+        from compliance.models import AuditorFinalVerdict
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.client.force_login(_staff_user())
+        body = self.client.get(reverse('compliance:auditor_verdict', args=[sub.id])).content.decode()
+        self.assertIn('حفظ قرار المدقق', body)
+        resp = self.client.post(reverse('compliance:auditor_verdict', args=[sub.id]),
+                                {'status': 'final_c', 'rationale': 'تمت المراجعة.', 'confidence': '80'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(AuditorFinalVerdict.objects.get(submission=sub).status, 'final_c')
+
+    def test_company_user_post_forbidden_writes_nothing(self):
+        from compliance.models import AuditorFinalVerdict
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.client.force_login(_journey_user(c))
+        resp = self.client.post(reverse('compliance:auditor_verdict', args=[sub.id]),
+                                {'status': 'final_c', 'rationale': 'x'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(AuditorFinalVerdict.objects.filter(submission=sub).exists())
+
+    def test_no_official_certification_wording(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.client.force_login(_staff_user())
+        self.client.post(reverse('compliance:auditor_verdict', args=[sub.id]),
+                         {'status': 'final_c', 'rationale': 'ok', 'confidence': '70'})
+        body = self.client.get(reverse('compliance:auditor_verdict', args=[sub.id])).content.decode()
+        for bad in ('شهادة رسمية', 'اعتماد رسمي من جهة حكومية', 'معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', '/media/evidence_v2/'):
+            self.assertNotIn(bad, body)
+
+    def test_english_mode_does_not_break(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.client.force_login(_staff_user())
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('compliance:auditor_verdict', args=[sub.id])).content.decode()
+        self.assertIn('Auditor final verdict', body)
+        self.assertIn('Save auditor decision', body)
+
+
+class AuditorVerdictJourneyTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _step(self, company, key):
+        from compliance.journey import build_company_compliance_journey
+        j = build_company_compliance_journey(company)
+        return {s['key']: s for s in j['steps']}[key]
+
+    def _ready_with_rule(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024', name='p.txt',
+                                                content=b'policy approved.', ftype='txt')
+        save_extraction_for_submission(sub)
+        _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+        evaluate_submission_rules(sub)
+        return c, item, sub
+
+    def test_auditor_review_planned_before_rule(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')  # no rule eval
+        self.assertEqual(self._step(c, 'auditor_review')['status'], 'planned')
+
+    def test_auditor_review_needs_action_after_rule(self):
+        c, item, sub = self._ready_with_rule()
+        self.assertEqual(self._step(c, 'auditor_review')['status'], 'needs_action')
+
+    def test_auditor_review_and_final_verdict_completed_after_verdict(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = self._ready_with_rule()
+        record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='reviewed')
+        self.assertEqual(self._step(c, 'auditor_review')['status'], 'completed')
+        self.assertEqual(self._step(c, 'final_verdict')['status'], 'completed')
+
+    def test_reports_remain_not_completed(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = self._ready_with_rule()
+        record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='reviewed')
+        self.assertNotEqual(self._step(c, 'reports')['status'], 'completed')
+
+
+class AuditorVerdictSecurityTests(TestCase):
+    def test_anonymous_redirected(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        resp = self.client.get(reverse('compliance:auditor_verdict', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_cross_company_view_blocked(self):
+        c1, i1, s1 = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        c2 = _company(name='Other6f')
+        self.client.force_login(_journey_user(c2))
+        resp = self.client.get(reverse('compliance:auditor_verdict', args=[s1.id]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_cross_company_post_writes_nothing(self):
+        from compliance.models import AuditorFinalVerdict
+        c1, i1, s1 = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        c2 = _company(name='Other6f2')
+        self.client.force_login(_journey_user(c2))
+        resp = self.client.post(reverse('compliance:auditor_verdict', args=[s1.id]),
+                                {'status': 'final_c', 'rationale': 'x'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(AuditorFinalVerdict.objects.filter(submission=s1).exists())

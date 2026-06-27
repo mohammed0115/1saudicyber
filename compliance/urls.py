@@ -43,6 +43,8 @@ urlpatterns = [
     # Phase 6E — rule engine suggested status (preview + POST run, owner-only)
     path('evidence-submissions/<int:submission_id>/rule-evaluation/', views.evidence_rule_evaluation_preview, name='evidence_rule_evaluation'),
     path('evidence-submissions/<int:submission_id>/run-rule-evaluation/', views.run_evidence_rule_evaluation, name='run_evidence_rule_evaluation'),
+    # Phase 6F — auditor final verdict (GET review + POST verdict; staff/assigned auditor)
+    path('evidence-submissions/<int:submission_id>/auditor-verdict/', views.auditor_verdict_view, name='auditor_verdict'),
 
     # Phase 3F — advisory analysis trigger (staff-only)
     path('evidence-submissions/<int:submission_id>/analyze/', views.analyze_submission_view, name='analyze_submission'),

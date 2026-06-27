@@ -988,3 +988,59 @@ class EvidenceRuleEvaluation(models.Model):
     @property
     def status_ar(self):
         return self.STATUS_AR.get(self.status, self.status)
+
+
+class AuditorFinalVerdict(models.Model):
+    """Phase 6F — a HUMAN reviewer's final verdict for one EvidenceSubmission.
+
+    The first human-reviewed final decision recorded inside the platform. It is an
+    INTERNAL review decision — NOT an official certification/accreditation. It never
+    issues a certificate, never finalizes external reports, and never bulk-creates
+    CompanyControl. Recorded only by staff/superuser or an assigned active auditor.
+    """
+    STATUS_CHOICES = [
+        # NCA-style
+        ('final_c', 'Final Compliant'),
+        ('final_pc', 'Final Partially Compliant'),
+        ('final_nc', 'Final Non-Compliant'),
+        ('final_na', 'Final Not Applicable'),
+        # Aramco / SABIC-style
+        ('final_compliance', 'Final Compliance'),
+        ('final_noncompliance', 'Final Non-Compliance'),
+        ('final_not_applicable', 'Final Not Applicable'),
+        # shared
+        ('needs_more_evidence', 'Needs More Evidence'),
+    ]
+    submission = models.OneToOneField(
+        'compliance.EvidenceSubmission', on_delete=models.CASCADE, related_name='auditor_final_verdict')
+    reviewer = models.ForeignKey(User, on_delete=models.PROTECT, related_name='auditor_final_verdicts')
+    status = models.CharField(max_length=64, choices=STATUS_CHOICES)
+    confidence = models.PositiveSmallIntegerField(default=0)
+    rationale = models.TextField()
+    required_actions = models.JSONField(default=list, blank=True)
+    framework_type = models.CharField(max_length=32, blank=True)
+    source_rule_evaluation = models.ForeignKey(
+        'compliance.EvidenceRuleEvaluation', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='auditor_verdicts')
+    reviewed_at = models.DateTimeField(auto_now=True)
+
+    STATUS_AR = {
+        'final_c': 'متوافق (بعد مراجعة المدقق)',
+        'final_pc': 'متوافق جزئيًا (بعد مراجعة المدقق)',
+        'final_nc': 'غير متوافق (بعد مراجعة المدقق)',
+        'final_na': 'غير منطبق (بعد مراجعة المدقق)',
+        'final_compliance': 'امتثال (بعد مراجعة المدقق)',
+        'final_noncompliance': 'عدم امتثال (بعد مراجعة المدقق)',
+        'final_not_applicable': 'غير منطبق (بعد مراجعة المدقق)',
+        'needs_more_evidence': 'بحاجة إلى أدلة إضافية',
+    }
+
+    class Meta:
+        db_table = 'auditor_final_verdicts'
+
+    def __str__(self):
+        return f"Verdict[{self.submission_id}] = {self.status} by {self.reviewer_id}"
+
+    @property
+    def status_ar(self):
+        return self.STATUS_AR.get(self.status, self.status)

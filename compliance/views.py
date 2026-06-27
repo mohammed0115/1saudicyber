@@ -307,6 +307,53 @@ def run_evidence_rule_evaluation(request, submission_id):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
+def auditor_verdict_view(request, submission_id):
+    """Phase 6F — auditor/staff final-verdict review for one submission.
+
+    GET renders the full review context (extraction + advisory AI + rule suggestion).
+    POST records a human reviewer verdict (staff/superuser or assigned active auditor
+    only). Company users may view their own but never submit. Internal decision only —
+    never a certificate; never finalizes reports.
+    """
+    from .models import EvidenceSubmission
+    from .auditor_verdict import (can_view_submission_review, can_submit_final_verdict,
+                                  allowed_statuses_for, record_auditor_final_verdict, VerdictError)
+    sub = EvidenceSubmission.objects.filter(id=submission_id).first()
+    if sub is None or not can_view_submission_review(request.user, sub):
+        messages.error(request, 'الدليل غير موجود أو لا تملك صلاحية عرضه.')
+        return redirect('compliance:evidence_checklist')
+
+    can_submit = can_submit_final_verdict(request.user, sub)
+    if request.method == 'POST':
+        if not can_submit:
+            messages.error(request, 'يمكنك عرض القرار، ولا تملك صلاحية تعديله.')
+            return redirect('compliance:auditor_verdict', submission_id=sub.id)
+        try:
+            record_auditor_final_verdict(
+                sub, request.user,
+                status=request.POST.get('status', ''),
+                rationale=request.POST.get('rationale', ''),
+                confidence=request.POST.get('confidence') or None,
+                required_actions=[a for a in request.POST.getlist('required_actions') if a.strip()],
+            )
+            messages.success(request, 'تم حفظ قرار المدقق. هذه مراجعة داخلية فقط.')
+        except VerdictError as e:
+            messages.error(request, str(e))
+        return redirect('compliance:auditor_verdict', submission_id=sub.id)
+
+    return render(request, 'compliance/auditor_verdict.html', {
+        'submission': sub,
+        'extraction': getattr(sub, 'text_extraction', None),
+        'ai_analysis': getattr(sub, 'ai_analysis', None),
+        'rule_evaluation': getattr(sub, 'rule_evaluation', None),
+        'verdict': getattr(sub, 'auditor_final_verdict', None),
+        'can_submit': can_submit,
+        'allowed_statuses': allowed_statuses_for(sub),
+    })
+
+
+@login_required
 def applicability_preview(request):
     """Phase 6B — advisory control-applicability preview for the user's own company.
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-27 09:53+0300\n"
+"POT-Creation-Date: 2026-06-27 12:32+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -131,12 +131,14 @@ msgid "تحتاج بيانات إضافية"
 msgstr ""
 
 #: templates/compliance/applicability_preview.html:30
+#: templates/compliance/auditor_verdict.html:76
 #: templates/compliance/evidence_ai_analysis.html:51
 #: templates/compliance/evidence_rule_evaluation.html:41
 msgid "مستوى الثقة"
 msgstr ""
 
 #: templates/compliance/applicability_preview.html:57
+#: templates/compliance/auditor_verdict.html:74
 msgid "سبب القرار"
 msgstr ""
 
@@ -163,6 +165,75 @@ msgstr ""
 #: templates/compliance/applicability_preview.html:93
 #: templates/compliance/classification.html:84
 msgid "العودة إلى لوحة الرحلة"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:3
+#: templates/compliance/auditor_verdict.html:9
+msgid "قرار المدقق النهائي"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:16
+msgid "هذا القرار يمثل مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية."
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:22
+msgid "الحالة المقترحة من محرك القواعد"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:25
+msgid "مقترح — بانتظار مراجعة المدقق"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:29
+#: templates/compliance/evidence_ai_analysis.html:3
+#: templates/compliance/evidence_ai_analysis.html:9
+msgid "التحليل الاستشاري للذكاء الاصطناعي"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:32
+msgid "استشاري فقط"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:36
+msgid "النص المستخرج من الدليل"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:38
+msgid "حرف"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:45
+#: templates/compliance/evidence_rule_evaluation.html:48
+msgid "سبب الاقتراح"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:53
+#: templates/compliance/auditor_verdict.html:69
+#: templates/compliance/auditor_verdict.html:70
+msgid "الحالة بعد مراجعة المدقق"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:60
+msgid "تمت مراجعته بواسطة المدقق"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:79
+msgid "الإجراءات المطلوبة"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:83
+msgid "حفظ قرار المدقق"
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:87
+msgid "يمكنك عرض القرار، ولا تملك صلاحية تعديله."
+msgstr ""
+
+#: templates/compliance/auditor_verdict.html:94
+#: templates/compliance/evidence_ai_analysis.html:97
+#: templates/compliance/evidence_extraction.html:77
+#: templates/compliance/evidence_rule_evaluation.html:78
+msgid "العودة إلى تفاصيل الدليل"
 msgstr ""
 
 #: templates/compliance/classification.html:3
@@ -202,11 +273,6 @@ msgstr ""
 
 #: templates/compliance/classification.html:81
 msgid "إكمال ملف التصنيف"
-msgstr ""
-
-#: templates/compliance/evidence_ai_analysis.html:3
-#: templates/compliance/evidence_ai_analysis.html:9
-msgid "التحليل الاستشاري للذكاء الاصطناعي"
 msgstr ""
 
 #: templates/compliance/evidence_ai_analysis.html:16
@@ -254,12 +320,6 @@ msgstr ""
 
 #: templates/compliance/evidence_ai_analysis.html:83
 msgid "توصيات استشارية"
-msgstr ""
-
-#: templates/compliance/evidence_ai_analysis.html:97
-#: templates/compliance/evidence_extraction.html:77
-#: templates/compliance/evidence_rule_evaluation.html:78
-msgid "العودة إلى تفاصيل الدليل"
 msgstr ""
 
 #: templates/compliance/evidence_extraction.html:16
@@ -338,10 +398,6 @@ msgstr ""
 
 #: templates/compliance/evidence_rule_evaluation.html:38
 msgid "بانتظار مراجعة المدقق"
-msgstr ""
-
-#: templates/compliance/evidence_rule_evaluation.html:48
-msgid "سبب الاقتراح"
 msgstr ""
 
 #: templates/compliance/evidence_rule_evaluation.html:55
