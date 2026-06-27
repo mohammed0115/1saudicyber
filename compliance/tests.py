@@ -4640,3 +4640,241 @@ class EvidenceExtractionSecurityTests(TestCase):
         resp = self.client.get(reverse('compliance:evidence_extraction', args=[s1.id]))
         self.assertEqual(resp.status_code, 302)  # redirected away (not found for this tenant)
         self.assertNotIn('استخراج النص من الدليل', resp.content.decode())
+
+
+# ============================================================
+# Phase 6D — AI Evidence Analyzer Advisory
+# ============================================================
+class _FakeProvider:
+    """Deterministic fake AI provider — no network."""
+    def __init__(self, payload=None, exc=None):
+        self.payload = payload if payload is not None else {
+            'relevance': 'high', 'confidence': 80, 'summary': 'يبدو أن الدليل مرتبط بالضابط.',
+            'matched_signals': ['سياسة موثّقة'], 'missing_items': ['تاريخ الاعتماد'],
+            'recommendations': ['أرفق سجل الموافقة'],
+        }
+        self.exc = exc
+    def analyze(self, prompt):
+        if self.exc:
+            raise self.exc
+        return self.payload
+
+
+def _extracted_submission(ftype='txt', content=b'Access control policy approved by management.'):
+    """A submission with a persisted successful extraction (gate satisfied)."""
+    from compliance.evidence_extraction import save_extraction_for_submission
+    c, item, sub = _company_with_submission(name='p.%s' % ftype, content=content, ftype=ftype)
+    save_extraction_for_submission(sub)
+    return c, item, sub
+
+
+class AIAnalyzerGateTests(TestCase):
+    def test_no_extraction_cannot_analyze(self):
+        from compliance.evidence_ai_analyzer import can_analyze_submission
+        c, item, sub = _company_with_submission()
+        ok, reason = can_analyze_submission(sub)
+        self.assertFalse(ok)
+        self.assertIn('استخراج نص', reason)
+
+    def test_no_text_extracted_cannot_analyze(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        from compliance.evidence_ai_analyzer import can_analyze_submission
+        c, item, sub = _company_with_submission(name='scan.png', ftype='png', content=b'\x89PNG\r\n')
+        save_extraction_for_submission(sub)  # no_text_extracted
+        ok, _ = can_analyze_submission(sub)
+        self.assertFalse(ok)
+
+    def test_extracted_with_text_can_analyze(self):
+        from compliance.evidence_ai_analyzer import can_analyze_submission
+        c, item, sub = _extracted_submission()
+        ok, reason = can_analyze_submission(sub)
+        self.assertTrue(ok)
+        self.assertEqual(reason, '')
+
+
+class AIAnalyzerServiceTests(TestCase):
+    def test_completed_with_fake_provider(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        obj = analyze_submission_evidence(sub, provider=_FakeProvider())
+        self.assertEqual(obj.status, 'completed')
+        self.assertEqual(obj.relevance, 'high')
+        self.assertEqual(obj.confidence, 80)
+        self.assertEqual(obj.matched_signals, ['سياسة موثّقة'])
+
+    def test_rerun_updates_same_row(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        from compliance.models import EvidenceAIAnalysis
+        c, item, sub = _extracted_submission()
+        analyze_submission_evidence(sub, provider=_FakeProvider())
+        analyze_submission_evidence(sub, provider=_FakeProvider({'relevance': 'low', 'confidence': 10}))
+        self.assertEqual(EvidenceAIAnalysis.objects.filter(submission=sub).count(), 1)
+        self.assertEqual(EvidenceAIAnalysis.objects.get(submission=sub).relevance, 'low')
+
+    def test_gate_blocks_provider_call(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _company_with_submission()  # no extraction
+        called = {'n': 0}
+        class Spy:
+            def analyze(self, prompt): called['n'] += 1; return {}
+        obj = analyze_submission_evidence(sub, provider=Spy())
+        self.assertEqual(obj.status, 'skipped')
+        self.assertEqual(called['n'], 0)
+
+    def test_invalid_response_is_failed(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        obj = analyze_submission_evidence(sub, provider=_FakeProvider(payload=['not', 'a', 'dict']))
+        self.assertEqual(obj.status, 'failed')
+
+    def test_provider_exception_is_failed_safely(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        obj = analyze_submission_evidence(sub, provider=_FakeProvider(exc=RuntimeError('boom')))
+        self.assertEqual(obj.status, 'failed')
+        self.assertNotIn('boom', obj.error_message)  # no raw exception leaked
+
+    def test_provider_unavailable_is_skipped(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence, ProviderUnavailable
+        c, item, sub = _extracted_submission()
+        obj = analyze_submission_evidence(sub, provider=_FakeProvider(exc=ProviderUnavailable('no key')))
+        self.assertEqual(obj.status, 'skipped')
+
+    def test_confidence_clamped(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        obj = analyze_submission_evidence(sub, provider=_FakeProvider({'relevance': 'high', 'confidence': 999}))
+        self.assertEqual(obj.confidence, 100)
+
+    def test_relevance_restricted(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        obj = analyze_submission_evidence(sub, provider=_FakeProvider({'relevance': 'compliant', 'confidence': 50}))
+        self.assertEqual(obj.relevance, 'unclear')   # invalid value coerced, never a compliance verdict
+
+    def test_prompt_advisory_and_no_path_or_secret(self):
+        from compliance.evidence_ai_analyzer import build_prompt
+        c, item, sub = _extracted_submission()
+        prompt = build_prompt(sub, sub.text_extraction)
+        self.assertIn('ADVISORY ONLY', prompt)
+        self.assertIn('DO NOT decide compliance', prompt)
+        self.assertNotIn('/media/', prompt)
+        self.assertNotIn(settings.OPENAI_API_KEY or 'no-key-sentinel', prompt) if (settings.OPENAI_API_KEY) else None
+
+    def test_no_final_compliance_wording_in_stored_output(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        obj = analyze_submission_evidence(sub, provider=_FakeProvider())
+        blob = (obj.summary + ' ' + ' '.join(obj.matched_signals + obj.missing_items + obj.recommendations))
+        for bad in ('متوافق نهائيًا', 'قرار نهائي', 'شهادة'):
+            self.assertNotIn(bad, blob)
+
+
+class AIAnalyzerUITests(TestCase):
+    def _patch_provider(self, provider):
+        import compliance.evidence_ai_analyzer as mod
+        self._orig = mod.default_provider
+        mod.default_provider = lambda: provider
+        self.addCleanup(lambda: setattr(mod, 'default_provider', self._orig))
+
+    def test_preview_renders_for_owner(self):
+        c, item, sub = _extracted_submission()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:evidence_ai_analysis', args=[sub.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'التحليل الاستشاري للذكاء الاصطناعي')
+        self.assertContains(resp, 'لا يُعد قرارًا نهائيًا')
+        self.assertContains(resp, 'تشغيل التحليل الاستشاري')
+
+    def test_gate_warning_shown_without_extraction(self):
+        c, item, sub = _company_with_submission()
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(reverse('compliance:evidence_ai_analysis', args=[sub.id])).content.decode()
+        self.assertIn('يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري', body)
+
+    def test_post_run_works_for_owner_with_fake_provider(self):
+        from compliance.models import EvidenceAIAnalysis
+        c, item, sub = _extracted_submission()
+        self._patch_provider(_FakeProvider())
+        self.client.force_login(_journey_user(c))
+        resp = self.client.post(reverse('compliance:run_evidence_ai_analysis', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(EvidenceAIAnalysis.objects.get(submission=sub).status, 'completed')
+
+    def test_no_compliance_status_or_verdict_wording(self):
+        c, item, sub = _extracted_submission()
+        self._patch_provider(_FakeProvider())
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('compliance:run_evidence_ai_analysis', args=[sub.id]))
+        body = self.client.get(reverse('compliance:evidence_ai_analysis', args=[sub.id])).content.decode()
+        for bad in (' C/PC/NC', 'Noncompliance', 'متوافق نهائيًا', 'غير متوافق نهائيًا', 'قرار نهائي', 'شهادة امتثال نهائية'):
+            self.assertNotIn(bad, body)
+
+    def test_english_mode_does_not_break(self):
+        c, item, sub = _extracted_submission()
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('compliance:evidence_ai_analysis', args=[sub.id])).content.decode()
+        self.assertIn('AI advisory analysis', body)
+        self.assertIn('Run advisory analysis', body)
+
+
+class AIAnalyzerJourneyTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _step(self, company, key):
+        from compliance.journey import build_company_compliance_journey
+        j = build_company_compliance_journey(company)
+        return {s['key']: s for s in j['steps']}[key]
+
+    def test_planned_without_extracted_text(self):
+        c, item, sub = _company_with_submission()  # uploaded, not extracted
+        self.assertEqual(self._step(c, 'ai_analysis')['status'], 'planned')
+
+    def test_needs_action_with_extraction_but_no_analysis(self):
+        c, item, sub = _extracted_submission()
+        self.assertEqual(self._step(c, 'ai_analysis')['status'], 'needs_action')
+
+    def test_completed_after_completed_analysis(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        analyze_submission_evidence(sub, provider=_FakeProvider())
+        self.assertEqual(self._step(c, 'ai_analysis')['status'], 'completed')
+
+    def test_downstream_steps_remain_not_completed(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        analyze_submission_evidence(sub, provider=_FakeProvider())
+        for k in ('rule_engine', 'final_verdict'):
+            self.assertNotEqual(self._step(c, k)['status'], 'completed')
+
+
+class AIAnalyzerSecurityTests(TestCase):
+    def test_anonymous_redirected(self):
+        c, item, sub = _extracted_submission()
+        resp = self.client.get(reverse('compliance:evidence_ai_analysis', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_cross_company_view_blocked(self):
+        c1, i1, s1 = _extracted_submission()
+        c2 = _company(name='Other6d')
+        self.client.force_login(_journey_user(c2))
+        resp = self.client.get(reverse('compliance:evidence_ai_analysis', args=[s1.id]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_cross_company_post_blocked_writes_nothing(self):
+        from compliance.models import EvidenceAIAnalysis
+        c1, i1, s1 = _extracted_submission()
+        c2 = _company(name='Other6d2')
+        self.client.force_login(_journey_user(c2))
+        resp = self.client.post(reverse('compliance:run_evidence_ai_analysis', args=[s1.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(EvidenceAIAnalysis.objects.filter(submission=s1).exists())
+
+    def test_get_run_action_405(self):
+        c, item, sub = _extracted_submission()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:run_evidence_ai_analysis', args=[sub.id]))
+        self.assertEqual(resp.status_code, 405)

@@ -884,3 +884,53 @@ class EvidenceTextExtraction(models.Model):
     @property
     def status_ar(self):
         return self.STATUS_AR.get(self.status, self.status)
+
+
+class EvidenceAIAnalysis(models.Model):
+    """Phase 6D — advisory AI analysis of an EvidenceSubmission's EXTRACTED text.
+
+    Advisory only: it helps a human auditor and never decides compliance. It is
+    gated on a successful EvidenceTextExtraction, stores no C/PC/NC or final
+    verdict, and never touches ControlAssessment / CompanyControl / reports.
+    Distinct from the legacy Phase 3F EvidenceAnalysisResult.
+    """
+    STATUS_CHOICES = [
+        ('completed', 'Completed'),
+        ('skipped', 'Skipped'),
+        ('failed', 'Failed'),
+    ]
+    RELEVANCE_CHOICES = [
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+        ('unclear', 'Unclear'),
+    ]
+    submission = models.OneToOneField(
+        'compliance.EvidenceSubmission', on_delete=models.CASCADE, related_name='ai_analysis')
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES)
+    relevance = models.CharField(max_length=32, choices=RELEVANCE_CHOICES, blank=True)
+    confidence = models.PositiveSmallIntegerField(default=0)
+    summary = models.TextField(blank=True)
+    matched_signals = models.JSONField(default=list, blank=True)
+    missing_items = models.JSONField(default=list, blank=True)
+    recommendations = models.JSONField(default=list, blank=True)
+    raw_response = models.JSONField(default=dict, blank=True)
+    error_message = models.TextField(blank=True)
+    analyzed_at = models.DateTimeField(auto_now=True)
+
+    STATUS_AR = {'completed': 'مكتمل', 'skipped': 'متخطّى', 'failed': 'فشل'}
+    RELEVANCE_AR = {'high': 'مرتفع', 'medium': 'متوسط', 'low': 'منخفض', 'unclear': 'غير واضح'}
+
+    class Meta:
+        db_table = 'evidence_ai_analyses'
+
+    def __str__(self):
+        return f"AIAnalysis[{self.submission_id}] = {self.status}/{self.relevance}"
+
+    @property
+    def status_ar(self):
+        return self.STATUS_AR.get(self.status, self.status)
+
+    @property
+    def relevance_ar(self):
+        return self.RELEVANCE_AR.get(self.relevance, self.relevance)

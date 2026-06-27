@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-27 09:00+0300\n"
+"POT-Creation-Date: 2026-06-27 09:28+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,6 +110,7 @@ msgid "هذا التحليل لا يقرر الامتثال أو عدم الام
 msgstr ""
 
 #: templates/compliance/applicability_preview.html:17
+#: templates/compliance/evidence_ai_analysis.html:17
 msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
 msgstr ""
 
@@ -130,6 +131,7 @@ msgid "تحتاج بيانات إضافية"
 msgstr ""
 
 #: templates/compliance/applicability_preview.html:30
+#: templates/compliance/evidence_ai_analysis.html:51
 msgid "مستوى الثقة"
 msgstr ""
 
@@ -201,9 +203,61 @@ msgstr ""
 msgid "إكمال ملف التصنيف"
 msgstr ""
 
+#: templates/compliance/evidence_ai_analysis.html:3
+#: templates/compliance/evidence_ai_analysis.html:9
+msgid "التحليل الاستشاري للذكاء الاصطناعي"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:16
+msgid "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال."
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:23
+msgid "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري."
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:27
 #: templates/compliance/evidence_extraction.html:3
 #: templates/compliance/evidence_extraction.html:9
 msgid "استخراج النص من الدليل"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:35
+msgid "إعادة تشغيل التحليل الاستشاري"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:35
+msgid "تشغيل التحليل الاستشاري"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:43
+#: templates/compliance/evidence_ai_analysis.html:91
+msgid "حالة التحليل"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:47
+msgid "مدى ارتباط الدليل بالضابط"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:58
+msgid "ملخص التحليل"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:65
+msgid "إشارات مطابقة"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:74
+msgid "عناصر ناقصة"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:83
+msgid "توصيات استشارية"
+msgstr ""
+
+#: templates/compliance/evidence_ai_analysis.html:97
+#: templates/compliance/evidence_extraction.html:77
+msgid "العودة إلى تفاصيل الدليل"
 msgstr ""
 
 #: templates/compliance/evidence_extraction.html:16
@@ -248,10 +302,6 @@ msgstr ""
 
 #: templates/compliance/evidence_extraction.html:70
 msgid "تعذر استخراج نص كافٍ من هذا الملف."
-msgstr ""
-
-#: templates/compliance/evidence_extraction.html:77
-msgid "العودة إلى تفاصيل الدليل"
 msgstr ""
 
 #: templates/components/journey_wizard.html:7

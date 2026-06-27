@@ -5,7 +5,7 @@ from .models import (
     CompanyIntakeProfile, FrameworkApplicabilityResult,
     CompanyFrameworkScope, ControlApplicabilityResult,
     EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
-    ControlAssessment, EvidenceTextExtraction,
+    ControlAssessment, EvidenceTextExtraction, EvidenceAIAnalysis,
 )
 
 
@@ -17,6 +17,20 @@ class EvidenceTextExtractionAdmin(admin.ModelAdmin):
     search_fields = ('submission__original_filename',)
     readonly_fields = ('submission', 'status', 'extracted_text', 'char_count', 'page_count',
                        'extraction_method', 'warnings', 'error_message', 'truncated', 'extracted_at')
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(EvidenceAIAnalysis)
+class EvidenceAIAnalysisAdmin(admin.ModelAdmin):
+    """Read-only: advisory AI analysis is produced by the service, never hand-edited."""
+    list_display = ('submission', 'status', 'relevance', 'confidence', 'analyzed_at')
+    list_filter = ('status', 'relevance')
+    search_fields = ('submission__original_filename',)
+    readonly_fields = ('submission', 'status', 'relevance', 'confidence', 'summary',
+                       'matched_signals', 'missing_items', 'recommendations', 'raw_response',
+                       'error_message', 'analyzed_at')
 
     def has_add_permission(self, request):
         return False

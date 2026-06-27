@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-27 09:00+0300\n"
+"POT-Creation-Date: 2026-06-27 09:28+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,6 +28,7 @@ msgstr "Please select a file to upload."
 #: compliance/views.py:134
 msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
 msgstr "Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
@@ -113,6 +114,7 @@ msgid "هذا التحليل لا يقرر الامتثال أو عدم الام
 msgstr "This analysis does not decide compliance or non-compliance."
 
 #: templates/compliance/applicability_preview.html:17
+#: templates/compliance/evidence_ai_analysis.html:17
 msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
 msgstr "The final result depends on evidence and auditor review."
 
@@ -133,6 +135,7 @@ msgid "تحتاج بيانات إضافية"
 msgstr "Needs more information"
 
 #: templates/compliance/applicability_preview.html:30
+#: templates/compliance/evidence_ai_analysis.html:51
 msgid "مستوى الثقة"
 msgstr "Confidence"
 
@@ -180,6 +183,7 @@ msgstr "This classification is advisory and is not a final decision or a certifi
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 
 #: templates/compliance/classification.html:20
@@ -208,10 +212,67 @@ msgstr "Reason"
 msgid "إكمال ملف التصنيف"
 msgstr "Complete the intake profile"
 
+#: templates/compliance/evidence_ai_analysis.html:3
+#: templates/compliance/evidence_ai_analysis.html:9
+msgid "التحليل الاستشاري للذكاء الاصطناعي"
+msgstr "AI advisory analysis"
+
+#: templates/compliance/evidence_ai_analysis.html:16
+msgid "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال."
+msgstr "This analysis assists the auditor and is not a final decision or compliance certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+
+#: templates/compliance/evidence_ai_analysis.html:23
+msgid "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري."
+msgstr "Readable text must be extracted from the evidence before running the advisory analysis."
+
+#: templates/compliance/evidence_ai_analysis.html:27
 #: templates/compliance/evidence_extraction.html:3
 #: templates/compliance/evidence_extraction.html:9
 msgid "استخراج النص من الدليل"
 msgstr "Evidence text extraction"
+
+#: templates/compliance/evidence_ai_analysis.html:35
+msgid "إعادة تشغيل التحليل الاستشاري"
+msgstr "Re-run advisory analysis"
+
+#: templates/compliance/evidence_ai_analysis.html:35
+msgid "تشغيل التحليل الاستشاري"
+msgstr "Run advisory analysis"
+
+#: templates/compliance/evidence_ai_analysis.html:43
+#: templates/compliance/evidence_ai_analysis.html:91
+msgid "حالة التحليل"
+msgstr "Analysis status"
+
+#: templates/compliance/evidence_ai_analysis.html:47
+msgid "مدى ارتباط الدليل بالضابط"
+msgstr "Evidence relevance to the control"
+
+#: templates/compliance/evidence_ai_analysis.html:58
+msgid "ملخص التحليل"
+msgstr "Analysis summary"
+
+#: templates/compliance/evidence_ai_analysis.html:65
+msgid "إشارات مطابقة"
+msgstr "Matched signals"
+
+#: templates/compliance/evidence_ai_analysis.html:74
+msgid "عناصر ناقصة"
+msgstr "Missing items"
+
+#: templates/compliance/evidence_ai_analysis.html:83
+msgid "توصيات استشارية"
+msgstr "Advisory recommendations"
+
+#: templates/compliance/evidence_ai_analysis.html:97
+#: templates/compliance/evidence_extraction.html:77
+msgid "العودة إلى تفاصيل الدليل"
+msgstr "Back to evidence details"
 
 #: templates/compliance/evidence_extraction.html:16
 msgid "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال."
@@ -256,10 +317,6 @@ msgstr "Extracted text"
 #: templates/compliance/evidence_extraction.html:70
 msgid "تعذر استخراج نص كافٍ من هذا الملف."
 msgstr "Could not extract sufficient text from this file."
-
-#: templates/compliance/evidence_extraction.html:77
-msgid "العودة إلى تفاصيل الدليل"
-msgstr "Back to evidence details"
 
 #: templates/components/journey_wizard.html:7
 msgid "مسار جاهزية الامتثال"

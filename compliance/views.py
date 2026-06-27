@@ -225,6 +225,52 @@ def run_evidence_extraction(request, submission_id):
 
 
 @login_required
+def evidence_ai_analysis_preview(request, submission_id):
+    """Phase 6D — advisory AI analysis preview for one evidence submission (read-only).
+
+    Tenant-scoped. Shows the persisted advisory result or a gated/not-run state.
+    No final compliance decision; never leaks the file path or secrets.
+    """
+    from .models import EvidenceSubmission
+    from .evidence_ai_analyzer import can_analyze_submission
+    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
+    if sub is None:
+        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    can_run, reason = can_analyze_submission(sub)
+    return render(request, 'compliance/evidence_ai_analysis.html', {
+        'submission': sub,
+        'analysis': getattr(sub, 'ai_analysis', None),
+        'can_run': can_run,
+        'gate_reason': reason,
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def run_evidence_ai_analysis(request, submission_id):
+    """Phase 6D — run + persist advisory AI analysis (owner-only, POST, gated)."""
+    from .models import EvidenceSubmission
+    from .evidence_ai_analyzer import can_analyze_submission, analyze_submission_evidence
+    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
+    if sub is None:
+        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    can_run, reason = can_analyze_submission(sub)
+    if not can_run:
+        messages.error(request, reason)
+        return redirect('compliance:evidence_ai_analysis', submission_id=sub.id)
+    obj = analyze_submission_evidence(sub, actor=request.user)
+    if obj.status == 'completed':
+        messages.success(request, 'تم تشغيل التحليل الاستشاري. النتيجة استشارية ولا تُعد قرارًا نهائيًا.')
+    elif obj.status == 'skipped':
+        messages.warning(request, 'خدمة التحليل الاستشاري غير متاحة حاليًا.')
+    else:
+        messages.error(request, 'تعذر تنفيذ التحليل الاستشاري بأمان.')
+    return redirect('compliance:evidence_ai_analysis', submission_id=sub.id)
+
+
+@login_required
 def applicability_preview(request):
     """Phase 6B — advisory control-applicability preview for the user's own company.
 

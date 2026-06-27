@@ -42,7 +42,7 @@ _STEP_DEFS = [
      'رفع الأدلة', 'رفع الأدلة المرتبطة بعناصر قائمة الأدلة.'),
     ('ocr_extraction', 'استخراج النص من الأدلة', 'evidence', 'extraction', 'compliance:evidence_checklist',
      'استخراج النص', 'استخراج النص القابل للقراءة من المستندات (OCR للصور مُخطّط لاحقًا).'),
-    ('ai_analysis', 'التحليل الاستشاري للذكاء الاصطناعي', 'evidence', 'optional', 'compliance:evidence_checklist',
+    ('ai_analysis', 'التحليل الاستشاري للذكاء الاصطناعي', 'evidence', 'ai_analysis', 'compliance:evidence_checklist',
      'إدارة الأدلة', 'تحليل استشاري مساعد للأدلة — لا يُعد قرارًا نهائيًا.'),
     ('rule_engine', 'محرك القواعد', 'evidence', 'planned', None,
      '', 'محرك قواعد تقييم الأدلة — قيد التجهيز (متاح في مرحلة لاحقة).'),
@@ -67,7 +67,7 @@ def _signals(company):
     from .models import (CompanyIntakeProfile, FrameworkApplicabilityResult,
                          CompanyFrameworkScope, ControlApplicabilityResult,
                          EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
-                         EvidenceTextExtraction, ControlAssessment)
+                         EvidenceTextExtraction, EvidenceAIAnalysis, ControlAssessment)
     from risk.models import RiskItem, RemediationTask
     from auditors.models import AuditorAssignment
     from monitoring.models import MonitoringCheck
@@ -88,6 +88,9 @@ def _signals(company):
         'text_extracted': EvidenceTextExtraction.objects.filter(
             submission__company=company, status='extracted', char_count__gt=0).exists(),
         'analysis': q(EvidenceAnalysisResult),
+        # Phase 6D: advisory AI analyzer step — only a completed advisory result counts.
+        'ai_analysis_completed': EvidenceAIAnalysis.objects.filter(
+            submission__company=company, status='completed').exists(),
         'risks': q(RiskItem),
         'remediation': q(RemediationTask),
         'assignment_accepted': AuditorAssignment.objects.filter(
@@ -115,7 +118,8 @@ def _completed(key, f):
         # successful extraction (status=extracted, char_count>0) is persisted —
         # never from a file-type heuristic. OCR (scanned images) stays planned.
         'ocr_extraction': f['text_extracted'],
-        'ai_analysis': f['analysis'],
+        # Phase 6D: completed only when a persisted advisory AI analysis is completed.
+        'ai_analysis': f['ai_analysis_completed'],
         'gap_risk': f['risks'],
         'remediation': f['remediation'],
         'auditor_review': f['reviewed'] or f['assignment_accepted'],
@@ -143,6 +147,16 @@ def build_company_compliance_journey(company, user=None):
             if completed:
                 status = 'completed'
             elif f['submissions']:
+                status = 'needs_action'
+            else:
+                status = 'planned'
+        elif kind == 'ai_analysis':
+            # Phase 6D: advisory analysis requires extracted text first.
+            # completed = a completed advisory analysis exists; needs_action =
+            # extracted text exists but no completed analysis; planned otherwise.
+            if completed:
+                status = 'completed'
+            elif f['text_extracted']:
                 status = 'needs_action'
             else:
                 status = 'planned'
