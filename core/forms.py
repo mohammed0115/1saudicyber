@@ -3,14 +3,43 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import User, Company
 
 
+# Phase 8C — Arabic display labels for registration choices. Values are IDENTICAL
+# to Company.SECTOR_CHOICES / SIZE_CHOICES (logic unchanged); only labels are Arabic,
+# applied at the form/view layer so no model change / migration is needed.
+SECTOR_CHOICES_AR = [
+    ('oil_gas', 'النفط والغاز'),
+    ('petrochemical', 'البتروكيماويات'),
+    ('banking', 'البنوك والتمويل'),
+    ('telecom', 'الاتصالات'),
+    ('healthcare', 'الرعاية الصحية'),
+    ('government', 'القطاع الحكومي'),
+    ('defense', 'الدفاع'),
+    ('energy', 'الطاقة والمرافق'),
+    ('manufacturing', 'التصنيع'),
+    ('technology', 'التقنية'),
+    ('logistics', 'النقل والخدمات اللوجستية'),
+    ('construction', 'الإنشاءات'),
+    ('retail', 'التجزئة'),
+    ('education', 'التعليم'),
+    ('other', 'أخرى'),
+]
+SIZE_CHOICES_AR = [
+    ('micro', 'متناهية الصغر'),
+    ('small', 'صغيرة'),
+    ('medium', 'متوسطة'),
+    ('large', 'كبيرة'),
+    ('enterprise', 'مؤسسة كبرى'),
+]
+
+
 class CompanyRegistrationForm(forms.Form):
     """Combined form for company and user registration."""
     # Company fields
     company_name = forms.CharField(max_length=255)
     company_name_ar = forms.CharField(max_length=255, required=False)
     cr_number = forms.CharField(max_length=20)
-    sector = forms.ChoiceField(choices=Company.SECTOR_CHOICES)
-    size = forms.ChoiceField(choices=Company.SIZE_CHOICES)
+    sector = forms.ChoiceField(choices=SECTOR_CHOICES_AR)
+    size = forms.ChoiceField(choices=SIZE_CHOICES_AR)
     city = forms.CharField(max_length=100, required=False)
 
     # Targets
@@ -60,15 +89,19 @@ class SelfServiceRegistrationForm(forms.Form):
     last_name = forms.CharField(max_length=30, label='اسم العائلة')
     email = forms.EmailField(label='البريد الإلكتروني')
     phone = forms.CharField(max_length=20, required=False, label='رقم الجوال')
-    password = forms.CharField(widget=forms.PasswordInput, min_length=12, label='كلمة المرور')
+    password = forms.CharField(
+        widget=forms.PasswordInput, min_length=12, label='كلمة المرور',
+        help_text='استخدم كلمة مرور قوية لا تقل عن 12 حرفًا، ويفضّل أن تحتوي على أحرف وأرقام ورمز خاص.')
     password_confirm = forms.CharField(widget=forms.PasswordInput, label='تأكيد كلمة المرور')
 
     # بيانات الشركة
     company_name_ar = forms.CharField(max_length=255, label='اسم الشركة بالعربية')
     company_name = forms.CharField(max_length=255, required=False, label='اسم الشركة بالإنجليزية')
-    cr_number = forms.CharField(max_length=20, label='رقم السجل التجاري')
-    sector = forms.ChoiceField(choices=Company.SECTOR_CHOICES, label='القطاع / نوع الجهة')
-    size = forms.ChoiceField(choices=Company.SIZE_CHOICES, label='حجم الشركة')
+    cr_number = forms.CharField(
+        max_length=20, label='رقم السجل التجاري',
+        help_text='رقم السجل التجاري في السعودية يتكوّن غالبًا من 10 أرقام.')
+    sector = forms.ChoiceField(choices=SECTOR_CHOICES_AR, label='القطاع / نوع الجهة')
+    size = forms.ChoiceField(choices=SIZE_CHOICES_AR, label='حجم الشركة')
     city = forms.CharField(max_length=100, required=False, label='المدينة')
     country = forms.CharField(max_length=100, required=False, initial='SA', label='الدولة')
     description = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False,
@@ -78,6 +111,12 @@ class SelfServiceRegistrationForm(forms.Form):
     target_nca = forms.BooleanField(required=False, label='نحتاج الامتثال لـ NCA')
     target_aramco = forms.BooleanField(required=False, label='نحتاج الامتثال لـ Aramco')
     target_sabic = forms.BooleanField(required=False, label='نحتاج الامتثال لـ SABIC')
+
+    # Phase 8C — trust: explicit terms/privacy acceptance (form-only, not stored).
+    accept_terms = forms.BooleanField(
+        required=True,
+        label='أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة 1SaudiCyber.',
+        error_messages={'required': 'يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب.'})
 
     def clean_cr_number(self):
         cr = (self.cleaned_data.get('cr_number') or '').strip()

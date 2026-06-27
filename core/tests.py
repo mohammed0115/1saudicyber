@@ -249,7 +249,7 @@ class Phase4ARegistrationOnboardingTests(TestCase):
             'company_name_ar': 'شركة الاختبار', 'company_name': 'Test Co',
             'cr_number': '1212121212', 'sector': 'technology', 'size': 'small',
             'city': 'Riyadh', 'country': 'SA', 'description': 'وصف',
-            'target_nca': 'on',
+            'target_nca': 'on', 'accept_terms': 'on',
         }
         d.update(over)
         return d
@@ -291,7 +291,7 @@ class Phase4ARegistrationOnboardingTests(TestCase):
             resp = self.client.post(reverse('core:register'), {
                 'company_name': 'Legacy Co', 'cr_number': '9090909090', 'sector': 'technology',
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'legacy@x.com',
-                'password': 'longenough12', 'target_nca': 'on'})
+                'password': 'longenough12', 'target_nca': 'on', 'accept_terms': 'on'})
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(Company.objects.filter(cr_number='9090909090').exists())
 
@@ -375,7 +375,7 @@ class Phase4ABackwardCompatTests(TestCase):
             'first_name': 'B', 'last_name': 'C', 'email': 'bc4a@co.example',
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'BC Co', 'cr_number': '1313131313',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
 
     def test_journey_pages_still_work_for_registered_company(self):
         self._registered_client()
@@ -422,7 +422,7 @@ class Phase4AFixALocalizationTests(TestCase):
             'first_name': 'S', 'last_name': 'A', 'email': 'fixa@co.example',
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': '1717171717',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
 
     # --- Arabic / RTL ---
     def test_public_landing_contains_arabic_primary_copy(self):
@@ -501,7 +501,7 @@ class Phase4AFixABackwardCompatTests(TestCase):
             'first_name': 'B', 'last_name': 'C', 'email': 'bcfa@co.example',
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': '1818181818',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(Company.objects.filter(cr_number='1818181818').exists())
 
@@ -510,7 +510,7 @@ class Phase4AFixABackwardCompatTests(TestCase):
             'first_name': 'B', 'last_name': 'C', 'email': 'bcfa2@co.example',
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': '1919191919',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
         self.assertEqual(self.client.get(reverse('core:onboarding')).status_code, 200)
 
     def test_subscription_gated_reports_still_work(self):
@@ -568,7 +568,7 @@ class Phase4DLoadingStateTests(TestCase):
             'first_name': 'S', 'last_name': 'A', 'email': 'load@co.example',
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': '3131313131',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
         resp = self.client.get(reverse('core:onboarding'))
         self.assertContains(resp, 'جارٍ تجهيز لوحة الرحلة')
 
@@ -735,7 +735,7 @@ class Phase4DBackwardCompatTests(TestCase):
             'first_name': 'B', 'last_name': 'C', 'email': 'bc4d@co.example',
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': '2424242424',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(Company.objects.filter(cr_number='2424242424').exists())
 
@@ -744,7 +744,7 @@ class Phase4DBackwardCompatTests(TestCase):
             'first_name': 'B', 'last_name': 'C', 'email': 'bc4d2@co.example',
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': '2525252525',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
         self.assertEqual(self.client.get(reverse('core:onboarding')).status_code, 200)
 
     def test_subscription_gated_reports_still_work(self):
@@ -958,7 +958,7 @@ class Phase4DFixBBrandingTests(TestCase):
             'first_name': 'S', 'last_name': 'A', 'email': email,
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': cr,
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
 
     def test_public_brand_uses_1saudicyber(self):
         self.assertContains(self.client.get(reverse('core:landing')), '1SaudiCyber')
@@ -1114,7 +1114,7 @@ class ArabicResidueCleanupTests(TestCase):
             'first_name': 'S', 'last_name': 'A', 'email': 'res@co.example', 'phone': '',
             'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': '3434343434',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
 
     def test_onboarding_welcome_uses_clean_intake_label(self):
         self._reg_company_user()
@@ -1245,3 +1245,83 @@ class BilingualSwitcherTests(TestCase):
         self._login_company()
         resp = self.client.get('/monitoring/continuous/')
         self.assertIn(resp.status_code, (200, 302))
+
+
+# ============================================================
+# Phase 8C — Public UX Trust Polish
+# ============================================================
+from django.utils import timezone as _tz_8c
+
+
+class Phase8CPublicUXTrustTests(TestCase):
+    def _reg_payload(self, **over):
+        d = {
+            'first_name': 'S', 'last_name': 'A', 'email': 'trust8c@co.example', 'phone': '',
+            'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': '9090909090',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on',
+        }
+        d.update(over)
+        return d
+
+    # 1) Login page Arabic copy
+    def test_login_page_arabic_copy(self):
+        body = self.client.get(reverse('core:login')).content.decode()
+        self.assertIn('مرحبًا بعودتك', body)
+        self.assertIn('تسجيل الدخول', body)
+        self.assertNotIn('Welcome back', body)  # default Arabic, not English
+
+    # 2) Registration Arabic labels + help text
+    def test_registration_arabic_labels_and_help(self):
+        body = self.client.get(reverse('core:company_register')).content.decode()
+        self.assertIn('الرعاية الصحية', body)        # sector AR label
+        self.assertIn('متناهية الصغر', body)          # size AR label
+        self.assertNotIn('Oil & Gas', body)
+        self.assertNotIn('Petrochemical', body)
+        self.assertIn('يتكوّن غالبًا من 10 أرقام', body)   # CR hint
+        self.assertIn('أوافق على شروط الاستخدام وسياسة الخصوصية', body)  # terms label
+
+    # 3) Terms acceptance required
+    def test_registration_requires_terms_acceptance(self):
+        resp = self.client.post(reverse('core:company_register'),
+                                self._reg_payload(accept_terms=''))
+        self.assertEqual(resp.status_code, 200)  # re-render, not redirect
+        self.assertContains(resp, 'يجب الموافقة على شروط الاستخدام وسياسة الخصوصية')
+        self.assertFalse(Company.objects.filter(cr_number='9090909090').exists())
+
+    def test_registration_succeeds_with_terms(self):
+        resp = self.client.post(reverse('core:company_register'), self._reg_payload())
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Company.objects.filter(cr_number='9090909090').exists())
+
+    # 4) Auditor wording safety (public auditor intake page)
+    def test_auditor_public_wording_safe(self):
+        body = self.client.get(reverse('core:auditor_register')).content.decode()
+        self.assertNotIn('مدقّق معتمد', body)
+        self.assertIn('مراجع امتثال', body)
+
+    # 5) Public pages have no positive certification/accreditation claims
+    def test_public_pages_no_certification_claims(self):
+        for url in (reverse('core:landing'), reverse('core:login'),
+                    reverse('core:get_started'), reverse('core:auditor_register')):
+            body = self.client.get(url).content.decode()
+            for bad in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك',
+                        'official accreditation', 'certified by NCA', 'شهادة رسمية', 'اعتماد حكومي'):
+                self.assertNotIn(bad, body, f'{bad} in {url}')
+
+    # 6) Footer uses dynamic year, not hardcoded 2024
+    def test_footer_dynamic_year(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        year = str(_tz_8c.now().year)
+        self.assertIn(year, body)
+        self.assertNotIn('&copy; 2024', body)
+        self.assertNotIn('© 2024', body)
+
+    # 7) Marketing 24/7 absolute claim removed; illustrative disclaimer present
+    def test_landing_marketing_safety(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        self.assertNotIn('24/7', body)
+        self.assertIn('جاهزية للمراقبة المستمرة', body)
+        self.assertIn('مؤشرات توضيحية', body)
+        self.assertIn('417', body)        # official total still shown
+        self.assertNotIn('>334<', body)   # legacy total not a displayed figure

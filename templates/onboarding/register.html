@@ -107,6 +107,14 @@
           <label style="display:flex;align-items:center;gap:8px;background:#F7F9F8;border:1px solid #D8E1DD;border-radius:10px;padding:10px 14px;color:#1F2933;font-size:.92rem;">
             {{ form.target_sabic }} {{ form.target_sabic.label }}</label>
         </div>
+
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:20px;color:#1F2933;font-size:.9rem;line-height:1.7;">
+          {{ form.accept_terms }} <span>{{ form.accept_terms.label }}</span>
+        </label>
+        {% if form.accept_terms.errors %}
+        <div style="color:#9B2C2C;font-size:.8rem;margin-top:4px;">{{ form.accept_terms.errors|striptags }}</div>
+        {% endif %}
+
         <div style="margin-top:26px;display:flex;gap:12px;align-items:center;">
           <button type="button" data-prev
                   style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:11px 22px;border:1px solid #D8E1DD;border-radius:10px;cursor:pointer;">السابق</button>

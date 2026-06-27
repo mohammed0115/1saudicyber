@@ -20,6 +20,7 @@
 [ ] login succeeds (Arabic UI, RTL)
 [ ] /dashboard/ loads
 [ ] /compliance/dashboard/ (journey) loads; wizard renders
+        # NOTE: /compliance/dashboard/ is the journey dashboard route. There is no /compliance/journey/ URL.
 [ ] /compliance/classification/ loads (advisory wording present)
 [ ] /compliance/applicability/ loads
 [ ] evidence submission detail loads for OWN company submission

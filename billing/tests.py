@@ -258,7 +258,7 @@ class Phase4BBackwardCompatTests(TestCase):
             'first_name': 'B', 'last_name': 'C', 'email': 'bc4b@co.example',
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'BC Co', 'cr_number': '1414141414',
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
 
     def test_company_registration_still_works(self):
         resp = self._register()
@@ -300,5 +300,5 @@ class Phase4BBackwardCompatTests(TestCase):
             resp = self.client.post(reverse('core:register'), {
                 'company_name': 'Legacy4B', 'cr_number': '1515151515', 'sector': 'technology',
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'leg4b@x.com',
-                'password': 'longenough12', 'target_nca': 'on'})
+                'password': 'longenough12', 'target_nca': 'on', 'accept_terms': 'on'})
         self.assertEqual(resp.status_code, 302)

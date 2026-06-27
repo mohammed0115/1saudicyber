@@ -3,6 +3,9 @@
     {{ field.label }}{% if req %} <span style="color:#9B2C2C;">*</span>{% endif %}
   </label>
   {{ field }}
+  {% if field.help_text %}
+  <div style="color:#667085;font-size:.78rem;margin-top:4px;">{{ field.help_text }}</div>
+  {% endif %}
   {% if field.errors %}
   <div style="color:#9B2C2C;font-size:.8rem;margin-top:4px;">{{ field.errors|striptags }}</div>
   {% endif %}

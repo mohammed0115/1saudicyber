@@ -10,6 +10,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils.translation import gettext as _
 from .models import Company, User
 from .forms import CompanyRegistrationForm
+from .forms import SECTOR_CHOICES_AR as _SECTOR_AR, SIZE_CHOICES_AR as _SIZE_AR
 from ai_engine.services import classify_company
 
 
@@ -53,8 +54,8 @@ def register_company(request):
             # FR-002.10/.11 and password policy errors are surfaced here.
             return render(request, 'core/register.html', {
                 'form': form,
-                'sectors': Company.SECTOR_CHOICES,
-                'sizes': Company.SIZE_CHOICES,
+                'sectors': _SECTOR_AR,
+                'sizes': _SIZE_AR,
             })
 
         data = form.cleaned_data
@@ -116,8 +117,8 @@ def register_company(request):
 
     return render(request, 'core/register.html', {
         'form': CompanyRegistrationForm(),
-        'sectors': Company.SECTOR_CHOICES,
-        'sizes': Company.SIZE_CHOICES,
+        'sectors': _SECTOR_AR,
+        'sizes': _SIZE_AR,
     })
 
 

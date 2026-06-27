@@ -310,7 +310,7 @@ class Phase5ABackwardCompatTests(TestCase):
             'first_name': 'B', 'last_name': 'C', 'email': email, 'phone': '',
             'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'BC', 'cr_number': cr,
-            'sector': 'technology', 'size': 'small', 'target_nca': 'on'})
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
 
     def test_company_registration_still_works(self):
         self.assertEqual(self._register().status_code, 302)
