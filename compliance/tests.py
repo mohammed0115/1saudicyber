@@ -5647,3 +5647,121 @@ class ReportFinalizationSecurityTests(TestCase):
         from compliance.models import AuditorFinalVerdict
         v = AuditorFinalVerdict.objects.get(submission=sub)
         self.assertNotIn('شهادة', v.status_ar)
+
+
+# ============================================================
+# Phase 7C — Local Polish / Pre-Deploy Safety Pack (regression)
+# ============================================================
+class Phase7CPreDeployPolishTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _step(self, company, key):
+        from compliance.journey import build_company_compliance_journey
+        return {s['key']: s for s in build_company_compliance_journey(company)['steps']}[key]
+
+    # ---- Route smoke: authorized owner gets 200 across the whole chain ----
+    def test_chain_routes_render_for_owner(self):
+        c, item, sub = _company_with_verdict(subscribe=True)
+        u = c.users.first() if hasattr(c, 'users') else None
+        self.client.force_login(_journey_user(c, email='polish_owner@x.com'))
+        pages = [
+            reverse('compliance:dashboard'),
+            reverse('compliance:classification'),
+            reverse('compliance:applicability_preview'),
+            reverse('compliance:reports_index'),
+            reverse('compliance:auditor_reviewed_report'),
+            reverse('compliance:evidence_extraction', args=[sub.id]),
+            reverse('compliance:evidence_ai_analysis', args=[sub.id]),
+            reverse('compliance:evidence_rule_evaluation', args=[sub.id]),
+            reverse('compliance:evidence_submission_detail', args=[sub.id]),
+            reverse('compliance:auditor_verdict', args=[sub.id]),
+        ]
+        for url in pages:
+            self.assertEqual(self.client.get(url).status_code, 200, url)
+        self.assertIn(self.client.get('/monitoring/continuous/').status_code, (200, 302))
+
+    # ---- Anonymous redirect for protected pages ----
+    def test_protected_pages_redirect_anonymous(self):
+        c, item, sub = _company_with_verdict(subscribe=True)
+        for url in (reverse('compliance:classification'),
+                    reverse('compliance:applicability_preview'),
+                    reverse('compliance:auditor_reviewed_report'),
+                    reverse('compliance:evidence_extraction', args=[sub.id]),
+                    reverse('compliance:auditor_verdict', args=[sub.id])):
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 302, url)
+            self.assertIn('/login', resp.url, url)
+
+    # ---- Wording safety on key pages ----
+    def test_wording_safety_on_key_pages(self):
+        c, item, sub = _company_with_verdict(subscribe=True)
+        self.client.force_login(_journey_user(c, email='polish_w@x.com'))
+        bodies = {
+            'rule': self.client.get(reverse('compliance:evidence_rule_evaluation', args=[sub.id])).content.decode(),
+            'verdict': self.client.get(reverse('compliance:auditor_verdict', args=[sub.id])).content.decode(),
+            'report': self.client.get(reverse('compliance:auditor_reviewed_report')).content.decode(),
+        }
+        for body in bodies.values():
+            for bad in ('334', 'CyberTrust KSA', 'معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك',
+                        'certified by NCA', 'official accreditation', 'اعتماد حكومي', 'تم إصدار شهادة'):
+                self.assertNotIn(bad, body)
+        # advisory / suggested / internal-review wording present where it should be
+        self.assertIn('بانتظار مراجعة المدقق', bodies['rule'])
+        self.assertIn('لا يُعد شهادة امتثال رسمية', bodies['verdict'])
+        self.assertIn('لا يُعد شهادة امتثال رسمية', bodies['report'])
+
+    def test_ai_page_is_advisory(self):
+        c, item, sub = _company_with_verdict(subscribe=True)
+        self.client.force_login(_journey_user(c, email='polish_ai@x.com'))
+        body = self.client.get(reverse('compliance:evidence_ai_analysis', args=[sub.id])).content.decode()
+        self.assertIn('لا يُعد قرارًا نهائيًا أو شهادة امتثال', body)
+
+    # ---- Journey truthfulness for a fully-populated company ----
+    def test_journey_steps_completed_for_full_chain(self):
+        c, item, sub = _company_with_verdict(subscribe=True)
+        for key in ('ocr_extraction', 'ai_analysis', 'rule_engine', 'auditor_review', 'final_verdict', 'reports'):
+            self.assertEqual(self._step(c, key)['status'], 'completed', key)
+        # planned/foundation steps must NOT be falsely completed
+        # (rule_engine here IS completed; OCR-for-images and monitoring connectors are not modeled as steps)
+        self.assertNotEqual(self._step(c, 'monitoring')['status'], 'completed')
+
+    # ---- Cross-tenant link safety across the chain ----
+    def test_cross_company_blocked_across_chain(self):
+        c1, i1, s1 = _company_with_verdict(subscribe=True)
+        c2 = _company(name='PolishOther')
+        self.client.force_login(_journey_user(c2, email='polish_other@x.com'))
+        for name in ('evidence_extraction', 'evidence_ai_analysis', 'evidence_rule_evaluation', 'auditor_verdict'):
+            self.assertEqual(self.client.get(reverse('compliance:%s' % name, args=[s1.id])).status_code, 302, name)
+
+    def test_company_user_cannot_submit_verdict(self):
+        from compliance.models import AuditorFinalVerdict
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.client.force_login(_journey_user(c, email='polish_co@x.com'))
+        self.client.post(reverse('compliance:auditor_verdict', args=[sub.id]),
+                         {'status': 'final_c', 'rationale': 'x'})
+        # a verdict may already exist from _company_with_submission? no — fresh submission, none recorded
+        self.assertFalse(AuditorFinalVerdict.objects.filter(submission=sub).exists())
+
+    def test_get_run_actions_405(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.client.force_login(_journey_user(c, email='polish_405@x.com'))
+        for name in ('run_evidence_extraction', 'run_evidence_ai_analysis', 'run_evidence_rule_evaluation'):
+            self.assertEqual(self.client.get(reverse('compliance:%s' % name, args=[sub.id])).status_code, 405, name)
+
+    # ---- English mode renders ----
+    def test_english_mode_key_pages(self):
+        c, item, sub = _company_with_verdict(subscribe=True)
+        self.client.force_login(_journey_user(c, email='polish_en@x.com'))
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        for url in (reverse('compliance:classification'),
+                    reverse('compliance:applicability_preview'),
+                    reverse('compliance:auditor_reviewed_report'),
+                    reverse('compliance:evidence_ai_analysis', args=[sub.id])):
+            self.assertEqual(self.client.get(url).status_code, 200, url)
+
+    # ---- Official total is 417, never legacy 334 ----
+    def test_official_total_417_not_334(self):
+        from compliance.smart_classification import OFFICIAL_TOTAL, _FW
+        self.assertEqual(OFFICIAL_TOTAL, 417)
+        self.assertNotIn(334, [f['expected'] for f in _FW.values()])
