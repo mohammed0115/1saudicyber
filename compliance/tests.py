@@ -4878,3 +4878,236 @@ class AIAnalyzerSecurityTests(TestCase):
         self.client.force_login(_journey_user(c))
         resp = self.client.get(reverse('compliance:run_evidence_ai_analysis', args=[sub.id]))
         self.assertEqual(resp.status_code, 405)
+
+
+# ============================================================
+# Phase 6E — Rule Engine Suggested Compliance Status
+# ============================================================
+def _set_ai_analysis(submission, relevance='high', confidence=80, missing=None, status='completed'):
+    from compliance.models import EvidenceAIAnalysis
+    return EvidenceAIAnalysis.objects.update_or_create(
+        submission=submission,
+        defaults=dict(status=status, relevance=relevance, confidence=confidence,
+                      summary='s', matched_signals=[], missing_items=missing or [],
+                      recommendations=[], raw_response={}, error_message=''))[0]
+
+
+class RuleEngineServiceTests(TestCase):
+    def _sub(self, fv_code='NCA-ECC-2-2024', ftype='txt', content=b'Access control policy approved.'):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(fv_code=fv_code, name='p.%s' % ftype,
+                                                content=content, ftype=ftype)
+        save_extraction_for_submission(sub)
+        return c, item, sub
+
+    def test_no_extracted_text_insufficient_data(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')  # no extraction
+        obj = evaluate_submission_rules(sub)
+        self.assertEqual(obj.status, 'completed')
+        self.assertEqual(obj.suggested_status, 'insufficient_data')
+
+    def test_extracted_no_ai_needs_review(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._sub()
+        obj = evaluate_submission_rules(sub)
+        self.assertEqual(obj.suggested_status, 'needs_review')
+        self.assertEqual(obj.confidence, 40)
+
+    def test_nca_high_no_missing_suggested_c(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._sub()
+        _set_ai_analysis(sub, relevance='high', confidence=95, missing=[])
+        obj = evaluate_submission_rules(sub)
+        self.assertEqual(obj.suggested_status, 'suggested_c')
+        self.assertEqual(obj.confidence, 90)  # capped at 90
+
+    def test_nca_medium_or_missing_suggested_pc(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._sub()
+        _set_ai_analysis(sub, relevance='high', confidence=88, missing=['تاريخ الاعتماد'])
+        obj = evaluate_submission_rules(sub)
+        self.assertEqual(obj.suggested_status, 'suggested_pc')
+        self.assertEqual(obj.confidence, 75)
+
+    def test_nca_low_suggested_nc(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._sub()
+        _set_ai_analysis(sub, relevance='low', confidence=90, missing=[])
+        obj = evaluate_submission_rules(sub)
+        self.assertEqual(obj.suggested_status, 'suggested_nc')
+        self.assertEqual(obj.confidence, 70)
+
+    def test_unclear_needs_review(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._sub()
+        _set_ai_analysis(sub, relevance='unclear', confidence=99, missing=[])
+        obj = evaluate_submission_rules(sub)
+        self.assertEqual(obj.suggested_status, 'needs_review')
+        self.assertEqual(obj.confidence, 50)
+
+    def test_aramco_high_suggested_compliance(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._sub(fv_code='ARAMCO-SACS-002')
+        _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+        obj = evaluate_submission_rules(sub)
+        self.assertEqual(obj.framework_type, 'aramco_sabic')
+        self.assertEqual(obj.suggested_status, 'suggested_compliance')
+
+    def test_aramco_low_suggested_noncompliance(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._sub(fv_code='ARAMCO-SACS-002')
+        _set_ai_analysis(sub, relevance='low', confidence=60, missing=[])
+        obj = evaluate_submission_rules(sub)
+        self.assertEqual(obj.suggested_status, 'suggested_noncompliance')
+
+    def test_rerun_updates_same_row(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        from compliance.models import EvidenceRuleEvaluation
+        c, item, sub = self._sub()
+        evaluate_submission_rules(sub)
+        _set_ai_analysis(sub, relevance='high', confidence=90, missing=[])
+        evaluate_submission_rules(sub)
+        self.assertEqual(EvidenceRuleEvaluation.objects.filter(submission=sub).count(), 1)
+        self.assertEqual(EvidenceRuleEvaluation.objects.get(submission=sub).suggested_status, 'suggested_c')
+
+    def test_deterministic_repeated(self):
+        from compliance.rule_engine import suggest_status_for_submission
+        c, item, sub = self._sub()
+        _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+        a = suggest_status_for_submission(sub); b = suggest_status_for_submission(sub)
+        self.assertEqual((a.suggested_status, a.confidence), (b.suggested_status, b.confidence))
+
+    def test_does_not_touch_final_assessment_or_company_control(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        from compliance.models import ControlAssessment, CompanyControl
+        c, item, sub = self._sub()
+        _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+        before = (ControlAssessment.objects.count(), CompanyControl.objects.count())
+        evaluate_submission_rules(sub)
+        self.assertEqual(before, (ControlAssessment.objects.count(), CompanyControl.objects.count()))
+
+
+class RuleEngineUITests(TestCase):
+    def _ready_sub(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024', name='p.txt',
+                                                content=b'Access control policy approved.', ftype='txt')
+        save_extraction_for_submission(sub)
+        _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+        return c, item, sub
+
+    def test_page_renders_for_owner(self):
+        c, item, sub = self._ready_sub()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:evidence_rule_evaluation', args=[sub.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'محرك القواعد')
+        self.assertContains(resp, 'تشغيل التقييم النظامي')
+        self.assertContains(resp, 'ليست قرارًا نهائيًا')
+
+    def test_post_run_works_and_shows_suggestion(self):
+        from compliance.models import EvidenceRuleEvaluation
+        c, item, sub = self._ready_sub()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.post(reverse('compliance:run_evidence_rule_evaluation', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        ev = EvidenceRuleEvaluation.objects.get(submission=sub)
+        self.assertEqual(ev.status, 'completed')
+        body = self.client.get(reverse('compliance:evidence_rule_evaluation', args=[sub.id])).content.decode()
+        self.assertIn('حالة نظامية مقترحة', body)
+        self.assertIn('بانتظار مراجعة المدقق', body)
+
+    def test_no_final_verdict_or_certification_wording(self):
+        c, item, sub = self._ready_sub()
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('compliance:run_evidence_rule_evaluation', args=[sub.id]))
+        body = self.client.get(reverse('compliance:evidence_rule_evaluation', args=[sub.id])).content.decode()
+        for bad in ('تم الاعتماد', 'قرار نهائي', 'شهادة امتثال', 'اعتماد رسمي', '/media/evidence_v2/'):
+            self.assertNotIn(bad, body)
+
+    def test_english_mode_does_not_break(self):
+        c, item, sub = self._ready_sub()
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('compliance:evidence_rule_evaluation', args=[sub.id])).content.decode()
+        self.assertIn('Rule engine', body)
+        self.assertIn('Run system evaluation', body)
+
+
+class RuleEngineJourneyTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _step(self, company, key):
+        from compliance.journey import build_company_compliance_journey
+        j = build_company_compliance_journey(company)
+        return {s['key']: s for s in j['steps']}[key]
+
+    def _ready_sub(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024', name='p.txt',
+                                                content=b'Access control policy approved.', ftype='txt')
+        save_extraction_for_submission(sub)
+        return c, item, sub
+
+    def test_planned_before_ai_analysis(self):
+        c, item, sub = self._ready_sub()  # extracted, no AI
+        self.assertEqual(self._step(c, 'rule_engine')['status'], 'planned')
+
+    def test_needs_action_after_ai_before_rule(self):
+        c, item, sub = self._ready_sub()
+        _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+        self.assertEqual(self._step(c, 'rule_engine')['status'], 'needs_action')
+
+    def test_completed_after_rule_evaluation(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._ready_sub()
+        _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+        evaluate_submission_rules(sub)
+        self.assertEqual(self._step(c, 'rule_engine')['status'], 'completed')
+
+    def test_auditor_and_final_verdict_remain_not_completed(self):
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._ready_sub()
+        _set_ai_analysis(sub, relevance='high', confidence=80, missing=[])
+        evaluate_submission_rules(sub)
+        self.assertNotEqual(self._step(c, 'auditor_review')['status'], 'completed')
+        self.assertNotEqual(self._step(c, 'final_verdict')['status'], 'completed')
+
+
+class RuleEngineSecurityTests(TestCase):
+    def _ready_sub(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024', name='p.txt',
+                                                content=b'policy approved.', ftype='txt')
+        save_extraction_for_submission(sub)
+        return c, item, sub
+
+    def test_anonymous_redirected(self):
+        c, item, sub = self._ready_sub()
+        resp = self.client.get(reverse('compliance:evidence_rule_evaluation', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_cross_company_view_blocked(self):
+        c1, i1, s1 = self._ready_sub()
+        c2 = _company(name='Other6e')
+        self.client.force_login(_journey_user(c2))
+        resp = self.client.get(reverse('compliance:evidence_rule_evaluation', args=[s1.id]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_cross_company_post_writes_nothing(self):
+        from compliance.models import EvidenceRuleEvaluation
+        c1, i1, s1 = self._ready_sub()
+        c2 = _company(name='Other6e2')
+        self.client.force_login(_journey_user(c2))
+        resp = self.client.post(reverse('compliance:run_evidence_rule_evaluation', args=[s1.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(EvidenceRuleEvaluation.objects.filter(submission=s1).exists())
+
+    def test_get_run_action_405(self):
+        c, item, sub = self._ready_sub()
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:run_evidence_rule_evaluation', args=[sub.id]))
+        self.assertEqual(resp.status_code, 405)

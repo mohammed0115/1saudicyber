@@ -5,7 +5,7 @@ from .models import (
     CompanyIntakeProfile, FrameworkApplicabilityResult,
     CompanyFrameworkScope, ControlApplicabilityResult,
     EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
-    ControlAssessment, EvidenceTextExtraction, EvidenceAIAnalysis,
+    ControlAssessment, EvidenceTextExtraction, EvidenceAIAnalysis, EvidenceRuleEvaluation,
 )
 
 
@@ -31,6 +31,20 @@ class EvidenceAIAnalysisAdmin(admin.ModelAdmin):
     readonly_fields = ('submission', 'status', 'relevance', 'confidence', 'summary',
                        'matched_signals', 'missing_items', 'recommendations', 'raw_response',
                        'error_message', 'analyzed_at')
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(EvidenceRuleEvaluation)
+class EvidenceRuleEvaluationAdmin(admin.ModelAdmin):
+    """Read-only: suggested status is computed by the rule engine, never hand-edited."""
+    list_display = ('submission', 'status', 'suggested_status', 'confidence', 'framework_type', 'evaluated_at')
+    list_filter = ('status', 'suggested_status', 'framework_type')
+    search_fields = ('submission__original_filename',)
+    readonly_fields = ('submission', 'status', 'suggested_status', 'confidence', 'rationale',
+                       'rule_signals', 'missing_requirements', 'framework_type', 'error_message',
+                       'evaluated_at')
 
     def has_add_permission(self, request):
         return False

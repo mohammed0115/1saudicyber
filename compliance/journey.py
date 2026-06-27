@@ -44,8 +44,8 @@ _STEP_DEFS = [
      'استخراج النص', 'استخراج النص القابل للقراءة من المستندات (OCR للصور مُخطّط لاحقًا).'),
     ('ai_analysis', 'التحليل الاستشاري للذكاء الاصطناعي', 'evidence', 'ai_analysis', 'compliance:evidence_checklist',
      'إدارة الأدلة', 'تحليل استشاري مساعد للأدلة — لا يُعد قرارًا نهائيًا.'),
-    ('rule_engine', 'محرك القواعد', 'evidence', 'planned', None,
-     '', 'محرك قواعد تقييم الأدلة — قيد التجهيز (متاح في مرحلة لاحقة).'),
+    ('rule_engine', 'محرك القواعد', 'evidence', 'rule_engine', 'compliance:evidence_checklist',
+     'تشغيل التقييم النظامي', 'حالة نظامية مقترحة بناءً على القواعد والأدلة — بانتظار مراجعة المدقق.'),
 
     ('gap_risk', 'تحليل الفجوات والمخاطر', 'gaps', 'optional', 'risk:list',
      'فتح سجل المخاطر', 'تسجيل المخاطر والفجوات وتقييمها.'),
@@ -67,7 +67,8 @@ def _signals(company):
     from .models import (CompanyIntakeProfile, FrameworkApplicabilityResult,
                          CompanyFrameworkScope, ControlApplicabilityResult,
                          EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
-                         EvidenceTextExtraction, EvidenceAIAnalysis, ControlAssessment)
+                         EvidenceTextExtraction, EvidenceAIAnalysis, EvidenceRuleEvaluation,
+                         ControlAssessment)
     from risk.models import RiskItem, RemediationTask
     from auditors.models import AuditorAssignment
     from monitoring.models import MonitoringCheck
@@ -90,6 +91,9 @@ def _signals(company):
         'analysis': q(EvidenceAnalysisResult),
         # Phase 6D: advisory AI analyzer step — only a completed advisory result counts.
         'ai_analysis_completed': EvidenceAIAnalysis.objects.filter(
+            submission__company=company, status='completed').exists(),
+        # Phase 6E: rule-engine step — only a completed suggestion counts.
+        'rule_eval_completed': EvidenceRuleEvaluation.objects.filter(
             submission__company=company, status='completed').exists(),
         'risks': q(RiskItem),
         'remediation': q(RemediationTask),
@@ -120,6 +124,8 @@ def _completed(key, f):
         'ocr_extraction': f['text_extracted'],
         # Phase 6D: completed only when a persisted advisory AI analysis is completed.
         'ai_analysis': f['ai_analysis_completed'],
+        # Phase 6E: completed only when a persisted suggested status is computed.
+        'rule_engine': f['rule_eval_completed'],
         'gap_risk': f['risks'],
         'remediation': f['remediation'],
         'auditor_review': f['reviewed'] or f['assignment_accepted'],
@@ -157,6 +163,16 @@ def build_company_compliance_journey(company, user=None):
             if completed:
                 status = 'completed'
             elif f['text_extracted']:
+                status = 'needs_action'
+            else:
+                status = 'planned'
+        elif kind == 'rule_engine':
+            # Phase 6E: suggested status requires a completed advisory analysis first.
+            # completed = a completed rule evaluation exists; needs_action = AI
+            # advisory done but no rule run; planned otherwise.
+            if completed:
+                status = 'completed'
+            elif f['ai_analysis_completed']:
                 status = 'needs_action'
             else:
                 status = 'planned'

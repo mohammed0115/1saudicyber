@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-27 09:28+0300\n"
+"POT-Creation-Date: 2026-06-27 09:53+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,6 +28,7 @@ msgstr "Please select a file to upload."
 #: compliance/views.py:134
 msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
 msgstr "Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
@@ -136,6 +137,7 @@ msgstr "Needs more information"
 
 #: templates/compliance/applicability_preview.html:30
 #: templates/compliance/evidence_ai_analysis.html:51
+#: templates/compliance/evidence_rule_evaluation.html:41
 msgid "مستوى الثقة"
 msgstr "Confidence"
 
@@ -184,6 +186,7 @@ msgstr "This classification is advisory and is not a final decision or a certifi
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 
 #: templates/compliance/classification.html:20
@@ -220,15 +223,19 @@ msgstr "AI advisory analysis"
 #: templates/compliance/evidence_ai_analysis.html:16
 msgid "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال."
 msgstr "This analysis assists the auditor and is not a final decision or compliance certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"This analysis assists the auditor and is not a final decision or compliance "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.Evidence uploaded. Advisory analysis is running and is not a "
+"final decision."
 
 #: templates/compliance/evidence_ai_analysis.html:23
 msgid "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري."
 msgstr "Readable text must be extracted from the evidence before running the advisory analysis."
+"Readable text must be extracted from the evidence before running the "
+"advisory analysis."
 
 #: templates/compliance/evidence_ai_analysis.html:27
 #: templates/compliance/evidence_extraction.html:3
@@ -271,6 +278,7 @@ msgstr "Advisory recommendations"
 
 #: templates/compliance/evidence_ai_analysis.html:97
 #: templates/compliance/evidence_extraction.html:77
+#: templates/compliance/evidence_rule_evaluation.html:78
 msgid "العودة إلى تفاصيل الدليل"
 msgstr "Back to evidence details"
 
@@ -317,6 +325,58 @@ msgstr "Extracted text"
 #: templates/compliance/evidence_extraction.html:70
 msgid "تعذر استخراج نص كافٍ من هذا الملف."
 msgstr "Could not extract sufficient text from this file."
+
+#: templates/compliance/evidence_rule_evaluation.html:3
+#: templates/compliance/evidence_rule_evaluation.html:9
+msgid "محرك القواعد"
+msgstr "Rule engine"
+
+#: templates/compliance/evidence_rule_evaluation.html:16
+msgid "هذه نتيجة نظامية مقترحة وليست قرارًا نهائيًا."
+msgstr "This is a system-suggested result, not a final decision."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+
+#: templates/compliance/evidence_rule_evaluation.html:17
+msgid "النتيجة النهائية تعتمد على مراجعة المدقق."
+msgstr "The final result depends on auditor review."
+
+#: templates/compliance/evidence_rule_evaluation.html:24
+msgid "إعادة تشغيل التقييم النظامي"
+msgstr "Re-run system evaluation"
+
+#: templates/compliance/evidence_rule_evaluation.html:24
+msgid "تشغيل التقييم النظامي"
+msgstr "Run system evaluation"
+
+#: templates/compliance/evidence_rule_evaluation.html:30
+msgid "لم يتم تشغيل التقييم النظامي بعد."
+msgstr "The system evaluation has not been run yet."
+
+#: templates/compliance/evidence_rule_evaluation.html:36
+#: templates/compliance/evidence_rule_evaluation.html:72
+msgid "حالة نظامية مقترحة"
+msgstr "Suggested system status"
+
+#: templates/compliance/evidence_rule_evaluation.html:38
+msgid "بانتظار مراجعة المدقق"
+msgstr "Pending auditor review"
+
+#: templates/compliance/evidence_rule_evaluation.html:48
+msgid "سبب الاقتراح"
+msgstr "Reason for suggestion"
+
+#: templates/compliance/evidence_rule_evaluation.html:55
+msgid "إشارات القواعد"
+msgstr "Rule signals"
+
+#: templates/compliance/evidence_rule_evaluation.html:64
+msgid "العناصر الناقصة"
+msgstr "Missing items"
 
 #: templates/components/journey_wizard.html:7
 msgid "مسار جاهزية الامتثال"

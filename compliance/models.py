@@ -934,3 +934,57 @@ class EvidenceAIAnalysis(models.Model):
     @property
     def relevance_ar(self):
         return self.RELEVANCE_AR.get(self.relevance, self.relevance)
+
+
+class EvidenceRuleEvaluation(models.Model):
+    """Phase 6E — deterministic, SYSTEM-SUGGESTED (non-final) compliance status for
+    one EvidenceSubmission.
+
+    A suggestion only — it combines applicability + extraction + advisory AI signals
+    via simple deterministic rules. It is NEVER a final decision, auditor verdict, or
+    certification, and it never writes ControlAssessment / CompanyControl / reports.
+    """
+    STATUS_CHOICES = [
+        ('completed', 'Completed'),
+        ('skipped', 'Skipped'),
+        ('failed', 'Failed'),
+    ]
+    submission = models.OneToOneField(
+        'compliance.EvidenceSubmission', on_delete=models.CASCADE, related_name='rule_evaluation')
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES)
+    suggested_status = models.CharField(max_length=64, blank=True)
+    confidence = models.PositiveSmallIntegerField(default=0)
+    rationale = models.TextField(blank=True)
+    rule_signals = models.JSONField(default=list, blank=True)
+    missing_requirements = models.JSONField(default=list, blank=True)
+    framework_type = models.CharField(max_length=32, blank=True)
+    error_message = models.TextField(blank=True)
+    evaluated_at = models.DateTimeField(auto_now=True)
+
+    # Suggested-status display labels (ALWAYS advisory — "بانتظار مراجعة المدقق").
+    SUGGESTED_AR = {
+        'suggested_c': 'متوافق مبدئيًا',
+        'suggested_pc': 'متوافق جزئيًا مبدئيًا',
+        'suggested_nc': 'غير متوافق مبدئيًا',
+        'suggested_na': 'غير منطبق مبدئيًا',
+        'suggested_compliance': 'امتثال مبدئي',
+        'suggested_noncompliance': 'عدم امتثال مبدئي',
+        'suggested_not_applicable': 'غير منطبق مبدئيًا',
+        'needs_review': 'يحتاج مراجعة',
+        'insufficient_data': 'بيانات غير كافية',
+    }
+    STATUS_AR = {'completed': 'مكتمل', 'skipped': 'متخطّى', 'failed': 'فشل'}
+
+    class Meta:
+        db_table = 'evidence_rule_evaluations'
+
+    def __str__(self):
+        return f"RuleEval[{self.submission_id}] = {self.suggested_status}"
+
+    @property
+    def suggested_status_ar(self):
+        return self.SUGGESTED_AR.get(self.suggested_status, self.suggested_status)
+
+    @property
+    def status_ar(self):
+        return self.STATUS_AR.get(self.status, self.status)

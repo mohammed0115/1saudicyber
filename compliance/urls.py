@@ -40,6 +40,9 @@ urlpatterns = [
     # Phase 6D — advisory AI evidence analysis (preview + POST run, owner-only)
     path('evidence-submissions/<int:submission_id>/ai-analysis/', views.evidence_ai_analysis_preview, name='evidence_ai_analysis'),
     path('evidence-submissions/<int:submission_id>/run-ai-analysis/', views.run_evidence_ai_analysis, name='run_evidence_ai_analysis'),
+    # Phase 6E — rule engine suggested status (preview + POST run, owner-only)
+    path('evidence-submissions/<int:submission_id>/rule-evaluation/', views.evidence_rule_evaluation_preview, name='evidence_rule_evaluation'),
+    path('evidence-submissions/<int:submission_id>/run-rule-evaluation/', views.run_evidence_rule_evaluation, name='run_evidence_rule_evaluation'),
 
     # Phase 3F — advisory analysis trigger (staff-only)
     path('evidence-submissions/<int:submission_id>/analyze/', views.analyze_submission_view, name='analyze_submission'),

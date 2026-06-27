@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-27 09:28+0300\n"
+"POT-Creation-Date: 2026-06-27 09:53+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -132,6 +132,7 @@ msgstr ""
 
 #: templates/compliance/applicability_preview.html:30
 #: templates/compliance/evidence_ai_analysis.html:51
+#: templates/compliance/evidence_rule_evaluation.html:41
 msgid "مستوى الثقة"
 msgstr ""
 
@@ -257,6 +258,7 @@ msgstr ""
 
 #: templates/compliance/evidence_ai_analysis.html:97
 #: templates/compliance/evidence_extraction.html:77
+#: templates/compliance/evidence_rule_evaluation.html:78
 msgid "العودة إلى تفاصيل الدليل"
 msgstr ""
 
@@ -302,6 +304,52 @@ msgstr ""
 
 #: templates/compliance/evidence_extraction.html:70
 msgid "تعذر استخراج نص كافٍ من هذا الملف."
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:3
+#: templates/compliance/evidence_rule_evaluation.html:9
+msgid "محرك القواعد"
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:16
+msgid "هذه نتيجة نظامية مقترحة وليست قرارًا نهائيًا."
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:17
+msgid "النتيجة النهائية تعتمد على مراجعة المدقق."
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:24
+msgid "إعادة تشغيل التقييم النظامي"
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:24
+msgid "تشغيل التقييم النظامي"
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:30
+msgid "لم يتم تشغيل التقييم النظامي بعد."
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:36
+#: templates/compliance/evidence_rule_evaluation.html:72
+msgid "حالة نظامية مقترحة"
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:38
+msgid "بانتظار مراجعة المدقق"
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:48
+msgid "سبب الاقتراح"
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:55
+msgid "إشارات القواعد"
+msgstr ""
+
+#: templates/compliance/evidence_rule_evaluation.html:64
+msgid "العناصر الناقصة"
 msgstr ""
 
 #: templates/components/journey_wizard.html:7

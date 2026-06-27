@@ -271,6 +271,42 @@ def run_evidence_ai_analysis(request, submission_id):
 
 
 @login_required
+def evidence_rule_evaluation_preview(request, submission_id):
+    """Phase 6E — system-suggested (non-final) status preview for one submission.
+
+    Tenant-scoped, read-only render of the persisted suggestion. No final verdict,
+    no certification; never leaks the file path.
+    """
+    from .models import EvidenceSubmission
+    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
+    if sub is None:
+        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    return render(request, 'compliance/evidence_rule_evaluation.html', {
+        'submission': sub,
+        'evaluation': getattr(sub, 'rule_evaluation', None),
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def run_evidence_rule_evaluation(request, submission_id):
+    """Phase 6E — run + persist the deterministic suggested status (owner-only, POST)."""
+    from .models import EvidenceSubmission
+    from .rule_engine import evaluate_submission_rules
+    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
+    if sub is None:
+        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
+        return redirect('compliance:evidence_checklist')
+    obj = evaluate_submission_rules(sub, actor=request.user)
+    if obj.status == 'completed':
+        messages.success(request, 'تم إنشاء حالة نظامية مقترحة. النتيجة بانتظار مراجعة المدقق.')
+    else:
+        messages.warning(request, 'تعذر إنشاء حالة نظامية مقترحة لهذا الدليل.')
+    return redirect('compliance:evidence_rule_evaluation', submission_id=sub.id)
+
+
+@login_required
 def applicability_preview(request):
     """Phase 6B — advisory control-applicability preview for the user's own company.
 
