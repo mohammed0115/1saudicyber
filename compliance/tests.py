@@ -5316,3 +5316,168 @@ class AuditorVerdictSecurityTests(TestCase):
                                 {'status': 'final_c', 'rationale': 'x'})
         self.assertEqual(resp.status_code, 302)
         self.assertFalse(AuditorFinalVerdict.objects.filter(submission=s1).exists())
+
+
+# ============================================================
+# Phase 7A — Local End-to-End UAT 90% Gate
+# ============================================================
+class _UATFake:
+    """Deterministic fake AI provider for UAT (no network)."""
+    def __init__(self, payload=None):
+        self.payload = payload or {'relevance': 'high', 'confidence': 85,
+                                   'summary': 'يبدو أن الدليل مرتبط بالضابط.',
+                                   'matched_signals': ['سياسة موثّقة'], 'missing_items': [],
+                                   'recommendations': []}
+    def analyze(self, prompt):
+        return self.payload
+
+
+class Phase7AEndToEndUATTests(TestCase):
+    def setUp(self):
+        call_command('seed_framework_versions', stdout=StringIO())
+
+    def _ready_submission(self, fv='NCA-ECC-2-2024', name='access_control_policy.txt',
+                          content=b'Access control policy and incident response procedure approved.'):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(fv_code=fv, name=name, content=content, ftype='txt')
+        save_extraction_for_submission(sub)
+        return c, item, sub
+
+    def _step(self, company, key):
+        from compliance.journey import build_company_compliance_journey
+        return {s['key']: s for s in build_company_compliance_journey(company)['steps']}[key]
+
+    def _patch_ai(self, provider):
+        import compliance.evidence_ai_analyzer as mod
+        orig = mod.default_provider
+        mod.default_provider = lambda: provider
+        self.addCleanup(lambda: setattr(mod, 'default_provider', orig))
+
+    # ---- Scenario A/B: full chain upload -> verdict ----
+    def test_full_chain_upload_to_verdict(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        from compliance.rule_engine import evaluate_submission_rules
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = self._ready_submission()
+        # extraction completed
+        self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'completed')
+        # AI advisory (fake provider)
+        ai = analyze_submission_evidence(sub, provider=_UATFake())
+        self.assertEqual(ai.status, 'completed')
+        self.assertEqual(self._step(c, 'ai_analysis')['status'], 'completed')
+        # rule engine suggestion
+        self.assertEqual(self._step(c, 'rule_engine')['status'], 'needs_action')  # AI done, no rule yet
+        ev = evaluate_submission_rules(sub)
+        self.assertEqual(ev.status, 'completed')
+        self.assertEqual(ev.suggested_status, 'suggested_c')
+        self.assertEqual(self._step(c, 'rule_engine')['status'], 'completed')      # rule eval persisted
+        self.assertEqual(self._step(c, 'auditor_review')['status'], 'needs_action')  # rule done, no verdict
+        # auditor verdict
+        v = record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='reviewed')
+        self.assertEqual(v.status, 'final_c')
+        self.assertEqual(self._step(c, 'auditor_review')['status'], 'completed')
+        self.assertEqual(self._step(c, 'final_verdict')['status'], 'completed')
+
+    # ---- Case 2: image-only evidence ----
+    def test_image_only_evidence_blocks_ai_and_rule_insufficient(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence, can_analyze_submission
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024', name='scan.png',
+                                                content=b'\x89PNG\r\n', ftype='png')
+        save_extraction_for_submission(sub)
+        ok, _ = can_analyze_submission(sub)
+        self.assertFalse(ok)
+        ai = analyze_submission_evidence(sub, provider=_UATFake())  # gate -> skipped
+        self.assertEqual(ai.status, 'skipped')
+        ev = evaluate_submission_rules(sub)
+        self.assertEqual(ev.suggested_status, 'insufficient_data')
+        self.assertEqual(self._step(c, 'ocr_extraction')['status'], 'needs_action')
+
+    # ---- Case 3: missing AI provider safe skip ----
+    def test_missing_ai_provider_skips_safely(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence, ProviderUnavailable
+        c, item, sub = self._ready_submission()
+        class _Unavail:
+            def analyze(self, prompt): raise ProviderUnavailable('no key')
+        ai = analyze_submission_evidence(sub, provider=_Unavail())
+        self.assertEqual(ai.status, 'skipped')
+
+    # ---- Scenario C: wording safety ----
+    def test_rule_and_verdict_pages_wording_safe(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        from compliance.rule_engine import evaluate_submission_rules
+        c, item, sub = self._ready_submission()
+        analyze_submission_evidence(sub, provider=_UATFake())
+        evaluate_submission_rules(sub)
+        self.client.force_login(_journey_user(c))
+        rule_body = self.client.get(reverse('compliance:evidence_rule_evaluation', args=[sub.id])).content.decode()
+        self.assertIn('بانتظار مراجعة المدقق', rule_body)
+        for bad in ('قرار نهائي', 'شهادة', 'اعتماد رسمي', 'معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك'):
+            self.assertNotIn(bad, rule_body)
+        self.client.force_login(_staff_user())
+        vbody = self.client.get(reverse('compliance:auditor_verdict', args=[sub.id])).content.decode()
+        self.assertIn('مراجعة داخلية', vbody)
+        self.assertIn('لا يُعد شهادة امتثال رسمية', vbody)
+        for bad in ('شهادة رسمية', 'اعتماد حكومي', 'معتمد من NCA'):
+            self.assertNotIn(bad, vbody)
+
+    # ---- Scenario D: reports not finalized by verdict ----
+    def test_reports_not_finalized_by_verdict(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = self._ready_submission()
+        record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='ok')
+        self.assertNotEqual(self._step(c, 'reports')['status'], 'completed')  # still gated
+
+    # ---- Scenario F: permissions / cross-company isolation across the chain ----
+    def test_cross_company_blocked_across_chain(self):
+        c1, i1, s1 = self._ready_submission()
+        c2 = _company(name='UATOther')
+        self.client.force_login(_journey_user(c2))
+        for name in ('evidence_extraction', 'evidence_ai_analysis', 'evidence_rule_evaluation', 'auditor_verdict'):
+            resp = self.client.get(reverse('compliance:%s' % name, args=[s1.id]))
+            self.assertEqual(resp.status_code, 302, name)
+
+    def test_company_user_cannot_submit_verdict(self):
+        from compliance.models import AuditorFinalVerdict
+        c, item, sub = self._ready_submission()
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('compliance:auditor_verdict', args=[sub.id]),
+                         {'status': 'final_c', 'rationale': 'x'})
+        self.assertFalse(AuditorFinalVerdict.objects.filter(submission=sub).exists())
+
+    def test_run_actions_get_405(self):
+        c, item, sub = self._ready_submission()
+        self.client.force_login(_journey_user(c))
+        for name in ('run_evidence_extraction', 'run_evidence_ai_analysis', 'run_evidence_rule_evaluation'):
+            resp = self.client.get(reverse('compliance:%s' % name, args=[sub.id]))
+            self.assertEqual(resp.status_code, 405, name)
+
+    # ---- Scenario A: classification + applicability pages, count, i18n ----
+    def test_classification_and_applicability_pages_and_count(self):
+        c = _company(target_nca=True)
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True, has_remote_work=True,
+                                            manages_official_social_media_accounts=True)
+        self.client.force_login(_journey_user(c))
+        cls = self.client.get(reverse('compliance:classification')).content.decode()
+        self.assertIn('التصنيف الذكي', cls)
+        self.assertNotIn('334', cls)
+        app = self.client.get(reverse('compliance:applicability_preview')).content.decode()
+        self.assertIn('قابلية تطبيق الضوابط', app)
+        self.assertNotIn('334', app)     # legacy total never shown
+        # official totals come from the canonical 417 helper (not legacy 334)
+        from compliance.smart_classification import OFFICIAL_TOTAL
+        self.assertEqual(OFFICIAL_TOTAL, 417)
+
+    def test_english_mode_core_pages(self):
+        c = _company(target_nca=True)
+        self.client.force_login(_journey_user(c))
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        for url in (reverse('compliance:classification'), reverse('compliance:applicability_preview')):
+            self.assertEqual(self.client.get(url).status_code, 200)
+
+    # ---- Scenario E: monitoring foundation ----
+    def test_monitoring_route_renders_or_redirects(self):
+        c = _company()
+        self.client.force_login(_journey_user(c))
+        self.assertIn(self.client.get('/monitoring/continuous/').status_code, (200, 302))
