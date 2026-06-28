@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-27 23:27+0300\n"
+"POT-Creation-Date: 2026-06-28 21:02+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,17 +17,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: compliance/views.py:23
 msgid "لا توجد شركة مرتبطة بحسابك."
 msgstr "No company is associated with your account."
 
-#: compliance/views.py:93
 msgid "يرجى اختيار ملف للرفع."
 msgstr "Please select a file to upload."
 
-#: compliance/views.py:134
 msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
-msgstr "Evidence uploaded. Advisory analysis is running and is not a final decision."
+msgstr ""
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
@@ -38,24 +36,18 @@ msgstr "Evidence uploaded. Advisory analysis is running and is not a final decis
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 
-#: core/views.py:125
 msgid "تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي."
 msgstr "Company registered successfully. Preparing the initial classification."
 
-#: core/views.py:151
 msgid "بيانات الدخول غير صحيحة. حاول مرة أخرى."
 msgstr "Invalid credentials. Please try again."
 
-#: core/views.py:182
 msgid "تم تفعيل التحقق بخطوتين."
 msgstr "Multi-factor authentication enabled."
 
-#: templates/ai_engine/gap_analysis_advisory.html:3
-#: templates/ai_engine/gap_analysis_advisory.html:9
 msgid "تحليل الفجوات الاستشاري"
 msgstr "Advisory gap analysis"
 
-#: templates/ai_engine/gap_analysis_advisory.html:15
 msgid ""
 "تحليل الفجوات هنا استشاري ويساعدك على فهم جاهزيتك، ولا يُعد قرارًا نهائيًا أو "
 "شهادة امتثال رسمية."
@@ -71,169 +63,115 @@ msgstr ""
 "advisory and is not a final decision or a certificate.Evidence uploaded. "
 "Advisory analysis is running and is not a final decision."
 
-#: templates/ai_engine/gap_analysis_advisory.html:16
-#: templates/compliance/applicability_preview.html:17
-#: templates/compliance/evidence_ai_analysis.html:17
 msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
 msgstr "The final result depends on evidence and auditor review."
 
-#: templates/ai_engine/gap_analysis_advisory.html:20
 msgid ""
 "للاطّلاع على تقارير الجاهزية وتحليل الفجوات التفصيلي، استخدم صفحة التقارير "
 "ولوحة مسار الامتثال."
 msgstr ""
 
-#: templates/ai_engine/gap_analysis_advisory.html:22 templates/base.html:76
-#: templates/base.html:109
 msgid "التقارير"
 msgstr "Reports"
 
-#: templates/ai_engine/gap_analysis_advisory.html:23
 msgid "لوحة مسار الامتثال"
 msgstr "Compliance journey dashboard"
 
-#: templates/base.html:72 templates/base.html:102
 msgid "لوحة التحكم"
 msgstr "Dashboard"
 
-#: templates/base.html:73 templates/base.html:103
 msgid "مسار الامتثال"
 msgstr "Compliance Journey"
 
-#: templates/base.html:74 templates/base.html:105
-#: templates/compliance/applicability_preview.html:25
 msgid "الأطر"
 msgstr "Frameworks"
 
-#: templates/base.html:75 templates/base.html:107
 msgid "الأدلة"
 msgstr "Evidence"
 
-#: templates/base.html:77 templates/base.html:110
 msgid "المراقبة"
 msgstr "Monitoring"
 
-#: templates/base.html:79
 msgid "المزيد"
 msgstr "More"
 
-#: templates/base.html:81 templates/base.html:111
 msgid "الضوابط"
 msgstr "Controls"
 
-#: templates/base.html:82 templates/base.html:106
 msgid "خطة الضوابط"
 msgstr "Control plan"
 
-#: templates/base.html:83 templates/base.html:108
 msgid "المراجعة"
 msgstr "Review"
 
-#: templates/base.html:84 templates/base.html:112
 msgid "لوحة المدقق"
 msgstr "Auditor dashboard"
 
-#: templates/base.html:98
 msgid "تسجيل الخروج"
 msgstr "Log out"
 
-#: templates/base.html:104
 msgid "التصنيف"
-msgstr "Intake"
+msgstr "Classification"
 
-#: templates/base.html:136 templates/core/landing.html:20
-#: templates/core/login.html:3 templates/core/login.html:31
 msgid "تسجيل الدخول"
 msgstr "Sign in"
 
-#: templates/base.html:165 templates/core/privacy.html:3
-#: templates/core/privacy.html:7 templates/core/terms.html:37
 msgid "سياسة الخصوصية"
-msgstr "Privacy Policy"
+msgstr "Privacy policy"
 
-#: templates/base.html:167 templates/core/privacy.html:40
-#: templates/core/terms.html:3 templates/core/terms.html:7
 msgid "شروط الاستخدام"
-msgstr "Terms of Use"
+msgstr "Terms of use"
 
-#: templates/compliance/applicability_preview.html:3
-#: templates/compliance/applicability_preview.html:9
-#: templates/compliance/applicability_preview.html:52
 msgid "قابلية تطبيق الضوابط"
 msgstr "Control applicability"
 
-#: templates/compliance/applicability_preview.html:11
 msgid "تحليل استشاري لقابلية تطبيق الضوابط بناءً على بيانات الشركة."
 msgstr "An advisory analysis of control applicability based on company data."
 
-#: templates/compliance/applicability_preview.html:16
 msgid "هذا التحليل لا يقرر الامتثال أو عدم الامتثال."
 msgstr "This analysis does not decide compliance or non-compliance."
 
-#: templates/compliance/applicability_preview.html:26
 msgid "إجمالي الضوابط"
 msgstr "Total controls"
 
-#: templates/compliance/applicability_preview.html:27
 msgid "قابلة للتطبيق"
 msgstr "Applicable"
 
-#: templates/compliance/applicability_preview.html:28
 msgid "غير قابلة للتطبيق"
 msgstr "Not applicable"
 
-#: templates/compliance/applicability_preview.html:29
 msgid "تحتاج بيانات إضافية"
 msgstr "Needs more information"
 
-#: templates/compliance/applicability_preview.html:30
-#: templates/compliance/auditor_reviewed_report.html:67
-#: templates/compliance/auditor_verdict.html:76
-#: templates/compliance/evidence_ai_analysis.html:51
-#: templates/compliance/evidence_rule_evaluation.html:41
 msgid "مستوى الثقة"
 msgstr "Confidence"
 
-#: templates/compliance/applicability_preview.html:57
-#: templates/compliance/auditor_verdict.html:74
 msgid "سبب القرار"
 msgstr "Decision reason"
 
-#: templates/compliance/applicability_preview.html:68
 msgid ""
 "تعرض هذه الصفحة ملخصًا على مستوى الأطر. سيظهر تفصيل الضوابط بعد استيراد مكتبة "
 "الضوابط الرسمية."
 msgstr ""
 
-#: templates/compliance/applicability_preview.html:75
-#: templates/compliance/classification.html:66
 msgid "البيانات الناقصة"
 msgstr "Missing inputs"
 
-#: templates/compliance/applicability_preview.html:85
-#: templates/compliance/classification.html:76
 msgid "الخطوة التالية"
 msgstr "Next step"
 
-#: templates/compliance/applicability_preview.html:90
 msgid "عرض التصنيف الذكي"
 msgstr "View Smart Classification"
 
-#: templates/compliance/applicability_preview.html:93
-#: templates/compliance/classification.html:84
 msgid "العودة إلى لوحة الرحلة"
 msgstr "Back to the journey dashboard"
 
-#: templates/compliance/auditor_reviewed_report.html:3
-#: templates/compliance/auditor_reviewed_report.html:9
 msgid "تقرير مراجعة امتثال داخلي"
 msgstr "Internal compliance review report"
 
-#: templates/compliance/auditor_reviewed_report.html:11
 msgid "ملخص قرارات المدقق"
 msgstr "Auditor decisions summary"
 
-#: templates/compliance/auditor_reviewed_report.html:17
 msgid ""
 "هذا التقرير يعرض نتائج مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية "
 "أو اعتمادًا من أي جهة."
@@ -248,75 +186,137 @@ msgstr ""
 "advisory and is not a final decision or a certificate.Evidence uploaded. "
 "Advisory analysis is running and is not a final decision."
 
-#: templates/compliance/auditor_reviewed_report.html:22
 msgid "لا توجد قرارات مدقق نهائية بعد. يرجى إكمال مراجعة الأدلة أولًا."
-msgstr "There are no final auditor decisions yet. Please complete the evidence review first."
+msgstr ""
 "There are no final auditor decisions yet. Please complete the evidence "
-"review first."
+"review first.There are no final auditor decisions yet. Please complete the "
+"evidence review first."
 
-#: templates/compliance/auditor_reviewed_report.html:29
 msgid "إجمالي الأدلة"
 msgstr "Total evidence"
 
-#: templates/compliance/auditor_reviewed_report.html:33
 msgid "الأدلة التي تمت مراجعتها"
 msgstr "Reviewed evidence"
 
-#: templates/compliance/auditor_reviewed_report.html:37
-#: templates/compliance/evidence_rule_evaluation.html:38
 msgid "بانتظار مراجعة المدقق"
 msgstr "Pending auditor review"
 
-#: templates/compliance/auditor_reviewed_report.html:41
-#: templates/compliance/auditor_reviewed_report.html:69
 msgid "آخر مراجعة"
 msgstr "Last review"
 
-#: templates/compliance/auditor_reviewed_report.html:49
 msgid "توزيع الحالات بعد مراجعة المدقق"
 msgstr "Distribution of statuses after auditor review"
 
-#: templates/compliance/auditor_reviewed_report.html:60
 msgid "تفاصيل القرارات"
 msgstr "Decision details"
 
-#: templates/compliance/auditor_reviewed_report.html:64
 msgid "الضابط"
 msgstr "Control"
 
-#: templates/compliance/auditor_reviewed_report.html:65
-#: templates/compliance/auditor_verdict.html:22
 msgid "الحالة المقترحة من محرك القواعد"
 msgstr "Rule-engine suggested status"
 
-#: templates/compliance/auditor_reviewed_report.html:66
-#: templates/compliance/auditor_verdict.html:53
-#: templates/compliance/auditor_verdict.html:69
-#: templates/compliance/auditor_verdict.html:70
 msgid "الحالة بعد مراجعة المدقق"
 msgstr "Status after auditor review"
 
-#: templates/compliance/auditor_reviewed_report.html:68
-#: templates/compliance/auditor_verdict.html:79
 msgid "الإجراءات المطلوبة"
 msgstr "Required actions"
 
-#: templates/compliance/auditor_reviewed_report.html:94
 msgid "العودة إلى التقارير"
 msgstr "Back to reports"
 
-#: templates/compliance/auditor_verdict.html:3
-#: templates/compliance/auditor_verdict.html:9
 msgid "قرار المدقق النهائي"
 msgstr "Auditor final verdict"
 
-#: templates/compliance/auditor_verdict.html:16
 msgid "هذا القرار يمثل مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية."
-msgstr "This decision is an internal platform review and is not an official compliance certificate."
+msgstr ""
 "This decision is an internal platform review and is not an official "
 "compliance certificate.This decision is an internal platform review and is "
-"not an official compliance certificate.This analysis assists the auditor and "
-"is not a final decision or compliance certificate.This analysis assists the "
+"not an official compliance certificate.This decision is an internal platform "
+"review and is not an official compliance certificate.This analysis assists "
+"the auditor and is not a final decision or compliance certificate.This "
+"analysis assists the auditor and is not a final decision or compliance "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.Evidence uploaded. Advisory analysis is running and is not a "
+"final decision."
+
+msgid "مقترح — بانتظار مراجعة المدقق"
+msgstr "Suggested — pending auditor review"
+
+msgid "التحليل الاستشاري للذكاء الاصطناعي"
+msgstr "AI advisory analysis"
+
+msgid "استشاري فقط"
+msgstr "Advisory only"
+
+msgid "النص المستخرج من الدليل"
+msgstr "Extracted evidence text"
+
+msgid "حرف"
+msgstr "characters"
+
+msgid "سبب الاقتراح"
+msgstr "Reason for suggestion"
+
+msgid "تمت مراجعته بواسطة المدقق"
+msgstr "Reviewed by the auditor"
+
+msgid "حفظ قرار المدقق"
+msgstr "Save auditor decision"
+
+msgid "يمكنك عرض القرار، ولا تملك صلاحية تعديله."
+msgstr "You can view the decision but do not have permission to edit it."
+
+msgid "العودة إلى تفاصيل الدليل"
+msgstr "Back to evidence details"
+
+msgid "التصنيف الذكي"
+msgstr "Smart Classification"
+
+msgid "تصنيف أولي استشاري بناءً على بيانات الشركة."
+msgstr "An advisory preliminary classification based on company data."
+
+msgid "هذا التصنيف استشاري ولا يُعد قرارًا نهائيًا أو شهادة."
+msgstr ""
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+
+msgid "مستوى المخاطر"
+msgstr "Risk level"
+
+msgid "الأطر المقترحة"
+msgstr "Recommended frameworks"
+
+msgid "عدد الضوابط المتوقع"
+msgstr "Expected control count"
+
+msgid "ثقة التصنيف"
+msgstr "Classification confidence"
+
+msgid "سبب التصنيف"
+msgstr "Reason"
+
+msgid "إكمال ملف التصنيف"
+msgstr "Complete the intake profile"
+
+msgid "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال."
+msgstr ""
+"This analysis assists the auditor and is not a final decision or compliance "
+"certificate.This analysis assists the auditor and is not a final decision or "
+"compliance certificate.This analysis assists the auditor and is not a final "
+"decision or compliance certificate.This analysis assists the auditor and is "
+"not a final decision or compliance certificate.This analysis assists the "
 "auditor and is not a final decision or compliance certificate.This "
 "classification is advisory and is not a final decision or a certificate.This "
 "classification is advisory and is not a final decision or a certificate.This "
@@ -324,67 +324,84 @@ msgstr "This decision is an internal platform review and is not an official comp
 "classification is advisory and is not a final decision or a certificate."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 
-#: templates/compliance/auditor_verdict.html:25
-msgid "مقترح — بانتظار مراجعة المدقق"
-msgstr "Suggested — pending auditor review"
+msgid "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري."
+msgstr ""
+"Readable text must be extracted from the evidence before running the "
+"advisory analysis.Readable text must be extracted from the evidence before "
+"running the advisory analysis.Readable text must be extracted from the "
+"evidence before running the advisory analysis.Readable text must be "
+"extracted from the evidence before running the advisory analysis.Readable "
+"text must be extracted from the evidence before running the advisory "
+"analysis."
 
-#: templates/compliance/auditor_verdict.html:29
-#: templates/compliance/evidence_ai_analysis.html:3
-#: templates/compliance/evidence_ai_analysis.html:9
-msgid "التحليل الاستشاري للذكاء الاصطناعي"
-msgstr "AI advisory analysis"
+msgid "استخراج النص من الدليل"
+msgstr "Evidence text extraction"
 
-#: templates/compliance/auditor_verdict.html:32
-msgid "استشاري فقط"
-msgstr "Advisory only"
+msgid "إعادة تشغيل التحليل الاستشاري"
+msgstr "Re-run advisory analysis"
 
-#: templates/compliance/auditor_verdict.html:36
-msgid "النص المستخرج من الدليل"
-msgstr "Extracted evidence text"
+msgid "تشغيل التحليل الاستشاري"
+msgstr "Run advisory analysis"
 
-#: templates/compliance/auditor_verdict.html:38
-msgid "حرف"
-msgstr "characters"
+msgid "حالة التحليل"
+msgstr "Analysis status"
 
-#: templates/compliance/auditor_verdict.html:45
-#: templates/compliance/evidence_rule_evaluation.html:48
-msgid "سبب الاقتراح"
-msgstr "Reason for suggestion"
+msgid "مدى ارتباط الدليل بالضابط"
+msgstr "Evidence relevance to the control"
 
-#: templates/compliance/auditor_verdict.html:60
-msgid "تمت مراجعته بواسطة المدقق"
-msgstr "Reviewed by the auditor"
+msgid "ملخص التحليل"
+msgstr "Analysis summary"
 
-#: templates/compliance/auditor_verdict.html:83
-msgid "حفظ قرار المدقق"
-msgstr "Save auditor decision"
+msgid "إشارات مطابقة"
+msgstr "Matched signals"
 
-#: templates/compliance/auditor_verdict.html:87
-msgid "يمكنك عرض القرار، ولا تملك صلاحية تعديله."
-msgstr "You can view the decision but do not have permission to edit it."
+msgid "عناصر ناقصة"
+msgstr "Missing items"
 
-#: templates/compliance/auditor_verdict.html:94
-#: templates/compliance/evidence_ai_analysis.html:97
-#: templates/compliance/evidence_extraction.html:77
-#: templates/compliance/evidence_rule_evaluation.html:78
-msgid "العودة إلى تفاصيل الدليل"
-msgstr "Back to evidence details"
+msgid "توصيات استشارية"
+msgstr "Advisory recommendations"
 
-#: templates/compliance/classification.html:3
-#: templates/compliance/classification.html:9
-msgid "التصنيف الذكي"
-msgstr "Smart Classification"
+msgid "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال."
+msgstr "This extraction is not an analysis or a compliance judgment."
 
-#: templates/compliance/classification.html:12
-msgid "تصنيف أولي استشاري بناءً على بيانات الشركة."
-msgstr "An advisory preliminary classification based on company data."
+msgid "إعادة استخراج النص"
+msgstr "Re-run text extraction"
 
-#: templates/compliance/classification.html:13
-msgid "هذا التصنيف استشاري ولا يُعد قرارًا نهائيًا أو شهادة."
-msgstr "This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
+msgid "تشغيل استخراج النص"
+msgstr "Run text extraction"
+
+msgid "لم يتم تشغيل استخراج النص بعد."
+msgstr "Text extraction has not been run yet."
+
+msgid "حالة الاستخراج"
+msgstr "Extraction status"
+
+msgid "طريقة الاستخراج"
+msgstr "Extraction method"
+
+msgid "عدد الأحرف"
+msgstr "Character count"
+
+msgid "عدد الصفحات"
+msgstr "Page count"
+
+msgid "تنبيهات"
+msgstr "Warnings"
+
+msgid "النص المستخرج"
+msgstr "Extracted text"
+
+msgid "تعذر استخراج نص كافٍ من هذا الملف."
+msgstr "Could not extract sufficient text from this file."
+
+msgid "محرك القواعد"
+msgstr "Rule engine"
+
+msgid "هذه نتيجة نظامية مقترحة وليست قرارًا نهائيًا."
+msgstr ""
+"This is a system-suggested result, not a final decision.This is a system-"
+"suggested result, not a final decision.This is a system-suggested result, "
+"not a final decision.This is a system-suggested result, not a final decision."
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
 "This classification is advisory and is not a final decision or a certificate."
@@ -392,305 +409,223 @@ msgstr "This classification is advisory and is not a final decision or a certifi
 "This classification is advisory and is not a final decision or a certificate."
 "Evidence uploaded. Advisory analysis is running and is not a final decision."
 
-#: templates/compliance/classification.html:20
-msgid "مستوى المخاطر"
-msgstr "Risk level"
-
-#: templates/compliance/classification.html:26
-#: templates/compliance/classification.html:41
-msgid "الأطر المقترحة"
-msgstr "Recommended frameworks"
-
-#: templates/compliance/classification.html:30
-#: templates/compliance/classification.html:57
-msgid "عدد الضوابط المتوقع"
-msgstr "Expected control count"
-
-#: templates/compliance/classification.html:34
-msgid "ثقة التصنيف"
-msgstr "Classification confidence"
-
-#: templates/compliance/classification.html:46
-msgid "سبب التصنيف"
-msgstr "Reason"
-
-#: templates/compliance/classification.html:81
-msgid "إكمال ملف التصنيف"
-msgstr "Complete the intake profile"
-
-#: templates/compliance/evidence_ai_analysis.html:16
-msgid "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال."
-msgstr "This analysis assists the auditor and is not a final decision or compliance certificate."
-"This analysis assists the auditor and is not a final decision or compliance "
-"certificate.This analysis assists the auditor and is not a final decision or "
-"compliance certificate.This analysis assists the auditor and is not a final "
-"decision or compliance certificate.This analysis assists the auditor and is "
-"not a final decision or compliance certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.Evidence uploaded. "
-"Advisory analysis is running and is not a final decision."
-
-#: templates/compliance/evidence_ai_analysis.html:23
-msgid "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري."
-msgstr "Readable text must be extracted from the evidence before running the advisory analysis."
-"Readable text must be extracted from the evidence before running the "
-"advisory analysis.Readable text must be extracted from the evidence before "
-"running the advisory analysis.Readable text must be extracted from the "
-"evidence before running the advisory analysis.Readable text must be "
-"extracted from the evidence before running the advisory analysis."
-
-#: templates/compliance/evidence_ai_analysis.html:27
-#: templates/compliance/evidence_extraction.html:3
-#: templates/compliance/evidence_extraction.html:9
-msgid "استخراج النص من الدليل"
-msgstr "Evidence text extraction"
-
-#: templates/compliance/evidence_ai_analysis.html:35
-msgid "إعادة تشغيل التحليل الاستشاري"
-msgstr "Re-run advisory analysis"
-
-#: templates/compliance/evidence_ai_analysis.html:35
-msgid "تشغيل التحليل الاستشاري"
-msgstr "Run advisory analysis"
-
-#: templates/compliance/evidence_ai_analysis.html:43
-#: templates/compliance/evidence_ai_analysis.html:91
-msgid "حالة التحليل"
-msgstr "Analysis status"
-
-#: templates/compliance/evidence_ai_analysis.html:47
-msgid "مدى ارتباط الدليل بالضابط"
-msgstr "Evidence relevance to the control"
-
-#: templates/compliance/evidence_ai_analysis.html:58
-msgid "ملخص التحليل"
-msgstr "Analysis summary"
-
-#: templates/compliance/evidence_ai_analysis.html:65
-msgid "إشارات مطابقة"
-msgstr "Matched signals"
-
-#: templates/compliance/evidence_ai_analysis.html:74
-msgid "عناصر ناقصة"
-msgstr "Missing items"
-
-#: templates/compliance/evidence_ai_analysis.html:83
-msgid "توصيات استشارية"
-msgstr "Advisory recommendations"
-
-#: templates/compliance/evidence_extraction.html:16
-msgid "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال."
-msgstr "This extraction is not an analysis or a compliance judgment."
-
-#: templates/compliance/evidence_extraction.html:23
-msgid "إعادة استخراج النص"
-msgstr "Re-run text extraction"
-
-#: templates/compliance/evidence_extraction.html:23
-msgid "تشغيل استخراج النص"
-msgstr "Run text extraction"
-
-#: templates/compliance/evidence_extraction.html:30
-msgid "لم يتم تشغيل استخراج النص بعد."
-msgstr "Text extraction has not been run yet."
-
-#: templates/compliance/evidence_extraction.html:37
-msgid "حالة الاستخراج"
-msgstr "Extraction status"
-
-#: templates/compliance/evidence_extraction.html:41
-msgid "طريقة الاستخراج"
-msgstr "Extraction method"
-
-#: templates/compliance/evidence_extraction.html:45
-msgid "عدد الأحرف"
-msgstr "Character count"
-
-#: templates/compliance/evidence_extraction.html:49
-msgid "عدد الصفحات"
-msgstr "Page count"
-
-#: templates/compliance/evidence_extraction.html:56
-msgid "تنبيهات"
-msgstr "Warnings"
-
-#: templates/compliance/evidence_extraction.html:65
-msgid "النص المستخرج"
-msgstr "Extracted text"
-
-#: templates/compliance/evidence_extraction.html:70
-msgid "تعذر استخراج نص كافٍ من هذا الملف."
-msgstr "Could not extract sufficient text from this file."
-
-#: templates/compliance/evidence_rule_evaluation.html:3
-#: templates/compliance/evidence_rule_evaluation.html:9
-msgid "محرك القواعد"
-msgstr "Rule engine"
-
-#: templates/compliance/evidence_rule_evaluation.html:16
-msgid "هذه نتيجة نظامية مقترحة وليست قرارًا نهائيًا."
-msgstr "This is a system-suggested result, not a final decision."
-"This is a system-suggested result, not a final decision.This is a system-"
-"suggested result, not a final decision.This is a system-suggested result, "
-"not a final decision.This classification is advisory and is not a final "
-"decision or a certificate.This classification is advisory and is not a final "
-"decision or a certificate.This classification is advisory and is not a final "
-"decision or a certificate.This classification is advisory and is not a final "
-"decision or a certificate.This classification is advisory and is not a final "
-"decision or a certificate.Evidence uploaded. Advisory analysis is running "
-"and is not a final decision."
-
-#: templates/compliance/evidence_rule_evaluation.html:17
 msgid "النتيجة النهائية تعتمد على مراجعة المدقق."
 msgstr "The final result depends on auditor review."
 
-#: templates/compliance/evidence_rule_evaluation.html:24
 msgid "إعادة تشغيل التقييم النظامي"
 msgstr "Re-run system evaluation"
 
-#: templates/compliance/evidence_rule_evaluation.html:24
 msgid "تشغيل التقييم النظامي"
 msgstr "Run system evaluation"
 
-#: templates/compliance/evidence_rule_evaluation.html:30
 msgid "لم يتم تشغيل التقييم النظامي بعد."
 msgstr "The system evaluation has not been run yet."
 
-#: templates/compliance/evidence_rule_evaluation.html:36
-#: templates/compliance/evidence_rule_evaluation.html:72
 msgid "حالة نظامية مقترحة"
 msgstr "Suggested system status"
 
-#: templates/compliance/evidence_rule_evaluation.html:55
 msgid "إشارات القواعد"
 msgstr "Rule signals"
 
-#: templates/compliance/evidence_rule_evaluation.html:64
 msgid "العناصر الناقصة"
 msgstr "Missing items"
 
-#: templates/components/journey_wizard.html:7
 msgid "مسار جاهزية الامتثال"
 msgstr "Compliance readiness journey"
 
-#: templates/components/journey_wizard.html:9
 msgid ""
 "اتبع الخطوات التالية لتحديد الأطر المطلوبة، تقييم الضوابط، رفع الأدلة، "
 "معالجة الفجوات، وتجهيز التقارير."
 msgstr ""
 
-#: templates/components/journey_wizard.html:14
 msgid "نسبة الإنجاز"
 msgstr "Progress"
 
-#: templates/components/journey_wizard.html:19
 msgid "المرحلة الحالية:"
 msgstr "Current stage:"
 
-#: templates/components/journey_wizard.html:22
 msgid "الخطوة التالية الموصى بها"
 msgstr "Recommended next step"
 
-#: templates/components/status_badge.html:11
 msgid "مكتمل"
 msgstr "Completed"
 
-#: templates/components/status_badge.html:12
 msgid "الخطوة الحالية"
 msgstr "Current step"
 
-#: templates/components/status_badge.html:13
 msgid "يحتاج إجراء"
 msgstr "Needs action"
 
-#: templates/components/status_badge.html:14
 msgid "مقفل"
 msgstr "Locked"
 
-#: templates/components/status_badge.html:15
 msgid "قيد التجهيز"
 msgstr "Planned"
 
-#: templates/components/status_badge.html:16
 msgid "غير متاح حاليًا"
 msgstr "Not available yet"
 
-#: templates/components/status_badge.html:17
 msgid "اختياري"
 msgstr "Optional"
 
-#: templates/core/landing.html:3 templates/core/landing.html:30
 msgid "منصة جاهزية الامتثال السيبراني"
 msgstr "Cybersecurity compliance readiness platform"
 
-#: templates/core/landing.html:21 templates/core/login.html:34
 msgid "ابدأ الآن"
 msgstr "Get started"
 
-#: templates/core/landing.html:33
 msgid "جاهزية الامتثال السيبراني المستمرة"
 msgstr "Continuous cybersecurity compliance readiness"
 
-#: templates/core/landing.html:34
 msgid "للسوق السعودي"
 msgstr "for the Saudi market"
 
-#: templates/core/landing.html:43
+msgid ""
+"منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل "
+"الفجوات، وإعداد تقارير الامتثال وفق أطر NCA وAramco وSABIC. القرار النهائي "
+"يبقى للمدقّق أو فريق الامتثال المختص."
+msgstr "The 1SaudiCyber platform for cybersecurity compliance readiness: organize evidence, analyze gaps, and prepare compliance reports against the NCA, Aramco, and SABIC frameworks. The final decision always remains with the auditor or the responsible compliance team."
+
 msgid "ابدأ تقييم الامتثال"
 msgstr "Start your compliance assessment"
 
-#: templates/core/landing.html:46
 msgid "كيف تعمل المنصّة"
 msgstr "How the platform works"
 
-#: templates/core/landing.html:84
+msgid "مؤشّر الجاهزية"
+msgstr "Readiness indicator"
+
+msgid "مثال توضيحي"
+msgstr "Illustrative example"
+
+msgid "تغطية لـ 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC"
+msgstr "Coverage of 417 official controls across the NCA, Aramco, and SABIC frameworks"
+
 msgid "إنجاز أسرع للتقييم"
 msgstr "Faster assessment"
 
-#: templates/core/landing.html:85
 msgid "خفض في الكلفة"
 msgstr "Cost reduction"
 
-#: templates/core/landing.html:86
 msgid "ضابطًا رسميًا مهيكلًا"
 msgstr "structured official controls"
 
-#: templates/core/landing.html:87
 msgid "جاهزية للمراقبة المستمرة"
 msgstr "Continuous monitoring readiness"
 
-#: templates/core/landing.html:87
 msgid "أساس تقني عند ربط مصادر البيانات المناسبة"
 msgstr "Technical foundation once data sources are connected"
 
-#: templates/core/landing.html:89
 msgid ""
 "مؤشرات توضيحية تعتمد على نضج بيانات العميل واكتمال الأدلة، وليست نتائج "
 "مضمونة."
 msgstr ""
 
-#: templates/core/login.html:16
+msgid "مسار الامتثال في خمس خطوات"
+msgstr "The compliance journey in five steps"
+
+msgid ""
+"من التسجيل إلى تقارير الجاهزية والامتثال — رحلة منظّمة وواضحة خطوة بخطوة."
+msgstr "From registration to readiness and compliance reports — a clear, structured journey, step by step."
+
+msgid "التسجيل"
+msgstr "Registration"
+
+msgid "ملف الشركة وأهداف الامتثال"
+msgstr "Company profile and compliance objectives"
+
+msgid "تحديد الأطر المنطبقة وخطة الضوابط"
+msgstr "Identify the applicable frameworks and the control plan"
+
+msgid "رفع الأدلة"
+msgstr "Evidence upload"
+
+msgid "تنظيم الأدلة وتحليل استشاري مساعد"
+msgstr "Organize evidence with assistive advisory analysis"
+
+msgid "تحليل الفجوات"
+msgstr "Gap analysis"
+
+msgid "قياس الجاهزية وتحديد الفجوات"
+msgstr "Measure readiness and identify gaps"
+
+msgid "مراجعة المدقّق"
+msgstr "Auditor review"
+
+msgid "القرار النهائي للامتثال يتّخذه المدقّق"
+msgstr "The final compliance decision is made by the auditor"
+
+msgid "الأطر المدعومة"
+msgstr "Supported frameworks"
+
+msgid "منصّة واحدة لمتطلبات الامتثال السيبراني في السوق السعودي"
+msgstr "One platform for cybersecurity compliance requirements in the Saudi market"
+
+msgid ""
+"الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني للجهات "
+"الحكومية والبنى التحتية الحرجة."
+msgstr "The Essential Cybersecurity Controls from the National Cybersecurity Authority for government entities and critical infrastructure."
+
+msgid "108 ضوابط (ECC) — إجمالي أطر NCA 231 ضابطًا"
+msgstr "108 controls (ECC) — 231 controls in total across the NCA frameworks"
+
+msgid ""
+"معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة لجميع الموردين ومزوّدي "
+"الخدمات."
+msgstr "Saudi Aramco's third-party cybersecurity standard for all suppliers and service providers."
+
+msgid "92 ضابطًا"
+msgstr "92 controls"
+
+msgid "معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات."
+msgstr "SABIC's CyberTrust standard for petrochemical-sector suppliers and service providers."
+
+msgid "94 ضابطًا"
+msgstr "94 controls"
+
+msgid "إجمالي التغطية: 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC."
+msgstr "Total coverage: 417 official controls across the NCA, Aramco, and SABIC frameworks."
+
+msgid "جاهزون لرفع جاهزية الامتثال؟"
+msgstr "Ready to raise your compliance readiness?"
+
+msgid ""
+"انضم إلى الشركات والجهات في السعودية التي تنظّم أدلّتها وتُعدّ تقارير جاهزيتها "
+"للمراجعة."
+msgstr "Join the companies and entities in Saudi Arabia that organize their evidence and prepare their readiness reports for review."
+
+msgid "سجّل شركتك"
+msgstr "Register your company"
+
+msgid "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية."
+msgstr "A cybersecurity compliance readiness management platform in the Kingdom of Saudi Arabia."
+
+msgid "الضوابط الأساسية NCA ECC"
+msgstr "NCA ECC Essential Controls"
+
+msgid "معيار SABIC CyberTrust"
+msgstr "SABIC CyberTrust standard"
+
+msgid "المنصّة"
+msgstr "The platform"
+
+msgid "جميع الحقوق محفوظة. متوافقة مع رؤية المملكة 2030."
+msgstr "All rights reserved. Aligned with Saudi Vision 2030."
+
 msgid "مرحبًا بعودتك"
 msgstr "Welcome back"
 
-#: templates/core/login.html:17
 msgid "سجّل الدخول إلى لوحة الامتثال الخاصة بك"
 msgstr "Sign in to your compliance dashboard"
 
-#: templates/core/login.html:23
 msgid "البريد الإلكتروني"
 msgstr "Email"
 
-#: templates/core/login.html:27
 msgid "كلمة المرور"
 msgstr "Password"
 
-#: templates/core/login.html:34
 msgid "ليس لديك حساب؟"
 msgstr "Don't have an account?"
 
-#: templates/core/privacy.html:8 templates/core/terms.html:8
 msgid "آخر تحديث:"
 msgstr "Last updated:"

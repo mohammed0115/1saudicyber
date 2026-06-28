@@ -61,6 +61,50 @@ class AuditorRegistrationTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/login', resp.url)
 
+    def test_authenticated_company_user_cannot_submit_auditor_registration(self):
+        # A logged-in company user must NOT create a new auditor or switch session.
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        before_users = User.objects.count()
+        before_auditors = AuditorProfile.objects.count()
+        resp = self.client.post(reverse('auditors:register'),
+                                self._payload(email='switcher@x.com'))
+        self.assertEqual(resp.status_code, 200)  # blocked page, not a redirect into a new session
+        self.assertFalse(User.objects.filter(email='switcher@x.com').exists())
+        self.assertEqual(User.objects.count(), before_users)
+        self.assertEqual(AuditorProfile.objects.count(), before_auditors)
+        # Session is unchanged: still the company user.
+        self.assertEqual(int(self.client.session['_auth_user_id']), cu.id)
+
+    def test_authenticated_company_user_sees_clear_block_message(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        resp = self.client.get(reverse('auditors:register'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'تسجيل الخروج أولًا')
+
+    def test_existing_auditor_visiting_register_goes_to_onboarding(self):
+        u, p = _auditor(status='pending_review')
+        self.client.force_login(u)
+        resp = self.client.get(reverse('auditors:register'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse('auditors:onboarding'), resp.url)
+
+    def test_logout_with_next_returns_to_register(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        resp = self.client.post(reverse('core:logout') + '?next=' + reverse('auditors:register'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('auditors:register'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_logout_ignores_unsafe_next(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        resp = self.client.post(reverse('core:logout') + '?next=https://evil.example/x')
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('core:landing'))
+
     def test_pending_auditor_cannot_view_company_data(self):
         u, p = _auditor(status='pending_review')
         c, fv, scope = _company_with_assessments()

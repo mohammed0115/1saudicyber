@@ -1516,3 +1516,61 @@ class Phase8D2FixACriticalBlockerTests(TestCase):
         body = self.client.get(reverse('core:landing')).content.decode()
         self.assertIn('417', body)
         self.assertNotIn('>334<', body)
+
+
+class Phase8D2FixBLandingTranslationTests(TestCase):
+    """Manus 8D-2 Fix 5 — remaining landing marketing prose translated in English."""
+
+    # Key marketing prose that previously stayed Arabic in English mode.
+    EN_MARKERS = [
+        'Supported frameworks',
+        'The compliance journey in five steps',
+        'Gap analysis',
+        'Auditor review',
+        'Register your company',
+        'Ready to raise your compliance readiness?',
+    ]
+    AR_HEADINGS = [
+        'الأطر المدعومة',
+        'مسار الامتثال في خمس خطوات',
+        'جاهزون لرفع جاهزية الامتثال؟',
+    ]
+
+    def test_english_mode_translates_marketing_prose(self):
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': '/'})
+        body = self.client.get(reverse('core:landing')).content.decode()
+        self.assertIn('lang="en"', body)
+        self.assertIn('dir="ltr"', body)
+        for marker in self.EN_MARKERS:
+            self.assertIn(marker, body, marker)
+        # English mode must NOT remain mostly Arabic: the major headings are translated.
+        for ar in self.AR_HEADINGS:
+            self.assertNotIn(ar, body, ar)
+
+    def test_arabic_mode_remains_arabic(self):
+        body = self.client.get(reverse('core:landing')).content.decode()
+        self.assertIn('lang="ar"', body)
+        self.assertIn('dir="rtl"', body)
+        for ar in self.AR_HEADINGS:
+            self.assertIn(ar, body, ar)
+
+    def test_language_switcher_still_works(self):
+        r = self.client.post(reverse('set_language'),
+                             {'language': 'en', 'next': reverse('core:landing')})
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('lang="en"', self.client.get(reverse('core:landing')).content.decode())
+
+    def test_no_internal_template_leak(self):
+        for lang in ('ar', 'en'):
+            self.client.post(reverse('set_language'), {'language': lang, 'next': '/'})
+            body = self.client.get(reverse('core:landing')).content.decode()
+            for leak in ('{% trans', 'blocktrans', 'msgid', 'Phase 8D'):
+                self.assertNotIn(leak, body, '%s in %s' % (leak, lang))
+
+    def test_no_unsafe_certification_wording(self):
+        for lang in ('ar', 'en'):
+            self.client.post(reverse('set_language'), {'language': lang, 'next': '/'})
+            body = self.client.get(reverse('core:landing')).content.decode()
+            for banned in ('معتمد من NCA', 'اعتماد رسمي', 'certified by NCA',
+                           'official accreditation', 'شهادة امتثال رسمية'):
+                self.assertNotIn(banned, body, banned)

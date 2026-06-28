@@ -13,6 +13,11 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
+        {% if not has_filter_options %}
+        <div dir="rtl" class="text-sm text-gov-gray-600 bg-gov-gray-50 border border-gov-gray-200 rounded-lg p-4">
+            ستظهر خيارات التصفية حسب الإطار والمجال بعد إنشاء خطة الضوابط المناسبة لمنشأتك.
+        </div>
+        {% else %}
         <form method="get" class="flex flex-wrap gap-4 items-end">
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-sm font-medium text-gov-gray-700 mb-1">Framework</label>
@@ -36,6 +41,7 @@
                 <i class="fas fa-filter mr-2"></i> Filter
             </button>
         </form>
+        {% endif %}
     </div>
 
     <!-- Controls Table -->

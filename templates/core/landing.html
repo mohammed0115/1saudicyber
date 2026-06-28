@@ -34,8 +34,7 @@
                     <br><span class="text-green-300">{% trans "للسوق السعودي" %}</span>
                 </h1>
                 <p class="text-gov-green-200 text-lg mb-3 leading-relaxed">
-                    منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات،
-                    وإعداد تقارير الامتثال وفق أطر NCA وAramco وSABIC. القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص.
+                    {% trans "منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات، وإعداد تقارير الامتثال وفق أطر NCA وAramco وSABIC. القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص." %}
                 </p>
                 <p class="text-gov-green-300/80 text-sm mb-8">Compliance &amp; audit readiness for Saudi enterprises and public-sector entities.</p>
                 <div class="flex flex-wrap gap-4">
@@ -50,8 +49,8 @@
             <div class="hidden lg:block">
                 <div class="glass-card rounded-2xl p-8 shadow-2xl text-right">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="font-bold text-gov-green-800 text-lg">مؤشّر الجاهزية</h3>
-                        <span class="bg-gov-gray-100 text-gov-gray-600 px-3 py-1 rounded-full text-sm font-medium">مثال توضيحي</span>
+                        <h3 class="font-bold text-gov-green-800 text-lg">{% trans "مؤشّر الجاهزية" %}</h3>
+                        <span class="bg-gov-gray-100 text-gov-gray-600 px-3 py-1 rounded-full text-sm font-medium">{% trans "مثال توضيحي" %}</span>
                     </div>
                     <div class="grid grid-cols-3 gap-4 mb-6">
                         <div class="text-center p-4 bg-gov-green-50 rounded-xl">
@@ -69,7 +68,7 @@
                     </div>
                     <div class="flex items-center text-sm text-gov-gray-500">
                         <i class="fas fa-layer-group text-gov-green-600 ms-2"></i>
-                        تغطية لـ 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC
+                        {% trans "تغطية لـ 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC" %}
                     </div>
                 </div>
             </div>
@@ -94,8 +93,8 @@
 <section id="process" class="py-20 bg-gov-gray-50">
     <div class="max-w-7xl mx-auto px-4">
         <div class="text-center mb-16">
-            <h2 class="text-3xl lg:text-4xl font-bold text-gov-green-800 mb-4">مسار الامتثال في خمس خطوات</h2>
-            <p class="text-gov-gray-600 text-lg max-w-2xl mx-auto">من التسجيل إلى تقارير الجاهزية والامتثال — رحلة منظّمة وواضحة خطوة بخطوة.</p>
+            <h2 class="text-3xl lg:text-4xl font-bold text-gov-green-800 mb-4">{% trans "مسار الامتثال في خمس خطوات" %}</h2>
+            <p class="text-gov-gray-600 text-lg max-w-2xl mx-auto">{% trans "من التسجيل إلى تقارير الجاهزية والامتثال — رحلة منظّمة وواضحة خطوة بخطوة." %}</p>
         </div>
         <div class="grid md:grid-cols-5 gap-6">
             {% for s in "12345" %}
@@ -104,11 +103,11 @@
                     <i class="fas {% if forloop.counter == 1 %}fa-building{% elif forloop.counter == 2 %}fa-clipboard-check{% elif forloop.counter == 3 %}fa-file-upload{% elif forloop.counter == 4 %}fa-magnifying-glass-chart{% else %}fa-user-shield{% endif %} text-white text-xl"></i>
                 </div>
                 <div class="bg-gov-green-800 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-3 text-sm font-bold">{{ forloop.counter }}</div>
-                {% if forloop.counter == 1 %}<h3 class="font-bold text-gov-green-800 mb-2">التسجيل</h3><p class="text-sm text-gov-gray-600">ملف الشركة وأهداف الامتثال</p>
-                {% elif forloop.counter == 2 %}<h3 class="font-bold text-gov-green-800 mb-2">التصنيف</h3><p class="text-sm text-gov-gray-600">تحديد الأطر المنطبقة وخطة الضوابط</p>
-                {% elif forloop.counter == 3 %}<h3 class="font-bold text-gov-green-800 mb-2">رفع الأدلة</h3><p class="text-sm text-gov-gray-600">تنظيم الأدلة وتحليل استشاري مساعد</p>
-                {% elif forloop.counter == 4 %}<h3 class="font-bold text-gov-green-800 mb-2">تحليل الفجوات</h3><p class="text-sm text-gov-gray-600">قياس الجاهزية وتحديد الفجوات</p>
-                {% else %}<h3 class="font-bold text-gov-green-800 mb-2">مراجعة المدقّق</h3><p class="text-sm text-gov-gray-600">القرار النهائي للامتثال يتّخذه المدقّق</p>{% endif %}
+                {% if forloop.counter == 1 %}<h3 class="font-bold text-gov-green-800 mb-2">{% trans "التسجيل" %}</h3><p class="text-sm text-gov-gray-600">{% trans "ملف الشركة وأهداف الامتثال" %}</p>
+                {% elif forloop.counter == 2 %}<h3 class="font-bold text-gov-green-800 mb-2">{% trans "التصنيف" %}</h3><p class="text-sm text-gov-gray-600">{% trans "تحديد الأطر المنطبقة وخطة الضوابط" %}</p>
+                {% elif forloop.counter == 3 %}<h3 class="font-bold text-gov-green-800 mb-2">{% trans "رفع الأدلة" %}</h3><p class="text-sm text-gov-gray-600">{% trans "تنظيم الأدلة وتحليل استشاري مساعد" %}</p>
+                {% elif forloop.counter == 4 %}<h3 class="font-bold text-gov-green-800 mb-2">{% trans "تحليل الفجوات" %}</h3><p class="text-sm text-gov-gray-600">{% trans "قياس الجاهزية وتحديد الفجوات" %}</p>
+                {% else %}<h3 class="font-bold text-gov-green-800 mb-2">{% trans "مراجعة المدقّق" %}</h3><p class="text-sm text-gov-gray-600">{% trans "القرار النهائي للامتثال يتّخذه المدقّق" %}</p>{% endif %}
             </div>
             {% endfor %}
         </div>
@@ -119,43 +118,43 @@
 <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4">
         <div class="text-center mb-12">
-            <h2 class="text-3xl lg:text-4xl font-bold text-gov-green-800 mb-4">الأطر المدعومة</h2>
-            <p class="text-gov-gray-600 text-lg">منصّة واحدة لمتطلبات الامتثال السيبراني في السوق السعودي</p>
+            <h2 class="text-3xl lg:text-4xl font-bold text-gov-green-800 mb-4">{% trans "الأطر المدعومة" %}</h2>
+            <p class="text-gov-gray-600 text-lg">{% trans "منصّة واحدة لمتطلبات الامتثال السيبراني في السوق السعودي" %}</p>
         </div>
         <div class="grid md:grid-cols-3 gap-8">
             <div class="border border-gov-gray-200 rounded-2xl p-8 hover:shadow-xl transition group">
                 <div class="w-14 h-14 bg-gov-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-gov-green-800 transition">
                     <i class="fas fa-landmark text-gov-green-800 text-2xl group-hover:text-white transition"></i></div>
                 <h3 class="text-xl font-bold text-gov-green-800 mb-3">NCA ECC</h3>
-                <p class="text-gov-gray-600 mb-4">الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني للجهات الحكومية والبنى التحتية الحرجة.</p>
-                <div class="text-sm text-gov-green-700 font-medium">108 ضوابط (ECC) — إجمالي أطر NCA 231 ضابطًا</div>
+                <p class="text-gov-gray-600 mb-4">{% trans "الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني للجهات الحكومية والبنى التحتية الحرجة." %}</p>
+                <div class="text-sm text-gov-green-700 font-medium">{% trans "108 ضوابط (ECC) — إجمالي أطر NCA 231 ضابطًا" %}</div>
             </div>
             <div class="border border-gov-gray-200 rounded-2xl p-8 hover:shadow-xl transition group">
                 <div class="w-14 h-14 bg-gov-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-gov-green-800 transition">
                     <i class="fas fa-oil-well text-gov-green-800 text-2xl group-hover:text-white transition"></i></div>
                 <h3 class="text-xl font-bold text-gov-green-800 mb-3">Aramco SACS-002</h3>
-                <p class="text-gov-gray-600 mb-4">معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة لجميع الموردين ومزوّدي الخدمات.</p>
-                <div class="text-sm text-gov-green-700 font-medium">92 ضابطًا</div>
+                <p class="text-gov-gray-600 mb-4">{% trans "معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة لجميع الموردين ومزوّدي الخدمات." %}</p>
+                <div class="text-sm text-gov-green-700 font-medium">{% trans "92 ضابطًا" %}</div>
             </div>
             <div class="border border-gov-gray-200 rounded-2xl p-8 hover:shadow-xl transition group">
                 <div class="w-14 h-14 bg-gov-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-gov-green-800 transition">
                     <i class="fas fa-industry text-gov-green-800 text-2xl group-hover:text-white transition"></i></div>
                 <h3 class="text-xl font-bold text-gov-green-800 mb-3">SABIC CyberTrust</h3>
-                <p class="text-gov-gray-600 mb-4">معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات.</p>
-                <div class="text-sm text-gov-green-700 font-medium">94 ضابطًا</div>
+                <p class="text-gov-gray-600 mb-4">{% trans "معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات." %}</p>
+                <div class="text-sm text-gov-green-700 font-medium">{% trans "94 ضابطًا" %}</div>
             </div>
         </div>
-        <p class="text-center text-gov-gray-500 text-sm mt-8">إجمالي التغطية: 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC.</p>
+        <p class="text-center text-gov-gray-500 text-sm mt-8">{% trans "إجمالي التغطية: 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC." %}</p>
     </div>
 </section>
 
 <!-- CTA -->
 <section class="gradient-gov py-20">
     <div class="max-w-4xl mx-auto px-4 text-center">
-        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">جاهزون لرفع جاهزية الامتثال؟</h2>
-        <p class="text-gov-green-200 text-lg mb-8">انضم إلى الشركات والجهات في السعودية التي تنظّم أدلّتها وتُعدّ تقارير جاهزيتها للمراجعة.</p>
+        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">{% trans "جاهزون لرفع جاهزية الامتثال؟" %}</h2>
+        <p class="text-gov-green-200 text-lg mb-8">{% trans "انضم إلى الشركات والجهات في السعودية التي تنظّم أدلّتها وتُعدّ تقارير جاهزيتها للمراجعة." %}</p>
         <a href="{% url 'core:get_started' %}" class="inline-block bg-white text-gov-green-800 px-10 py-4 rounded-lg font-bold text-lg hover:bg-green-50 transition shadow-xl">
-            سجّل شركتك
+            {% trans "سجّل شركتك" %}
         </a>
     </div>
 </section>
@@ -169,32 +168,32 @@
                     <i class="fas fa-shield-halved text-white text-2xl"></i>
                     <span class="text-white font-bold text-xl">1SaudiCyber</span>
                 </div>
-                <p class="text-sm">منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية.</p>
+                <p class="text-sm">{% trans "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية." %}</p>
             </div>
             <div>
-                <h4 class="text-white font-semibold mb-4">الأطر</h4>
+                <h4 class="text-white font-semibold mb-4">{% trans "الأطر" %}</h4>
                 <ul class="space-y-2 text-sm">
-                    <li>الضوابط الأساسية NCA ECC</li>
+                    <li>{% trans "الضوابط الأساسية NCA ECC" %}</li>
                     <li>Aramco SACS-002</li>
-                    <li>معيار SABIC CyberTrust</li>
+                    <li>{% trans "معيار SABIC CyberTrust" %}</li>
                 </ul>
             </div>
             <div>
-                <h4 class="text-white font-semibold mb-4">المنصّة</h4>
+                <h4 class="text-white font-semibold mb-4">{% trans "المنصّة" %}</h4>
                 <ul class="space-y-2 text-sm">
-                    <li><a href="{% url 'core:get_started' %}" class="hover:text-white transition">سجّل شركتك</a></li>
-                    <li><a href="{% url 'core:login' %}" class="hover:text-white transition">تسجيل الدخول</a></li>
-                    <li><a href="#process" class="hover:text-white transition">كيف تعمل المنصّة</a></li>
+                    <li><a href="{% url 'core:get_started' %}" class="hover:text-white transition">{% trans "سجّل شركتك" %}</a></li>
+                    <li><a href="{% url 'core:login' %}" class="hover:text-white transition">{% trans "تسجيل الدخول" %}</a></li>
+                    <li><a href="#process" class="hover:text-white transition">{% trans "كيف تعمل المنصّة" %}</a></li>
                 </ul>
             </div>
         </div>
         <div class="border-t border-gov-green-800 mt-8 pt-8 text-center text-sm">
             <p class="mb-2">
-                <a href="{% url 'core:privacy' %}" class="hover:text-white transition">سياسة الخصوصية</a>
+                <a href="{% url 'core:privacy' %}" class="hover:text-white transition">{% trans "سياسة الخصوصية" %}</a>
                 <span class="mx-2 text-gov-green-600">|</span>
-                <a href="{% url 'core:terms' %}" class="hover:text-white transition">شروط الاستخدام</a>
+                <a href="{% url 'core:terms' %}" class="hover:text-white transition">{% trans "شروط الاستخدام" %}</a>
             </p>
-            <p>&copy; {% now "Y" %} 1SaudiCyber (1saudicyber.com) — جميع الحقوق محفوظة. متوافقة مع رؤية المملكة 2030.</p>
+            <p>&copy; {% now "Y" %} 1SaudiCyber (1saudicyber.com) — {% trans "جميع الحقوق محفوظة. متوافقة مع رؤية المملكة 2030." %}</p>
         </div>
     </div>
 </footer>

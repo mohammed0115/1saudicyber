@@ -23,8 +23,6 @@ def controls_list(request):
         messages.error(request, _('لا توجد شركة مرتبطة بحسابك.'))
         return redirect('dashboard:main')
 
-    # Get applicable frameworks
-    frameworks = Framework.objects.filter(is_active=True)
     selected_framework = request.GET.get('framework', '')
     selected_domain = request.GET.get('domain', '')
 
@@ -40,9 +38,15 @@ def controls_list(request):
         CompanyControl.objects.filter(company=company).select_related('control')
     }
 
-    domains = Domain.objects.all()
+    # Populate filters from frameworks/domains that ACTUALLY have controls, so the
+    # dropdowns can never appear empty while the library holds controls (Manus 8D-2).
+    fw_ids = Control.objects.values_list('framework_id', flat=True).distinct()
+    frameworks = Framework.objects.filter(id__in=fw_ids).order_by('name')
+    domain_qs = Domain.objects.filter(
+        id__in=Control.objects.values_list('domain_id', flat=True).distinct())
     if selected_framework:
-        domains = domains.filter(framework__code=selected_framework)
+        domain_qs = domain_qs.filter(framework__code=selected_framework)
+    domains = domain_qs.order_by('name')
 
     context = {
         'frameworks': frameworks,
@@ -51,6 +55,7 @@ def controls_list(request):
         'company_controls': company_controls,
         'selected_framework': selected_framework,
         'selected_domain': selected_domain,
+        'has_filter_options': frameworks.exists() or domains.exists(),
     }
     return render(request, 'compliance/controls_list.html', context)
 

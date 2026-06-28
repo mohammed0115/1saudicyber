@@ -52,7 +52,18 @@
                     <td class="px-4 py-3 text-gov-gray-500">{{ r.confidence }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="px-4 py-6 text-center text-gov-gray-500">لا توجد نتائج بعد. أكمل التصنيف أولاً.</td></tr>
+                <tr><td colspan="5" class="px-5 py-6 text-gov-gray-600 text-right leading-7">
+                    {% if has_profile %}
+                        لم يتم توليد توصية كافية من هذه الإجابات وحدها.
+                        أضف معلومات إضافية مثل القطاع، حجم المنشأة، طبيعة البيانات،
+                        أو علاقات الجهات الحساسة (أرامكو/سابك) للحصول على توصية أدق.
+                        <a href="{% url 'compliance:intake' %}" class="underline font-medium text-gov-green-700">تحديث بيانات التصنيف</a>.
+                        <span class="block text-xs text-gov-gray-400 mt-1">هذا التحليل استشاري ولا يُعد قرار امتثال نهائيًا أو شهادة.</span>
+                    {% else %}
+                        لا توجد نتائج بعد.
+                        <a href="{% url 'compliance:intake' %}" class="underline font-medium text-gov-green-700">أكمل التصنيف أولاً</a>.
+                    {% endif %}
+                </td></tr>
                 {% endfor %}
 
                 {% for fv in unavailable %}

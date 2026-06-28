@@ -18,9 +18,21 @@ from . import services
 # ---------- Auditor registration / onboarding ----------
 @require_http_methods(["GET", "POST"])
 def register(request):
-    """Self-service auditor registration -> User + AuditorProfile(pending_review)."""
-    if request.user.is_authenticated and services.get_auditor_profile(request.user):
-        return redirect('auditors:onboarding')
+    """Self-service auditor registration -> User + AuditorProfile(pending_review).
+
+    Role separation: an already-authenticated non-auditor (e.g. a company user)
+    must NOT be able to silently create a new auditor account and have the session
+    switched to it. Such users are shown a clear choice page on both GET and POST,
+    and no account is ever created for them here.
+    """
+    if request.user.is_authenticated:
+        # Existing auditor -> their own onboarding/status page.
+        if services.get_auditor_profile(request.user):
+            return redirect('auditors:onboarding')
+        # Authenticated non-auditor: block silent account creation + session switch.
+        return render(request, 'auditors/register_blocked.html', {
+            'current_email': request.user.email,
+        })
     if request.method == 'POST':
         form = AuditorRegistrationForm(request.POST)
         if form.is_valid():

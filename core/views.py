@@ -203,8 +203,13 @@ def verify_email(request, token):
 
 
 def logout_view(request):
-    """User logout."""
+    """User logout. Honors a safe internal ?next= (e.g. log out then register as auditor)."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+    next_url = request.GET.get('next', '')
     logout(request)
+    if next_url and url_has_allowed_host_and_scheme(
+            next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(next_url)
     return redirect('core:landing')
 
 

@@ -5765,3 +5765,141 @@ class Phase7CPreDeployPolishTests(TestCase):
         from compliance.smart_classification import OFFICIAL_TOTAL, _FW
         self.assertEqual(OFFICIAL_TOTAL, 417)
         self.assertNotIn(334, [f['expected'] for f in _FW.values()])
+
+
+class ControlsLibraryFilterTests(TestCase):
+    """Manus 8D-2 Fix 2 — controls library filters must not appear empty/confusing."""
+
+    def _seed_one_control(self):
+        from compliance.models import Framework, Domain, Control
+        fw, _ = Framework.objects.get_or_create(
+            code='NCA_ECC', defaults={'name': 'NCA Essential Cybersecurity Controls'})
+        dom, _ = Domain.objects.get_or_create(
+            framework=fw, code='GOV', defaults={'name': 'Governance'})
+        Control.objects.get_or_create(
+            framework=fw, domain=dom, control_id='ECC-1-1-1',
+            defaults={'title': 'Cybersecurity Strategy'})
+        return fw, dom
+
+    def _login_company_user(self):
+        c = _company()
+        self.client.force_login(_journey_user(c, email='ctrllib@x.com'))
+        return c
+
+    def test_filters_populated_when_controls_exist(self):
+        from compliance.models import Control, Framework
+        self._seed_one_control()
+        self.assertTrue(Control.objects.exists())
+        self._login_company_user()
+        resp = self.client.get(reverse('compliance:controls_list'))
+        self.assertEqual(resp.status_code, 200)
+        # At least one real framework option is rendered beyond "All Frameworks".
+        a_framework = Framework.objects.filter(
+            id__in=Control.objects.values_list('framework_id', flat=True)).first()
+        self.assertIsNotNone(a_framework)
+        self.assertContains(resp, a_framework.name)
+        # No empty-state explanation while options exist.
+        self.assertNotContains(resp, 'ستظهر خيارات التصفية')
+
+    def test_empty_state_explanation_when_no_filter_options(self):
+        from compliance.models import Control
+        Control.objects.all().delete()  # simulate environment with no usable control plan
+        self._login_company_user()
+        resp = self.client.get(reverse('compliance:controls_list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'ستظهر خيارات التصفية')
+
+    def test_official_total_417_shown_not_334(self):
+        self._login_company_user()
+        resp = self.client.get(reverse('compliance:controls_list'))
+        self.assertContains(resp, '417')
+        self.assertNotContains(resp, '334')
+
+
+class ClassificationEmptyStateTests(TestCase):
+    """Manus 8D-2 Fix 3 — Cloud-services-only must not dead-end on 'No results yet'."""
+
+    def _company_with_intake(self, **intake):
+        from compliance.models import CompanyIntakeProfile
+        c = _company()
+        defaults = dict(company=c, review_status='completed')
+        defaults.update(intake)
+        CompanyIntakeProfile.objects.create(**defaults)
+        return c
+
+    def test_completed_intake_no_results_shows_advisory_guidance(self):
+        # Profile completed but no applicability results (e.g. minimal inputs) ->
+        # helpful advisory guidance, not a dead 'No results yet'.
+        c = self._company_with_intake(uses_cloud_services=True)
+        self.client.force_login(_journey_user(c, email='cls_empty@x.com'))
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'لم يتم توليد توصية كافية من هذه الإجابات وحدها')
+        # Advisory wording: no final compliance decision / certificate claim.
+        self.assertContains(resp, 'استشاري')
+
+    def test_advisory_wording_has_no_official_certification_claim(self):
+        c = self._company_with_intake(uses_cloud_services=True)
+        self.client.force_login(_journey_user(c, email='cls_safe@x.com'))
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        body = resp.content.decode()
+        for banned in ('اعتماد رسمي', 'شهادة امتثال رسمية', 'معتمد من'):
+            self.assertNotIn(banned, body)
+
+    def test_no_profile_keeps_complete_classification_prompt(self):
+        c = _company()
+        self.client.force_login(_journey_user(c, email='cls_noprofile@x.com'))
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        self.assertContains(resp, 'أكمل التصنيف أولاً')
+
+
+class ManusE2EQASeedCommandTests(TestCase):
+    """Manus 8D-2 Fix 4 — QA seeder for activated-auditor verdict workflow."""
+
+    def test_refuses_without_confirmation(self):
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+        with self.assertRaises(CommandError):
+            call_command('seed_manus_e2e_qa', stdout=StringIO())
+
+    def test_seeds_company_auditor_and_accepted_assignment(self):
+        from django.core.management import call_command
+        from core.models import User, Company
+        from auditors.models import AuditorProfile, AuditorAssignment
+        from billing.subscription_access import company_has_active_subscription
+        call_command('seed_manus_e2e_qa', '--confirm', stdout=StringIO())
+        company = Company.objects.get(cr_number='QA-MANUS-0001')
+        self.assertTrue(User.objects.filter(email='qa.company@manus-e2e.test',
+                                            company=company).exists())
+        auditor = AuditorProfile.objects.get(user__email='qa.auditor@manus-e2e.test')
+        self.assertEqual(auditor.status, 'active')  # activated auditor
+        self.assertTrue(AuditorAssignment.objects.filter(
+            company=company, auditor=auditor, status='accepted').exists())
+        # QA-marked active subscription, no payment record.
+        self.assertTrue(company_has_active_subscription(company))
+
+    def test_idempotent(self):
+        from django.core.management import call_command
+        from core.models import User, Company
+        from auditors.models import AuditorAssignment
+        call_command('seed_manus_e2e_qa', '--confirm', stdout=StringIO())
+        call_command('seed_manus_e2e_qa', '--confirm', stdout=StringIO())
+        self.assertEqual(Company.objects.filter(cr_number='QA-MANUS-0001').count(), 1)
+        self.assertEqual(User.objects.filter(email='qa.auditor@manus-e2e.test').count(), 1)
+        self.assertEqual(AuditorAssignment.objects.filter(
+            company__cr_number='QA-MANUS-0001').count(), 1)
+
+    def test_seeded_auditor_can_submit_verdict_when_controls_available(self):
+        from django.core.management import call_command
+        from core.models import User
+        from compliance.models import EvidenceSubmission
+        from compliance.auditor_verdict import can_submit_final_verdict
+        # Seed framework versions + official controls so a submission is created.
+        call_command('seed_framework_versions', stdout=StringIO())
+        _seed_official('ARAMCO-SACS-002', 'ARAMCO_SACS002')
+        call_command('seed_manus_e2e_qa', '--confirm', stdout=StringIO())
+        sub = EvidenceSubmission.objects.filter(
+            company__cr_number='QA-MANUS-0001').first()
+        if sub is not None:  # controls available -> verdict-ready submission exists
+            auditor = User.objects.get(email='qa.auditor@manus-e2e.test')
+            self.assertTrue(can_submit_final_verdict(auditor, sub))
