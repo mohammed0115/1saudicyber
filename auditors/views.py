@@ -33,6 +33,7 @@ def register(request):
         return render(request, 'auditors/register_blocked.html', {
             'current_email': request.user.email,
         })
+    from .journey import build_auditor_journey
     if request.method == 'POST':
         form = AuditorRegistrationForm(request.POST)
         if form.is_valid():
@@ -49,28 +50,35 @@ def register(request):
             login(request, user)
             messages.success(request, 'تم استلام طلب تسجيلك كمدقّق. الحساب قيد مراجعة المنصّة.')
             return redirect('auditors:onboarding')
-        return render(request, 'auditors/register.html', {'form': form})
-    return render(request, 'auditors/register.html', {'form': AuditorRegistrationForm()})
+        return render(request, 'auditors/register.html', {
+            'form': form, 'auditor_journey': build_auditor_journey(request.user)})
+    return render(request, 'auditors/register.html', {
+        'form': AuditorRegistrationForm(),
+        'auditor_journey': build_auditor_journey(request.user)})
 
 
 @login_required
 def onboarding(request):
     """Auditor onboarding/status page (own profile only)."""
+    from .journey import build_auditor_journey
     profile = services.get_auditor_profile(request.user)
     if profile is None:
         return redirect('auditors:register')
-    return render(request, 'auditors/onboarding.html', {'profile': profile})
+    return render(request, 'auditors/onboarding.html', {
+        'profile': profile, 'auditor_journey': build_auditor_journey(request.user)})
 
 
 @login_required
 def dashboard(request):
     """Auditor dashboard. Pending/suspended/inactive -> no company data."""
+    from .journey import build_auditor_journey
     profile = services.get_auditor_profile(request.user)
     if profile is None:
         return redirect('auditors:register')
     assignments = services.assignments_for_user(request.user) if profile.is_active_auditor() else None
     return render(request, 'auditors/dashboard.html', {
-        'profile': profile, 'assignments': assignments})
+        'profile': profile, 'assignments': assignments,
+        'auditor_journey': build_auditor_journey(request.user)})
 
 
 @login_required
@@ -80,11 +88,14 @@ def assignment_detail(request, assignment_id):
     if assignment is None:
         messages.error(request, 'الطلب غير موجود أو لا يخصّك.')
         return redirect('auditors:dashboard')
+    from .journey import build_auditor_journey
+    journey = build_auditor_journey(request.user)
     profile = assignment.auditor
     if not profile.is_active_auditor():
         # Pending/suspended/inactive auditor: no company data at all.
         return render(request, 'auditors/assignment_detail.html', {
-            'assignment': assignment, 'profile': profile, 'context': None})
+            'assignment': assignment, 'profile': profile, 'context': None,
+            'auditor_journey': journey})
 
     context = None
     if services.auditor_can_view_company_context(assignment):
@@ -100,7 +111,8 @@ def assignment_detail(request, assignment_id):
             'matrix_rows': build_evidence_matrix(company)[:50],
         }
     return render(request, 'auditors/assignment_detail.html', {
-        'assignment': assignment, 'profile': profile, 'context': context})
+        'assignment': assignment, 'profile': profile, 'context': context,
+        'auditor_journey': journey})
 
 
 @login_required

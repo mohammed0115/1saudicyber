@@ -21,6 +21,10 @@
       <p style="color:#667085;font-size:.9rem;margin:0 0 18px;">الحالة: {{ profile.get_status_display }}</p>
       <a href="{% url 'auditors:dashboard' %}" style="display:inline-block;background:#0F5D46;color:#fff;font-weight:600;padding:11px 20px;border-radius:10px;text-decoration:none;">لوحة المدقّق</a>
     </div>
+
+    <div style="margin-top:18px;">
+      {% include "components/journey_stepper.html" with journey=auditor_journey %}
+    </div>
   </div>
 </div>
 {% endblock %}

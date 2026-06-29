@@ -11,6 +11,8 @@
       <p style="color:#667085;font-size:.95rem;margin:0;">{% trans "تحليل استشاري لقابلية تطبيق الضوابط بناءً على بيانات الشركة." %}</p>
     </div>
 
+    {% include "components/current_step_card.html" with guide=guide %}
+
     {# Disclaimers #}
     <div style="background:#FBF6EC;border:1px solid #E6D7B8;border-radius:12px;padding:14px 16px;margin-bottom:18px;color:#7A5B16;font-size:.9rem;">
       <p style="margin:0 0 4px;"><i class="fas fa-circle-info ms-1"></i> {% trans "هذا التحليل لا يقرر الامتثال أو عدم الامتثال." %}</p>

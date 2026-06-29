@@ -124,12 +124,14 @@ def monitoring_overview(request):
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
+    from compliance.journey import build_page_guide
     return render(request, 'monitoring/overview.html', {
         'company': company,
         'summary': summarize_company_monitoring(company),
         'checks': MonitoringCheck.objects.filter(company=company).select_related('control')[:50],
         'findings': MonitoringFinding.objects.filter(
             company=company).select_related('monitoring_run')[:50],
+        'guide': build_page_guide(company, 'monitoring'),
     })
 
 

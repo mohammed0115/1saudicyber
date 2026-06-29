@@ -5561,7 +5561,9 @@ class ReportFinalizationUITests(TestCase):
         activate_company_subscription(c, 'Plan', days=30)
         self.client.force_login(_journey_user(c))
         body = self.client.get(reverse('compliance:auditor_reviewed_report')).content.decode()
-        self.assertIn('لا توجد قرارات مدقق نهائية بعد', body)
+        # Phase 8D-2-FIX-C: actionable empty state instead of a dead "no results".
+        self.assertIn('لا يوجد تقرير مدقق بعد', body)
+        self.assertIn('بعد مراجعة المدقق', body)
         self.assertIn('لا يُعد شهادة امتثال رسمية', body)
 
     def test_renders_rows_after_verdict(self):
@@ -5903,3 +5905,116 @@ class ManusE2EQASeedCommandTests(TestCase):
         if sub is not None:  # controls available -> verdict-ready submission exists
             auditor = User.objects.get(email='qa.auditor@manus-e2e.test')
             self.assertTrue(can_submit_final_verdict(auditor, sub))
+
+
+class GuidedCompanyWorkflowTests(TestCase):
+    """Phase 8D-2-FIX-C — every guided company page answers where/what/next."""
+
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def _subscribed_company(self):
+        from billing.subscription_access import activate_company_subscription
+        c = _company()
+        activate_company_subscription(c, 'Plan', days=30)
+        return c
+
+    def test_build_page_guide_status_logic(self):
+        from compliance.journey import build_page_guide
+        c = _company()
+        # Fresh company: classification is current; downstream steps are blocked.
+        self.assertEqual(build_page_guide(c, 'classification')['status'], 'current')
+        self.assertEqual(build_page_guide(c, 'applicability')['status'], 'blocked')
+        self.assertEqual(build_page_guide(c, 'evidence')['status'], 'blocked')
+        self.assertEqual(build_page_guide(c, 'classification')['total'], 13)
+
+    def test_classification_page_shows_current_step_and_next_action(self):
+        c = _company()
+        self._login(c, 'guide_cls@x.com')
+        resp = self.client.get(reverse('compliance:classification'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'أنت الآن في الخطوة 3 من 13')
+        self.assertContains(resp, 'المطلوب منك الآن')
+        self.assertContains(resp, 'الخطوة التالية')
+
+    def test_applicability_page_blocked_when_classification_missing(self):
+        c = _company()
+        self._login(c, 'guide_app@x.com')
+        resp = self.client.get(reverse('compliance:applicability_preview'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'لم تظهر نتائج بعد لأن خطوة التصنيف لم تكتمل')
+
+    def test_applicability_review_blocked_state_present(self):
+        c = _company()
+        self._login(c, 'guide_appr@x.com')
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        self.assertContains(resp, 'بانتظار خطوة سابقة')
+
+    def test_evidence_page_explains_missing_control_plan(self):
+        c = _company()
+        self._login(c, 'guide_ev@x.com')
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'خطة الضوابط')
+
+    def test_controls_page_shows_guided_step(self):
+        c = _company()
+        self._login(c, 'guide_ctrl@x.com')
+        resp = self.client.get(reverse('compliance:controls_list'))
+        self.assertContains(resp, 'أنت الآن في الخطوة 5 من 13')
+
+    def test_auditor_reviewed_report_explains_pending_review(self):
+        c = self._subscribed_company()
+        self._login(c, 'guide_rep@x.com')
+        resp = self.client.get(reverse('compliance:auditor_reviewed_report'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'لا يوجد تقرير مدقق بعد')
+        self.assertContains(resp, 'بعد مراجعة المدقق')
+
+    def test_risk_page_shows_guided_step(self):
+        c = _company()
+        self._login(c, 'guide_risk@x.com')
+        resp = self.client.get(reverse('risk:list'))
+        self.assertContains(resp, 'أنت الآن في الخطوة 13 من 13')
+
+    def test_guided_pages_have_no_unsafe_certification_wording(self):
+        c = self._subscribed_company()
+        self._login(c, 'guide_safe@x.com')
+        # Affirmative certification/accreditation CLAIMS must never appear.
+        # (Disclaimers like "لا يُعد شهادة امتثال رسمية" are explicitly safe.)
+        banned_affirmative = ['معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك',
+                              'اعتماد حكومي', 'certified by NCA', 'certified by Aramco',
+                              'certified by SABIC', 'official accreditation',
+                              'government accreditation']
+        for name in ('compliance:classification', 'compliance:applicability_preview',
+                     'compliance:controls_list', 'compliance:evidence_checklist',
+                     'compliance:auditor_reviewed_report', 'risk:list'):
+            body = self.client.get(reverse(name)).content.decode()
+            for w in banned_affirmative:
+                self.assertNotIn(w, body, '%s in %s' % (w, name))
+            # If the "official compliance certificate" phrase appears at all, it must
+            # be a negated disclaimer, never an affirmative claim.
+            if 'شهادة امتثال رسمية' in body:
+                self.assertIn('لا يُعد شهادة امتثال رسمية', body, name)
+
+    def test_controls_page_417_not_334(self):
+        c = _company()
+        self._login(c, 'guide_417@x.com')
+        body = self.client.get(reverse('compliance:controls_list')).content.decode()
+        self.assertIn('417', body)
+        self.assertNotIn('>334<', body)
+
+    def test_monitoring_page_shows_ongoing_step_guidance(self):
+        c = _company()
+        self._login(c, 'guide_mon@x.com')
+        resp = self.client.get(reverse('monitoring:overview'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'خطوة مستمرة')
+
+    def test_company_dashboard_shows_guided_journey_and_next_action(self):
+        c = _company()
+        self._login(c, 'guide_dash@x.com')
+        resp = self.client.get(reverse('compliance:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        # The journey wizard + workflow stepper both render a next recommended action.
+        self.assertContains(resp, 'الخطوة')

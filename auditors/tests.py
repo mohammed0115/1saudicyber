@@ -327,6 +327,74 @@ class AuditorUxTests(TestCase):
         self.assertContains(self.client.get(reverse('auditors:register')), 'dir="rtl"')
 
 
+class GuidedAuditorWorkflowTests(TestCase):
+    """Phase 8D-2-FIX-C — auditor guided journey: pending + no-assignment guidance."""
+
+    def test_journey_builder_anonymous_and_steps(self):
+        from django.contrib.auth.models import AnonymousUser
+        from auditors.journey import build_auditor_journey
+        j = build_auditor_journey(AnonymousUser())
+        self.assertEqual(j['total'], 10)
+        self.assertEqual(j['current_step']['key'], 'registration')
+        self.assertFalse(j['has_profile'])
+
+    def test_pending_auditor_dashboard_shows_activation_guidance(self):
+        u, p = _auditor(status='pending_review')
+        self.client.force_login(u)
+        resp = self.client.get(reverse('auditors:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'حسابك قيد المراجعة من إدارة المنصة')
+        self.assertContains(resp, 'بعد التفعيل ستظهر لك ملفات الشركات المسندة')
+
+    def test_active_auditor_no_assignments_shows_guidance(self):
+        u, p = _auditor(status='active')
+        self.client.force_login(u)
+        resp = self.client.get(reverse('auditors:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'لا توجد ملفات شركات مسندة إليك حاليًا')
+        self.assertContains(resp, 'تواصل مع إدارة المنصة لإسناد ملف مراجعة')
+
+    def test_pending_journey_marks_dashboard_step_blocked(self):
+        u, p = _auditor(status='pending_review')
+        from auditors.journey import build_auditor_journey
+        j = build_auditor_journey(u)
+        by_key = {s['key']: s for s in j['steps']}
+        self.assertEqual(by_key['registration']['status'], 'completed')
+        self.assertEqual(by_key['pending_activation']['status'], 'current')
+        self.assertEqual(by_key['dashboard']['status'], 'blocked')
+        self.assertEqual(by_key['final_verdict']['status'], 'blocked')
+
+    def test_active_with_accepted_assignment_unblocks_review(self):
+        u, p = _auditor(status='active')
+        c, fv, scope = _company_with_assessments()
+        _assignment(c, p, status='accepted')
+        from auditors.journey import build_auditor_journey
+        j = build_auditor_journey(u)
+        by_key = {s['key']: s for s in j['steps']}
+        self.assertEqual(by_key['assigned_files']['status'], 'completed')
+        self.assertEqual(by_key['final_verdict']['status'], 'current')
+
+    def test_auditor_dashboard_renders_journey_stepper(self):
+        u, p = _auditor(status='active')
+        self.client.force_login(u)
+        resp = self.client.get(reverse('auditors:dashboard'))
+        self.assertContains(resp, 'مسار المراجعة الموجّه')
+
+    def test_auditor_pages_safe_internal_review_wording(self):
+        u, p = _auditor(status='active')
+        self.client.force_login(u)
+        body = self.client.get(reverse('auditors:dashboard')).content.decode()
+        self.assertIn('مراجعة داخلية', body)
+        for banned in ('معتمد من NCA', 'اعتماد حكومي', 'official accreditation',
+                       'certified by NCA'):
+            self.assertNotIn(banned, body)
+
+    def test_register_page_shows_journey_roadmap(self):
+        resp = self.client.get(reverse('auditors:register'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'مسار المراجعة الموجّه')
+
+
 class Phase4CBackwardCompatTests(TestCase):
     def setUp(self):
         from io import StringIO

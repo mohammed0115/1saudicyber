@@ -57,6 +57,8 @@ def controls_list(request):
         'selected_domain': selected_domain,
         'has_filter_options': frameworks.exists() or domains.exists(),
     }
+    from .journey import build_page_guide
+    context['guide'] = build_page_guide(company, 'controls')
     return render(request, 'compliance/controls_list.html', context)
 
 
@@ -367,12 +369,14 @@ def applicability_preview(request):
     rows, never runs AI, never produces a compliance status or a final verdict.
     """
     from .applicability_engine import evaluate_company_applicability
+    from .journey import build_page_guide
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
     return render(request, 'compliance/applicability_preview.html', {
         'company': company,
         'preview': evaluate_company_applicability(company),
+        'guide': build_page_guide(company, 'applicability'),
     })
 
 
@@ -385,12 +389,14 @@ def classification_summary(request):
     never issues a final compliance decision.
     """
     from .smart_classification import classify_company
+    from .journey import build_page_guide
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
     return render(request, 'compliance/classification.html', {
         'company': company,
         'classification': classify_company(company),
+        'guide': build_page_guide(company, 'classification'),
     })
 
 
@@ -464,6 +470,7 @@ def applicability_review(request):
         fv = FrameworkVersion.objects.filter(code=code).first()
         if fv and not _is_available(fv):
             unavailable.append(fv)
+    from .journey import build_page_guide
     return render(request, 'compliance/applicability_review.html', {
         'company': company,
         'results': results,
@@ -471,6 +478,7 @@ def applicability_review(request):
         'unavailable': unavailable,
         'can_approve': request.user.is_staff,
         'has_profile': CompanyIntakeProfile.objects.filter(company=company).exists(),
+        'guide': build_page_guide(company, 'applicability'),
     })
 
 
@@ -560,9 +568,11 @@ def evidence_checklist(request):
                              'control_applicability_result')
              .prefetch_related('submissions'))
     from .workflow_stepper import build_company_workflow_stepper
+    from .journey import build_page_guide
     return render(request, 'compliance/evidence_checklist.html', {
         'company': company, 'items': items, 'can_generate': request.user.is_staff,
         'stepper': build_company_workflow_stepper(company),
+        'guide': build_page_guide(company, 'evidence'),
     })
 
 
@@ -809,9 +819,11 @@ def auditor_reviewed_report(request):
     if gate:
         return gate
     from .report_finalization import build_auditor_reviewed_report
+    from .journey import build_page_guide
     return render(request, 'compliance/auditor_reviewed_report.html', {
         'company': company,
         'report': build_auditor_reviewed_report(company),
+        'guide': build_page_guide(company, 'auditor_report'),
     })
 
 

@@ -251,3 +251,108 @@ def build_company_compliance_journey(company, user=None):
         'current_stage_title': current_stage['title'] if current_stage else (
             stages[-1]['title'] if stages else ''),
     }
+
+
+# ============================================================
+# Phase 8D-2-FIX-C — per-page guided "Where am I / What now / Next" card.
+# Read-only. Reuses _signals() so page guidance never diverges from the journey.
+# ============================================================
+
+# The canonical 13-step company journey (numbers shown to the user). The page
+# guide maps each guided page to one of these steps and answers the three
+# questions: where am I, what do I do now, what is the next step.
+GUIDE_TOTAL = 13
+
+# page_key -> dict(n, title, what, next_title, done(f), prereq_ok(f), blocked_msg, cta)
+# cta is (url_name, label) for the primary action ON this page (advisory/onward).
+_PAGE_GUIDE = {
+    'classification': dict(
+        n=3, title='التصنيف الذكي',
+        what='أجب على أسئلة التصنيف لتحديد الأطر المحتملة لمنشأتك.',
+        next_title='تحليل الأطر القابلة للتطبيق',
+        done=lambda f: f['applicability'] or f['intake_profile'],
+        prereq_ok=lambda f: True,
+        blocked_msg='',
+        cta=('compliance:intake', 'إكمال بيانات التصنيف')),
+    'applicability': dict(
+        n=4, title='تحليل الأطر القابلة للتطبيق',
+        what='راجع الأطر المقترحة بناءً على إجابات التصنيف ثم اعتمد النطاق.',
+        next_title='خطة الضوابط وقائمة الأدلة',
+        done=lambda f: f['control_plan'] or f['approved_scope'],
+        prereq_ok=lambda f: f['intake_profile'] or f['applicability'],
+        blocked_msg='لم تظهر نتائج بعد لأن خطوة التصنيف لم تكتمل. ابدأ بالتصنيف الذكي لتحديد الأطر المحتملة.',
+        cta=('compliance:classification', 'فتح التصنيف الذكي')),
+    'controls': dict(
+        n=5, title='خطة الضوابط وقائمة الأدلة',
+        what='استعرض الضوابط المنطبقة وولّد خطة الضوابط وقائمة الأدلة لمنشأتك.',
+        next_title='رفع الأدلة',
+        done=lambda f: f['checklist'],
+        prereq_ok=lambda f: f['approved_scope'] or f['control_plan'],
+        blocked_msg='ستظهر خطة الضوابط الخاصة بمنشأتك بعد اعتماد الأطر القابلة للتطبيق. أكمل خطوة تحليل الأطر أولًا.',
+        cta=('compliance:applicability_review', 'مراجعة واعتماد الأطر')),
+    'evidence': dict(
+        n=6, title='رفع الأدلة',
+        what='ارفع الأدلة المطلوبة لكل ضابط في خطة الضوابط لبدء التحليل الاستشاري.',
+        next_title='التحليل الاستشاري ثم الحالة المقترحة',
+        done=lambda f: f['submissions'],
+        prereq_ok=lambda f: f['checklist'] or f['control_plan'],
+        blocked_msg='لا توجد قائمة أدلة بعد لأن خطة الضوابط لم تُنشأ. أكمل اعتماد الأطر وتوليد خطة الضوابط أولًا.',
+        cta=('compliance:control_plan', 'عرض خطة الضوابط')),
+    'auditor_report': dict(
+        n=12, title='التقرير الداخلي بعد مراجعة المدقق',
+        what='يعرض هذا التقرير نتيجة مراجعة المدقق الداخلية بعد إصدار الحكم على الأدلة.',
+        next_title='سجل المخاطر وخطة المعالجة',
+        done=lambda f: f['auditor_verdict_exists'],
+        prereq_ok=lambda f: True,
+        blocked_msg='',
+        cta=('compliance:reports_index', 'عرض التقارير')),
+    'risks': dict(
+        n=13, title='سجل المخاطر وخطة المعالجة',
+        what='سجّل المخاطر والفجوات وأدرها عبر مهام المعالجة. هذه خطوة استشارية مساعدة.',
+        next_title='المراقبة المستمرة',
+        done=lambda f: f['risks'],
+        prereq_ok=lambda f: True,
+        blocked_msg='',
+        cta=('risk:list', 'إدارة المخاطر والمعالجة')),
+    # Continuous/ongoing area after auditor review — not one of the 13 discrete steps.
+    'monitoring': dict(
+        n=None, title='المراقبة المستمرة بعد المراجعة',
+        what='تابع فحوص المراقبة الدورية لصحّة الضوابط بعد مراجعة المدقق. خطوة مستمرة ومساعدة، والأساس متاح عند ربط مصادر البيانات المناسبة.',
+        next_title='',
+        done=lambda f: f['monitoring_checks'],
+        prereq_ok=lambda f: True,
+        blocked_msg='',
+        cta=('monitoring:overview', 'فتح المراقبة المستمرة')),
+}
+
+
+def build_page_guide(company, page_key):
+    """Return a read-only {where/what/next} guide for one guided page, or None.
+
+    status: completed | current | blocked | not_started. Never writes; derived
+    purely from existing data signals so it cannot diverge from the journey.
+    """
+    cfg = _PAGE_GUIDE.get(page_key)
+    if cfg is None:
+        return None
+    f = _signals(company)
+    done = cfg['done'](f)
+    prereq_ok = cfg['prereq_ok'](f)
+    if done:
+        status = 'completed'
+    elif not prereq_ok:
+        status = 'blocked'
+    else:
+        status = 'current'
+    url_name, label = cfg['cta']
+    return {
+        'step_number': cfg['n'],
+        'total': GUIDE_TOTAL,
+        'title': cfg['title'],
+        'status': status,
+        'what_now': cfg['what'],
+        'next_title': cfg['next_title'],
+        'blocked_reason': cfg['blocked_msg'] if status == 'blocked' else '',
+        'cta_url_name': url_name,
+        'cta_label': label,
+    }

@@ -14,10 +14,12 @@ def risk_list(request):
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
+    from compliance.journey import build_page_guide
     return render(request, 'risk/risk_list.html', {
         'company': company,
         'risks': services.company_risks(company).select_related('control', 'framework_version'),
         'counts': services.risk_dashboard_counts(company),
+        'guide': build_page_guide(company, 'risks'),
     })
 
 

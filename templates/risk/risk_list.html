@@ -3,6 +3,7 @@
 {% block content %}
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div class="max-w-5xl mx-auto space-y-6">
+    {% include "components/current_step_card.html" with guide=guide %}
     <div class="flex justify-between items-center">
       <div>
         <h1 class="text-2xl font-bold text-gov-green-800">سجل المخاطر وخطة المعالجة</h1>

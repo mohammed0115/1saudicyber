@@ -11,6 +11,8 @@
         </div>
     </div>
 
+    {% include "components/current_step_card.html" with guide=guide %}
+
     <!-- Filters -->
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
         {% if not has_filter_options %}

@@ -6,6 +6,8 @@
     <a href="{% url 'auditors:dashboard' %}" style="color:#667085;text-decoration:none;font-size:.9rem;">← لوحة المدقّق</a>
     <h1 style="color:#1F2933;font-size:1.45rem;font-weight:700;margin:10px 0 4px;">تفاصيل طلب الإسناد</h1>
 
+    {% include "components/journey_stepper.html" with journey=auditor_journey %}
+
     <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;padding:20px;margin:14px 0;">
       <p style="margin:0 0 6px;color:#1F2933;"><strong>الحالة:</strong> {{ assignment.get_status_display }}</p>
       <p style="margin:0 0 6px;color:#1F2933;"><strong>النطاق:</strong> {{ assignment.get_scope_display }}</p>

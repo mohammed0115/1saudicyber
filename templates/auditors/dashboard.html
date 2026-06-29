@@ -4,11 +4,14 @@
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div style="max-width:880px;margin:0 auto;padding:8px 4px 24px;">
     <h1 style="color:#1F2933;font-size:1.5rem;font-weight:700;margin:0 0 4px;">لوحة المدقّق</h1>
-    <p style="color:#667085;font-size:.95rem;margin:0 0 18px;">الطلبات المُسندة إليك فقط. القرار النهائي للامتثال يبقى لفريق المنصّة المختص.</p>
+    <p style="color:#667085;font-size:.95rem;margin:0 0 18px;">الطلبات المُسندة إليك فقط. القرار النهائي هو مراجعة داخلية من المدقق ولا يُعد شهادة امتثال رسمية.</p>
+
+    {% include "components/next_action_card.html" with next_action=auditor_journey.next_action %}
 
     {% if not profile.is_active_auditor %}
-      <div style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;border-radius:12px;padding:18px;font-size:.95rem;">
-        <i class="fas fa-hourglass-half ms-1"></i> حسابك ({{ profile.get_status_display }}) لا يتيح الوصول إلى بيانات الشركات. سيتم إشعارك عند تفعيل الحساب.
+      <div style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;border-radius:12px;padding:18px;font-size:.95rem;line-height:1.8;">
+        <i class="fas fa-hourglass-half ms-1"></i> {{ auditor_journey.pending_message }}
+        <span style="display:block;color:#8A6D2A;margin-top:4px;font-size:.85rem;">حسابك ({{ profile.get_status_display }}) لا يتيح الوصول إلى بيانات الشركات حتى يتم التفعيل.</span>
       </div>
     {% else %}
       <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;overflow:hidden;">
@@ -29,12 +32,16 @@
               <td style="padding:10px 16px;"><a href="{% url 'auditors:assignment_detail' a.id %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">عرض</a></td>
             </tr>
           {% empty %}
-            <tr><td colspan="4" style="padding:18px 16px;text-align:center;color:#667085;">لا توجد طلبات مُسندة إليك بعد.</td></tr>
+            <tr><td colspan="4" style="padding:18px 16px;text-align:right;color:#667085;line-height:1.8;">{{ auditor_journey.no_assignment_message }}</td></tr>
           {% endfor %}
           </tbody>
         </table>
       </div>
     {% endif %}
+
+    <div style="margin-top:18px;">
+      {% include "components/journey_stepper.html" with journey=auditor_journey %}
+    </div>
   </div>
 </div>
 {% endblock %}

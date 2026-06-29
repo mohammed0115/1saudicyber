@@ -15,6 +15,8 @@
     <h1 style="color:#1F2933;font-size:1.55rem;font-weight:700;margin:0 0 6px;">التسجيل كمدقّق في المنصّة</h1>
     <p style="color:#667085;font-size:.95rem;margin:0 0 20px;">أكمل بياناتك. يخضع الحساب لمراجعة المنصّة قبل التفعيل. الحقول المعلّمة بـ * مطلوبة.</p>
 
+    {% include "components/journey_stepper.html" with journey=auditor_journey %}
+
     {% if form.non_field_errors %}
     <div style="background:#FBEAEA;border:1px solid #E6BCBC;color:#9B2C2C;border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:.9rem;">
       {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>

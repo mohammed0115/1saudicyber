@@ -17,9 +17,12 @@
       {% trans "هذا التقرير يعرض نتائج مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية أو اعتمادًا من أي جهة." %}
     </div>
 
+    {% include "components/current_step_card.html" with guide=guide %}
+
     {% if not report.has_verdicts %}
-    <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:18px;color:#667085;">
-      {% trans "لا توجد قرارات مدقق نهائية بعد. يرجى إكمال مراجعة الأدلة أولًا." %}
+    <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:18px;color:#667085;line-height:1.8;">
+      <p style="margin:0 0 4px;font-weight:600;color:#374151;">{% trans "لا يوجد تقرير مدقق بعد." %}</p>
+      {% trans "سيظهر التقرير الداخلي بعد مراجعة المدقق للأدلة وإصدار الحكم الداخلي. تأكد من رفع الأدلة المطلوبة وإسناد الملف إلى مدقق داخل المنصة." %}
     </div>
     {% else %}
 

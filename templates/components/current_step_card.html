@@ -1,0 +1,44 @@
+{% comment %}
+Phase 8D-2-FIX-C — guided "Where am I / What now / Next" card.
+Expects `guide` (from compliance.journey.build_page_guide or compatible dict):
+  step_number, total, title, status, what_now, next_title,
+  blocked_reason, cta_url_name, cta_label
+Read-only; renders nothing if `guide` is missing.
+{% endcomment %}
+{% if guide %}
+<div dir="rtl" class="ct-current-step rounded-xl border p-4 mb-5"
+     style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#FFFFFF;
+     border-color:{% if guide.status == 'blocked' %}#E6C98C{% elif guide.status == 'completed' %}#BFE3CF{% else %}#0F5D46{% endif %};
+     {% if guide.status == 'current' %}box-shadow:0 0 0 1px #0F5D46;{% endif %}">
+  <div class="flex items-center justify-between gap-2 mb-2">
+    <p style="margin:0;color:#1F6B63;font-weight:700;font-size:.9rem;">
+      {% if guide.step_number %}أنت الآن في الخطوة {{ guide.step_number }} من {{ guide.total }}: {{ guide.title }}{% else %}خطوة مستمرة: {{ guide.title }}{% endif %}
+    </p>
+    {% include "components/status_badge.html" with status=guide.status %}
+  </div>
+
+  {% if guide.status == 'blocked' and guide.blocked_reason %}
+  <p style="margin:0 0 10px;color:#7A5B16;font-size:.9rem;line-height:1.7;">
+    <i class="fas fa-lock" style="margin-inline-end:6px;"></i>{{ guide.blocked_reason }}
+  </p>
+  {% else %}
+  <p style="margin:0 0 6px;color:#374151;font-size:.92rem;line-height:1.7;">
+    <span style="color:#0F5D46;font-weight:600;">المطلوب منك الآن:</span> {{ guide.what_now }}
+  </p>
+  {% endif %}
+
+  {% if guide.next_title %}
+  <p style="margin:0 0 10px;color:#6B7280;font-size:.85rem;">
+    <span style="font-weight:600;">الخطوة التالية:</span> {{ guide.next_title }}
+  </p>
+  {% endif %}
+
+  {% if guide.cta_url_name and guide.cta_label %}
+  <a href="{% url guide.cta_url_name %}" data-busy="جارٍ فتح الخطوة..."
+     class="inline-block rounded-lg text-sm font-medium px-4 py-2"
+     style="{% if guide.status == 'blocked' %}background:#F7F9F8;border:1px solid #D9E2DE;color:#0F5D46;{% else %}background:#0F5D46;color:#fff;{% endif %}">
+    {{ guide.cta_label }}
+  </a>
+  {% endif %}
+</div>
+{% endif %}
