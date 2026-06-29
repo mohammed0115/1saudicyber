@@ -10,7 +10,10 @@
 
     {% if not profile.is_active_auditor %}
       <div style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;border-radius:12px;padding:18px;font-size:.95rem;line-height:1.8;">
-        <i class="fas fa-hourglass-half ms-1"></i> {{ auditor_journey.pending_message }}
+        <i class="fas fa-hourglass-half ms-1"></i>
+        {% if profile.status == 'suspended' %}{{ auditor_journey.suspended_message }}
+        {% elif profile.status == 'inactive' %}{{ auditor_journey.rejected_message }}
+        {% else %}{{ auditor_journey.pending_message }}{% endif %}
         <span style="display:block;color:#8A6D2A;margin-top:4px;font-size:.85rem;">حسابك ({{ profile.get_status_display }}) لا يتيح الوصول إلى بيانات الشركات حتى يتم التفعيل.</span>
       </div>
     {% else %}

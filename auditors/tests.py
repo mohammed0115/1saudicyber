@@ -343,7 +343,7 @@ class GuidedAuditorWorkflowTests(TestCase):
         self.client.force_login(u)
         resp = self.client.get(reverse('auditors:dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'حسابك قيد المراجعة من إدارة المنصة')
+        self.assertContains(resp, 'حسابك قيد مراجعة إدارة منصة 1SaudiCyber لدى شركة احصل الحل')
         self.assertContains(resp, 'بعد التفعيل ستظهر لك ملفات الشركات المسندة')
 
     def test_active_auditor_no_assignments_shows_guidance(self):
@@ -352,7 +352,7 @@ class GuidedAuditorWorkflowTests(TestCase):
         resp = self.client.get(reverse('auditors:dashboard'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'لا توجد ملفات شركات مسندة إليك حاليًا')
-        self.assertContains(resp, 'تواصل مع إدارة المنصة لإسناد ملف مراجعة')
+        self.assertContains(resp, 'تواصل مع إدارة منصة احصل الحل لإسناد ملف مراجعة')
 
     def test_pending_journey_marks_dashboard_step_blocked(self):
         u, p = _auditor(status='pending_review')
@@ -393,6 +393,169 @@ class GuidedAuditorWorkflowTests(TestCase):
         resp = self.client.get(reverse('auditors:register'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'مسار المراجعة الموجّه')
+
+
+class PlatformAdminAuditorApprovalTests(TestCase):
+    """Phase 8D-3A — Get Solution platform-admin auditor approval workflow."""
+
+    def _staff(self, email='gsadmin@x.com', superuser=False):
+        u = User.objects.create_user(username=email, email=email, password='longenough12',
+                                     role='admin', is_staff=True, is_superuser=superuser)
+        return u
+
+    # ---- access control ----
+    def test_anonymous_redirected_to_login(self):
+        resp = self.client.get(reverse('platform_admin:auditor_list'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_staff_can_access_list(self):
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:auditor_list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'إدارة اعتماد المدققين')
+
+    def test_superuser_can_access_list(self):
+        self.client.force_login(self._staff(email='su@x.com', superuser=True))
+        self.assertEqual(self.client.get(reverse('platform_admin:auditor_list')).status_code, 200)
+
+    def test_company_user_denied(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        resp = self.client.get(reverse('platform_admin:auditor_list'))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_auditor_user_denied(self):
+        u, p = _auditor(status='active')
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(reverse('platform_admin:auditor_list')).status_code, 403)
+
+    def test_normal_authenticated_user_denied(self):
+        u = User.objects.create_user(username='plain@x.com', email='plain@x.com',
+                                     password='longenough12', role='company_admin')
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(reverse('platform_admin:auditor_list')).status_code, 403)
+
+    # ---- listing ----
+    def test_pending_auditor_appears_in_list(self):
+        u, p = _auditor(status='pending_review', full_name='PendingAud')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:auditor_list') + '?status=pending_review')
+        self.assertContains(resp, 'PendingAud')
+
+    def test_summary_counts_render(self):
+        _auditor(status='pending_review')
+        _auditor(status='active')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:auditor_list'))
+        self.assertContains(resp, 'قيد المراجعة')
+        self.assertContains(resp, 'مفعّل')
+
+    # ---- actions ----
+    def test_approve_changes_pending_to_active(self):
+        u, p = _auditor(status='pending_review')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:auditor_action', args=[p.id]),
+                         {'action': 'approve'})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'active')
+
+    def test_approve_writes_audit_log(self):
+        from core.models import AuditLog
+        u, p = _auditor(status='pending_review')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:auditor_action', args=[p.id]), {'action': 'approve'})
+        log = AuditLog.objects.filter(action='auditor_approve').order_by('-id').first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.metadata.get('new_status'), 'active')
+        self.assertEqual(log.metadata.get('old_status'), 'pending_review')
+
+    def test_reject_requires_reason(self):
+        u, p = _auditor(status='pending_review')
+        self.client.force_login(self._staff())
+        # No reason -> rejected (declined) must NOT happen.
+        self.client.post(reverse('platform_admin:auditor_action', args=[p.id]), {'action': 'reject'})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'pending_review')
+        # With reason -> inactive (declined).
+        self.client.post(reverse('platform_admin:auditor_action', args=[p.id]),
+                         {'action': 'reject', 'reason': 'بيانات غير مكتملة'})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'inactive')
+
+    def test_suspend_requires_reason(self):
+        u, p = _auditor(status='active')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:auditor_action', args=[p.id]), {'action': 'suspend'})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'active')
+        self.client.post(reverse('platform_admin:auditor_action', args=[p.id]),
+                         {'action': 'suspend', 'reason': 'مخالفة سياسة'})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'suspended')
+
+    def test_reactivate_suspended_to_active(self):
+        u, p = _auditor(status='suspended')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:auditor_action', args=[p.id]), {'action': 'reactivate'})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'active')
+
+    def test_company_user_cannot_perform_action(self):
+        c, cu = _company_user(subscribe=True)
+        u, p = _auditor(status='pending_review')
+        self.client.force_login(cu)
+        resp = self.client.post(reverse('platform_admin:auditor_action', args=[p.id]),
+                                {'action': 'approve'})
+        self.assertEqual(resp.status_code, 403)
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'pending_review')  # unchanged
+
+    def test_detail_page_shows_actions(self):
+        u, p = _auditor(status='pending_review', full_name='DetailAud')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:auditor_detail', args=[p.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'DetailAud')
+        self.assertContains(resp, 'اعتماد وتفعيل')
+
+    # ---- safety ----
+    def test_no_unsafe_certification_wording_on_admin_pages(self):
+        u, p = _auditor(status='pending_review')
+        self.client.force_login(self._staff())
+        banned = ['معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد رسمي',
+                  'اعتماد حكومي', 'certified by NCA', 'official accreditation', 'government accredited']
+        for url in (reverse('platform_admin:auditor_list'),
+                    reverse('platform_admin:auditor_detail', args=[p.id])):
+            body = self.client.get(url).content.decode()
+            for w in banned:
+                self.assertNotIn(w, body, '%s in %s' % (w, url))
+
+    def test_get_solution_ownership_wording_present(self):
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:auditor_list')).content.decode()
+        self.assertIn('شركة احصل الحل', body)
+
+    # ---- regression: registration flows intact ----
+    def test_anonymous_auditor_registration_still_works(self):
+        resp = self.client.post(reverse('auditors:register'), {
+            'full_name': 'مدقق جديد', 'email': 'freshaud@x.com',
+            'password': 'longenough123', 'password_confirm': 'longenough123',
+            'city': 'Riyadh'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(AuditorProfile.objects.filter(user__email='freshaud@x.com',
+                                                      status='pending_review').exists())
+
+    def test_company_user_cannot_switch_into_auditor_registration(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        before = User.objects.count()
+        resp = self.client.post(reverse('auditors:register'), {
+            'full_name': 'X', 'email': 'switch2@x.com',
+            'password': 'longenough123', 'password_confirm': 'longenough123'})
+        self.assertEqual(resp.status_code, 200)  # blocked page
+        self.assertFalse(User.objects.filter(email='switch2@x.com').exists())
+        self.assertEqual(User.objects.count(), before)
 
 
 class Phase4CBackwardCompatTests(TestCase):

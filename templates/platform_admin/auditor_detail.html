@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}مراجعة المدقق - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-3xl mx-auto px-4 py-6 space-y-6">
+
+    <a href="{% url 'platform_admin:auditor_list' %}" class="text-gov-gray-500 text-sm">← قائمة المدققين</a>
+    <div>
+      <p class="text-gov-green-700 font-semibold text-sm mb-1">إدارة المنصة — شركة احصل الحل</p>
+      <h1 class="text-2xl font-bold text-gov-green-800">مراجعة حساب المدقق</h1>
+    </div>
+
+    {% if messages %}{% for m in messages %}
+      <div class="rounded-lg p-3 text-sm {% if m.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% else %}bg-green-50 border border-green-200 text-green-800{% endif %}">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    {# Profile #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold text-gov-gray-800">{{ profile.full_name }}</h2>
+        <span class="text-xs px-2.5 py-1 rounded-full font-medium
+          {% if profile.status == 'active' %}bg-green-100 text-green-800
+          {% elif profile.status == 'pending_review' %}bg-amber-100 text-amber-800
+          {% elif profile.status == 'suspended' %}bg-orange-100 text-orange-800
+          {% else %}bg-gray-100 text-gray-600{% endif %}">{{ profile.get_status_display }}</span>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gov-gray-500">البريد الإلكتروني:</span> <span dir="ltr">{{ profile.user.email }}</span></div>
+        <div><span class="text-gov-gray-500">الجهة:</span> {{ profile.organization_name|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">رقم الترخيص/العضوية:</span> {{ profile.license_or_membership_no|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">التخصص:</span> {{ profile.specialization|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">المدينة:</span> {{ profile.city|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">الدولة:</span> {{ profile.country|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">تاريخ التسجيل:</span> {{ profile.created_at|date:"Y-m-d H:i" }}</div>
+        <div><span class="text-gov-gray-500">آخر تحديث:</span> {{ profile.updated_at|date:"Y-m-d H:i" }}</div>
+      </div>
+      {% if profile.bio %}<div class="text-sm"><span class="text-gov-gray-500">نبذة:</span> {{ profile.bio }}</div>{% endif %}
+    </div>
+
+    {# Actions #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h3 class="font-bold text-gov-green-800 mb-4">إجراءات الإدارة</h3>
+      {% if available_actions %}
+      <div class="space-y-4">
+        {% for act in available_actions %}
+        <form method="post" action="{% url 'platform_admin:auditor_action' profile.id %}"
+              onsubmit="return confirm('تأكيد تنفيذ الإجراء: {{ act.label }} على حساب {{ profile.full_name|escapejs }}؟');"
+              class="flex flex-col md:flex-row md:items-center gap-3 border border-gov-gray-100 rounded-lg p-3">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="{{ act.action }}">
+          <span class="font-medium text-gov-gray-700 min-w-[120px]">{{ act.label }}</span>
+          {% if act.reason_required %}
+          <input type="text" name="reason" required placeholder="السبب (مطلوب)"
+                 class="flex-1 border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+          {% else %}
+          <input type="text" name="reason" placeholder="ملاحظة (اختياري)"
+                 class="flex-1 border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+          {% endif %}
+          <button type="submit"
+            class="px-5 py-2 rounded-lg text-sm font-medium text-white
+            {% if act.action == 'approve' or act.action == 'reactivate' %}bg-gov-green-700 hover:bg-gov-green-800
+            {% elif act.action == 'suspend' %}bg-orange-600 hover:bg-orange-700
+            {% else %}bg-red-600 hover:bg-red-700{% endif %}">{{ act.label }}</button>
+        </form>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-sm text-gov-gray-500">لا توجد إجراءات متاحة على الحالة الحالية لهذا الحساب.</p>
+      {% endif %}
+      <p class="text-xs text-gov-gray-400 mt-4">يتم تسجيل كل إجراء في سجل تدقيق المنصة (المستخدم، الحالة القديمة والجديدة، السبب، والوقت). إجراء داخلي تشغيلي فقط ولا يمثّل اعتمادًا رسميًا.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

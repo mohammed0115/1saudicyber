@@ -7,15 +7,19 @@
       <h1 style="color:#1F2933;font-size:1.4rem;font-weight:700;margin:0 0 6px;">مرحبًا، {{ profile.full_name }}</h1>
       {% if profile.status == 'pending_review' %}
         <div style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;border-radius:10px;padding:14px;margin:14px 0;font-size:.95rem;">
-          <i class="fas fa-hourglass-half ms-1"></i> تم استلام ملفك وهو قيد مراجعة المنصّة. لا يمكنك الوصول إلى بيانات الشركات حتى يتم تفعيل حسابك وإسناد ملفات إليك.
+          <i class="fas fa-hourglass-half ms-1"></i> حسابك قيد مراجعة إدارة منصة 1SaudiCyber لدى شركة احصل الحل. بعد التفعيل ستظهر لك ملفات الشركات المسندة.
         </div>
       {% elif profile.status == 'active' %}
         <div style="background:#EAF3EF;border:1px solid #CFE3DA;color:#0F5D46;border-radius:10px;padding:14px;margin:14px 0;font-size:.95rem;">
           <i class="fas fa-circle-check ms-1"></i> حسابك مفعّل. يمكنك الآن استعراض الطلبات المُسندة إليك.
         </div>
+      {% elif profile.status == 'suspended' %}
+        <div style="background:#FBEAEA;border:1px solid #E6BCBC;color:#9B2C2C;border-radius:10px;padding:14px;margin:14px 0;font-size:.95rem;">
+          تم إيقاف صلاحية حساب المدقق مؤقتًا من إدارة المنصة. يرجى التواصل مع إدارة منصة احصل الحل.
+        </div>
       {% else %}
         <div style="background:#FBEAEA;border:1px solid #E6BCBC;color:#9B2C2C;border-radius:10px;padding:14px;margin:14px 0;font-size:.95rem;">
-          حالة الحساب: {{ profile.get_status_display }} — لا يمكن الوصول إلى بيانات الشركات.
+          تعذر تفعيل حسابك كمدقق في الوقت الحالي. يمكنك التواصل مع إدارة منصة احصل الحل لمزيد من التفاصيل.
         </div>
       {% endif %}
       <p style="color:#667085;font-size:.9rem;margin:0 0 18px;">الحالة: {{ profile.get_status_display }}</p>
