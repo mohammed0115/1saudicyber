@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}حسابات غير مرتبطة · Unlinked Accounts - Get Solution CRM{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+    {% include "platform_admin/_crm_nav.html" with active='unlinked' %}
+
+    <div>
+      <h1 class="text-2xl font-bold text-gov-green-800">حسابات غير مرتبطة · Unlinked Accounts</h1>
+      <p class="text-gov-gray-600 text-sm mt-1 leading-7">
+        هذه حسابات مستخدمين مفعّلة لكنها غير مرتبطة بأي شركة وليست حسابات مدققين.
+        هؤلاء المستخدمون هم من يرون رسالة «لا توجد شركة مرتبطة بالحساب» في صفحات الامتثال.
+        تساعد هذه القائمة فريق احصل الحل على تحديد سبب ظهور الرسالة ومتابعة ربط الحساب بالشركة المناسبة.
+      </p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gov-green-50 text-gov-green-800">
+            <tr>
+              <th class="text-right px-4 py-3">البريد · Email</th>
+              <th class="text-right px-4 py-3">الاسم · Name</th>
+              <th class="text-right px-4 py-3">الدور · Role</th>
+              <th class="text-right px-4 py-3">نشط · Active</th>
+              <th class="text-right px-4 py-3">تاريخ الانضمام · Joined</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gov-gray-100">
+            {% for u in users %}
+            <tr class="hover:bg-gov-gray-50">
+              <td class="px-4 py-3 text-gov-gray-700" dir="ltr">{{ u.email }}</td>
+              <td class="px-4 py-3 text-gov-gray-600">{{ u.get_full_name|default:"—" }}</td>
+              <td class="px-4 py-3 text-gov-gray-600">{{ u.get_role_display }}</td>
+              <td class="px-4 py-3 text-gov-gray-600">{{ u.is_active|yesno:"نعم,لا" }}</td>
+              <td class="px-4 py-3 text-gov-gray-500">{{ u.date_joined|date:"Y-m-d" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="px-4 py-10 text-center text-gov-gray-500">لا توجد حسابات غير مرتبطة حاليًا · No unlinked accounts currently.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="text-xs text-gov-gray-400">عرض تشغيلي داخلي للقراءة فقط في هذه المرحلة — لا توجد إجراءات تعديل هنا.</p>
+  </div>
+</div>
+{% endblock %}

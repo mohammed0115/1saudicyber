@@ -558,6 +558,129 @@ class PlatformAdminAuditorApprovalTests(TestCase):
         self.assertEqual(User.objects.count(), before)
 
 
+class GetSolutionCRMConsoleTests(TestCase):
+    """Phase 8D-3B-ADMIN-CRM-A — read-only Get Solution CRM console foundation."""
+
+    def _staff(self, email='crmadmin@x.com', superuser=False):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True, is_superuser=superuser)
+
+    CRM_URLS = ('platform_admin:dashboard', 'platform_admin:companies_list',
+                'platform_admin:unlinked_accounts')
+
+    # ---- access control ----
+    def test_anonymous_denied_from_dashboard(self):
+        resp = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_company_user_denied(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        for name in self.CRM_URLS:
+            self.assertEqual(self.client.get(reverse(name)).status_code, 403, name)
+
+    def test_auditor_user_denied(self):
+        u, p = _auditor(status='active')
+        self.client.force_login(u)
+        for name in self.CRM_URLS:
+            self.assertEqual(self.client.get(reverse(name)).status_code, 403, name)
+
+    def test_staff_can_access_dashboard(self):
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Get Solution CRM')
+        self.assertContains(resp, 'Internal operations console')
+
+    def test_superuser_can_access_dashboard(self):
+        self.client.force_login(self._staff(email='su2@x.com', superuser=True))
+        self.assertEqual(self.client.get(reverse('platform_admin:dashboard')).status_code, 200)
+
+    # ---- companies ----
+    def test_staff_can_access_companies_list(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:companies_list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Companies')
+        self.assertContains(resp, c.name)
+
+    def test_staff_can_access_company_detail(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, c.name)
+        self.assertContains(resp, cu.email)  # linked user shown
+        self.assertContains(resp, 'Operational status')
+
+    def test_companies_list_no_500_when_empty(self):
+        # No companies at all -> must render an empty-state, not crash.
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:companies_list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'No companies registered yet')
+
+    def test_dashboard_no_500_with_no_data(self):
+        self.client.force_login(self._staff())
+        self.assertEqual(self.client.get(reverse('platform_admin:dashboard')).status_code, 200)
+
+    # ---- unlinked accounts (solves "No Company Associated") ----
+    def test_unlinked_accounts_renders_and_lists_unlinked_user(self):
+        # A company_admin role user with NO company is exactly the "No Company Associated" case.
+        orphan = User.objects.create_user(username='orphan@x.com', email='orphan@x.com',
+                                          password='longenough12', role='company_admin')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:unlinked_accounts'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Unlinked Accounts')
+        self.assertContains(resp, 'orphan@x.com')
+
+    def test_unlinked_excludes_company_linked_and_auditors_and_staff(self):
+        from auditors.crm_services import unlinked_users
+        c, cu = _company_user(subscribe=True)           # linked -> excluded
+        au, ap = _auditor(status='active')              # auditor -> excluded
+        staff = self._staff(email='exadmin@x.com')      # staff -> excluded
+        orphan = User.objects.create_user(username='lonely@x.com', email='lonely@x.com',
+                                          password='longenough12', role='company_admin')
+        ids = set(unlinked_users().values_list('id', flat=True))
+        self.assertIn(orphan.id, ids)
+        self.assertNotIn(cu.id, ids)
+        self.assertNotIn(au.id, ids)
+        self.assertNotIn(staff.id, ids)
+
+    # ---- read-only: no destructive actions exposed ----
+    def test_crm_views_are_get_only_readonly(self):
+        self.client.force_login(self._staff())
+        # Read-only foundation: no CRM page may submit a form to a platform-admin
+        # endpoint (the only POST form in the layout is the i18n language switcher).
+        c, cu = _company_user(subscribe=True)
+        for name, args in (('platform_admin:dashboard', []),
+                           ('platform_admin:companies_list', []),
+                           ('platform_admin:company_detail', [c.id]),
+                           ('platform_admin:unlinked_accounts', [])):
+            body = self.client.get(reverse(name, args=args)).content.decode()
+            self.assertNotIn('action="/platform-admin', body, name)
+            self.assertNotIn("action='/platform-admin", body, name)
+
+    # ---- safety wording ----
+    def test_no_unsafe_certification_wording_on_crm_pages(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(self._staff())
+        banned = ['معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد رسمي',
+                  'اعتماد حكومي', 'certified by NCA', 'official accreditation',
+                  'government accredited', 'official certification']
+        urls = [reverse('platform_admin:dashboard'),
+                reverse('platform_admin:companies_list'),
+                reverse('platform_admin:company_detail', args=[c.id]),
+                reverse('platform_admin:unlinked_accounts')]
+        for url in urls:
+            body = self.client.get(url).content.decode()
+            for w in banned:
+                self.assertNotIn(w, body, '%s in %s' % (w, url))
+
+
 class Phase4CBackwardCompatTests(TestCase):
     def setUp(self):
         from io import StringIO

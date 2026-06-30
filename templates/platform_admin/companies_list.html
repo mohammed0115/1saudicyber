@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}الشركات · Companies - Get Solution CRM{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+    {% include "platform_admin/_crm_nav.html" with active='companies' %}
+
+    <div>
+      <h1 class="text-2xl font-bold text-gov-green-800">الشركات · Companies</h1>
+      <p class="text-gov-gray-600 text-sm mt-1">عرض تشغيلي للقراءة فقط لجميع الشركات المسجّلة على المنصة.</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gov-green-50 text-gov-green-800">
+            <tr>
+              <th class="text-right px-4 py-3">الشركة · Company</th>
+              <th class="text-right px-4 py-3">السجل التجاري · CR</th>
+              <th class="text-right px-4 py-3">الحالة · Status</th>
+              <th class="text-right px-4 py-3">المستخدمون · Users</th>
+              <th class="text-right px-4 py-3">القطاع · Sector</th>
+              <th class="text-right px-4 py-3">تاريخ الإنشاء · Created</th>
+              <th class="text-right px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gov-gray-100">
+            {% for c in companies %}
+            <tr class="hover:bg-gov-gray-50">
+              <td class="px-4 py-3 font-medium text-gov-gray-800">{{ c.name_ar|default:c.name }}</td>
+              <td class="px-4 py-3 text-gov-gray-600" dir="ltr">{{ c.cr_number }}</td>
+              <td class="px-4 py-3"><span class="text-xs px-2.5 py-1 rounded-full bg-gov-green-50 text-gov-green-800 font-medium">{{ c.get_status_display }}</span></td>
+              <td class="px-4 py-3 text-gov-gray-600">{{ c.user_count }}</td>
+              <td class="px-4 py-3 text-gov-gray-600">{{ c.get_sector_display }}</td>
+              <td class="px-4 py-3 text-gov-gray-500">{{ c.created_at|date:"Y-m-d" }}</td>
+              <td class="px-4 py-3"><a href="{% url 'platform_admin:company_detail' c.id %}" class="text-gov-green-700 hover:text-gov-green-900 font-medium">تفاصيل · View</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="px-4 py-10 text-center text-gov-gray-500">لا توجد شركات مسجّلة بعد · No companies registered yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -13,6 +13,7 @@ from django.views.decorators.http import require_http_methods
 
 from .models import AuditorProfile
 from . import admin_services as svc
+from . import crm_services as crm
 
 
 def platform_admin_required(view):
@@ -59,6 +60,44 @@ def auditor_approval_detail(request, profile_id):
     return render(request, 'platform_admin/auditor_detail.html', {
         'profile': profile,
         'available_actions': available,
+    })
+
+
+# ============================================================
+# Phase 8D-3B-ADMIN-CRM-A — Get Solution CRM Console (read-only foundation)
+# ============================================================
+@platform_admin_required
+def crm_dashboard(request):
+    """Internal Get Solution operations console home: summary + navigation."""
+    return render(request, 'platform_admin/dashboard.html', {
+        'summary': crm.crm_summary(),
+    })
+
+
+@platform_admin_required
+def crm_companies_list(request):
+    """Read-only list of all companies with linked-user counts and status."""
+    return render(request, 'platform_admin/companies_list.html', {
+        'companies': crm.companies_overview(),
+    })
+
+
+@platform_admin_required
+def crm_company_detail(request, company_id):
+    """Read-only operational snapshot for one company."""
+    from core.models import Company
+    company = get_object_or_404(Company, id=company_id)
+    return render(request, 'platform_admin/company_detail.html', {
+        'company': company,
+        'snapshot': crm.company_operational_snapshot(company),
+    })
+
+
+@platform_admin_required
+def crm_unlinked_accounts(request):
+    """Accounts not linked to any company/auditor profile (explains 'No Company Associated')."""
+    return render(request, 'platform_admin/unlinked_accounts.html', {
+        'users': crm.unlinked_users(),
     })
 
 

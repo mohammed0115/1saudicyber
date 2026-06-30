@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ company.name }} · Company - Get Solution CRM{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+    {% include "platform_admin/_crm_nav.html" with active='companies' %}
+
+    <a href="{% url 'platform_admin:companies_list' %}" class="text-gov-gray-500 text-sm">← الشركات · Companies</a>
+    <div>
+      <h1 class="text-2xl font-bold text-gov-green-800">{{ company.name_ar|default:company.name }}</h1>
+      <p class="text-gov-gray-600 text-sm mt-1" dir="ltr">{{ company.name }} · CR {{ company.cr_number }}</p>
+    </div>
+
+    {# Profile #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">بيانات الشركة · Company profile</h2>
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gov-gray-500">الحالة · Status:</span> {{ company.get_status_display }}</div>
+        <div><span class="text-gov-gray-500">القطاع · Sector:</span> {{ company.get_sector_display }}</div>
+        <div><span class="text-gov-gray-500">الحجم · Size:</span> {{ company.get_size_display }}</div>
+        <div><span class="text-gov-gray-500">المدينة · City:</span> {{ company.city|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">بريد التواصل · Contact:</span> <span dir="ltr">{{ company.contact_email }}</span></div>
+        <div><span class="text-gov-gray-500">التهيئة مكتملة · Onboarded:</span> {{ company.onboarding_completed|yesno:"نعم,لا" }}</div>
+        <div><span class="text-gov-gray-500">تاريخ الإنشاء · Created:</span> {{ company.created_at|date:"Y-m-d H:i" }}</div>
+        <div><span class="text-gov-gray-500">آخر تحديث · Updated:</span> {{ company.updated_at|date:"Y-m-d H:i" }}</div>
+      </div>
+    </div>
+
+    {# Linked users #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">المستخدمون المرتبطون · Linked users ({{ snapshot.linked_users|length }})</h2>
+      {% if snapshot.linked_users %}
+      <table class="w-full text-sm">
+        <thead class="text-gov-gray-500"><tr><th class="text-right py-2">البريد · Email</th><th class="text-right py-2">الدور · Role</th><th class="text-right py-2">نشط · Active</th></tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+          {% for u in snapshot.linked_users %}
+          <tr><td class="py-2" dir="ltr">{{ u.email }}</td><td class="py-2">{{ u.get_role_display }}</td><td class="py-2">{{ u.is_active|yesno:"نعم,لا" }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-sm text-gov-gray-500">لا يوجد مستخدمون مرتبطون بهذه الشركة بعد · No users linked to this company yet.</p>
+      {% endif %}
+    </div>
+
+    {# Operational snapshot #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">الحالة التشغيلية · Operational status</h2>
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gov-gray-500">التصنيف · Classification:</span> {{ snapshot.has_classification|yesno:"مكتمل,لم يبدأ" }}</div>
+        <div><span class="text-gov-gray-500">تحليل الأطر · Applicability:</span> {{ snapshot.has_applicability|yesno:"متوفر,لا يوجد" }}</div>
+        <div><span class="text-gov-gray-500">الأدلة المرفوعة · Evidence uploaded:</span> {{ snapshot.has_evidence|yesno:"نعم,لا" }}</div>
+        <div><span class="text-gov-gray-500">إسناد مدقق · Auditor assigned:</span> {{ snapshot.has_auditor_assignment|yesno:"نعم,لا" }}</div>
+        <div><span class="text-gov-gray-500">حكم المدقق الداخلي · Auditor verdict:</span> {{ snapshot.has_auditor_verdict|yesno:"نعم,لا" }}</div>
+        <div><span class="text-gov-gray-500">تقرير المراجعة الداخلي · Reviewed report:</span> {{ snapshot.has_reviewed_report|yesno:"متوفر,لا يوجد" }}</div>
+      </div>
+      <div class="mt-4">
+        <span class="text-gov-gray-500 text-sm">الأطر المعتمدة · Approved frameworks:</span>
+        {% if snapshot.approved_frameworks %}
+          <div class="flex flex-wrap gap-2 mt-2">
+            {% for fw in snapshot.approved_frameworks %}<span class="text-xs px-2.5 py-1 rounded-full bg-gov-green-50 text-gov-green-800">{{ fw }}</span>{% endfor %}
+          </div>
+        {% else %}
+          <span class="text-sm text-gov-gray-500"> لا توجد أطر معتمدة بعد · none yet.</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <p class="text-xs text-gov-gray-400">عرض تشغيلي داخلي للقراءة فقط — لا يمثّل قرار امتثال أو اعتمادًا رسميًا. الحكم النهائي مراجعة داخلية من المدقق.</p>
+  </div>
+</div>
+{% endblock %}
