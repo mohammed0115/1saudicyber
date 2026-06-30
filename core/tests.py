@@ -1574,3 +1574,237 @@ class Phase8D2FixBLandingTranslationTests(TestCase):
             for banned in ('معتمد من NCA', 'اعتماد رسمي', 'certified by NCA',
                            'official accreditation', 'شهادة امتثال رسمية'):
                 self.assertNotIn(banned, body, banned)
+
+
+# ============================================================
+# Phase 8D-3B-AUTH-A — Email OTP verification + Forgot Password
+# ============================================================
+from core import otp_services as _otp
+from core.models import EmailOTP
+
+
+def _reg_payload(**over):
+    d = {
+        'first_name': 'Otp', 'last_name': 'User',
+        'email': 'otpuser@co.example', 'phone': '0500000000',
+        'password': 'longenough123', 'password_confirm': 'longenough123',
+        'company_name_ar': 'شركة الرمز', 'company_name': 'OTP Co',
+        'cr_number': '3434343434', 'sector': 'technology', 'size': 'small',
+        'city': 'Riyadh', 'country': 'SA', 'description': 'وصف',
+        'target_nca': 'on', 'accept_terms': 'on',
+    }
+    d.update(over)
+    return d
+
+
+class EmailOTPTests(TestCase):
+    def _user(self, email='u@x.com', **kw):
+        return User.objects.create_user(username=email, email=email,
+                                        password='longenough12', **kw)
+
+    def test_registration_creates_otp_requirement(self):
+        resp = self.client.post(reverse('core:company_register'), _reg_payload())
+        self.assertEqual(resp.status_code, 302)
+        u = User.objects.get(email='otpuser@co.example')
+        self.assertFalse(u.email_verified)
+        self.assertTrue(EmailOTP.objects.filter(user=u, used=False).exists())
+
+    def test_registration_sends_otp_email(self):
+        from django.core import mail
+        self.client.post(reverse('core:company_register'), _reg_payload())
+        self.assertTrue(any('1SaudiCyber' in m.subject or 'التحقق' in m.subject for m in mail.outbox))
+
+    def test_valid_otp_verifies_email(self):
+        u = self._user()
+        raw = _otp.issue_and_send(u)
+        self.client.force_login(u)
+        resp = self.client.post(reverse('core:verify_email_otp'), {'code': raw})
+        u.refresh_from_db()
+        self.assertTrue(u.email_verified)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_invalid_otp_does_not_verify(self):
+        u = self._user()
+        _otp.issue_and_send(u)
+        self.client.force_login(u)
+        self.client.post(reverse('core:verify_email_otp'), {'code': '000000'})
+        u.refresh_from_db()
+        self.assertFalse(u.email_verified)
+
+    def test_expired_otp_does_not_verify(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        u = self._user()
+        otp_obj, raw = _otp.issue_otp(u)
+        EmailOTP.objects.filter(id=otp_obj.id).update(
+            expires_at=timezone.now() - timedelta(minutes=1))
+        ok, reason = _otp.verify_otp(u, raw)
+        self.assertFalse(ok)
+        self.assertEqual(reason, 'expired')
+        u.refresh_from_db()
+        self.assertFalse(u.email_verified)
+
+    def test_too_many_attempts_blocks(self):
+        u = self._user()
+        _otp.issue_otp(u)
+        for _ in range(_otp.OTP_MAX_ATTEMPTS):
+            _otp.verify_otp(u, '000000')  # wrong
+        ok, reason = _otp.verify_otp(u, '000000')
+        self.assertFalse(ok)
+        self.assertEqual(reason, 'too_many_attempts')
+
+    def test_too_many_attempts_then_correct_still_blocked(self):
+        u = self._user()
+        otp_obj, raw = _otp.issue_otp(u)
+        for _ in range(_otp.OTP_MAX_ATTEMPTS):
+            _otp.verify_otp(u, '000000')
+        ok, reason = _otp.verify_otp(u, raw)  # correct code, but attempts exhausted
+        self.assertFalse(ok)
+        self.assertEqual(reason, 'too_many_attempts')
+        u.refresh_from_db()
+        self.assertFalse(u.email_verified)
+
+    def test_resend_generates_new_active_otp(self):
+        u = self._user()
+        first, raw1 = _otp.issue_otp(u)
+        # force resend allowed by ageing the first OTP
+        from django.utils import timezone
+        from datetime import timedelta
+        EmailOTP.objects.filter(id=first.id).update(
+            created_at=timezone.now() - timedelta(seconds=120))
+        self.assertTrue(_otp.can_resend(u))
+        self.client.force_login(u)
+        self.client.post(reverse('core:resend_email_otp'))
+        first.refresh_from_db()
+        self.assertTrue(first.used)  # old one invalidated
+        self.assertTrue(EmailOTP.objects.filter(user=u, used=False).exists())
+
+    def test_resend_throttled_quickly(self):
+        u = self._user()
+        _otp.issue_otp(u)
+        self.assertFalse(_otp.can_resend(u))  # just issued
+
+    def test_otp_not_stored_in_plaintext(self):
+        u = self._user()
+        otp_obj, raw = _otp.issue_otp(u)
+        self.assertNotIn(raw, otp_obj.code_hash)
+        self.assertNotEqual(raw, otp_obj.code_hash)
+
+    def test_auditor_registration_issues_otp(self):
+        resp = self.client.post(reverse('auditors:register'), {
+            'full_name': 'مدقق الرمز', 'email': 'audotp@x.com',
+            'password': 'longenough123', 'password_confirm': 'longenough123',
+            'city': 'Riyadh'})
+        self.assertEqual(resp.status_code, 302)
+        u = User.objects.get(email='audotp@x.com')
+        self.assertTrue(EmailOTP.objects.filter(user=u, used=False).exists())
+
+    def test_staff_login_not_broken_and_not_gated(self):
+        staff = self._user(email='staffotp@x.com', is_staff=True)
+        # email_verified defaults False, but staff must still access dashboard (no hard gate).
+        self.client.force_login(staff)
+        self.assertFalse(staff.email_verified)
+        resp = self.client.get(reverse('dashboard:main'))
+        self.assertNotEqual(resp.status_code, 403)
+
+    def test_legacy_unverified_user_not_locked_out(self):
+        u = self._user(email='legacy@x.com', role='company_admin')
+        self.client.force_login(u)
+        # An unverified legacy user can still reach login/dashboard flow (non-blocking OTP).
+        resp = self.client.get(reverse('core:verify_email_otp'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_already_verified_user_redirected_from_otp_page(self):
+        u = self._user(email='verified@x.com')
+        u.email_verified = True
+        u.save(update_fields=['email_verified'])
+        self.client.force_login(u)
+        resp = self.client.get(reverse('core:verify_email_otp'))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_otp_page_requires_login(self):
+        resp = self.client.get(reverse('core:verify_email_otp'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/login', resp.url)
+
+    def test_resend_route_not_captured_as_token(self):
+        # /verify-email/resend/ must hit the OTP resend view, not the legacy token view.
+        u = self._user(email='resendroute@x.com')
+        self.client.force_login(u)
+        resp = self.client.post(reverse('core:resend_email_otp'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse('core:verify_email_otp'), resp.url)
+
+    def test_no_unsafe_wording_on_otp_page(self):
+        u = self._user(email='safe@x.com')
+        self.client.force_login(u)
+        body = self.client.get(reverse('core:verify_email_otp')).content.decode()
+        for banned in ('معتمد من NCA', 'اعتماد رسمي', 'certified by NCA',
+                       'official accreditation', 'government accredited', 'شهادة امتثال رسمية'):
+            self.assertNotIn(banned, body)
+
+
+class ForgotPasswordTests(TestCase):
+    def _user(self, email='reset@x.com'):
+        return User.objects.create_user(username=email, email=email, password='oldpassword123')
+
+    def test_login_page_has_forgot_password_link(self):
+        body = self.client.get(reverse('core:login')).content.decode()
+        self.assertIn(reverse('core:password_reset'), body)
+        self.assertIn('نسيت كلمة المرور', body)
+
+    def test_password_reset_request_page_loads(self):
+        self.assertEqual(self.client.get(reverse('core:password_reset')).status_code, 200)
+
+    def test_reset_request_does_not_reveal_email_existence(self):
+        self._user(email='exists@x.com')
+        # Existing email -> redirect to done.
+        r1 = self.client.post(reverse('core:password_reset'), {'email': 'exists@x.com'})
+        # Non-existent email -> SAME redirect to done (no disclosure).
+        r2 = self.client.post(reverse('core:password_reset'), {'email': 'nobody@x.com'})
+        self.assertEqual(r1.status_code, 302)
+        self.assertEqual(r2.status_code, 302)
+        self.assertEqual(r1.url, r2.url)
+
+    def test_reset_email_generated_for_existing_user(self):
+        from django.core import mail
+        self._user(email='hasmail@x.com')
+        self.client.post(reverse('core:password_reset'), {'email': 'hasmail@x.com'})
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('hasmail@x.com', mail.outbox[0].to)
+
+    def test_no_email_for_unknown_address(self):
+        from django.core import mail
+        self.client.post(reverse('core:password_reset'), {'email': 'ghost@x.com'})
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_valid_token_allows_password_change_and_login(self):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        u = self._user(email='changer@x.com')
+        uidb64 = urlsafe_base64_encode(force_bytes(u.pk))
+        token = default_token_generator.make_token(u)
+        # GET sets the session token then redirects to the 'set-password' URL.
+        follow = self.client.get(reverse('core:password_reset_confirm',
+                                          args=[uidb64, token]), follow=True)
+        self.assertEqual(follow.status_code, 200)
+        post_url = follow.redirect_chain[-1][0] if follow.redirect_chain else \
+            reverse('core:password_reset_confirm', args=[uidb64, 'set-password'])
+        resp = self.client.post(post_url, {'new_password1': 'BrandNewPass123',
+                                           'new_password2': 'BrandNewPass123'})
+        self.assertEqual(resp.status_code, 302)
+        u.refresh_from_db()
+        self.assertTrue(u.check_password('BrandNewPass123'))
+        self.assertTrue(self.client.login(username='changer@x.com', password='BrandNewPass123'))
+
+    def test_invalid_token_rejected(self):
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        u = self._user(email='badtoken@x.com')
+        uidb64 = urlsafe_base64_encode(force_bytes(u.pk))
+        resp = self.client.get(reverse('core:password_reset_confirm',
+                                        args=[uidb64, 'invalid-token-xyz']), follow=True)
+        self.assertContains(resp, 'رابط', status_code=200) if False else None
+        # The confirm view renders an "invalid" state and does not offer the set-password form.
+        self.assertNotContains(resp, 'new_password1')

@@ -48,7 +48,11 @@ def register(request):
                 specialization=d.get('specialization', ''), city=d.get('city', ''),
                 bio=d.get('bio', ''), status='pending_review')
             login(request, user)
-            messages.success(request, 'تم استلام طلب تسجيلك كمدقّق. الحساب قيد مراجعة المنصّة.')
+            # Phase 8D-3B-AUTH-A: email a 6-digit verification OTP (non-blocking).
+            from core import otp_services as otp
+            otp.issue_and_send(user)
+            messages.success(request, 'تم استلام طلب تسجيلك كمدقّق. الحساب قيد مراجعة المنصّة. '
+                                      'تحقّق من بريدك الإلكتروني للحصول على رمز التحقق · Check your email for the verification code.')
             return redirect('auditors:onboarding')
         return render(request, 'auditors/register.html', {
             'form': form, 'auditor_journey': build_auditor_journey(request.user)})

@@ -202,6 +202,54 @@ def verify_email(request, token):
     return redirect('dashboard:main' if request.user.is_authenticated else 'core:login')
 
 
+# ============================================================
+# Phase 8D-3B-AUTH-A — 6-digit email OTP verification (non-blocking).
+# Does NOT gate login (existing/legacy users keep working); it is a guided
+# post-registration step to confirm email ownership.
+# ============================================================
+@login_required
+@require_http_methods(["GET", "POST"])
+def verify_email_otp(request):
+    """Enter the 6-digit OTP emailed at registration to mark email verified."""
+    from . import otp_services as otp
+    user = request.user
+    if user.email_verified:
+        messages.info(request, 'بريدك الإلكتروني مُوثّق بالفعل · Your email is already verified.')
+        return redirect('dashboard:main')
+
+    if request.method == 'POST':
+        ok, reason = otp.verify_otp(user, request.POST.get('code', ''))
+        if ok:
+            messages.success(request, 'تم توثيق بريدك الإلكتروني بنجاح · Email verified successfully.')
+            return redirect('dashboard:main')
+        msgs = {
+            'no_otp': 'لا يوجد رمز نشِط. اطلب رمزًا جديدًا · No active code. Please request a new one.',
+            'expired': 'انتهت صلاحية الرمز. اطلب رمزًا جديدًا · The code has expired. Request a new one.',
+            'too_many_attempts': 'تم تجاوز عدد المحاولات المسموح بها. اطلب رمزًا جديدًا · Too many attempts. Request a new code.',
+            'invalid': 'الرمز غير صحيح. حاول مرة أخرى · Invalid code. Please try again.',
+        }
+        messages.error(request, msgs.get(reason, msgs['invalid']))
+        return render(request, 'core/verify_email_otp.html', {'email': user.email})
+
+    return render(request, 'core/verify_email_otp.html', {'email': user.email})
+
+
+@login_required
+@require_http_methods(["POST"])
+def resend_email_otp(request):
+    """Resend a fresh OTP (throttled). Never reveals the code in the response."""
+    from . import otp_services as otp
+    user = request.user
+    if user.email_verified:
+        return redirect('dashboard:main')
+    if otp.can_resend(user):
+        otp.issue_and_send(user)
+        messages.success(request, 'تم إرسال رمز تحقق جديد إلى بريدك · A new verification code has been sent to your email.')
+    else:
+        messages.info(request, 'يرجى الانتظار قبل طلب رمز جديد · Please wait a moment before requesting a new code.')
+    return redirect('core:verify_email_otp')
+
+
 def logout_view(request):
     """User logout. Honors a safe internal ?next= (e.g. log out then register as auditor)."""
     from django.utils.http import url_has_allowed_host_and_scheme
@@ -260,7 +308,11 @@ def company_self_register(request):
                     phone=d.get('phone', ''), company=company, role='company_admin',
                 )
             login(request, user)
-            messages.success(request, 'تم إنشاء حساب شركتك بنجاح. مرحبًا بك في CyberTrust.')
+            # Phase 8D-3B-AUTH-A: issue + email a 6-digit verification OTP (non-blocking).
+            from . import otp_services as otp
+            otp.issue_and_send(user)
+            messages.success(request, 'تم إنشاء حساب شركتك بنجاح. تحقّق من بريدك الإلكتروني '
+                                      'للحصول على رمز التحقق · Check your email for the verification code.')
             return redirect('core:onboarding')
         return render(request, 'onboarding/register.html', {'form': form})
     return render(request, 'onboarding/register.html', {'form': SelfServiceRegistrationForm()})

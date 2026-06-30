@@ -167,6 +167,36 @@ class EmailVerificationToken(models.Model):
         return secrets.token_urlsafe(32)
 
 
+class EmailOTP(models.Model):
+    """Phase 8D-3B-AUTH-A — 6-digit email-verification OTP (hashed, expiring).
+
+    The raw 6-digit code is NEVER stored: only a salted hash (Django password
+    hasher) is kept. Each OTP expires after a short TTL and allows a limited
+    number of attempts; an expired or over-attempted OTP can never verify.
+    """
+    PURPOSE_CHOICES = [('email_verify', 'Email Verification')]
+
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='email_otps')
+    purpose = models.CharField(max_length=32, choices=PURPOSE_CHOICES, default='email_verify')
+    code_hash = models.CharField(max_length=255)
+    attempts = models.PositiveIntegerField(default=0)
+    used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'email_otps'
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['user', 'purpose', 'used'])]
+
+    def __str__(self):
+        return f"OTP({self.user_id}, {self.purpose}, used={self.used})"
+
+    def is_expired(self):
+        from django.utils import timezone
+        return timezone.now() >= self.expires_at
+
+
 class AuditLog(models.Model):
     """General system audit trail for all user actions (FR-012.8 / NFR-021 / NFR-046)."""
     user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_entries')

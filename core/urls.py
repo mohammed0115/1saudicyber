@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
 from . import views
 
@@ -23,20 +23,30 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('account/delete/', views.delete_company_data, name='delete_company_data'),
 
-    # Email verification (FR-002.8)
+    # Phase 8D-3B-AUTH-A — 6-digit email OTP verification (static routes BEFORE the
+    # token route so 'resend' is never captured as a verification token).
+    path('verify-email/', views.verify_email_otp, name='verify_email_otp'),
+    path('verify-email/resend/', views.resend_email_otp, name='resend_email_otp'),
+
+    # Email verification (FR-002.8) — legacy one-time link
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),
 
     # MFA (FR-012.3)
     path('mfa/setup/', views.mfa_setup, name='mfa_setup'),
     path('mfa/challenge/', views.mfa_challenge, name='mfa_challenge'),
 
-    # Password reset via email (FR-012.7) — Django built-in views
+    # Password reset via email (FR-012.7) — Django built-in views.
+    # Namespaced success_url is set explicitly so reverse() resolves under 'core:'.
     path('password-reset/', auth_views.PasswordResetView.as_view(
-        template_name='core/password_reset.html'), name='password_reset'),
+        template_name='core/password_reset.html',
+        email_template_name='core/password_reset_email.txt',
+        subject_template_name='core/password_reset_subject.txt',
+        success_url=reverse_lazy('core:password_reset_done')), name='password_reset'),
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(
         template_name='core/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
-        template_name='core/password_reset_confirm.html'), name='password_reset_confirm'),
+        template_name='core/password_reset_confirm.html',
+        success_url=reverse_lazy('core:password_reset_complete')), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='core/password_reset_complete.html'), name='password_reset_complete'),
 ]
