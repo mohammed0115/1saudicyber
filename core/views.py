@@ -57,7 +57,15 @@ def _create_company_control_checklist(company):
 
 @require_http_methods(["GET", "POST"])
 def register_company(request):
-    """Standalone company registration - no external API verification."""
+    """Standalone company registration - no external API verification.
+
+    Phase 8D-3C: anonymous-only — never create/switch account context over an
+    existing authenticated session.
+    """
+    if request.user.is_authenticated:
+        from .roles import portal_for
+        return render(request, 'core/already_authenticated.html',
+                      {'portal': portal_for(request.user)})
     if request.method == 'POST':
         form = CompanyRegistrationForm(request.POST)
         if not form.is_valid():
@@ -280,8 +288,17 @@ def company_self_register(request):
     """Self-service company registration → creates User + Company, logs in,
     routes to onboarding. Additive; no CompanyControl, no destructive change."""
     from .forms import SelfServiceRegistrationForm
+    # Phase 8D-3C: anonymous-only — an already-authenticated user (company, auditor
+    # or staff) must not silently create/switch into a new company session.
     if request.user.is_authenticated:
-        return redirect('core:onboarding')
+        from .roles import portal_for, get_user_company
+        # A company user who already has a company just returns to their onboarding;
+        # everyone else (auditor, staff, or an account with no company) is blocked
+        # from creating/switching into a brand-new company session.
+        if get_user_company(request.user) is not None:
+            return redirect('core:onboarding')
+        return render(request, 'core/already_authenticated.html',
+                      {'portal': portal_for(request.user)})
     if request.method == 'POST':
         form = SelfServiceRegistrationForm(request.POST)
         if form.is_valid():

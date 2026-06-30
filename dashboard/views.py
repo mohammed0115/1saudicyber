@@ -12,7 +12,15 @@ from ai_engine.models import GapAnalysis
 
 @login_required
 def main_dashboard(request):
-    """Route to appropriate dashboard based on user role."""
+    """Route to the correct portal based on the user's role (fail-closed).
+
+    Phase 8D-3C: Get Solution staff/superuser go to the CRM console (never the
+    customer compliance dashboard), and auditor accounts go to the auditor portal.
+    """
+    from core.roles import is_platform_admin_user
+    # Get Solution staff/admin are NOT customers — send them to the CRM console.
+    if is_platform_admin_user(request.user):
+        return redirect('platform_admin:dashboard')
     role = request.user.role
     if role == 'executive':
         return executive_dashboard(request)

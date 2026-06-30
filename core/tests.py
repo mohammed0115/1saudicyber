@@ -1808,3 +1808,206 @@ class ForgotPasswordTests(TestCase):
         self.assertContains(resp, 'رابط', status_code=200) if False else None
         # The confirm view renders an "invalid" state and does not offer the set-password form.
         self.assertNotContains(resp, 'new_password1')
+
+
+# ============================================================
+# Phase 8D-3C-SECURITY-A — Role Portal & Session Isolation
+# ============================================================
+from auditors.models import AuditorProfile, AuditorAssignment
+
+
+class RolePortalIsolationTests(TestCase):
+    def _company_with_user(self, cr='5151515151', email='cu@portal.example'):
+        c = Company.objects.create(name='Portal Co', cr_number=cr, sector='technology',
+                                   size='small', contact_email=email)
+        u = User.objects.create_user(username=email, email=email, password='longenough12',
+                                     company=c, role='company_admin')
+        return c, u
+
+    def _auditor(self, email='aud@portal.example', status='active'):
+        u = User.objects.create_user(username=email, email=email, password='longenough12',
+                                     role='auditor')
+        p = AuditorProfile.objects.create(user=u, full_name='Portal Auditor', status=status)
+        return u, p
+
+    def _staff(self, email='staff@portal.example', superuser=False):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True, is_superuser=superuser)
+
+    def _unlinked(self, email='orphan@portal.example'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='company_admin')
+
+    # ---- role helpers ----
+    def test_role_helpers_classify_correctly(self):
+        from core.roles import portal_for, is_company_user, is_auditor_user, is_platform_admin_user
+        _, cu = self._company_with_user()
+        au, _ = self._auditor()
+        st = self._staff()
+        orphan = self._unlinked()
+        self.assertEqual(portal_for(cu), 'company')
+        self.assertEqual(portal_for(au), 'auditor')
+        self.assertEqual(portal_for(st), 'platform_admin')
+        self.assertEqual(portal_for(orphan), 'company_unlinked')
+        self.assertTrue(is_company_user(cu))
+        self.assertTrue(is_auditor_user(au))
+        self.assertTrue(is_platform_admin_user(st))
+        self.assertFalse(is_company_user(st))
+        self.assertFalse(is_company_user(au))
+
+    # ---- /platform-admin/ access (1-4) ----
+    def test_anonymous_cannot_access_platform_admin(self):
+        r = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/login', r.url)
+
+    def test_company_user_cannot_access_platform_admin(self):
+        _, cu = self._company_with_user()
+        self.client.force_login(cu)
+        self.assertEqual(self.client.get(reverse('platform_admin:dashboard')).status_code, 403)
+
+    def test_auditor_user_cannot_access_platform_admin(self):
+        au, _ = self._auditor()
+        self.client.force_login(au)
+        self.assertEqual(self.client.get(reverse('platform_admin:dashboard')).status_code, 403)
+
+    def test_staff_and_superuser_can_access_platform_admin(self):
+        for u in (self._staff(), self._staff(email='su@portal.example', superuser=True)):
+            self.client.force_login(u)
+            self.assertEqual(self.client.get(reverse('platform_admin:dashboard')).status_code, 200)
+
+    # ---- staff/auditor on company pages (6,7,8) ----
+    def test_staff_on_company_page_gets_admin_safe_message(self):
+        st = self._staff()
+        self.client.force_login(st)
+        resp = self.client.get(reverse('compliance:classification'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Get Solution CRM')
+        self.assertContains(resp, 'signed in as Get Solution staff')
+        self.assertNotContains(resp, 'not linked to a company')  # not the customer text
+
+    def test_auditor_on_company_page_gets_auditor_safe_message(self):
+        au, _ = self._auditor()
+        self.client.force_login(au)
+        resp = self.client.get(reverse('compliance:classification'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Auditor account')
+        self.assertContains(resp, reverse('auditors:dashboard'))
+
+    def test_unlinked_user_gets_safe_no_company_page(self):
+        orphan = self._unlinked()
+        self.client.force_login(orphan)
+        resp = self.client.get(reverse('compliance:classification'))
+        self.assertEqual(resp.status_code, 200)  # no 500
+        self.assertContains(resp, 'not linked to a company')
+        self.assertContains(resp, 'Get Solution support')
+
+    # ---- session isolation (9-13) ----
+    def test_company_user_cannot_switch_into_auditor_registration(self):
+        _, cu = self._company_with_user()
+        self.client.force_login(cu)
+        before = AuditorProfile.objects.count()
+        resp = self.client.post(reverse('auditors:register'), {
+            'full_name': 'X', 'email': 'switchaud@x.com',
+            'password': 'longenough123', 'password_confirm': 'longenough123'})
+        self.assertEqual(resp.status_code, 200)  # blocked page
+        self.assertEqual(AuditorProfile.objects.count(), before)
+        self.assertEqual(int(self.client.session['_auth_user_id']), cu.id)  # session unchanged
+
+    def test_auditor_cannot_switch_into_company_registration(self):
+        au, _ = self._auditor()
+        self.client.force_login(au)
+        before = Company.objects.count()
+        resp = self.client.post(reverse('core:company_register'), {
+            'first_name': 'A', 'last_name': 'B', 'email': 'newco@x.com',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'ش', 'company_name': 'C', 'cr_number': '7777777777',
+            'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'already signed in')
+        self.assertEqual(Company.objects.count(), before)  # no new company
+        self.assertEqual(int(self.client.session['_auth_user_id']), au.id)
+
+    def test_staff_cannot_register_company_in_session(self):
+        st = self._staff()
+        self.client.force_login(st)
+        before = Company.objects.count()
+        resp = self.client.post(reverse('core:register'), {
+            'first_name': 'A', 'last_name': 'B', 'email': 'staffco@x.com',
+            'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
+            'company_name_ar': 'ش', 'company_name': 'C', 'cr_number': '8888888888',
+            'sector': 'technology', 'size': 'small'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'already signed in')
+        self.assertEqual(Company.objects.count(), before)
+
+    def test_registration_pages_anonymous_accessible(self):
+        self.assertEqual(self.client.get(reverse('core:company_register')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('auditors:register')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('core:register')).status_code, 200)
+
+    # ---- portal redirects (14-17) ----
+    def test_staff_dashboard_redirects_to_crm(self):
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('dashboard:main'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('platform_admin:dashboard'))
+
+    def test_auditor_dashboard_redirects_to_auditor_portal(self):
+        au, _ = self._auditor()
+        self.client.force_login(au)
+        resp = self.client.get(reverse('dashboard:main'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/auditor', resp.url)
+
+    def test_company_linked_user_reaches_company_dashboard(self):
+        _, cu = self._company_with_user()
+        self.client.force_login(cu)
+        resp = self.client.get(reverse('dashboard:main'))
+        self.assertEqual(resp.status_code, 200)  # company dashboard, not no_company/500
+
+    def test_unlinked_user_dashboard_safe_no_company(self):
+        self.client.force_login(self._unlinked())
+        resp = self.client.get(reverse('dashboard:main'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'not linked to a company')
+
+    # ---- data isolation (18,19) ----
+    def test_company_user_cannot_open_other_company_crm_detail(self):
+        other, _ = self._company_with_user(cr='9090909090', email='other@x.com')
+        _, cu = self._company_with_user()
+        self.client.force_login(cu)
+        # CRM company-detail is staff-only; a company user is denied (no ID enumeration).
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:company_detail', args=[other.id])).status_code, 403)
+
+    def test_active_auditor_sees_only_assigned_company(self):
+        au, p = self._auditor()
+        c1, _ = self._company_with_user(cr='1111000011', email='c1@x.com')
+        c2, _ = self._company_with_user(cr='2222000022', email='c2@x.com')
+        a1 = AuditorAssignment.objects.create(company=c1, auditor=p, status='accepted')
+        from auditors.services import assignments_for_user
+        assigned = list(assignments_for_user(au))
+        self.assertIn(a1, assigned)
+        self.assertTrue(all(a.company_id == c1.id for a in assigned))
+
+    # ---- UI isolation + safety (22,24,25) ----
+    def test_company_dashboard_has_no_crm_nav(self):
+        _, cu = self._company_with_user()
+        self.client.force_login(cu)
+        body = self.client.get(reverse('dashboard:main')).content.decode()
+        self.assertNotIn('Get Solution CRM', body)
+        self.assertNotIn('/platform-admin/', body)
+
+    def test_status_pages_have_no_unsafe_claims(self):
+        banned = ['معتمد من NCA', 'اعتماد رسمي', 'اعتماد حكومي', 'certified by NCA',
+                  'official accreditation', 'government accredited', 'official certification',
+                  'شهادة امتثال رسمية']
+        # staff no-company, unlinked no-company, already-authenticated
+        st = self._staff(); self.client.force_login(st)
+        bodies = [self.client.get(reverse('compliance:classification')).content.decode()]
+        au, _ = self._auditor(email='aud2@x.com'); self.client.force_login(au)
+        bodies.append(self.client.get(reverse('core:company_register')).content.decode())
+        for body in bodies:
+            for w in banned:
+                self.assertNotIn(w, body)
