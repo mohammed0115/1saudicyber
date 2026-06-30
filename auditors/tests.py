@@ -681,6 +681,96 @@ class GetSolutionCRMConsoleTests(TestCase):
                 self.assertNotIn(w, body, '%s in %s' % (w, url))
 
 
+class PlatformAdminCRMNavigationTests(TestCase):
+    """Phase 8D-3B-UI-FIX-A — platform-admin pages use the CRM layout, not the
+    customer/compliance navbar."""
+
+    def _staff(self, email='navadmin@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    # Customer/compliance navbar links that must NEVER appear on platform-admin pages.
+    CUSTOMER_NAV_LINKS = ('/compliance/dashboard/', '/compliance/reports/',
+                          '/compliance/evidence-checklist/', '/monitoring/')
+
+    def _crm_urls(self, company_id):
+        return [reverse('platform_admin:dashboard'),
+                reverse('platform_admin:companies_list'),
+                reverse('platform_admin:company_detail', args=[company_id]),
+                reverse('platform_admin:unlinked_accounts'),
+                reverse('platform_admin:auditor_list')]
+
+    def test_dashboard_renders_crm_navigation(self):
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Get Solution CRM')
+        self.assertContains(resp, 'Overview')
+        self.assertContains(resp, 'Internal operations console')
+
+    def test_auditors_page_renders_crm_navigation(self):
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:auditor_list'))
+        self.assertContains(resp, 'Get Solution CRM')
+        self.assertContains(resp, 'Companies')
+
+    def test_companies_page_renders_crm_navigation(self):
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:companies_list'))
+        self.assertContains(resp, 'Get Solution CRM')
+        self.assertContains(resp, 'Unlinked Accounts')
+
+    def test_unlinked_page_renders_crm_navigation(self):
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:unlinked_accounts'))
+        self.assertContains(resp, 'Get Solution CRM')
+        self.assertContains(resp, 'Auditors')
+
+    def test_platform_admin_pages_have_no_customer_compliance_nav(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(self._staff())
+        for url in self._crm_urls(c.id):
+            body = self.client.get(url).content.decode()
+            # Distinctive customer-nav label (nav-only; never CRM content):
+            self.assertNotIn('مسار الامتثال', body, url)
+            # Customer-nav links must be absent:
+            for link in self.CUSTOMER_NAV_LINKS:
+                self.assertNotIn(link, body, '%s in %s' % (link, url))
+
+    def test_auditor_approval_workflow_still_works(self):
+        u, p = _auditor(status='pending_review')
+        self.client.force_login(self._staff())
+        # detail page renders under the CRM layout
+        resp = self.client.get(reverse('platform_admin:auditor_detail', args=[p.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Get Solution CRM')
+        # approve action still works
+        self.client.post(reverse('platform_admin:auditor_action', args=[p.id]), {'action': 'approve'})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'active')
+
+    def test_denied_page_shows_neither_customer_nor_full_crm_compliance_nav(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(cu)
+        resp = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertEqual(resp.status_code, 403)
+        body = resp.content.decode()
+        self.assertNotIn('مسار الامتثال', body)
+        for link in self.CUSTOMER_NAV_LINKS:
+            self.assertNotIn(link, body)
+
+    def test_no_unsafe_certification_wording_in_crm_layout(self):
+        c, cu = _company_user(subscribe=True)
+        self.client.force_login(self._staff())
+        banned = ['معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد رسمي',
+                  'اعتماد حكومي', 'certified by NCA', 'official accreditation',
+                  'government accredited', 'official certification']
+        for url in self._crm_urls(c.id):
+            body = self.client.get(url).content.decode()
+            for w in banned:
+                self.assertNotIn(w, body, '%s in %s' % (w, url))
+
+
 class Phase4CBackwardCompatTests(TestCase):
     def setUp(self):
         from io import StringIO
