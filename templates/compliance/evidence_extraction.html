@@ -16,13 +16,14 @@
       <i class="fas fa-circle-info ms-1"></i> {% trans "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال." %}
     </div>
 
-    {# Run / re-run action #}
-    <form method="post" action="{% url 'compliance:run_evidence_extraction' submission.id %}" data-busy="جارٍ استخراج النص..." style="margin-bottom:18px;">
+    {# Run / re-run action — shows the smart processing animation on submit #}
+    <form method="post" action="{% url 'compliance:run_evidence_extraction' submission.id %}" data-smart-processing style="margin-bottom:18px;">
       {% csrf_token %}
       <button type="submit" style="background:#0F5D46;color:#fff;font-weight:600;padding:11px 22px;border:none;border-radius:10px;cursor:pointer;">
         {% if extraction %}{% trans "إعادة استخراج النص" %}{% else %}{% trans "تشغيل استخراج النص" %}{% endif %}
       </button>
     </form>
+    {% include "components/smart_processing.html" %}
 
     {% if not extraction %}
     {# Not attempted yet — do not imply success #}

@@ -13,7 +13,7 @@
     {% if messages %}{% for m in messages %}
     <div class="bg-gov-green-50 border border-gov-green-200 text-gov-green-800 rounded-lg p-3">{{ m }}</div>
     {% endfor %}{% endif %}
-    <form method="post" enctype="multipart/form-data" data-busy="جارٍ رفع الدليل..." class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-4">
+    <form method="post" enctype="multipart/form-data" data-smart-processing class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-4">
         {% csrf_token %}
         <div>
             <label class="block text-sm font-medium text-gov-gray-700 mb-1">الملف</label>
@@ -30,6 +30,7 @@
             <a href="{% url 'compliance:evidence_submission_list' item.id %}" class="text-gov-green-700 hover:underline text-sm">عرض الأدلة المرفوعة</a>
         </div>
     </form>
+    {% include "components/smart_processing.html" %}
     <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 text-sm">
         <i class="fas fa-info-circle"></i> لا تحليل آلي أو قرار امتثال في هذه المرحلة — مجرّد رفع وربط بعنصر القائمة.
     </div>

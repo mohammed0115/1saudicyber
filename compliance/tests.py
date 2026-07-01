@@ -6018,3 +6018,201 @@ class GuidedCompanyWorkflowTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         # The journey wizard + workflow stepper both render a next recommended action.
         self.assertContains(resp, 'الخطوة')
+
+
+# ============================================================
+# Phase 8E-EVIDENCE-OCR-A — Evidence Upload + OCR/Text-Extraction MVP
+# ============================================================
+def _docx_bytes(text):
+    import io
+    from docx import Document
+    d = Document(); d.add_paragraph(text)
+    buf = io.BytesIO(); d.save(buf); return buf.getvalue()
+
+
+def _pdf_bytes(text):
+    import io
+    from reportlab.pdfgen import canvas
+    buf = io.BytesIO(); c = canvas.Canvas(buf); c.drawString(72, 720, text); c.showPage(); c.save()
+    return buf.getvalue()
+
+
+class EvidenceOCRMVPTests(TestCase):
+    # ---- extraction by file type (service layer) ----
+    def test_txt_extraction_succeeds(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(name='e.txt',
+                                                content=b'Access control policy approved by management.', ftype='txt')
+        obj = save_extraction_for_submission(sub)
+        self.assertEqual(obj.status, 'extracted')
+        self.assertTrue(obj.has_text)
+        self.assertIn('policy', obj.extracted_text.lower())
+
+    def test_docx_extraction_succeeds(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(name='e.docx',
+                                                content=_docx_bytes('Firewall configured and reviewed quarterly'),
+                                                ftype='docx')
+        obj = save_extraction_for_submission(sub)
+        self.assertEqual(obj.status, 'extracted')
+        self.assertIn('Firewall', obj.extracted_text)
+
+    def test_pdf_textlayer_extraction_succeeds(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(name='e.pdf',
+                                                content=_pdf_bytes('Encryption at rest enabled'), ftype='pdf')
+        obj = save_extraction_for_submission(sub)
+        self.assertEqual(obj.status, 'extracted')
+        self.assertIn('Encryption', obj.extracted_text)
+
+    def test_image_does_not_fake_ocr_success(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        png = b'\x89PNG\r\n\x1a\n' + b'\x00' * 32
+        c, item, sub = _company_with_submission(name='e.png', content=png, ftype='png')
+        obj = save_extraction_for_submission(sub)
+        self.assertFalse(obj.has_text)                    # never pretends OCR success
+        self.assertEqual(obj.status, 'no_text_extracted')  # honest manual-review status
+
+    def test_corrupt_file_extraction_no_500(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(name='bad.docx', content=b'not a real docx', ftype='docx')
+        obj = save_extraction_for_submission(sub)  # must not raise
+        self.assertIn(obj.status, ('failed', 'unsupported_type', 'no_text_extracted'))
+        self.assertNotIn('/', obj.error_message or '')     # no file path leaked
+
+    def test_extracted_text_is_bounded(self):
+        from compliance.evidence_extraction import save_extraction_for_submission, MAX_TEXT_CHARS
+        big = ('policy ' * 20000).encode()  # 140k chars, well over the cap
+        self.assertGreater(len(big), MAX_TEXT_CHARS)
+        c, item, sub = _company_with_submission(name='big.txt', content=big, ftype='txt')
+        obj = save_extraction_for_submission(sub)
+        # Stored/previewed text is bounded to the cap regardless of source size.
+        self.assertLessEqual(len(obj.extracted_text), MAX_TEXT_CHARS)
+        self.assertLessEqual(obj.char_count, MAX_TEXT_CHARS)
+
+    # ---- upload permissions / tenant ----
+    def _login_company(self, c, email):
+        u = _journey_user(c, email=email)
+        self.client.force_login(u)
+        return u
+
+    def test_anonymous_cannot_upload(self):
+        c, item, sub = _company_with_submission()
+        r = self.client.get(reverse('compliance:evidence_upload_v2', args=[item.id]))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/login', r.url)
+
+    def test_company_user_can_upload(self):
+        from compliance.models import EvidenceSubmission
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        self._login_company(c, 'ocrup@x.com')
+        before = EvidenceSubmission.objects.filter(company=c).count()
+        f = _SUF('policy.txt', b'access control policy', content_type='text/plain')
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]), {'uploaded_file': f})
+        self.assertEqual(EvidenceSubmission.objects.filter(company=c).count(), before + 1)
+
+    def test_upload_writes_audit_log(self):
+        from core.models import AuditLog
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        self._login_company(c, 'ocraud@x.com')
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                         {'uploaded_file': _SUF('p.txt', b'x', content_type='text/plain')})
+        self.assertTrue(AuditLog.objects.filter(action='evidence_uploaded').exists())
+
+    def test_unlinked_user_upload_safe_no_company(self):
+        from core.models import User
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        orphan = User.objects.create_user(username='ocrorphan@x.com', email='ocrorphan@x.com',
+                                          password='longenough12', role='company_admin')
+        self.client.force_login(orphan)
+        resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[item.id]))
+        self.assertEqual(resp.status_code, 200)  # no 500
+        self.assertContains(resp, 'not linked to a company')
+
+    def test_auditor_cannot_upload_via_company_portal(self):
+        from auditors.models import AuditorProfile
+        from core.models import User
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        au = User.objects.create_user(username='ocraud2@x.com', email='ocraud2@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[item.id]))
+        self.assertContains(resp, 'Auditor account', status_code=200)
+
+    def test_upload_rejects_unsupported_type(self):
+        from compliance.models import EvidenceSubmission
+        c, fv, scope = _company_with_checklist()
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        self._login_company(c, 'ocrbad@x.com')
+        before = EvidenceSubmission.objects.filter(company=c).count()
+        self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                         {'uploaded_file': _SUF('m.exe', b'MZ', content_type='application/octet-stream')})
+        self.assertEqual(EvidenceSubmission.objects.filter(company=c).count(), before)
+
+    def test_company_cannot_access_other_company_submission(self):
+        c1, i1, s1 = _company_with_submission(name='a.txt')
+        c2, i2, s2 = _company_with_submission(name='b.txt')
+        self._login_company(c1, 'ocrt1@x.com')
+        resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[s2.id]))
+        self.assertEqual(resp.status_code, 302)  # not found for this tenant -> safe redirect
+
+    def test_company_cannot_run_extraction_for_other_company(self):
+        from compliance.models import EvidenceTextExtraction
+        c1, i1, s1 = _company_with_submission(name='a.txt')
+        c2, i2, s2 = _company_with_submission(name='b.txt')
+        self._login_company(c1, 'ocrt2@x.com')
+        self.client.post(reverse('compliance:run_evidence_extraction', args=[s2.id]))
+        self.assertFalse(EvidenceTextExtraction.objects.filter(submission=s2).exists())
+
+    # ---- run extraction via view ----
+    def test_run_extraction_writes_audit_and_shows_text(self):
+        from core.models import AuditLog
+        c, item, sub = _company_with_submission(name='e.txt',
+                                                content=b'network segmentation policy', ftype='txt')
+        self._login_company(c, 'ocrrun@x.com')
+        self.client.post(reverse('compliance:run_evidence_extraction', args=[sub.id]))
+        self.assertTrue(AuditLog.objects.filter(action='evidence_extraction').exists())
+        detail = self.client.get(reverse('compliance:evidence_submission_detail', args=[sub.id])).content.decode()
+        self.assertIn('network segmentation', detail)
+
+    def test_submission_detail_shows_extraction_status(self):
+        c, item, sub = _company_with_submission(name='e.txt', content=b'hello', ftype='txt')
+        self._login_company(c, 'ocrstat@x.com')
+        body = self.client.get(reverse('compliance:evidence_submission_detail', args=[sub.id])).content.decode()
+        self.assertIn('Text extraction', body)
+
+    # ---- CRM evidence summary ----
+    def test_crm_company_detail_shows_evidence_summary(self):
+        from core.models import User
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(name='e.txt', content=b'policy text', ftype='txt')
+        save_extraction_for_submission(sub)
+        staff = User.objects.create_user(username='ocrstaff@x.com', email='ocrstaff@x.com',
+                                         password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(staff)
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Evidence summary')
+
+    # ---- smart processing animation + safety ----
+    def test_processing_animation_present_on_extraction_page(self):
+        c, item, sub = _company_with_submission(name='e.txt', content=b'x', ftype='txt')
+        self._login_company(c, 'ocranim@x.com')
+        body = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id])).content.decode()
+        self.assertIn('data-smart-processing', body)
+        self.assertIn('Processing evidence', body)
+        self.assertIn('Reading file', body)
+
+    def test_processing_animation_no_unsafe_wording(self):
+        c, item, sub = _company_with_submission(name='e.txt', content=b'x', ftype='txt')
+        self._login_company(c, 'ocrsafe@x.com')
+        body = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id])).content.decode()
+        for w in ('شهادة امتثال رسمية', 'اعتماد رسمي', 'معتمد من NCA', 'certified by NCA',
+                  'official accreditation', 'government accredited', 'AI approved', 'AI certified',
+                  'compliance confirmed'):
+            self.assertNotIn(w, body)

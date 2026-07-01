@@ -98,6 +98,7 @@ def crm_company_detail(request, company_id):
         'crm_timeline': crm.get_company_activity_timeline(company),
         'crm_status_choices': CompanyCRMProfile.CRM_STATUS_CHOICES,
         'assignable_staff': crm.assignable_staff(),
+        'evidence_summary': crm.company_evidence_summary(company),
     })
 
 

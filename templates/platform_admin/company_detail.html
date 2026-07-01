@@ -162,6 +162,18 @@
       {% endif %}
     </div>
 
+    {# Evidence summary (counts only — no evidence content is exposed to CRM) #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-1">ملخص الأدلة · Evidence summary</h2>
+      <p class="text-xs text-gov-gray-500 mb-3">أعداد فقط للاطّلاع الداخلي — لا يتم عرض محتوى الأدلة في وحدة CRM.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ evidence_summary.uploaded }}</div><div class="text-xs text-gov-gray-500 mt-1">مرفوعة · Uploaded</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-700">{{ evidence_summary.extracted }}</div><div class="text-xs text-gov-gray-500 mt-1">مُستخرجة · Extracted</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ evidence_summary.manual_review }}</div><div class="text-xs text-gov-gray-500 mt-1">مراجعة يدوية · Manual review</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ evidence_summary.failed }}</div><div class="text-xs text-gov-gray-500 mt-1">فشل · Failed</div></div>
+      </div>
+    </div>
+
     {# Operational snapshot #}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
       <h2 class="font-bold text-gov-green-800 mb-3">الحالة التشغيلية · Operational status</h2>

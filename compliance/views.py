@@ -192,6 +192,7 @@ def journey_dashboard(request):
 
 
 @login_required
+@company_portal_required
 def evidence_extraction_preview(request, submission_id):
     """Phase 6C / 6C-FIX-A — text-extraction preview for one evidence submission.
 
@@ -211,6 +212,7 @@ def evidence_extraction_preview(request, submission_id):
 
 
 @login_required
+@company_portal_required
 @require_http_methods(["POST"])
 def run_evidence_extraction(request, submission_id):
     """Phase 6C-FIX-A — run + persist a safe text-extraction attempt (owner-only).
@@ -219,18 +221,26 @@ def run_evidence_extraction(request, submission_id):
     EvidenceTextExtraction row (upsert). No OCR, no AI, no external calls.
     """
     from .models import EvidenceSubmission
-    from .evidence_extraction import save_extraction_for_submission
+    from .evidence_extraction import (save_extraction_for_submission,
+                                      record_evidence_audit, MANUAL_REVIEW_STATUSES)
     sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
     if sub is None:
         messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
         return redirect('compliance:evidence_checklist')
     obj = save_extraction_for_submission(sub)
+    # Audit the run + resulting status (success / failure / manual-review) safely.
+    record_evidence_audit(request.user, request.user.company, 'extraction', sub,
+                          status=obj.status, extra={'char_count': obj.char_count,
+                                                    'method': obj.extraction_method})
     if obj.has_text:
-        messages.success(request, 'تم استخراج النص من الدليل.')
+        messages.success(request, 'تم استخراج النص من الدليل · Text extraction complete.')
     elif obj.status == 'failed':
-        messages.error(request, 'تعذر تنفيذ الاستخراج بأمان.')
+        messages.error(request, 'تعذر تنفيذ الاستخراج بأمان · Extraction failed safely.')
+    elif obj.status in MANUAL_REVIEW_STATUSES:
+        messages.warning(request, 'يتطلب هذا الملف مراجعة يدوية — لا تتوفّر طبقة نص قابلة للاستخراج (OCR غير مفعّل). '
+                                  '· Manual review required — no extractable text layer (OCR not available yet).')
     else:
-        messages.warning(request, 'تعذر استخراج نص كافٍ من هذا الملف.')
+        messages.warning(request, 'تعذر استخراج نص كافٍ من هذا الملف · Not enough text could be extracted.')
     return redirect('compliance:evidence_extraction', submission_id=sub.id)
 
 
@@ -613,12 +623,14 @@ def _company_checklist_item(request, item_id):
 
 
 @login_required
+@company_portal_required
 @require_http_methods(["GET", "POST"])
 def evidence_upload_v2(request, item_id):
     """Upload an EvidenceSubmission for a checklist item (tenant-scoped). No AI/OCR."""
     import hashlib, os
     from .forms import EvidenceSubmissionForm
     from .models import EvidenceSubmission
+    from .evidence_extraction import record_evidence_audit
     item = _company_checklist_item(request, item_id)
     if item is None:
         messages.error(request, 'عنصر القائمة غير موجود أو لا يخصّ شركتك.')
@@ -639,6 +651,9 @@ def evidence_upload_v2(request, item_id):
                 original_filename=f.name, file_type=ext, file_size=f.size,
                 file_hash=digest.hexdigest(), version=version, status='pending_review',
                 uploaded_by=request.user, notes=form.cleaned_data.get('notes', ''))
+            sub = EvidenceSubmission.objects.filter(checklist_item=item).order_by('-id').first()
+            record_evidence_audit(request.user, request.user.company, 'uploaded', sub,
+                                  status='pending_review')
             # Reflect progress on the checklist item (NOT a compliance decision).
             if item.status in ('planned', 'in_progress'):
                 item.status = 'submitted'
@@ -651,6 +666,7 @@ def evidence_upload_v2(request, item_id):
 
 
 @login_required
+@company_portal_required
 def evidence_submission_list(request, item_id):
     """List submissions for a checklist item (tenant-scoped)."""
     item = _company_checklist_item(request, item_id)
@@ -662,6 +678,7 @@ def evidence_submission_list(request, item_id):
 
 
 @login_required
+@company_portal_required
 def evidence_submission_detail(request, submission_id):
     """Submission detail (tenant-scoped to the user's company)."""
     from .models import EvidenceSubmission
@@ -670,8 +687,10 @@ def evidence_submission_detail(request, submission_id):
         messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
         return redirect('compliance:evidence_checklist')
     analysis = getattr(sub, 'analysis', None)
+    extraction = getattr(sub, 'text_extraction', None)
     return render(request, 'compliance/evidence_submission_detail.html',
-                  {'submission': sub, 'analysis': analysis, 'can_analyze': request.user.is_staff})
+                  {'submission': sub, 'analysis': analysis, 'extraction': extraction,
+                   'can_analyze': request.user.is_staff})
 
 
 # ============================================================

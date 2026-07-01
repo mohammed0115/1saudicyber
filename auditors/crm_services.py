@@ -250,6 +250,26 @@ def assignable_staff():
     return User.objects.filter(Q(is_staff=True) | Q(is_superuser=True)).order_by('email')
 
 
+def company_evidence_summary(company):
+    """Phase 8E — staff-only evidence counts for a company (read-only, no content).
+
+    Returns {uploaded, extracted, manual_review, failed}. Never exposes evidence
+    text/files to the CRM — counts only. Guarded so it never 500s.
+    """
+    summary = {'uploaded': 0, 'extracted': 0, 'manual_review': 0, 'failed': 0}
+    try:
+        from compliance.models import EvidenceSubmission, EvidenceTextExtraction
+        summary['uploaded'] = EvidenceSubmission.objects.filter(company=company).count()
+        ext = EvidenceTextExtraction.objects.filter(submission__company=company)
+        summary['extracted'] = ext.filter(status='extracted', char_count__gt=0).count()
+        summary['failed'] = ext.filter(status='failed').count()
+        summary['manual_review'] = ext.filter(
+            status__in=['no_text_extracted', 'unsupported_type', 'too_large']).count()
+    except Exception:
+        pass
+    return summary
+
+
 def company_notes(company):
     """Internal CRM notes for a company, newest first (read-only)."""
     from .models import CompanyCRMNote

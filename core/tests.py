@@ -608,7 +608,10 @@ class Phase4DLoadingStateTests(TestCase):
         item = EvidenceChecklistItem.objects.filter(company=c).first()
         self.client.force_login(_journey_user(c))
         resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[item.id]))
-        self.assertContains(resp, 'جارٍ رفع الدليل')
+        # Phase 8E: the upload form now uses the richer smart-processing animation
+        # (reading file -> extracting text -> preparing result) as its loading state.
+        self.assertContains(resp, 'data-smart-processing')
+        self.assertContains(resp, 'Processing evidence')
 
     def test_advisory_analysis_trigger_has_loading_state(self):
         from compliance.tests import _company_with_submission

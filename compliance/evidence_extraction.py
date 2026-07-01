@@ -231,6 +231,38 @@ def save_extraction_for_submission(submission):
     return obj
 
 
+# Statuses that mean "parsed but needs a human" (never fakes OCR success).
+MANUAL_REVIEW_STATUSES = {NO_TEXT, UNSUPPORTED, TOO_LARGE}
+
+
+def record_evidence_audit(actor, company, action, submission=None, status='', extra=None):
+    """Phase 8E — durably audit an evidence action via core.AuditLog (no migration).
+
+    Never leaks file paths or server internals; only safe metadata. Auditing must
+    never block the operational action, so all errors are swallowed.
+    """
+    try:
+        from core.models import AuditLog
+        meta = {
+            'company_id': getattr(company, 'id', None),
+            'submission_id': getattr(submission, 'id', None),
+            'filename': getattr(submission, 'original_filename', '') if submission else '',
+            'file_type': getattr(submission, 'file_type', '') if submission else '',
+            'status': status or '',
+            'performed_by': getattr(actor, 'email', ''),
+        }
+        if extra:
+            meta.update(extra)
+        AuditLog.objects.create(
+            user=actor if getattr(actor, 'is_authenticated', False) else None,
+            action=f'evidence_{action}'[:100],
+            path='/compliance/evidence/',
+            metadata=meta,
+        )
+    except Exception:
+        pass
+
+
 def extract_text_from_evidence(evidence) -> ExtractionResult:
     """Extract text from an EvidenceSubmission (or legacy Evidence) instance (read-only)."""
     file_field = getattr(evidence, 'uploaded_file', None) or getattr(evidence, 'file', None)
