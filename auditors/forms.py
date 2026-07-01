@@ -18,6 +18,23 @@ class UnlinkUserFromCompanyForm(forms.Form):
     reason = forms.CharField(max_length=1000, label='السبب')
 
 
+class CompanyCRMNoteForm(forms.Form):
+    """Internal CRM note (staff only). Text required."""
+    text = forms.CharField(max_length=5000, widget=forms.Textarea(attrs={'rows': 3}),
+                           label='ملاحظة داخلية')
+
+
+class CompanyCRMStatusForm(forms.Form):
+    """Update a company's internal CRM follow-up status (staff only)."""
+    from .models import CompanyCRMProfile
+    crm_status = forms.ChoiceField(choices=CompanyCRMProfile.CRM_STATUS_CHOICES, label='حالة المتابعة')
+    assigned_staff_id = forms.IntegerField(required=False, min_value=0)
+    next_follow_up_date = forms.DateField(required=False, label='تاريخ المتابعة التالي')
+    internal_summary = forms.CharField(max_length=5000, required=False,
+                                       widget=forms.Textarea(attrs={'rows': 2}), label='ملخص داخلي')
+    reason = forms.CharField(max_length=1000, required=False, label='السبب')
+
+
 class AuditorRegistrationForm(forms.Form):
     full_name = forms.CharField(max_length=160, label='الاسم الكامل')
     email = forms.EmailField(label='البريد الإلكتروني')

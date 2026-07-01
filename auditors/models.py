@@ -84,3 +84,57 @@ class AuditorAssignment(models.Model):
 
     def is_active(self):
         return self.status in self.ACTIVE_STATUSES
+
+
+# ============================================================
+# Phase 8D-3E-CRM-C — Get Solution CRM follow-up (internal-only).
+# These are INTERNAL Get Solution operations records. They never affect
+# compliance calculations, control counts, login, subscription, or access, and
+# are never exposed to the company or auditor portals.
+# ============================================================
+class CompanyCRMProfile(models.Model):
+    """One internal CRM follow-up record per company (Get Solution staff only)."""
+    CRM_STATUS_CHOICES = [
+        ('new', 'New'),
+        ('onboarding', 'Onboarding'),
+        ('active', 'Active'),
+        ('needs_follow_up', 'Needs follow-up'),
+        ('blocked', 'Blocked'),
+        ('inactive', 'Inactive'),
+    ]
+    company = models.OneToOneField('core.Company', on_delete=models.CASCADE,
+                                   related_name='crm_profile')
+    crm_status = models.CharField(max_length=20, choices=CRM_STATUS_CHOICES, default='new')
+    assigned_staff = models.ForeignKey('core.User', on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='crm_assigned_companies')
+    next_follow_up_date = models.DateField(null=True, blank=True)
+    internal_summary = models.TextField(blank=True)
+    updated_by = models.ForeignKey('core.User', on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='crm_status_updates')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'company_crm_profiles'
+
+    def __str__(self):
+        return f"CRM({self.company_id}, {self.crm_status})"
+
+
+class CompanyCRMNote(models.Model):
+    """An internal Get Solution CRM note on a company (never shown to customers)."""
+    company = models.ForeignKey('core.Company', on_delete=models.CASCADE, related_name='crm_notes')
+    author = models.ForeignKey('core.User', on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='crm_notes_authored')
+    text = models.TextField()
+    # Notes are internal-only by design; the flag documents intent and future-proofs.
+    visibility = models.CharField(max_length=16, default='internal')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'company_crm_notes'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Note({self.company_id}) by {self.author_id}"

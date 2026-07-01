@@ -987,6 +987,202 @@ class CRMCompanyUserLinkingTests(TestCase):
             self.assertIn('لا يمثّل اعتمادًا رسميًا أو شهادة امتثال رسمية', body)
 
 
+class CRMCompanyFollowUpTests(TestCase):
+    """Phase 8D-3E-CRM-C — internal CRM notes / follow-up status / activity timeline."""
+
+    def _staff(self, email='crmc@x.com', superuser=False):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True, is_superuser=superuser)
+
+    def _company(self, cr='8181818181', name='FollowUp Co'):
+        return Company.objects.create(name=name, cr_number=cr, sector='technology',
+                                      size='small', contact_email='fu@co.example')
+
+    def _company_user(self, c, email='fuuser@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        company=c, role='company_admin')
+
+    def _note_url(self, c):
+        return reverse('platform_admin:add_note', args=[c.id])
+
+    def _status_url(self, c):
+        return reverse('platform_admin:update_status', args=[c.id])
+
+    def _detail_url(self, c):
+        return reverse('platform_admin:company_detail', args=[c.id])
+
+    # ---- permissions ----
+    def test_anonymous_cannot_add_note(self):
+        c = self._company()
+        r = self.client.post(self._note_url(c), {'text': 'x'})
+        self.assertIn(r.status_code, (302, 403))
+
+    def test_company_user_cannot_add_note_or_status(self):
+        c = self._company()
+        cu = self._company_user(c)
+        self.client.force_login(cu)
+        self.assertEqual(self.client.post(self._note_url(c), {'text': 'x'}).status_code, 403)
+        self.assertEqual(self.client.post(self._status_url(c), {'crm_status': 'active'}).status_code, 403)
+
+    def test_auditor_cannot_add_note(self):
+        c = self._company()
+        au = User.objects.create_user(username='fuau@x.com', email='fuau@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        self.assertEqual(self.client.post(self._note_url(c), {'text': 'x'}).status_code, 403)
+
+    def test_staff_can_access_detail_no_500_empty(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        resp = self.client.get(self._detail_url(c))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'No internal notes yet')
+        self.assertContains(resp, 'No internal activity yet')
+
+    # ---- notes ----
+    def test_staff_can_add_note_and_it_appears(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.client.post(self._note_url(c), {'text': 'Called the customer about onboarding.'})
+        from auditors.models import CompanyCRMNote
+        self.assertTrue(CompanyCRMNote.objects.filter(company=c).exists())
+        body = self.client.get(self._detail_url(c)).content.decode()
+        self.assertIn('Called the customer about onboarding.', body)
+
+    def test_note_text_required(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.client.post(self._note_url(c), {'text': '   '})
+        from auditors.models import CompanyCRMNote
+        self.assertFalse(CompanyCRMNote.objects.filter(company=c).exists())
+
+    def test_note_writes_audit_log(self):
+        from core.models import AuditLog
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.client.post(self._note_url(c), {'text': 'audit me'})
+        log = AuditLog.objects.filter(action='crm_note_added').order_by('-id').first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.metadata.get('company_id'), c.id)
+
+    def test_notes_not_visible_in_company_portal(self):
+        c = self._company()
+        cu = self._company_user(c)
+        from auditors.crm_services import add_company_note
+        add_company_note(self._staff(), c, 'SECRET-INTERNAL-NOTE')
+        self.client.force_login(cu)
+        for name in ('compliance:classification', 'dashboard:main'):
+            body = self.client.get(reverse(name), follow=True).content.decode()
+            self.assertNotIn('SECRET-INTERNAL-NOTE', body)
+
+    def test_notes_not_visible_in_auditor_portal(self):
+        c = self._company()
+        au = User.objects.create_user(username='fuaud2@x.com', email='fuaud2@x.com',
+                                      password='longenough12', role='auditor')
+        p = AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        a = AuditorAssignment.objects.create(company=c, auditor=p, status='accepted')
+        from auditors.crm_services import add_company_note
+        add_company_note(self._staff(), c, 'SECRET-INTERNAL-NOTE-2')
+        self.client.force_login(au)
+        body = self.client.get(reverse('auditors:assignment_detail', args=[a.id])).content.decode()
+        self.assertNotIn('SECRET-INTERNAL-NOTE-2', body)
+
+    # ---- status ----
+    def test_staff_can_update_status(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.client.post(self._status_url(c), {'crm_status': 'needs_follow_up', 'reason': 'awaiting docs'})
+        from auditors.models import CompanyCRMProfile
+        self.assertEqual(CompanyCRMProfile.objects.get(company=c).crm_status, 'needs_follow_up')
+
+    def test_invalid_status_rejected(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.client.post(self._status_url(c), {'crm_status': 'not_a_status'})
+        from auditors.models import CompanyCRMProfile
+        self.assertFalse(CompanyCRMProfile.objects.filter(company=c, crm_status='not_a_status').exists())
+
+    def test_status_appears_on_detail_and_list(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.client.post(self._status_url(c), {'crm_status': 'blocked'})
+        detail = self.client.get(self._detail_url(c)).content.decode()
+        self.assertIn('Blocked', detail)
+        listing = self.client.get(reverse('platform_admin:companies_list')).content.decode()
+        self.assertIn('Blocked', listing)
+
+    def test_status_change_writes_audit_log(self):
+        from core.models import AuditLog
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.client.post(self._status_url(c), {'crm_status': 'active'})
+        log = AuditLog.objects.filter(action='crm_status_changed').order_by('-id').first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.metadata.get('new_status'), 'active')
+        self.assertEqual(log.metadata.get('company_id'), c.id)
+
+    def test_assigned_staff_and_follow_up_date(self):
+        c = self._company()
+        staff = self._staff()
+        assignee = self._staff(email='assignee@x.com')
+        self.client.force_login(staff)
+        self.client.post(self._status_url(c), {'crm_status': 'onboarding',
+                                               'assigned_staff_id': assignee.id,
+                                               'next_follow_up_date': '2026-08-15'})
+        from auditors.models import CompanyCRMProfile
+        prof = CompanyCRMProfile.objects.get(company=c)
+        self.assertEqual(prof.assigned_staff_id, assignee.id)
+        self.assertEqual(str(prof.next_follow_up_date), '2026-08-15')
+
+    def test_status_does_not_change_company_compliance(self):
+        c = self._company()
+        before_status = c.status
+        self.client.force_login(self._staff())
+        self.client.post(self._status_url(c), {'crm_status': 'inactive'})
+        c.refresh_from_db()
+        self.assertEqual(c.status, before_status)  # company.status (compliance) untouched
+
+    # ---- timeline ----
+    def test_timeline_shows_note_status_and_link_events(self):
+        c = self._company()
+        u = User.objects.create_user(username='tlfree@x.com', email='tlfree@x.com',
+                                     password='longenough12', role='company_admin')
+        staff = self._staff()
+        self.client.force_login(staff)
+        self.client.post(reverse('platform_admin:link_user', args=[c.id]),
+                         {'user_id': u.id, 'reason': 'r'})
+        self.client.post(self._status_url(c), {'crm_status': 'active'})
+        self.client.post(self._note_url(c), {'text': 'timeline note'})
+        from auditors.crm_services import get_company_activity_timeline
+        actions = [e['action'] for e in get_company_activity_timeline(c)]
+        self.assertIn('crm_link_user', actions)
+        self.assertIn('crm_status_changed', actions)
+        self.assertIn('crm_note_added', actions)
+        body = self.client.get(self._detail_url(c)).content.decode()
+        self.assertIn('Activity timeline', body)
+
+    def test_timeline_scoped_to_company(self):
+        c1 = self._company(cr='8282828282', name='C1')
+        c2 = self._company(cr='8383838383', name='C2')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:add_note', args=[c1.id]), {'text': 'only c1'})
+        from auditors.crm_services import get_company_activity_timeline
+        self.assertEqual(len(get_company_activity_timeline(c2)), 0)  # no cross-company leakage
+
+    # ---- safety ----
+    def test_no_unsafe_wording_on_detail(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail_url(c)).content.decode()
+        self.assertIn('Follow-up status', body)
+        self.assertIn('Internal notes', body)
+        for w in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد حكومي',
+                  'certified by NCA', 'official accreditation', 'government accredited',
+                  'official certification'):
+            self.assertNotIn(w, body)
+
+
 class Phase4CBackwardCompatTests(TestCase):
     def setUp(self):
         from io import StringIO

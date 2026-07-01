@@ -76,22 +76,63 @@ def crm_dashboard(request):
 
 @platform_admin_required
 def crm_companies_list(request):
-    """Read-only list of all companies with linked-user counts and status."""
+    """Read-only list of all companies with linked-user counts and CRM status."""
+    companies = crm.companies_overview().select_related('crm_profile', 'crm_profile__assigned_staff')
     return render(request, 'platform_admin/companies_list.html', {
-        'companies': crm.companies_overview(),
+        'companies': companies,
     })
 
 
 @platform_admin_required
 def crm_company_detail(request, company_id):
-    """Read-only operational snapshot for one company + link/unlink actions."""
+    """Operational snapshot + CRM follow-up (status, notes, timeline) + link/unlink."""
     from core.models import Company
+    from .models import CompanyCRMProfile
     company = get_object_or_404(Company, id=company_id)
     return render(request, 'platform_admin/company_detail.html', {
         'company': company,
         'snapshot': crm.company_operational_snapshot(company),
         'linkable_users': crm.linkable_users(),
+        'crm_profile': crm.get_company_crm_profile(company),
+        'crm_notes': crm.company_notes(company),
+        'crm_timeline': crm.get_company_activity_timeline(company),
+        'crm_status_choices': CompanyCRMProfile.CRM_STATUS_CHOICES,
+        'assignable_staff': crm.assignable_staff(),
     })
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_add_note(request, company_id):
+    """POST-only: add an internal CRM note to a company (staff-only)."""
+    from core.models import Company
+    company = get_object_or_404(Company, id=company_id)
+    try:
+        crm.add_company_note(request.user, company, request.POST.get('text', ''))
+        messages.success(request, 'تمت إضافة الملاحظة الداخلية.')
+    except crm.CRMLinkError as e:
+        messages.error(request, str(e))
+    return redirect('platform_admin:company_detail', company_id=company.id)
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_update_status(request, company_id):
+    """POST-only: update a company's internal CRM follow-up status (staff-only)."""
+    from core.models import Company
+    company = get_object_or_404(Company, id=company_id)
+    try:
+        crm.update_company_crm_status(
+            request.user, company,
+            crm_status=request.POST.get('crm_status'),
+            assigned_staff_id=request.POST.get('assigned_staff_id') or 0,
+            next_follow_up_date=request.POST.get('next_follow_up_date') or None,
+            internal_summary=request.POST.get('internal_summary'),
+            reason=request.POST.get('reason', ''))
+        messages.success(request, 'تم تحديث حالة المتابعة.')
+    except crm.CRMLinkError as e:
+        messages.error(request, str(e))
+    return redirect('platform_admin:company_detail', company_id=company.id)
 
 
 @platform_admin_required
