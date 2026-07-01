@@ -99,6 +99,7 @@ def crm_company_detail(request, company_id):
         'crm_status_choices': CompanyCRMProfile.CRM_STATUS_CHOICES,
         'assignable_staff': crm.assignable_staff(),
         'evidence_summary': crm.company_evidence_summary(company),
+        'gap_summary': crm.company_gap_summary(company),
     })
 
 

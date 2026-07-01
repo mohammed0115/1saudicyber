@@ -886,6 +886,39 @@ def report_gap_analysis(request):
                   {'company': company, 'frameworks': build_framework_gap_analysis(company)})
 
 
+# ============================================================
+# Phase 8F-GAP-ENGINE-A — deterministic internal-readiness gap dashboard.
+# Internal, preliminary, evidence-based readiness (NOT an official certification).
+# Not subscription-gated: companies can always see their preliminary readiness.
+# ============================================================
+@login_required
+@company_portal_required
+def gap_dashboard(request):
+    """Read-only internal readiness dashboard for the user's company."""
+    from .gap_engine import get_company_gap_summary, gap_rows, STATUS_AR
+    company = request.user.company
+    return render(request, 'compliance/gap_dashboard.html', {
+        'company': company,
+        'summary': get_company_gap_summary(company),
+        'rows': gap_rows(company),
+        'status_ar': STATUS_AR,
+    })
+
+
+@login_required
+@company_portal_required
+@require_http_methods(["POST"])
+def run_gap_recalc(request):
+    """POST-only: recalculate the deterministic gap analysis for the user's company."""
+    from .gap_engine import recalculate_company_gap
+    company = request.user.company
+    summary = recalculate_company_gap(company, actor=request.user)
+    messages.success(request, 'تم تحديث تحليل الفجوات (جاهزية أولية داخلية). '
+                              '· Preliminary internal readiness recalculated (%d%%).'
+                              % summary.get('overall_readiness_percent', 0))
+    return redirect('compliance:gap_dashboard')
+
+
 @login_required
 @company_portal_required
 def report_evidence_matrix(request):

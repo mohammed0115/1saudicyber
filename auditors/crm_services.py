@@ -250,6 +250,29 @@ def assignable_staff():
     return User.objects.filter(Q(is_staff=True) | Q(is_superuser=True)).order_by('email')
 
 
+def company_gap_summary(company):
+    """Phase 8F — staff-only preliminary gap-readiness summary for a company.
+
+    Read-only aggregate over the company's stored ControlGapAssessment rows; never
+    exposes control-level evidence content. Guarded so it never 500s.
+    """
+    summary = {'readiness_percent': 0, 'missing': 0, 'needs_review': 0,
+               'total': 0, 'calculated_at': None}
+    try:
+        from compliance.gap_engine import get_company_gap_summary
+        s = get_company_gap_summary(company)
+        summary.update({
+            'readiness_percent': s.get('overall_readiness_percent', 0),
+            'missing': s.get('missing_count', 0),
+            'needs_review': s.get('needs_review_count', 0),
+            'total': s.get('total', 0),
+            'calculated_at': s.get('calculated_at'),
+        })
+    except Exception:
+        pass
+    return summary
+
+
 def company_evidence_summary(company):
     """Phase 8E — staff-only evidence counts for a company (read-only, no content).
 

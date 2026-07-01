@@ -174,6 +174,18 @@
       </div>
     </div>
 
+    {# Gap readiness summary (preliminary internal readiness — counts only) #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-1">الجاهزية الأولية · Preliminary readiness</h2>
+      <p class="text-xs text-gov-gray-500 mb-3">جاهزية داخلية أولية مبنية على الأدلة — تتطلب مراجعة بشرية ولا تُعد شهادة امتثال رسمية.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ gap_summary.readiness_percent }}%</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية · Readiness</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ gap_summary.missing }}</div><div class="text-xs text-gov-gray-500 mt-1">مفقود · Missing</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ gap_summary.needs_review }}</div><div class="text-xs text-gov-gray-500 mt-1">مراجعة · Needs review</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-600">{{ gap_summary.calculated_at|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر حساب · Last calc</div></div>
+      </div>
+    </div>
+
     {# Operational snapshot #}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
       <h2 class="font-bold text-gov-green-800 mb-3">الحالة التشغيلية · Operational status</h2>

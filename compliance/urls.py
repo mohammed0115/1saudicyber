@@ -60,6 +60,9 @@ urlpatterns = [
     path('reports/auditor-reviewed/', views.auditor_reviewed_report, name='auditor_reviewed_report'),
     path('reports/executive-summary/', views.report_executive_summary, name='report_executive_summary'),
     path('reports/gap-analysis/', views.report_gap_analysis, name='report_gap_analysis'),
+    # Phase 8F — deterministic internal-readiness gap dashboard + recalculation
+    path('gap-analysis/', views.gap_dashboard, name='gap_dashboard'),
+    path('gap-analysis/recalculate/', views.run_gap_recalc, name='run_gap_recalc'),
     path('reports/evidence-matrix/', views.report_evidence_matrix, name='report_evidence_matrix'),
     path('reports/evidence-matrix.csv', views.export_evidence_matrix_csv, name='export_evidence_matrix_csv'),
     path('reports/evidence-matrix.xlsx', views.export_evidence_matrix_xlsx, name='export_evidence_matrix_xlsx'),

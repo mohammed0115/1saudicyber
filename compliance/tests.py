@@ -6216,3 +6216,230 @@ class EvidenceOCRMVPTests(TestCase):
                   'official accreditation', 'government accredited', 'AI approved', 'AI certified',
                   'compliance confirmed'):
             self.assertNotIn(w, body)
+
+
+# ============================================================
+# Phase 8F-GAP-ENGINE-A — Real Gap Analysis Engine
+# ============================================================
+class GapEngineTests(TestCase):
+    def _apply_controls(self, c):
+        from compliance.models import ControlApplicabilityResult
+        return list(ControlApplicabilityResult.objects.filter(
+            company=c, decision='applicable', control__framework_version__isnull=False))
+
+    # ---- calculation rules ----
+    def test_no_evidence_is_missing(self):
+        from compliance.gap_engine import recalculate_company_gap
+        from compliance.models import ControlGapAssessment
+        c, fv, scope = _company_with_official_plan()
+        # applicable controls exist but no checklist/evidence yet
+        recalculate_company_gap(c)
+        self.assertTrue(ControlGapAssessment.objects.filter(company=c, status='missing').exists())
+
+    def test_evidence_without_text_is_needs_review(self):
+        from compliance.gap_engine import recalculate_company_gap
+        from compliance.models import ControlGapAssessment, EvidenceChecklistItem
+        c, item, sub = _company_with_submission(name='e.png', content=b'\x89PNG\r\n', ftype='png')
+        recalculate_company_gap(c)
+        ctrl = item.evidence_requirement.control
+        g = ControlGapAssessment.objects.get(company=c, control=ctrl)
+        self.assertEqual(g.status, 'needs_review')
+        self.assertEqual(g.evidence_count, 1)
+        self.assertEqual(g.extracted_text_available_count, 0)
+
+    def test_evidence_with_text_is_partial(self):
+        from compliance.gap_engine import recalculate_company_gap
+        from compliance.evidence_extraction import save_extraction_for_submission
+        from compliance.models import ControlGapAssessment
+        c, item, sub = _company_with_submission(name='e.txt', content=b'access control policy approved', ftype='txt')
+        save_extraction_for_submission(sub)  # produces readable text
+        recalculate_company_gap(c)
+        ctrl = item.evidence_requirement.control
+        g = ControlGapAssessment.objects.get(company=c, control=ctrl)
+        self.assertEqual(g.status, 'partially_compliant')
+        self.assertGreaterEqual(g.extracted_text_available_count, 1)
+
+    def test_auditor_compliant_is_compliant(self):
+        from compliance.gap_engine import recalculate_company_gap
+        from compliance.models import ControlGapAssessment, ControlAssessment
+        c, fv, scope = _company_with_assessments()
+        a = ControlAssessment.objects.filter(company=c).first()
+        a.status = 'compliant'; a.save(update_fields=['status'])
+        recalculate_company_gap(c)
+        g = ControlGapAssessment.objects.get(company=c, control=a.control)
+        self.assertEqual(g.status, 'compliant')
+        self.assertEqual(g.score, 100)
+
+    def test_not_applicable_scope(self):
+        from compliance.gap_engine import recalculate_company_gap
+        from compliance.models import ControlGapAssessment, ControlApplicabilityResult
+        c, fv, scope = _company_with_official_plan()
+        car = ControlApplicabilityResult.objects.filter(company=c).first()
+        car.decision = 'not_applicable'; car.save(update_fields=['decision'])
+        recalculate_company_gap(c)
+        g = ControlGapAssessment.objects.get(company=c, control=car.control)
+        self.assertEqual(g.status, 'not_applicable')
+
+    def test_recalculation_idempotent(self):
+        from compliance.gap_engine import recalculate_company_gap
+        from compliance.models import ControlGapAssessment
+        c, item, sub = _company_with_submission()
+        recalculate_company_gap(c)
+        n1 = ControlGapAssessment.objects.filter(company=c).count()
+        recalculate_company_gap(c)
+        n2 = ControlGapAssessment.objects.filter(company=c).count()
+        self.assertEqual(n1, n2)
+
+    def test_empty_company_no_500(self):
+        from compliance.gap_engine import recalculate_company_gap, get_company_gap_summary
+        c = _company()
+        s = recalculate_company_gap(c)  # no plan at all
+        self.assertEqual(s['total'], 0)
+        self.assertEqual(get_company_gap_summary(c)['overall_readiness_percent'], 0)
+
+    def test_recalc_does_not_create_ai_gap_rows(self):
+        from compliance.gap_engine import recalculate_company_gap
+        from ai_engine.models import GapAnalysis
+        before = GapAnalysis.objects.count()
+        c, item, sub = _company_with_submission()
+        recalculate_company_gap(c)
+        self.assertEqual(GapAnalysis.objects.count(), before)  # deterministic engine, no AI
+
+    # ---- readiness scoring ----
+    def test_readiness_percent_weighted(self):
+        from compliance.gap_engine import _readiness_percent
+        # 1 compliant(100) + 1 partial(50) + 1 missing(0) over 3 applicable = 50
+        self.assertEqual(_readiness_percent({'compliant': 1, 'partially_compliant': 1,
+                                             'missing': 1, 'needs_review': 0, 'not_applicable': 0}), 50)
+        # not_applicable excluded from denominator
+        self.assertEqual(_readiness_percent({'compliant': 1, 'partially_compliant': 0,
+                                             'missing': 0, 'needs_review': 0, 'not_applicable': 5}), 100)
+
+    def test_counts_and_frameworks_scoped(self):
+        from compliance.gap_engine import recalculate_company_gap, get_company_gap_summary
+        c, item, sub = _company_with_submission()
+        recalculate_company_gap(c)
+        s = get_company_gap_summary(c)
+        self.assertEqual(sum(s['overall'].values()), s['total'])
+        self.assertGreaterEqual(len(s['frameworks']), 1)
+
+
+class GapDashboardViewTests(TestCase):
+    def _login(self, c, email):
+        u = _journey_user(c, email=email)
+        self.client.force_login(u)
+        return u
+
+    def test_anonymous_redirected(self):
+        r = self.client.get(reverse('compliance:gap_dashboard'))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/login', r.url)
+
+    def test_company_user_can_view(self):
+        c, item, sub = _company_with_submission()
+        self._login(c, 'gapv@x.com')
+        resp = self.client.get(reverse('compliance:gap_dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Internal readiness')
+
+    def test_disclaimer_and_distribution_present(self):
+        from compliance.gap_engine import recalculate_company_gap
+        c, item, sub = _company_with_submission()
+        recalculate_company_gap(c)
+        self._login(c, 'gapd@x.com')
+        body = self.client.get(reverse('compliance:gap_dashboard')).content.decode()
+        self.assertIn('Not an official certification', body)
+        self.assertIn('Framework readiness', body)
+        self.assertIn('Missing', body)  # status distribution card
+
+    def test_missing_control_links_to_evidence(self):
+        from compliance.gap_engine import recalculate_company_gap
+        c, fv, scope = _company_with_checklist()
+        recalculate_company_gap(c)  # no evidence -> missing rows
+        self._login(c, 'gapm@x.com')
+        body = self.client.get(reverse('compliance:gap_dashboard')).content.decode()
+        self.assertIn('Upload evidence', body)
+        self.assertIn(reverse('compliance:evidence_checklist'), body)
+
+    def test_smart_processing_animation_present(self):
+        c, item, sub = _company_with_submission()
+        self._login(c, 'gapa@x.com')
+        body = self.client.get(reverse('compliance:gap_dashboard')).content.decode()
+        self.assertIn('data-smart-processing', body)
+        self.assertIn('Processing evidence', body)
+
+    def test_empty_company_dashboard_no_500(self):
+        c = _company()
+        self._login(c, 'gape@x.com')
+        self.assertEqual(self.client.get(reverse('compliance:gap_dashboard')).status_code, 200)
+
+    # ---- recalc action ----
+    def test_recalc_requires_post(self):
+        c, item, sub = _company_with_submission()
+        self._login(c, 'gaprp@x.com')
+        self.assertEqual(self.client.get(reverse('compliance:run_gap_recalc')).status_code, 405)
+
+    def test_recalc_writes_audit(self):
+        from core.models import AuditLog
+        c, item, sub = _company_with_submission()
+        self._login(c, 'gapau@x.com')
+        self.client.post(reverse('compliance:run_gap_recalc'))
+        log = AuditLog.objects.filter(action='gap_recalculated').order_by('-id').first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.metadata.get('company_id'), c.id)
+
+    def test_recalc_tenant_scoped(self):
+        from compliance.gap_engine import recalculate_company_gap, gap_rows
+        c1, i1, s1 = _company_with_submission(name='a.txt')
+        c2, i2, s2 = _company_with_submission(name='b.txt')
+        recalculate_company_gap(c1); recalculate_company_gap(c2)
+        self.assertTrue(all(r.company_id == c1.id for r in gap_rows(c1)))
+        self.assertTrue(all(r.company_id == c2.id for r in gap_rows(c2)))
+
+    # ---- permissions ----
+    def test_auditor_denied(self):
+        from auditors.models import AuditorProfile
+        from core.models import User
+        au = User.objects.create_user(username='gapaud@x.com', email='gapaud@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        resp = self.client.get(reverse('compliance:gap_dashboard'))
+        self.assertContains(resp, 'Auditor account', status_code=200)
+
+    def test_staff_without_company_routed_to_crm(self):
+        from core.models import User
+        st = User.objects.create_user(username='gapstaff@x.com', email='gapstaff@x.com',
+                                      password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(st)
+        resp = self.client.get(reverse('compliance:gap_dashboard'))
+        self.assertContains(resp, 'Get Solution CRM', status_code=200)
+
+    # ---- CRM summary + safety ----
+    def test_crm_company_detail_shows_gap_summary(self):
+        from compliance.gap_engine import recalculate_company_gap
+        from core.models import User
+        c, item, sub = _company_with_submission()
+        recalculate_company_gap(c)
+        staff = User.objects.create_user(username='gapcrm@x.com', email='gapcrm@x.com',
+                                         password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(staff)
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Preliminary readiness')
+
+    def test_no_unsafe_wording_on_gap_page(self):
+        from compliance.gap_engine import recalculate_company_gap
+        c, item, sub = _company_with_submission()
+        recalculate_company_gap(c)
+        self._login(c, 'gapsafe@x.com')
+        body = self.client.get(reverse('compliance:gap_dashboard')).content.decode()
+        # Affirmative certification/accreditation claims must never appear. The safe
+        # NEGATED disclaimer "Not an official certification" is allowed.
+        for w in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد حكومي',
+                  'certified by NCA', 'official accreditation', 'government accredited'):
+            self.assertNotIn(w, body)
+        if 'official certification' in body:
+            self.assertIn('Not an official certification', body)
+        if 'شهادة امتثال رسمية' in body:
+            self.assertIn('لا تُعد شهادة امتثال رسمية', body)

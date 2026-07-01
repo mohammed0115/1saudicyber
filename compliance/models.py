@@ -1044,3 +1044,47 @@ class AuditorFinalVerdict(models.Model):
     @property
     def status_ar(self):
         return self.STATUS_AR.get(self.status, self.status)
+
+
+class ControlGapAssessment(models.Model):
+    """Phase 8F — deterministic, evidence-aware INTERNAL readiness per control.
+
+    A preliminary, system-calculated readiness status for one applicable official
+    control (per company). It is NOT the auditor's final decision (ControlAssessment)
+    and NOT an official certification/accreditation — it is an evidence-based
+    preliminary status that always requires human review. Recomputed deterministically
+    from existing data (applicability scope, evidence submissions, text extraction,
+    and the auditor assessment when present). No AI, no external calls.
+    """
+    STATUS_CHOICES = [
+        ('compliant', 'Compliant'),
+        ('partially_compliant', 'Partially Compliant'),
+        ('missing', 'Missing'),
+        ('not_applicable', 'Not Applicable'),
+        ('needs_review', 'Needs Review'),
+    ]
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='control_gap_assessments')
+    framework_version = models.ForeignKey(
+        FrameworkVersion, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='control_gap_assessments')
+    control = models.ForeignKey(Control, on_delete=models.CASCADE, related_name='gap_assessments')
+
+    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='needs_review')
+    score = models.PositiveSmallIntegerField(default=0)  # 0-100 preliminary readiness
+    evidence_count = models.PositiveIntegerField(default=0)
+    extracted_text_available_count = models.PositiveIntegerField(default=0)
+    reason = models.TextField(blank=True)
+    calculated_by = models.CharField(max_length=64, default='deterministic_v1')
+    calculated_at = models.DateTimeField(auto_now=True)
+    reviewed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_gap_assessments')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'control_gap_assessments'
+        unique_together = ['company', 'control']
+        ordering = ['company', 'control']
+
+    def __str__(self):
+        return f"Gap[{self.company_id}/{self.control_id}] = {self.status}"
