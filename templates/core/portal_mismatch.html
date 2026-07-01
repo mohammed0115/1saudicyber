@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Portal · 1SaudiCyber{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto text-center py-20 px-4">
+  <i class="fas fa-shuffle text-gov-green-700 text-5xl mb-6"></i>
+  <h2 class="text-2xl font-bold text-gov-green-800 mb-3">This action requires a different portal</h2>
+  <p class="text-gov-gray-600 mb-2">Your account belongs to a different portal. Use the correct console below.</p>
+  <p class="text-gov-gray-500 mb-6" dir="rtl">هذا الإجراء يتطلّب بوابة مختلفة. استخدم الوحدة المناسبة لحسابك.</p>
+  <div class="flex flex-wrap gap-3 justify-center">
+    {% if target == 'platform_admin' %}
+    <a href="{% url 'platform_admin:dashboard' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+      <i class="fas fa-table-columns mr-2"></i> Get Solution CRM
+    </a>
+    {% elif target == 'auditor' %}
+    <a href="{% url 'auditors:dashboard' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+      <i class="fas fa-clipboard-check mr-2"></i> Auditor portal · بوابة المدقّق
+    </a>
+    {% else %}
+    <a href="{% url 'dashboard:main' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+      <i class="fas fa-gauge mr-2"></i> My portal · بوابتي
+    </a>
+    {% endif %}
+    <a href="{% url 'core:logout' %}" class="bg-white text-gov-green-800 px-6 py-3 rounded-lg font-medium border border-gov-green-700 hover:bg-gov-green-50 transition">
+      Logout · تسجيل الخروج
+    </a>
+  </div>
+</div>
+{% endblock %}

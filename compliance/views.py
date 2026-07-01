@@ -13,9 +13,11 @@ from django.utils.translation import gettext as _
 from .models import Framework, Domain, Control, CompanyControl, Evidence, Assessment
 from ai_engine.services import process_uploaded_file, analyze_evidence
 from ai_engine.models import AIAuditLog
+from core.roles import company_portal_required
 
 
 @login_required
+@company_portal_required
 def controls_list(request):
     """Display all applicable controls for the user's company."""
     company = request.user.company
@@ -154,6 +156,7 @@ def upload_evidence(request, control_id):
 # Phase 3I — Journey dashboard (read-only overview + next step)
 # ============================================================
 @login_required
+@company_portal_required
 def journey_dashboard(request):
     """Read-only end-to-end workflow overview for the user's company.
 
@@ -361,6 +364,7 @@ def auditor_verdict_view(request, submission_id):
 
 
 @login_required
+@company_portal_required
 def applicability_preview(request):
     """Phase 6B — advisory control-applicability preview for the user's own company.
 
@@ -381,6 +385,7 @@ def applicability_preview(request):
 
 
 @login_required
+@company_portal_required
 def classification_summary(request):
     """Phase 6A — advisory Smart Classification summary for the user's own company.
 
@@ -409,6 +414,7 @@ from .framework_applicability import evaluate_company, RULES, _is_available
 
 
 @login_required
+@company_portal_required
 def intake_wizard(request):
     """Create/update the company's intake profile, then evaluate framework applicability.
 
@@ -439,6 +445,7 @@ def intake_wizard(request):
 
 
 @login_required
+@company_portal_required
 def applicability_review(request):
     """Show framework applicability + proposed/approved scopes for the user's company."""
     from django.db.models import Count, Q
@@ -535,6 +542,7 @@ def generate_control_plan_view(request, scope_id):
 
 
 @login_required
+@company_portal_required
 def control_plan(request):
     """Read-only page: planned controls (ControlApplicabilityResult) for approved frameworks."""
     from .models import CompanyFrameworkScope, ControlApplicabilityResult
@@ -556,6 +564,7 @@ def control_plan(request):
 # Phase 3D — Evidence Checklist planning page (no upload form here)
 # ============================================================
 @login_required
+@company_portal_required
 def evidence_checklist(request):
     """Read-only planned evidence checklist for the user's company (no upload here)."""
     from .models import EvidenceChecklistItem
@@ -690,6 +699,7 @@ def analyze_submission_view(request, submission_id):
 # Phase 3G — Auditor review + Control Assessment (staff-only to assess)
 # ============================================================
 @login_required
+@company_portal_required
 def auditor_review_queue(request):
     """Queue of the company's control assessments (applicable official controls)."""
     from .models import ControlAssessment
@@ -787,6 +797,7 @@ def _require_report_export(request, company):
 
 
 @login_required
+@company_portal_required
 def reports_index(request):
     company = request.user.company
     if not company:
@@ -805,6 +816,7 @@ def reports_index(request):
 
 
 @login_required
+@company_portal_required
 def auditor_reviewed_report(request):
     """Phase 7B — internal auditor-reviewed report (subscription-gated, company-scoped).
 
@@ -828,6 +840,7 @@ def auditor_reviewed_report(request):
 
 
 @login_required
+@company_portal_required
 def report_executive_summary(request):
     company = request.user.company
     if not company:
@@ -841,6 +854,7 @@ def report_executive_summary(request):
 
 
 @login_required
+@company_portal_required
 def report_gap_analysis(request):
     company = request.user.company
     if not company:
@@ -854,6 +868,7 @@ def report_gap_analysis(request):
 
 
 @login_required
+@company_portal_required
 def report_evidence_matrix(request):
     company = request.user.company
     if not company:
@@ -867,6 +882,7 @@ def report_evidence_matrix(request):
 
 
 @login_required
+@company_portal_required
 def report_framework(request, framework_version_id):
     """Framework-filtered report (gap + matrix), scoped to an approved framework version."""
     company = request.user.company

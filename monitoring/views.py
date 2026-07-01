@@ -5,9 +5,11 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import ComplianceScore, Alert, MonthlyReport, CertificateTracker
+from core.roles import company_portal_required
 
 
 @login_required
+@company_portal_required
 def compliance_hub(request):
     """Phase 10: Continuous Compliance Hub - daily scores, monthly reports, renewal countdown."""
     company = request.user.company
@@ -38,6 +40,7 @@ def compliance_hub(request):
 
 
 @login_required
+@company_portal_required
 def realtime_monitoring(request):
     """Real-time monitoring dashboard - live event feed."""
     company = request.user.company
@@ -117,6 +120,7 @@ def event_stream(request):
 # Phase 5B — Continuous Monitoring Foundation (read-only surfaces)
 # ============================================================
 @login_required
+@company_portal_required
 def monitoring_overview(request):
     """Company-scoped continuous-monitoring dashboard (counters)."""
     from .continuous import summarize_company_monitoring
@@ -136,6 +140,7 @@ def monitoring_overview(request):
 
 
 @login_required
+@company_portal_required
 def checks_list(request):
     from .models import MonitoringCheck
     company = request.user.company
@@ -148,6 +153,7 @@ def checks_list(request):
 
 
 @login_required
+@company_portal_required
 def findings_list(request):
     from .models import MonitoringFinding
     company = request.user.company

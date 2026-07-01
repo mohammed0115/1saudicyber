@@ -13,6 +13,7 @@ from core.models import User
 from .forms import AuditorRegistrationForm
 from .models import AuditorProfile, AuditorAssignment
 from . import services
+from core.roles import company_portal_required, auditor_portal_required
 
 
 # ---------- Auditor registration / onboarding ----------
@@ -62,6 +63,7 @@ def register(request):
 
 
 @login_required
+@auditor_portal_required
 def onboarding(request):
     """Auditor onboarding/status page (own profile only)."""
     from .journey import build_auditor_journey
@@ -73,6 +75,7 @@ def onboarding(request):
 
 
 @login_required
+@auditor_portal_required
 def dashboard(request):
     """Auditor dashboard. Pending/suspended/inactive -> no company data."""
     from .journey import build_auditor_journey
@@ -86,6 +89,7 @@ def dashboard(request):
 
 
 @login_required
+@auditor_portal_required
 def assignment_detail(request, assignment_id):
     """Assignment detail for the owning auditor only. Context read-only when accepted+active."""
     assignment = services.get_assignment_for_user(request.user, assignment_id)
@@ -121,6 +125,7 @@ def assignment_detail(request, assignment_id):
 
 @login_required
 @require_http_methods(["POST"])
+@auditor_portal_required
 def assignment_respond(request, assignment_id):
     """Auditor accepts/rejects a 'requested' assignment (own assignment only)."""
     assignment = services.get_assignment_for_user(request.user, assignment_id)
@@ -138,6 +143,7 @@ def assignment_respond(request, assignment_id):
 
 # ---------- Company-facing: list + assign ----------
 @login_required
+@company_portal_required
 def auditors_list(request):
     """List available platform auditors for a subscribed company to assign."""
     company = request.user.company
@@ -154,6 +160,7 @@ def auditors_list(request):
 
 @login_required
 @require_http_methods(["POST"])
+@company_portal_required
 def assign(request, auditor_id):
     """Assign the current company's file to a platform auditor (subscription required)."""
     company = request.user.company

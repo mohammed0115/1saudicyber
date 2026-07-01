@@ -7,9 +7,11 @@ from django.views.decorators.http import require_http_methods
 from .forms import RiskForm, RemediationTaskForm
 from .models import RiskItem, RemediationTask
 from . import services
+from core.roles import company_portal_required
 
 
 @login_required
+@company_portal_required
 def risk_list(request):
     company = request.user.company
     if not company:
@@ -63,6 +65,7 @@ def _linked_objects(request, company):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@company_portal_required
 def risk_create(request):
     company = request.user.company
     if not company:

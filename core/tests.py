@@ -2011,3 +2011,122 @@ class RolePortalIsolationTests(TestCase):
         for body in bodies:
             for w in banned:
                 self.assertNotIn(w, body)
+
+
+class ExplicitPortalGuardTests(TestCase):
+    """Phase 8D-3C-B — explicit company_portal_required / auditor_portal_required guards."""
+
+    def _company_with_user(self, cr='6161616161', email='cg@portal.example'):
+        c = Company.objects.create(name='Guard Co', cr_number=cr, sector='technology',
+                                   size='small', contact_email=email)
+        u = User.objects.create_user(username=email, email=email, password='longenough12',
+                                     company=c, role='company_admin')
+        return c, u
+
+    def _auditor(self, email='ag@portal.example', status='active'):
+        u = User.objects.create_user(username=email, email=email, password='longenough12',
+                                     role='auditor')
+        p = AuditorProfile.objects.create(user=u, full_name='Guard Auditor', status=status)
+        return u, p
+
+    def _staff(self, email='sg@portal.example', superuser=False, company=None):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True, is_superuser=superuser,
+                                        company=company)
+
+    COMPANY_PAGES = ('compliance:classification', 'compliance:applicability_preview',
+                     'compliance:controls_list', 'compliance:evidence_checklist',
+                     'compliance:reports_index', 'risk:list', 'monitoring:overview')
+
+    # ---- company guard ----
+    def test_anonymous_company_page_redirects_login(self):
+        for name in self.COMPANY_PAGES:
+            r = self.client.get(reverse(name))
+            self.assertEqual(r.status_code, 302, name)
+            self.assertIn('/login', r.url, name)
+
+    def test_company_user_allowed(self):
+        _, cu = self._company_with_user()
+        self.client.force_login(cu)
+        for name in self.COMPANY_PAGES:
+            self.assertEqual(self.client.get(reverse(name)).status_code, 200, name)
+
+    def test_staff_with_company_still_allowed(self):
+        # A staff user acting in company context (has a company) must NOT be blocked.
+        c, _ = self._company_with_user(cr='6262626262', email='cs@x.com')
+        st = self._staff(email='staffco@x.com', company=c)
+        self.client.force_login(st)
+        self.assertEqual(self.client.get(reverse('compliance:classification')).status_code, 200)
+
+    def test_staff_without_company_gets_crm_safe_message(self):
+        st = self._staff()
+        self.client.force_login(st)
+        resp = self.client.get(reverse('compliance:classification'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Get Solution CRM')
+        self.assertNotContains(resp, 'not linked to a company')
+
+    def test_auditor_on_company_page_safe(self):
+        au, _ = self._auditor()
+        self.client.force_login(au)
+        resp = self.client.get(reverse('compliance:classification'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Auditor account')
+
+    def test_unlinked_user_company_page_safe_no_500(self):
+        u = User.objects.create_user(username='ug@x.com', email='ug@x.com',
+                                     password='longenough12', role='company_admin')
+        self.client.force_login(u)
+        resp = self.client.get(reverse('risk:list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'not linked to a company')
+
+    # ---- auditor guard ----
+    def test_anonymous_auditor_page_redirects_login(self):
+        for name in ('auditors:dashboard', 'auditors:onboarding'):
+            r = self.client.get(reverse(name))
+            self.assertEqual(r.status_code, 302, name)
+            self.assertIn('/login', r.url, name)
+
+    def test_active_auditor_allowed_on_dashboard(self):
+        au, _ = self._auditor()
+        self.client.force_login(au)
+        self.assertEqual(self.client.get(reverse('auditors:dashboard')).status_code, 200)
+
+    def test_pending_auditor_allowed_on_onboarding(self):
+        au, _ = self._auditor(email='pend@x.com', status='pending_review')
+        self.client.force_login(au)
+        self.assertEqual(self.client.get(reverse('auditors:onboarding')).status_code, 200)
+
+    def test_pending_auditor_assignment_detail_no_company_data(self):
+        au, p = self._auditor(email='pend2@x.com', status='pending_review')
+        c, _ = self._company_with_user(cr='6363636363', email='c3@x.com')
+        a = AuditorAssignment.objects.create(company=c, auditor=p, status='accepted')
+        self.client.force_login(au)
+        resp = self.client.get(reverse('auditors:assignment_detail', args=[a.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'سياق الشركة')
+
+    def test_company_user_denied_auditor_dashboard(self):
+        _, cu = self._company_with_user()
+        self.client.force_login(cu)
+        resp = self.client.get(reverse('auditors:dashboard'))
+        self.assertEqual(resp.status_code, 302)  # -> auditor registration (existing safe flow)
+        self.assertIn(reverse('auditors:register'), resp.url)
+
+    def test_staff_on_auditor_page_gets_portal_mismatch(self):
+        st = self._staff(email='staffaud@x.com')
+        self.client.force_login(st)
+        resp = self.client.get(reverse('auditors:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'requires a different portal')
+        self.assertContains(resp, 'Get Solution CRM')
+
+    # ---- safety ----
+    def test_portal_mismatch_no_unsafe_wording(self):
+        st = self._staff(email='staffsafe@x.com')
+        self.client.force_login(st)
+        body = self.client.get(reverse('auditors:dashboard')).content.decode()
+        for w in ('معتمد من NCA', 'اعتماد رسمي', 'certified by NCA', 'official accreditation',
+                  'government accredited', 'official certification', 'شهادة امتثال رسمية'):
+            self.assertNotIn(w, body)

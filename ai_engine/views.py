@@ -8,6 +8,7 @@ from django.utils import timezone
 from .services import classify_company, generate_gap_analysis
 from .models import AIClassificationLog, GapAnalysis
 from compliance.models import CompanyControl
+from core.roles import company_portal_required
 
 
 @login_required
@@ -54,6 +55,7 @@ def run_classification(request):
 
 
 @login_required
+@company_portal_required
 def run_gap_analysis(request):
     """Phase 8D-2-FIX-A — safe, read-only advisory gap-analysis landing page.
 

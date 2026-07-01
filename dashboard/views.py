@@ -8,6 +8,7 @@ from core.models import Company
 from compliance.models import CompanyControl, Assessment, Framework
 from monitoring.models import ComplianceScore, Alert, CertificateTracker
 from ai_engine.models import GapAnalysis
+from core.roles import company_portal_required
 
 
 @login_required
@@ -35,6 +36,7 @@ def main_dashboard(request):
 
 
 @login_required
+@company_portal_required
 def executive_dashboard(request):
     """Executive Leadership Dashboard - Risk heatmap, ROI, board reports."""
     company = request.user.company
@@ -68,6 +70,7 @@ def executive_dashboard(request):
 
 
 @login_required
+@company_portal_required
 def compliance_officer_dashboard(request):
     """Compliance Officer Dashboard - Full control checklist, audit readiness."""
     company = request.user.company
@@ -114,6 +117,7 @@ def compliance_officer_dashboard(request):
 
 
 @login_required
+@company_portal_required
 def it_security_dashboard(request):
     """IT/Security Team Dashboard - Technical controls, vulnerabilities."""
     company = request.user.company
@@ -140,6 +144,7 @@ def it_security_dashboard(request):
 
 
 @login_required
+@company_portal_required
 def bu_manager_dashboard(request):
     """Business Unit Manager Dashboard - Department compliance, training."""
     company = request.user.company
