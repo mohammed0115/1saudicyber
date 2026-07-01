@@ -14,6 +14,8 @@ urlpatterns = [
     path('', admin_views.crm_dashboard, name='dashboard'),
     path('companies/', admin_views.crm_companies_list, name='companies_list'),
     path('companies/<int:company_id>/', admin_views.crm_company_detail, name='company_detail'),
+    path('companies/<int:company_id>/link-user/', admin_views.crm_link_user, name='link_user'),
+    path('companies/<int:company_id>/unlink-user/', admin_views.crm_unlink_user, name='unlink_user'),
     path('unlinked-accounts/', admin_views.crm_unlinked_accounts, name='unlinked_accounts'),
 
     # Auditor approval (Phase 8D-3A)

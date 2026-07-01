@@ -84,13 +84,45 @@ def crm_companies_list(request):
 
 @platform_admin_required
 def crm_company_detail(request, company_id):
-    """Read-only operational snapshot for one company."""
+    """Read-only operational snapshot for one company + link/unlink actions."""
     from core.models import Company
     company = get_object_or_404(Company, id=company_id)
     return render(request, 'platform_admin/company_detail.html', {
         'company': company,
         'snapshot': crm.company_operational_snapshot(company),
+        'linkable_users': crm.linkable_users(),
     })
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_link_user(request, company_id):
+    """POST-only: link an existing unlinked user to this company (staff-only)."""
+    from core.models import Company, User
+    company = get_object_or_404(Company, id=company_id)
+    user = User.objects.filter(id=request.POST.get('user_id') or 0).first()
+    try:
+        crm.link_user_to_company(request.user, user, company, request.POST.get('reason', ''))
+        messages.success(request, 'تم ربط الحساب %s بالشركة %s.' % (
+            getattr(user, 'email', ''), company.name))
+    except crm.CRMLinkError as e:
+        messages.error(request, str(e))
+    return redirect('platform_admin:company_detail', company_id=company.id)
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_unlink_user(request, company_id):
+    """POST-only: unlink a user from this company (staff-only). Deletes nothing."""
+    from core.models import Company, User
+    company = get_object_or_404(Company, id=company_id)
+    user = User.objects.filter(id=request.POST.get('user_id') or 0, company=company).first()
+    try:
+        crm.unlink_user_from_company(request.user, user, request.POST.get('reason', ''))
+        messages.success(request, 'تم إلغاء ربط الحساب %s.' % getattr(user, 'email', ''))
+    except crm.CRMLinkError as e:
+        messages.error(request, str(e))
+    return redirect('platform_admin:company_detail', company_id=company.id)
 
 
 @platform_admin_required

@@ -650,15 +650,13 @@ class GetSolutionCRMConsoleTests(TestCase):
         self.assertNotIn(au.id, ids)
         self.assertNotIn(staff.id, ids)
 
-    # ---- read-only: no destructive actions exposed ----
-    def test_crm_views_are_get_only_readonly(self):
+    # ---- overview/listing pages stay read-only (no platform-admin POST forms) ----
+    # NOTE: company_detail is intentionally an ACTION page from Phase 8D-3D-CRM-B
+    # (it hosts the guarded link/unlink POST forms), so it is excluded here.
+    def test_crm_listing_views_are_get_only_readonly(self):
         self.client.force_login(self._staff())
-        # Read-only foundation: no CRM page may submit a form to a platform-admin
-        # endpoint (the only POST form in the layout is the i18n language switcher).
-        c, cu = _company_user(subscribe=True)
         for name, args in (('platform_admin:dashboard', []),
                            ('platform_admin:companies_list', []),
-                           ('platform_admin:company_detail', [c.id]),
                            ('platform_admin:unlinked_accounts', [])):
             body = self.client.get(reverse(name, args=args)).content.decode()
             self.assertNotIn('action="/platform-admin', body, name)
@@ -769,6 +767,224 @@ class PlatformAdminCRMNavigationTests(TestCase):
             body = self.client.get(url).content.decode()
             for w in banned:
                 self.assertNotIn(w, body, '%s in %s' % (w, url))
+
+
+class CRMCompanyUserLinkingTests(TestCase):
+    """Phase 8D-3D-CRM-B — Get Solution CRM company/user link & unlink actions."""
+
+    def _staff(self, email='linkadmin@x.com', superuser=False):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True, is_superuser=superuser)
+
+    def _company(self, cr='7171717171', name='Link Co'):
+        return Company.objects.create(name=name, cr_number=cr, sector='technology',
+                                      size='small', contact_email='link@co.example')
+
+    def _unlinked_user(self, email='free@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='company_admin')
+
+    def _link_url(self, c):
+        return reverse('platform_admin:link_user', args=[c.id])
+
+    def _unlink_url(self, c):
+        return reverse('platform_admin:unlink_user', args=[c.id])
+
+    # ---- permissions ----
+    def test_anonymous_cannot_link(self):
+        c = self._company()
+        r = self.client.post(self._link_url(c), {'user_id': 1, 'reason': 'x'})
+        self.assertIn(r.status_code, (302, 403))
+        if r.status_code == 302:
+            self.assertIn('/login', r.url)
+
+    def test_company_user_cannot_link(self):
+        c = self._company()
+        u = self._unlinked_user('cu2@x.com'); u.company = c; u.save()
+        self.client.force_login(u)
+        self.assertEqual(self.client.post(self._link_url(c),
+                         {'user_id': 1, 'reason': 'x'}).status_code, 403)
+
+    def test_auditor_user_cannot_link(self):
+        c = self._company()
+        au = User.objects.create_user(username='al@x.com', email='al@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        self.assertEqual(self.client.post(self._link_url(c),
+                         {'user_id': 1, 'reason': 'x'}).status_code, 403)
+
+    def test_link_requires_post(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.assertEqual(self.client.get(self._link_url(c)).status_code, 405)
+
+    # ---- linking ----
+    def test_staff_can_link_eligible_user(self):
+        c = self._company()
+        u = self._unlinked_user()
+        self.client.force_login(self._staff())
+        self.client.post(self._link_url(c), {'user_id': u.id, 'reason': 'رقم الطلب 123'})
+        u.refresh_from_db()
+        self.assertEqual(u.company_id, c.id)
+
+    def test_link_requires_reason(self):
+        c = self._company()
+        u = self._unlinked_user()
+        self.client.force_login(self._staff())
+        self.client.post(self._link_url(c), {'user_id': u.id, 'reason': ''})
+        u.refresh_from_db()
+        self.assertIsNone(u.company_id)
+
+    def test_link_rejects_staff_target(self):
+        c = self._company()
+        target = self._staff(email='targetstaff@x.com')
+        self.client.force_login(self._staff())
+        self.client.post(self._link_url(c), {'user_id': target.id, 'reason': 'x'})
+        target.refresh_from_db()
+        self.assertIsNone(target.company_id)
+
+    def test_link_rejects_auditor_target(self):
+        c = self._company()
+        au = User.objects.create_user(username='at@x.com', email='at@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(self._staff())
+        self.client.post(self._link_url(c), {'user_id': au.id, 'reason': 'x'})
+        au.refresh_from_db()
+        self.assertIsNone(au.company_id)
+
+    def test_link_rejects_already_linked_user(self):
+        c1 = self._company(cr='7272727272', name='C1')
+        c2 = self._company(cr='7373737373', name='C2')
+        u = self._unlinked_user(); u.company = c1; u.save()
+        self.client.force_login(self._staff())
+        self.client.post(self._link_url(c2), {'user_id': u.id, 'reason': 'move'})
+        u.refresh_from_db()
+        self.assertEqual(u.company_id, c1.id)  # unchanged (fail closed)
+
+    def test_link_missing_user_is_safe(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        resp = self.client.post(self._link_url(c), {'user_id': 999999, 'reason': 'x'})
+        self.assertEqual(resp.status_code, 302)  # no 500
+
+    def test_link_does_not_change_session(self):
+        c = self._company()
+        u = self._unlinked_user()
+        staff = self._staff()
+        self.client.force_login(staff)
+        self.client.post(self._link_url(c), {'user_id': u.id, 'reason': 'r'})
+        self.assertEqual(int(self.client.session['_auth_user_id']), staff.id)
+
+    def test_linked_user_gone_from_unlinked_and_on_company_detail(self):
+        c = self._company()
+        u = self._unlinked_user()
+        self.client.force_login(self._staff())
+        self.client.post(self._link_url(c), {'user_id': u.id, 'reason': 'r'})
+        # First GET flushes the transient success flash (which echoes the email);
+        # the second GET reflects the steady-state list.
+        self.client.get(reverse('platform_admin:unlinked_accounts'))
+        unlinked = self.client.get(reverse('platform_admin:unlinked_accounts')).content.decode()
+        self.assertNotIn(u.email, unlinked)
+        self.assertIn('No unlinked accounts currently', unlinked)
+        detail = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn(u.email, detail)
+
+    def test_linked_user_can_reach_company_dashboard(self):
+        c = self._company()
+        u = self._unlinked_user()
+        self.client.force_login(self._staff())
+        self.client.post(self._link_url(c), {'user_id': u.id, 'reason': 'r'})
+        self.client.logout()
+        self.client.force_login(User.objects.get(id=u.id))
+        self.assertEqual(self.client.get(reverse('compliance:classification')).status_code, 200)
+
+    # ---- unlinking ----
+    def test_staff_can_unlink_user(self):
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()
+        self.client.force_login(self._staff())
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'left company'})
+        u.refresh_from_db()
+        self.assertIsNone(u.company_id)
+
+    def test_unlink_requires_post(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.assertEqual(self.client.get(self._unlink_url(c)).status_code, 405)
+
+    def test_unlink_requires_reason(self):
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()
+        self.client.force_login(self._staff())
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': ''})
+        u.refresh_from_db()
+        self.assertEqual(u.company_id, c.id)  # unchanged
+
+    def test_unlink_does_not_delete_user_or_company(self):
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()
+        self.client.force_login(self._staff())
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
+        self.assertTrue(User.objects.filter(id=u.id).exists())
+        self.assertTrue(Company.objects.filter(id=c.id).exists())
+
+    def test_unlinked_user_reappears_in_unlinked_list(self):
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()
+        self.client.force_login(self._staff())
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
+        body = self.client.get(reverse('platform_admin:unlinked_accounts')).content.decode()
+        self.assertIn(u.email, body)
+
+    def test_unlink_does_not_change_session(self):
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()
+        staff = self._staff()
+        self.client.force_login(staff)
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
+        self.assertEqual(int(self.client.session['_auth_user_id']), staff.id)
+
+    # ---- audit ----
+    def test_link_writes_audit_log(self):
+        from core.models import AuditLog
+        c = self._company()
+        u = self._unlinked_user()
+        self.client.force_login(self._staff())
+        self.client.post(self._link_url(c), {'user_id': u.id, 'reason': 'ticket 9'})
+        log = AuditLog.objects.filter(action='crm_link_user').order_by('-id').first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.metadata.get('target_user_id'), u.id)
+        self.assertEqual(log.metadata.get('new_company_id'), c.id)
+        self.assertEqual(log.metadata.get('reason'), 'ticket 9')
+
+    def test_unlink_writes_audit_log(self):
+        from core.models import AuditLog
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()
+        self.client.force_login(self._staff())
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'offboard'})
+        log = AuditLog.objects.filter(action='crm_unlink_user').order_by('-id').first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.metadata.get('old_company_id'), c.id)
+        self.assertEqual(log.metadata.get('reason'), 'offboard')
+
+    # ---- safety ----
+    def test_company_detail_link_ui_no_unsafe_wording(self):
+        c = self._company()
+        self._unlinked_user()
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('Link user to company', body)
+        # Affirmative certification/accreditation CLAIMS must never appear (the CRM
+        # footer's negated disclaimer "لا يمثّل ... شهادة امتثال رسمية" is safe).
+        for w in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد حكومي',
+                  'certified by NCA', 'official accreditation', 'government accredited',
+                  'official certification'):
+            self.assertNotIn(w, body)
+        if 'شهادة امتثال رسمية' in body:
+            self.assertIn('لا يمثّل اعتمادًا رسميًا أو شهادة امتثال رسمية', body)
 
 
 class Phase4CBackwardCompatTests(TestCase):

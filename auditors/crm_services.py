@@ -92,3 +92,123 @@ def company_operational_snapshot(company):
         pass
 
     return snap
+
+
+# ============================================================
+# Phase 8D-3D-CRM-B — Company/User linking actions (write, staff-only).
+# Business rules live here (service layer). Every action is audited via the
+# existing core.AuditLog (no new model / no migration). Never creates users or
+# companies, never changes the current session, never touches compliance data.
+# ============================================================
+class CRMLinkError(Exception):
+    """Raised for an invalid link/unlink request (permission / eligibility)."""
+
+
+def is_platform_admin(user):
+    """Reuse the canonical Get Solution staff/superuser check."""
+    from .admin_services import is_platform_admin as _p
+    return _p(user)
+
+
+def user_is_linkable(user):
+    """True if a user account is eligible to be linked as a company user.
+
+    Eligible = a normal account: not staff/superuser, no auditor profile, and not
+    already linked to a company. (Cross-role accounts are never linked as company
+    users to avoid role/session confusion.)
+    """
+    if user is None:
+        return False
+    if user.is_staff or user.is_superuser:
+        return False
+    from .services import get_auditor_profile
+    if get_auditor_profile(user) is not None:
+        return False
+    return getattr(user, 'company_id', None) is None
+
+
+def linkable_users():
+    """Unlinked accounts eligible to be linked to a company (same set as the
+    'unlinked accounts' the customer would see 'No Company Associated')."""
+    return unlinked_users()
+
+
+def _record_link_audit(actor, action, target_user, old_company, new_company, reason):
+    """Durably record a link/unlink action in core.AuditLog (no migration)."""
+    try:
+        from core.models import AuditLog
+        AuditLog.objects.create(
+            user=actor if getattr(actor, 'is_authenticated', False) else None,
+            action=f'crm_{action}'[:100],
+            path='/platform-admin/companies/',
+            metadata={
+                'target_user_id': getattr(target_user, 'id', None),
+                'target_user_email': getattr(target_user, 'email', ''),
+                'old_company_id': getattr(old_company, 'id', None),
+                'old_company_name': getattr(old_company, 'name', '') if old_company else '',
+                'new_company_id': getattr(new_company, 'id', None),
+                'new_company_name': getattr(new_company, 'name', '') if new_company else '',
+                'reason': (reason or '')[:1000],
+                'performed_by': getattr(actor, 'email', ''),
+            },
+        )
+    except Exception:
+        # Auditing must never block the operational action.
+        pass
+
+
+def link_user_to_company(actor, user, company, reason):
+    """Link an existing normal user account to an existing company. Staff-only.
+
+    Raises CRMLinkError on permission / missing data / eligibility / already-linked.
+    Never creates users/companies; never changes the acting admin's session.
+    """
+    if not is_platform_admin(actor):
+        raise CRMLinkError('ليست لديك صلاحية تنفيذ هذا الإجراء.')
+    if not (reason or '').strip():
+        raise CRMLinkError('السبب مطلوب لتنفيذ الربط.')
+    if user is None:
+        raise CRMLinkError('الحساب المستهدف غير موجود.')
+    if company is None:
+        raise CRMLinkError('الشركة المستهدفة غير موجودة.')
+    if user.is_staff or user.is_superuser:
+        raise CRMLinkError('لا يمكن ربط حساب موظّف/مسؤول كحساب شركة.')
+    from .services import get_auditor_profile
+    if get_auditor_profile(user) is not None:
+        raise CRMLinkError('لا يمكن ربط حساب مدقّق كحساب شركة.')
+    if getattr(user, 'company_id', None) is not None:
+        # Fail closed: this phase does not implement "move user".
+        raise CRMLinkError('الحساب مرتبط بشركة أخرى بالفعل. إلغاء الربط الحالي أولًا.')
+
+    user.company = company
+    if not user.role or user.role in ('', 'admin'):
+        user.role = 'company_admin'
+    user.save(update_fields=['company', 'role'])
+    _record_link_audit(actor, 'link_user', user, None, company, reason)
+    return user
+
+
+def unlink_user_from_company(actor, user, reason):
+    """Clear a normal user's company link. Staff-only. Never deletes anything.
+
+    Raises CRMLinkError on permission / missing data / ineligible target.
+    """
+    if not is_platform_admin(actor):
+        raise CRMLinkError('ليست لديك صلاحية تنفيذ هذا الإجراء.')
+    if not (reason or '').strip():
+        raise CRMLinkError('السبب مطلوب لتنفيذ إلغاء الربط.')
+    if user is None:
+        raise CRMLinkError('الحساب المستهدف غير موجود.')
+    if user.is_staff or user.is_superuser:
+        raise CRMLinkError('لا يمكن تعديل ربط حساب موظّف/مسؤول من هنا.')
+    from .services import get_auditor_profile
+    if get_auditor_profile(user) is not None:
+        raise CRMLinkError('هذا حساب مدقّق ولا يُدار من هنا.')
+    old_company = getattr(user, 'company', None)
+    if old_company is None:
+        raise CRMLinkError('الحساب غير مرتبط بأي شركة.')
+
+    user.company = None
+    user.save(update_fields=['company'])
+    _record_link_audit(actor, 'unlink_user', user, old_company, None, reason)
+    return user

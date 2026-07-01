@@ -1,7 +1,21 @@
-"""Phase 4C — Arabic-first auditor registration form."""
+"""Phase 4C — Arabic-first auditor registration form.
+Phase 8D-3D-CRM-B — Get Solution CRM link/unlink forms (reason required)."""
 from django import forms
 
 from core.models import User
+
+
+class LinkUserToCompanyForm(forms.Form):
+    """Link an existing (unlinked) user account to a company. Reason required."""
+    user_id = forms.IntegerField(min_value=1)
+    reason = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={'rows': 2}),
+                             label='السبب')
+
+
+class UnlinkUserFromCompanyForm(forms.Form):
+    """Unlink a user from its company. Reason required."""
+    user_id = forms.IntegerField(min_value=1)
+    reason = forms.CharField(max_length=1000, label='السبب')
 
 
 class AuditorRegistrationForm(forms.Form):

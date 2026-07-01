@@ -30,15 +30,57 @@
       <h2 class="font-bold text-gov-green-800 mb-3">المستخدمون المرتبطون · Linked users ({{ snapshot.linked_users|length }})</h2>
       {% if snapshot.linked_users %}
       <table class="w-full text-sm">
-        <thead class="text-gov-gray-500"><tr><th class="text-right py-2">البريد · Email</th><th class="text-right py-2">الدور · Role</th><th class="text-right py-2">نشط · Active</th></tr></thead>
+        <thead class="text-gov-gray-500"><tr><th class="text-right py-2">البريد · Email</th><th class="text-right py-2">الدور · Role</th><th class="text-right py-2">نشط · Active</th><th class="text-right py-2"></th></tr></thead>
         <tbody class="divide-y divide-gov-gray-100">
           {% for u in snapshot.linked_users %}
-          <tr><td class="py-2" dir="ltr">{{ u.email }}</td><td class="py-2">{{ u.get_role_display }}</td><td class="py-2">{{ u.is_active|yesno:"نعم,لا" }}</td></tr>
+          <tr>
+            <td class="py-2" dir="ltr">{{ u.email }}</td>
+            <td class="py-2">{{ u.get_role_display }}</td>
+            <td class="py-2">{{ u.is_active|yesno:"نعم,لا" }}</td>
+            <td class="py-2">
+              {% if not u.is_staff and not u.is_superuser %}
+              <form method="post" action="{% url 'platform_admin:unlink_user' company.id %}"
+                    onsubmit="return confirm('إلغاء ربط {{ u.email|escapejs }} من هذه الشركة؟');"
+                    class="flex items-center gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ u.id }}">
+                <input type="text" name="reason" required placeholder="السبب (مطلوب)"
+                       class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-32">
+                <button type="submit" class="text-red-700 hover:text-red-900 text-xs font-medium">إلغاء الربط · Unlink</button>
+              </form>
+              {% else %}<span class="text-xs text-gov-gray-400">—</span>{% endif %}
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
       {% else %}
       <p class="text-sm text-gov-gray-500">لا يوجد مستخدمون مرتبطون بهذه الشركة بعد · No users linked to this company yet.</p>
+      {% endif %}
+    </div>
+
+    {# Link an unlinked account to this company #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-1">ربط حساب بالشركة · Link user to company</h2>
+      <p class="text-xs text-gov-gray-500 mb-3">عملية داخلية في وحدة Get Solution CRM. تُصلح الحسابات غير المرتبطة بأي شركة. السبب مطلوب ويُسجَّل في سجل التدقيق.</p>
+      {% if linkable_users %}
+      <form method="post" action="{% url 'platform_admin:link_user' company.id %}"
+            class="flex flex-col md:flex-row md:items-end gap-3">
+        {% csrf_token %}
+        <label class="text-sm flex-1">
+          <span class="block text-gov-gray-500 mb-1">الحساب · Account</span>
+          <select name="user_id" required class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+            {% for u in linkable_users %}<option value="{{ u.id }}">{{ u.email }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="text-sm flex-1">
+          <span class="block text-gov-gray-500 mb-1">السبب (مطلوب) · Reason</span>
+          <input type="text" name="reason" required class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+        </label>
+        <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2 rounded-lg text-sm font-medium">ربط · Link</button>
+      </form>
+      {% else %}
+      <p class="text-sm text-gov-gray-500">لا توجد حسابات غير مرتبطة متاحة للربط حاليًا · No eligible unlinked accounts available.</p>
       {% endif %}
     </div>
 
