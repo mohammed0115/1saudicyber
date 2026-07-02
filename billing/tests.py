@@ -1607,3 +1607,69 @@ class FeaturePermissionSafetyTests(TestCase):
         fields = {f.name for f in Payment._meta.get_fields()}
         for banned in ('card', 'card_number', 'pan', 'cvv', 'cvc', 'card_holder'):
             self.assertNotIn(banned, fields)
+
+
+# ============================================================
+# Phase 8J-A — Final commercial QA / UAT hardening
+# ============================================================
+class CommercialHappyPathE2ETests(TestCase):
+    """One consolidated pass over the paid company journey (allowed plan)."""
+
+    def test_full_commercial_journey_when_allowed(self):
+        from compliance.tests import _company_with_assessments
+        c, fv, scope = _company_with_assessments()
+        _activate(c, _feat_plan())                      # active subscription, all features on
+        self.client.force_login(_journey_user(c, email='e2ehappy@x.com'))
+
+        # Gap recalculation + risk generation actions are allowed.
+        self.assertEqual(self.client.post(reverse('compliance:run_gap_recalc')).status_code, 302)
+        self.assertEqual(self.client.post(reverse('risk:generate')).status_code, 302)
+
+        # Commercial HTML report renders and is NOT the blocked placeholder.
+        rep = self.client.get(reverse('compliance:commercial_readiness_report'))
+        self.assertEqual(rep.status_code, 200)
+        self.assertNotContains(rep, 'not included in your current plan')
+
+        # PDF export returns a PDF.
+        pdf = self.client.get(reverse('compliance:commercial_readiness_report_pdf'))
+        self.assertEqual(pdf.status_code, 200)
+        self.assertEqual(pdf['Content-Type'], 'application/pdf')
+
+        # Billing page shows the plan usage panel.
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertIn('Usage limits', body)
+        self.assertNotIn('sk_test_', body)
+        self.assertNotIn('sk_live_', body)
+
+    def test_report_handles_empty_company(self):
+        """Commercial report must not 500 on a brand-new company with no data."""
+        c = _company()
+        _activate(c, _feat_plan())
+        self.client.force_login(_journey_user(c, email='e2eempty@x.com'))
+        self.assertEqual(
+            self.client.get(reverse('compliance:commercial_readiness_report')).status_code, 200)
+
+
+class CommercialTenantIsolationTests(TestCase):
+    """Company A can never reach company B's billing/report surfaces."""
+
+    def test_company_a_cannot_open_company_b_checkout(self):
+        with override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_PUBLISHABLE_KEY=_PK,
+                               PUBLIC_BASE_URL='http://localhost:8000'):
+            a = _company(); b = _company()
+            self.client.force_login(_journey_user(a, email='isoA@x.com'))
+            self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+            self.client.force_login(_journey_user(b, email='isoB@x.com'))
+            self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+            pay_a = Payment.objects.filter(company=a).first()
+            # B is logged in; opening A's checkout must not be allowed.
+            resp = self.client.get(reverse('billing:checkout', args=[pay_a.id]))
+            self.assertRedirects(resp, reverse('billing:home'), fetch_redirect_response=False)
+
+    def test_company_b_usage_independent_of_a(self):
+        a = _company(); b = _company()
+        _activate(a, _feat_plan(max_evidence_files=5)); _activate(b, _feat_plan(max_evidence_files=5))
+        # A's plan summary reflects only A's (zero) usage regardless of B.
+        sa = bacc.plan_feature_summary(a)
+        self.assertEqual(sa['evidence_used'], 0)
+        self.assertEqual(sa['pdf_used'], 0)
