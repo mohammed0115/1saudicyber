@@ -6623,3 +6623,146 @@ class CommercialReportCRMSummaryTests(TestCase):
         self.client.force_login(_journey_user(c, email='crns@x.com'))
         self.assertEqual(self.client.get(
             reverse('platform_admin:company_detail', args=[c.id])).status_code, 403)
+
+
+# ============================================================
+# Phase 8H-B — Commercial Report PDF Export
+# ============================================================
+class CommercialReportPDFTests(TestCase):
+    URL = 'compliance:commercial_readiness_report_pdf'
+
+    def _prepared(self, **subkw):
+        from compliance.gap_engine import recalculate_company_gap
+        from risk.risk_engine import generate_risks_from_gap
+        c, item, sub = _company_with_submission(**subkw)
+        recalculate_company_gap(c); generate_risks_from_gap(c)
+        return c, item, sub
+
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def _pdf_text(self, pdf_bytes):
+        import io, pdfplumber
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as p:
+            return ' '.join((pg.extract_text() or '') for pg in p.pages)
+
+    # ---- access ----
+    def test_anonymous_redirected(self):
+        r = self.client.get(reverse(self.URL))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/login', r.url)
+
+    def test_company_user_can_export(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'pdfu@x.com')
+        resp = self.client.get(reverse(self.URL))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+
+    def test_unlinked_user_safe_no_company(self):
+        from core.models import User
+        u = User.objects.create_user(username='pdforph@x.com', email='pdforph@x.com',
+                                     password='longenough12', role='company_admin')
+        self.client.force_login(u)
+        resp = self.client.get(reverse(self.URL))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'not linked to a company')
+
+    def test_auditor_denied(self):
+        from auditors.models import AuditorProfile
+        from core.models import User
+        au = User.objects.create_user(username='pdfaud@x.com', email='pdfaud@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        self.assertContains(self.client.get(reverse(self.URL)), 'Auditor account', status_code=200)
+
+    def test_staff_without_company_routed_to_crm(self):
+        from core.models import User
+        st = User.objects.create_user(username='pdfstaff@x.com', email='pdfstaff@x.com',
+                                      password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(st)
+        self.assertContains(self.client.get(reverse(self.URL)), 'Get Solution CRM', status_code=200)
+
+    # ---- PDF response ----
+    def test_pdf_content_type_and_filename(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'pdff@x.com')
+        resp = self.client.get(reverse(self.URL))
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+        self.assertIn('attachment; filename="1saudicyber_readiness_report_%s.pdf"' % c.id,
+                      resp['Content-Disposition'])
+
+    def test_pdf_non_empty_and_valid_header(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'pdfh@x.com')
+        content = self.client.get(reverse(self.URL)).content
+        self.assertGreater(len(content), 500)
+        self.assertTrue(content.startswith(b'%PDF-'))
+
+    def test_pdf_contains_company_and_disclaimer(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'pdfd@x.com')
+        txt = self._pdf_text(self.client.get(reverse(self.URL)).content)
+        self.assertIn(c.name, txt)
+        self.assertIn('internal readiness report', txt.lower())
+        self.assertIn('not an official certification', txt.lower())
+
+    def test_pdf_no_unsafe_wording(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'pdfsafe@x.com')
+        txt = self._pdf_text(self.client.get(reverse(self.URL)).content).lower()
+        for w in ('certified by nca', 'certified by aramco', 'certified by sabic',
+                  'official accreditation', 'government accredited'):
+            self.assertNotIn(w, txt)
+        if 'official certification' in txt:
+            self.assertIn('not an official certification', txt)
+
+    def test_pdf_empty_company_no_500(self):
+        c = _company()
+        self._login(c, 'pdfe@x.com')
+        resp = self.client.get(reverse(self.URL))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+
+    def test_pdf_uses_only_current_company_data(self):
+        c1, i1, s1 = self._prepared(name='a.txt')
+        c2, i2, s2 = self._prepared(name='b.txt')
+        self._login(c1, 'pdften@x.com')
+        txt = self._pdf_text(self.client.get(reverse(self.URL)).content)
+        self.assertIn(c1.name, txt)
+        # c2 has the same generated CR pattern; ensure c2's CR is not in c1's report
+        self.assertNotIn(c2.cr_number, txt)
+
+    # ---- audit + service ----
+    def test_pdf_export_writes_audit(self):
+        from core.models import AuditLog
+        c, item, sub = self._prepared()
+        self._login(c, 'pdfaudit@x.com')
+        self.client.get(reverse(self.URL))
+        self.assertTrue(AuditLog.objects.filter(action='report_pdf_exported').exists())
+
+    def test_service_builds_pdf_bytes(self):
+        from compliance.report_pdf import build_commercial_readiness_pdf
+        c, item, sub = self._prepared()
+        pdf = build_commercial_readiness_pdf(c)
+        self.assertTrue(pdf.startswith(b'%PDF-'))
+
+    def test_pdf_export_fallback_on_failure_no_500(self):
+        from unittest import mock
+        c, item, sub = self._prepared()
+        self._login(c, 'pdffail@x.com')
+        with mock.patch('compliance.report_pdf.build_commercial_readiness_pdf',
+                        side_effect=RuntimeError('boom')):
+            resp = self.client.get(reverse(self.URL))
+        # safe fallback: redirect to the HTML report, no 500, no traceback
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse('compliance:commercial_readiness_report'), resp.url)
+
+    # ---- UI ----
+    def test_html_report_has_export_pdf_and_print(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'pdfui@x.com')
+        body = self.client.get(reverse('compliance:commercial_readiness_report')).content.decode()
+        self.assertIn(reverse(self.URL), body)  # Export PDF button link
+        self.assertIn('window.print()', body)   # Print button still present

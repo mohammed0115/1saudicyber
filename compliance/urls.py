@@ -66,6 +66,7 @@ urlpatterns = [
     # Phase 8H — internal commercial readiness report
     path('reports/commercial-readiness/', views.commercial_readiness_report, name='commercial_readiness_report'),
     path('reports/commercial-readiness/refresh/', views.refresh_commercial_report, name='refresh_commercial_report'),
+    path('reports/commercial-readiness/pdf/', views.commercial_readiness_report_pdf, name='commercial_readiness_report_pdf'),
     path('reports/evidence-matrix/', views.report_evidence_matrix, name='report_evidence_matrix'),
     path('reports/evidence-matrix.csv', views.export_evidence_matrix_csv, name='export_evidence_matrix_csv'),
     path('reports/evidence-matrix.xlsx', views.export_evidence_matrix_xlsx, name='export_evidence_matrix_xlsx'),

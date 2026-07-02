@@ -21,6 +21,8 @@
             <i class="fas fa-rotate mr-1"></i> تجهيز/تحديث التقرير · Refresh report
           </button>
         </form>
+        <a href="{% url 'compliance:commercial_readiness_report_pdf' %}" data-busy="جارٍ تجهيز ملف PDF..."
+           class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-file-pdf mr-1"></i> تصدير PDF · Export PDF</a>
         <button onclick="window.print()" class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-print mr-1"></i> طباعة · Print</button>
       </div>
     </div>

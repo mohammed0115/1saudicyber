@@ -958,6 +958,29 @@ def refresh_commercial_report(request):
 
 @login_required
 @company_portal_required
+def commercial_readiness_report_pdf(request):
+    """Export the internal readiness report as a PDF (own company only)."""
+    from django.http import HttpResponse
+    from .report_pdf import build_commercial_readiness_pdf
+    from .report_engine import build_commercial_readiness_report, record_report_audit
+    company = request.user.company
+    try:
+        pdf = build_commercial_readiness_pdf(company)
+    except Exception:
+        # No traceback/file path to the user; safe fallback to the HTML report.
+        messages.error(request, 'تعذر تجهيز ملف PDF بأمان. حاول مرة أخرى أو استخدم الطباعة. '
+                                '· Could not prepare the PDF safely. Try again or use Print.')
+        return redirect('compliance:commercial_readiness_report')
+    record_report_audit(request.user, company,
+                        build_commercial_readiness_report(company), action='pdf_exported')
+    resp = HttpResponse(pdf, content_type='application/pdf')
+    resp['Content-Disposition'] = (
+        'attachment; filename="1saudicyber_readiness_report_%s.pdf"' % company.id)
+    return resp
+
+
+@login_required
+@company_portal_required
 def report_evidence_matrix(request):
     company = request.user.company
     if not company:
