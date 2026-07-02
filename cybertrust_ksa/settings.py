@@ -210,8 +210,13 @@ SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
 PAYMENT_PROVIDER = os.getenv('PAYMENT_PROVIDER', 'manual')          # 'manual' | 'moyasar'
 MOYASAR_MODE = os.getenv('MOYASAR_MODE', 'sandbox')                 # 'sandbox' | 'live'
 MOYASAR_PUBLISHABLE_KEY = os.getenv('MOYASAR_PUBLISHABLE_KEY', '')  # pk_test_... in sandbox
-MOYASAR_SECRET_KEY = os.getenv('MOYASAR_SECRET_KEY', '')            # server-side only; not used this phase
+MOYASAR_SECRET_KEY = os.getenv('MOYASAR_SECRET_KEY', '')            # server-side only (Phase 8I-C verify)
 PUBLIC_BASE_URL = os.getenv('PUBLIC_BASE_URL', SITE_URL)
+# Optional shared token echoed by Moyasar dashboard webhooks (Phase 8I-C). When set,
+# the webhook rejects payloads whose secret_token/header does not match. When empty,
+# security relies on server-side Fetch-Payment verification instead. Full HMAC header
+# signature validation is deferred until Moyasar's exact header format is confirmed.
+MOYASAR_WEBHOOK_SECRET = os.getenv('MOYASAR_WEBHOOK_SECRET', '')
 
 # ---- Content Security Policy (NFR-017) ----
 CONTENT_SECURITY_POLICY = (

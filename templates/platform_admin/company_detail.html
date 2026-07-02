@@ -227,6 +227,11 @@
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700 truncate" title="{{ subscription_summary.last_payment_reference }}">{{ subscription_summary.last_payment_reference|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">المرجع · Reference</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-blue-700">{{ subscription_summary.pending_moyasar_payments }}</div><div class="text-xs text-gov-gray-500 mt-1">Moyasar معلّقة · Pending Moyasar</div></div>
       </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-center mb-4">
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-red-700">{{ subscription_summary.failed_moyasar_payments }}</div><div class="text-xs text-gov-gray-500 mt-1">Moyasar فاشلة · Failed Moyasar</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_payment_paid_at|date:"Y-m-d H:i"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">تاريخ الدفع · Paid at</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_moyasar_status|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر حالة مزوّد · Last provider status</div></div>
+      </div>
       {% if subscription_summary.last_payment_provider_id %}
       <p class="text-xs text-gov-gray-500 mb-3" dir="ltr">Provider payment id: <span class="font-mono">{{ subscription_summary.last_payment_provider_id }}</span></p>
       {% endif %}

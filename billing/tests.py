@@ -840,3 +840,457 @@ class MoyasarSafetyTests(TestCase):
             self.assertIn('not an official certification', body.lower())
             for w in ('certified by NCA', 'government accredited', 'official accreditation'):
                 self.assertNotIn(w, body)
+
+
+# ============================================================
+# Phase 8I-C — Moyasar Webhook + Payment Verification
+# ============================================================
+import json as _json
+from billing import verification as bverify
+
+
+def _moyasar_payload(payment, status='paid', amount=None, currency=None, ppid='moy_pay_abc',
+                     wrap=False, metadata=None):
+    """Build a Moyasar-shaped payment payload matching (or deliberately not) a Payment."""
+    if amount is None:
+        amount = int((payment.amount or 0) * 100)
+    if currency is None:
+        currency = payment.currency
+    if metadata is None:
+        metadata = {'internal_payment_id': str(payment.id), 'company_id': str(payment.company_id),
+                    'subscription_id': str(payment.subscription_id or ''), 'plan_code': 'basic'}
+    obj = {'id': ppid, 'status': status, 'amount': amount, 'currency': currency, 'metadata': metadata}
+    return {'type': 'payment_%s' % status, 'data': obj} if wrap else obj
+
+
+def _ok_fetch(payload):
+    return {'ok': True, 'status_code': 200, 'payload': payload, 'error': ''}
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
+                   MOYASAR_PUBLISHABLE_KEY=_PK, MOYASAR_SECRET_KEY=_SECRET,
+                   MOYASAR_WEBHOOK_SECRET='', PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarVerificationServiceTests(TestCase):
+    def _pending(self, c=None, ppid=''):
+        c = c or _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c)
+        if ppid:
+            pay.provider_payment_id = ppid; pay.save()
+        return c, pay
+
+    def test_status_mapping(self):
+        self.assertEqual(bverify.map_moyasar_status('paid'), 'paid')
+        self.assertEqual(bverify.map_moyasar_status('captured'), 'paid')
+        self.assertEqual(bverify.map_moyasar_status('failed'), 'failed')
+        self.assertEqual(bverify.map_moyasar_status('refunded'), 'refunded')
+        self.assertEqual(bverify.map_moyasar_status('voided'), 'cancelled')
+        self.assertEqual(bverify.map_moyasar_status('initiated'), 'pending')
+        self.assertEqual(bverify.map_moyasar_status('authorized'), 'pending')
+        self.assertIsNone(bverify.map_moyasar_status('weird'))
+
+    def test_verified_paid_activates(self):
+        c, pay = self._pending()
+        payload = _moyasar_payload(pay, status='paid')
+        res = bverify.process_moyasar_payment_result(pay, payload, source='webhook', allow_activation=True)
+        pay.refresh_from_db(); sub = bsvc.get_current_subscription(c)
+        self.assertTrue(res['activated'])
+        self.assertEqual(pay.status, 'paid')
+        self.assertIsNotNone(pay.paid_at)
+        self.assertEqual(pay.provider_payment_id, 'moy_pay_abc')
+        self.assertEqual(sub.status, 'active')
+        self.assertTrue(company_has_active_subscription(c))
+        self.assertEqual(pay.provider_metadata.get('last_provider_status'), 'paid')
+
+    def test_activation_writes_audit(self):
+        from core.models import AuditLog
+        c, pay = self._pending()
+        bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay), allow_activation=True)
+        self.assertTrue(AuditLog.objects.filter(action='subscription_activated_from_moyasar').exists())
+        self.assertTrue(AuditLog.objects.filter(action='moyasar_payment_paid').exists())
+        self.assertTrue(AuditLog.objects.filter(action='moyasar_payment_verified').exists())
+
+    def test_amount_mismatch_no_activation(self):
+        c, pay = self._pending()
+        payload = _moyasar_payload(pay, amount=1)   # wrong amount
+        res = bverify.process_moyasar_payment_result(pay, payload, allow_activation=True)
+        pay.refresh_from_db()
+        self.assertFalse(res['activated'])
+        self.assertEqual(res['reason'], 'amount_mismatch')
+        self.assertEqual(pay.status, 'pending')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_currency_mismatch_no_activation(self):
+        c, pay = self._pending()
+        payload = _moyasar_payload(pay, currency='USD')
+        res = bverify.process_moyasar_payment_result(pay, payload, allow_activation=True)
+        pay.refresh_from_db()
+        self.assertEqual(res['reason'], 'currency_mismatch')
+        self.assertEqual(pay.status, 'pending')
+
+    def test_company_metadata_mismatch_no_activation(self):
+        c, pay = self._pending()
+        payload = _moyasar_payload(pay, metadata={'internal_payment_id': str(pay.id),
+                                                  'company_id': '999999', 'subscription_id': str(pay.subscription_id)})
+        res = bverify.process_moyasar_payment_result(pay, payload, allow_activation=True)
+        pay.refresh_from_db()
+        self.assertEqual(res['reason'], 'company_mismatch')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_payment_metadata_mismatch_no_activation(self):
+        c, pay = self._pending()
+        payload = _moyasar_payload(pay, metadata={'internal_payment_id': '424242',
+                                                  'company_id': str(pay.company_id)})
+        res = bverify.process_moyasar_payment_result(pay, payload, allow_activation=True)
+        pay.refresh_from_db()
+        self.assertEqual(res['reason'], 'payment_metadata_mismatch')
+        self.assertEqual(pay.status, 'pending')
+
+    def test_subscription_metadata_mismatch_no_activation(self):
+        c, pay = self._pending()
+        payload = _moyasar_payload(pay, metadata={'internal_payment_id': str(pay.id),
+                                                  'company_id': str(pay.company_id), 'subscription_id': '888'})
+        res = bverify.process_moyasar_payment_result(pay, payload, allow_activation=True)
+        pay.refresh_from_db()
+        self.assertEqual(res['reason'], 'subscription_mismatch')
+
+    def test_already_failed_payment_not_activated(self):
+        c, pay = self._pending()
+        pay.status = 'failed'; pay.save()
+        res = bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay), allow_activation=True)
+        pay.refresh_from_db()
+        self.assertFalse(res['activated'])
+        self.assertEqual(pay.status, 'failed')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_subscription_not_pending_no_activation(self):
+        c, pay = self._pending()
+        sub = bsvc.get_current_subscription(c); sub.status = 'inactive'; sub.save()
+        res = bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay), allow_activation=True)
+        pay.refresh_from_db()
+        self.assertFalse(res['activated'])
+        self.assertEqual(pay.status, 'pending')
+
+    def test_not_server_verified_does_not_activate(self):
+        c, pay = self._pending()
+        res = bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay), allow_activation=False)
+        pay.refresh_from_db()
+        self.assertFalse(res['activated'])
+        self.assertEqual(pay.status, 'pending')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_failed_maps_to_failed(self):
+        c, pay = self._pending()
+        bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay, status='failed'), allow_activation=True)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'failed')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_refunded_maps_to_refunded(self):
+        c, pay = self._pending()
+        bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay, status='refunded'), allow_activation=True)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'refunded')
+
+    def test_voided_maps_to_cancelled(self):
+        c, pay = self._pending()
+        bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay, status='voided'), allow_activation=True)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'cancelled')
+
+    def test_initiated_keeps_pending(self):
+        c, pay = self._pending()
+        bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay, status='initiated'), allow_activation=True)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'pending')
+
+    def test_idempotent_double_paid(self):
+        c, pay = self._pending()
+        bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay), allow_activation=True)
+        sub = bsvc.get_current_subscription(c); first_ends = sub.ends_at
+        res2 = bverify.process_moyasar_payment_result(pay, _moyasar_payload(pay), allow_activation=True)
+        pay.refresh_from_db(); sub.refresh_from_db()
+        self.assertEqual(res2['action'], 'already_paid')
+        self.assertEqual(pay.status, 'paid')
+        self.assertEqual(Payment.objects.filter(company=c).count(), 1)
+        self.assertEqual(CompanySubscription.objects.filter(company=c).count(), 1)
+
+    def test_verify_moyasar_payment_fetch_then_activate(self):
+        c, pay = self._pending(ppid='moy_verify_1')
+        with mock.patch('billing.moyasar.fetch_moyasar_payment',
+                        return_value=_ok_fetch(_moyasar_payload(pay, ppid='moy_verify_1'))):
+            res = bverify.verify_moyasar_payment(pay, source='manual')
+        pay.refresh_from_db()
+        self.assertTrue(res['activated'])
+        self.assertEqual(pay.status, 'paid')
+
+    def test_verify_no_provider_id_safe(self):
+        c, pay = self._pending()
+        res = bverify.verify_moyasar_payment(pay)
+        self.assertFalse(res.get('ok'))
+        self.assertEqual(res['reason'], 'no_provider_id')
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
+                   MOYASAR_PUBLISHABLE_KEY=_PK, MOYASAR_SECRET_KEY=_SECRET,
+                   MOYASAR_WEBHOOK_SECRET='', PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarWebhookEndpointTests(TestCase):
+    def _pending(self, ppid='moy_wh_1'):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c)
+        pay.provider_payment_id = ppid; pay.save()
+        return c, pay
+
+    def _post(self, payload):
+        return self.client.post(reverse('billing:moyasar_webhook'),
+                                data=_json.dumps(payload), content_type='application/json')
+
+    def test_get_not_allowed(self):
+        self.assertEqual(self.client.get(reverse('billing:moyasar_webhook')).status_code, 405)
+
+    def test_malformed_json_no_500(self):
+        resp = self.client.post(reverse('billing:moyasar_webhook'), data='{not json',
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 400)
+
+    def test_missing_payment_id_no_500(self):
+        resp = self._post({'type': 'payment_paid', 'data': {'status': 'paid'}})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_unknown_provider_id_no_activation(self):
+        c, pay = self._pending()
+        payload = {'data': {'id': 'does_not_exist', 'status': 'paid', 'amount': 1,
+                            'currency': 'SAR', 'metadata': {}}}
+        with mock.patch('billing.moyasar.fetch_moyasar_payment') as fetch:
+            resp = self._post(payload)
+            fetch.assert_not_called()   # no local match -> never even fetch
+        self.assertEqual(resp.status_code, 200)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'pending')
+
+    def test_webhook_paid_activates_after_fetch(self):
+        c, pay = self._pending(ppid='moy_wh_paid')
+        fetched = _moyasar_payload(pay, ppid='moy_wh_paid', status='paid')
+        with mock.patch('billing.moyasar.fetch_moyasar_payment', return_value=_ok_fetch(fetched)):
+            resp = self._post(_moyasar_payload(pay, ppid='moy_wh_paid', status='paid', wrap=True))
+        self.assertEqual(resp.status_code, 200)
+        pay.refresh_from_db(); sub = bsvc.get_current_subscription(c)
+        self.assertEqual(pay.status, 'paid')
+        self.assertIsNotNone(pay.paid_at)
+        self.assertEqual(sub.status, 'active')
+        self.assertTrue(company_has_active_subscription(c))
+
+    def test_webhook_fetch_failure_no_activation(self):
+        c, pay = self._pending(ppid='moy_wh_fail')
+        with mock.patch('billing.moyasar.fetch_moyasar_payment',
+                        return_value={'ok': False, 'error': 'network', 'status_code': 0, 'payload': {}}):
+            resp = self._post(_moyasar_payload(pay, ppid='moy_wh_fail', status='paid', wrap=True))
+        self.assertEqual(resp.status_code, 200)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'pending')          # fetch failed -> not activated
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_webhook_forged_amount_no_activation(self):
+        """Attacker POSTs paid, but the authoritative fetch shows a wrong amount."""
+        c, pay = self._pending(ppid='moy_wh_forge')
+        forged_fetch = _moyasar_payload(pay, ppid='moy_wh_forge', status='paid', amount=1)
+        with mock.patch('billing.moyasar.fetch_moyasar_payment', return_value=_ok_fetch(forged_fetch)):
+            resp = self._post(_moyasar_payload(pay, ppid='moy_wh_forge', status='paid', wrap=True))
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'pending')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_webhook_duplicate_paid_idempotent(self):
+        c, pay = self._pending(ppid='moy_wh_dup')
+        fetched = _moyasar_payload(pay, ppid='moy_wh_dup', status='paid')
+        with mock.patch('billing.moyasar.fetch_moyasar_payment', return_value=_ok_fetch(fetched)):
+            self._post(_moyasar_payload(pay, ppid='moy_wh_dup', status='paid', wrap=True))
+            self._post(_moyasar_payload(pay, ppid='moy_wh_dup', status='paid', wrap=True))
+        self.assertEqual(Payment.objects.filter(company=c, status='paid').count(), 1)
+        self.assertEqual(CompanySubscription.objects.filter(company=c, status='active').count(), 1)
+
+    def test_webhook_duplicate_failed_safe(self):
+        c, pay = self._pending(ppid='moy_wh_df')
+        fetched = _moyasar_payload(pay, ppid='moy_wh_df', status='failed')
+        with mock.patch('billing.moyasar.fetch_moyasar_payment', return_value=_ok_fetch(fetched)):
+            self._post(_moyasar_payload(pay, ppid='moy_wh_df', status='failed', wrap=True))
+            self._post(_moyasar_payload(pay, ppid='moy_wh_df', status='failed', wrap=True))
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'failed')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_webhook_paid_after_active_idempotent(self):
+        c, pay = self._pending(ppid='moy_wh_aa')
+        fetched = _moyasar_payload(pay, ppid='moy_wh_aa', status='paid')
+        with mock.patch('billing.moyasar.fetch_moyasar_payment', return_value=_ok_fetch(fetched)):
+            self._post(_moyasar_payload(pay, ppid='moy_wh_aa', status='paid', wrap=True))
+        sub = bsvc.get_current_subscription(c); ends1 = sub.ends_at
+        with mock.patch('billing.moyasar.fetch_moyasar_payment', return_value=_ok_fetch(fetched)):
+            self._post(_moyasar_payload(pay, ppid='moy_wh_aa', status='paid', wrap=True))
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'active')
+        self.assertEqual(sub.ends_at, ends1)   # not extended again
+
+    def test_webhook_writes_received_and_invalid_audit(self):
+        from core.models import AuditLog
+        c, pay = self._pending()
+        self._post({'data': {'status': 'paid'}})   # no id -> invalid
+        self.assertTrue(AuditLog.objects.filter(action='moyasar_webhook_received').exists())
+        self.assertTrue(AuditLog.objects.filter(action='moyasar_webhook_invalid').exists())
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_PUBLISHABLE_KEY=_PK,
+                   MOYASAR_SECRET_KEY='', MOYASAR_WEBHOOK_SECRET='',
+                   PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarMissingSecretTests(TestCase):
+    def _pending(self, ppid='moy_ns'):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c)
+        pay.provider_payment_id = ppid; pay.save()
+        return c, pay
+
+    def test_fetch_no_secret_returns_safe(self):
+        res = bmoyasar.fetch_moyasar_payment('moy_x')
+        self.assertFalse(res['ok'])
+        self.assertEqual(res['error'], 'no_secret')
+
+    def test_webhook_without_secret_does_not_activate(self):
+        c, pay = self._pending()
+        resp = self.client.post(reverse('billing:moyasar_webhook'),
+                                data=_json.dumps(_moyasar_payload(pay, ppid='moy_ns', status='paid', wrap=True)),
+                                content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'pending')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_verify_without_secret_does_not_activate(self):
+        c, pay = self._pending()
+        res = bverify.verify_moyasar_payment(pay)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'pending')
+        self.assertFalse(company_has_active_subscription(c))
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_PUBLISHABLE_KEY=_PK,
+                   MOYASAR_SECRET_KEY=_SECRET, MOYASAR_WEBHOOK_SECRET='shared_token_123',
+                   PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarWebhookSecretTests(TestCase):
+    def _pending(self, ppid='moy_ws'):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c)
+        pay.provider_payment_id = ppid; pay.save()
+        return c, pay
+
+    def test_wrong_secret_rejected_403(self):
+        c, pay = self._pending()
+        payload = _moyasar_payload(pay, ppid='moy_ws', status='paid', wrap=True)
+        payload['secret_token'] = 'wrong'
+        resp = self.client.post(reverse('billing:moyasar_webhook'),
+                                data=_json.dumps(payload), content_type='application/json')
+        self.assertEqual(resp.status_code, 403)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'pending')
+
+    def test_correct_secret_processed(self):
+        c, pay = self._pending()
+        payload = _moyasar_payload(pay, ppid='moy_ws', status='paid', wrap=True)
+        payload['secret_token'] = 'shared_token_123'
+        with mock.patch('billing.moyasar.fetch_moyasar_payment',
+                        return_value=_ok_fetch(_moyasar_payload(pay, ppid='moy_ws', status='paid'))):
+            resp = self.client.post(reverse('billing:moyasar_webhook'),
+                                    data=_json.dumps(payload), content_type='application/json')
+        self.assertEqual(resp.status_code, 200)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'paid')
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_PUBLISHABLE_KEY=_PK,
+                   MOYASAR_SECRET_KEY=_SECRET, PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarPhase8ICSecurityUITests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_secret_never_in_webhook_response(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c); pay.provider_payment_id = 'moy_s'; pay.save()
+        with mock.patch('billing.moyasar.fetch_moyasar_payment',
+                        return_value=_ok_fetch(_moyasar_payload(pay, ppid='moy_s'))):
+            resp = self.client.post(reverse('billing:moyasar_webhook'),
+                                    data=_json.dumps(_moyasar_payload(pay, ppid='moy_s', wrap=True)),
+                                    content_type='application/json')
+        self.assertNotIn(_SECRET, resp.content.decode())
+
+    def test_no_card_fields_on_payment(self):
+        fields = {f.name for f in Payment._meta.get_fields()}
+        for banned in ('card', 'card_number', 'pan', 'cvv', 'cvc', 'card_holder', 'cardholder'):
+            self.assertNotIn(banned, fields)
+
+    def test_billing_waiting_verification_state(self):
+        c = _company()
+        self._login(c, 'uic1@x.com')
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c); pay.provider_payment_id = 'moy_w'; pay.save()
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertIn('Waiting for payment verification', body)
+        self.assertNotIn(_SECRET, body)
+
+    def test_billing_failed_state(self):
+        c = _company()
+        self._login(c, 'uic2@x.com')
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c); pay.status = 'failed'; pay.save()
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertIn('did not complete', body)
+
+    def test_crm_shows_safe_moyasar_verification(self):
+        from auditors import crm_services as crm
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c); pay.provider_payment_id = 'moy_crm'; pay.save()
+        with mock.patch('billing.moyasar.fetch_moyasar_payment',
+                        return_value=_ok_fetch(_moyasar_payload(pay, ppid='moy_crm'))):
+            bverify.verify_moyasar_payment(pay)
+        summary = crm.company_subscription_summary(c)
+        self.assertEqual(summary['last_moyasar_status'], 'paid')
+        self.assertIsNotNone(summary['last_payment_paid_at'])
+        self.assertIn('failed_moyasar_payments', summary)
+        self.assertNotIn(_SECRET, str(summary))
+
+    def test_crm_detail_no_secret(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        staff = User.objects.create_user(username='uicstaff@x.com', email='uicstaff@x.com',
+                                         password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(staff)
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('Failed Moyasar', body)
+        self.assertNotIn(_SECRET, body)
+
+    def test_callback_still_does_not_activate(self):
+        c = _company()
+        self._login(c, 'uiccb@x.com')
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c)
+        resp = self.client.get(reverse('billing:moyasar_callback'),
+                               {'ipid': pay.id, 'id': 'moy_cb', 'status': 'paid'}, follow=True)
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'pending')
+        self.assertFalse(company_has_active_subscription(c))
+        self.assertContains(resp, 'Subscription will be activated after verification')
+
+    def test_webhook_safe_no_certification_wording(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        pay = Payment.objects.get(company=c); pay.provider_payment_id = 'moy_sc'; pay.save()
+        with mock.patch('billing.moyasar.fetch_moyasar_payment',
+                        return_value=_ok_fetch(_moyasar_payload(pay, ppid='moy_sc'))):
+            resp = self.client.post(reverse('billing:moyasar_webhook'),
+                                    data=_json.dumps(_moyasar_payload(pay, ppid='moy_sc', wrap=True)),
+                                    content_type='application/json')
+        for w in ('official certification', 'government accredited', 'certified by NCA'):
+            self.assertNotIn(w, resp.content.decode())

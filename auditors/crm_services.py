@@ -255,7 +255,9 @@ def company_subscription_summary(company):
     summary = {'plan': '', 'status': 'inactive', 'starts_at': None, 'ends_at': None,
                'trial_ends_at': None, 'pending_payments': 0, 'last_payment_status': '—',
                'subscription_id': None, 'last_payment_provider': '—', 'last_payment_reference': '',
-               'last_payment_provider_id': '', 'pending_moyasar_payments': 0}
+               'last_payment_provider_id': '', 'pending_moyasar_payments': 0,
+               'failed_moyasar_payments': 0, 'last_payment_paid_at': None,
+               'last_moyasar_status': ''}
     try:
         from billing.subscription_access import get_company_subscription
         from billing.models import Payment
@@ -270,13 +272,17 @@ def company_subscription_summary(company):
         summary['pending_payments'] = Payment.objects.filter(company=company, status='pending').count()
         summary['pending_moyasar_payments'] = Payment.objects.filter(
             company=company, status='pending', provider='moyasar').count()
+        summary['failed_moyasar_payments'] = Payment.objects.filter(
+            company=company, provider='moyasar', status__in=('failed', 'cancelled')).count()
         last = Payment.objects.filter(company=company).order_by('-created_at').first()
         if last is not None:
-            # Read-only, no card data: provider/status/reference/provider_payment_id only.
+            # Read-only, no card data / no secrets / no raw payload: safe fields only.
             summary['last_payment_status'] = last.get_status_display()
             summary['last_payment_provider'] = last.get_provider_display()
             summary['last_payment_reference'] = last.reference or ''
             summary['last_payment_provider_id'] = last.provider_payment_id or ''
+            summary['last_payment_paid_at'] = last.paid_at
+            summary['last_moyasar_status'] = (last.provider_metadata or {}).get('last_provider_status', '')
     except Exception:
         pass
     return summary

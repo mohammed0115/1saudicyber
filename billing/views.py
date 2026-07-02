@@ -4,10 +4,14 @@ Internal foundation only: shows subscription status + plans, starts a trial, and
 selects a plan (which creates a pending manual payment). NO Moyasar checkout in
 this phase. All views are company-portal guarded and tenant-scoped.
 """
+import json
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from core.roles import company_portal_required
@@ -21,12 +25,18 @@ def billing_home(request):
     company = request.user.company
     sub = svc.get_current_subscription(company)
     pending_payment = company.payments.filter(status='pending').order_by('-created_at').first()
+    # A recent failed/cancelled Moyasar payment (only when nothing is pending/active).
+    failed_payment = None
+    if pending_payment is None and (sub is None or sub.status != 'active'):
+        failed_payment = company.payments.filter(
+            provider='moyasar', status__in=('failed', 'cancelled')).order_by('-created_at').first()
     return render(request, 'billing/home.html', {
         'company': company,
         'subscription': sub,
         'plans': svc.active_plans(),
         'status_message': svc.get_subscription_status_message(company),
         'pending_payment': pending_payment,
+        'failed_payment': failed_payment,
         'can_start_trial': sub is None or sub.status in ('inactive', 'expired', 'cancelled'),
     })
 
@@ -148,6 +158,33 @@ def moyasar_callback(request):
         messages.info(request, 'تم استلام نتيجة الدفع، وسيتم تأكيد الاشتراك بعد التحقق من الدفع. '
                                '· Payment result received. Subscription will be activated after verification.')
     return redirect('billing:home')
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def moyasar_webhook(request):
+    """External Moyasar webhook (Phase 8I-C). CSRF-exempt but protected by verification.
+
+    Activation happens ONLY inside process_moyasar_webhook after a server-side Fetch
+    Payment confirms the payment. This view just parses the body safely and never
+    leaks a stack trace, path, or secret.
+    """
+    from . import verification
+    try:
+        payload = json.loads((request.body or b'').decode('utf-8') or '{}')
+    except Exception:
+        verification._audit(None, None, 'moyasar_webhook_invalid', None, 'webhook', '',
+                            extra={'reason': 'malformed_json'})
+        return JsonResponse({'ok': False, 'error': 'invalid_payload'}, status=400)
+    if not isinstance(payload, dict):
+        return JsonResponse({'ok': False, 'error': 'invalid_payload'}, status=400)
+    try:
+        result = verification.process_moyasar_webhook(payload, headers=request.headers)
+    except Exception:
+        # Absolute backstop — never 500 to an external caller, never leak internals.
+        return JsonResponse({'ok': False, 'error': 'processing_error'}, status=200)
+    return JsonResponse({'ok': bool(result.get('ok', True)), 'status': result.get('action', 'none')},
+                        status=int(result.get('http_status', 200)))
 
 
 def _audit(actor, company, action, payment, extra=None):
