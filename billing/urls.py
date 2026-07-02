@@ -9,4 +9,6 @@ urlpatterns = [
     path('', views.billing_home, name='home'),
     path('start-trial/', views.start_trial, name='start_trial'),
     path('select-plan/', views.select_plan, name='select_plan'),
+    path('payments/<int:payment_id>/checkout/', views.checkout, name='checkout'),
+    path('moyasar/callback/', views.moyasar_callback, name='moyasar_callback'),
 ]

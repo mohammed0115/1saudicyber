@@ -557,3 +557,286 @@ class BillingCRMTests(TestCase):
         self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
                          {'action': 'activate', 'reason': 'r'})
         self.assertTrue(AuditLog.objects.filter(action='subscription_activated').exists())
+
+
+# ============================================================
+# Phase 8I-B — Moyasar Sandbox Checkout (UI/flow only; NO activation)
+# ============================================================
+from django.test import override_settings
+from billing import moyasar as bmoyasar
+
+_PK = 'pk_test_sandboxkey123'          # safe sandbox publishable key (fake)
+_LIVE_PK = 'pk_live_shouldnevershow'   # a live key must never reach the browser
+_SECRET = 'sk_test_secretmustnotleak'  # secret key must never reach the browser
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
+                   MOYASAR_PUBLISHABLE_KEY=_PK, MOYASAR_SECRET_KEY=_SECRET,
+                   PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarConfigTests(TestCase):
+    def test_provider_and_mode(self):
+        self.assertTrue(bmoyasar.is_moyasar_provider())
+        self.assertEqual(bmoyasar.moyasar_mode(), 'sandbox')
+
+    def test_publishable_key_exposed_only_when_sandbox(self):
+        self.assertEqual(bmoyasar.publishable_key_for_template(), _PK)
+        self.assertTrue(bmoyasar.is_configured())
+
+    @override_settings(MOYASAR_PUBLISHABLE_KEY=_LIVE_PK)
+    def test_live_publishable_key_not_exposed(self):
+        self.assertEqual(bmoyasar.publishable_key_for_template(), '')
+        self.assertFalse(bmoyasar.is_configured())
+
+    @override_settings(MOYASAR_PUBLISHABLE_KEY='')
+    def test_missing_key_not_configured(self):
+        self.assertEqual(bmoyasar.publishable_key_for_template(), '')
+        self.assertFalse(bmoyasar.is_configured())
+
+    def test_checkout_metadata_has_no_secrets(self):
+        c = _company()
+        sub, pay = bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        meta = bmoyasar.checkout_metadata(pay)
+        self.assertEqual(meta['internal_payment_id'], str(pay.id))
+        self.assertEqual(meta['plan_code'], 'basic')
+        blob = str(meta)
+        self.assertNotIn(_SECRET, blob)
+        self.assertNotIn('sk_', blob)
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
+                   MOYASAR_PUBLISHABLE_KEY=_PK, MOYASAR_SECRET_KEY=_SECRET,
+                   PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarCheckoutFlowTests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_select_plan_creates_moyasar_payment_and_redirects_to_checkout(self):
+        c = _company()
+        self._login(c, 'mflow1@x.com')
+        resp = self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c)
+        self.assertEqual(pay.provider, 'moyasar')
+        self.assertEqual(pay.status, 'pending')
+        self.assertRedirects(resp, reverse('billing:checkout', args=[pay.id]),
+                             fetch_redirect_response=False)
+        sub = bsvc.get_current_subscription(c)
+        self.assertEqual(sub.status, 'pending_payment')
+
+    def test_checkout_page_renders_form_and_publishable_key(self):
+        c = _company()
+        self._login(c, 'mflow2@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c)
+        body = self.client.get(reverse('billing:checkout', args=[pay.id])).content.decode()
+        self.assertIn('mysr-form', body)
+        self.assertIn(_PK, body)
+        self.assertIn('Sandbox', body)
+
+    def test_secret_key_never_in_checkout_html(self):
+        c = _company()
+        self._login(c, 'mflow3@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c)
+        body = self.client.get(reverse('billing:checkout', args=[pay.id])).content.decode()
+        self.assertNotIn(_SECRET, body)
+        self.assertNotIn('sk_test_', body)
+        self.assertNotIn('sk_live_', body)
+
+    def test_checkout_tenant_scoped_other_company_denied(self):
+        c1 = _company(); c2 = _company()
+        u2 = _journey_user(c2, email='mflow4b@x.com')
+        self._login(c1, 'mflow4a@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c1)
+        self.client.force_login(u2)
+        resp = self.client.get(reverse('billing:checkout', args=[pay.id]))
+        self.assertRedirects(resp, reverse('billing:home'), fetch_redirect_response=False)
+
+    def test_checkout_requires_pending_payment(self):
+        c = _company()
+        self._login(c, 'mflow5@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c)
+        pay.status = 'paid'; pay.save()
+        resp = self.client.get(reverse('billing:checkout', args=[pay.id]))
+        self.assertRedirects(resp, reverse('billing:home'), fetch_redirect_response=False)
+
+    def test_checkout_started_audited(self):
+        from core.models import AuditLog
+        c = _company()
+        self._login(c, 'mflow6@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c)
+        self.client.get(reverse('billing:checkout', args=[pay.id]))
+        self.assertTrue(AuditLog.objects.filter(action='moyasar_checkout_started').exists())
+
+    def test_billing_home_shows_pay_button(self):
+        c = _company()
+        self._login(c, 'mflow7@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertIn('Pay with Moyasar Sandbox', body)
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
+                   MOYASAR_PUBLISHABLE_KEY='', MOYASAR_SECRET_KEY=_SECRET,
+                   PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarNotConfiguredTests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_checkout_shows_not_configured_message(self):
+        c = _company()
+        self._login(c, 'mnc1@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c)
+        resp = self.client.get(reverse('billing:checkout', args=[pay.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('not configured yet', resp.content.decode())
+
+    def test_checkout_does_not_crash_without_key(self):
+        c = _company()
+        self._login(c, 'mnc2@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c)
+        self.assertEqual(self.client.get(
+            reverse('billing:checkout', args=[pay.id])).status_code, 200)
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
+                   MOYASAR_PUBLISHABLE_KEY=_PK, MOYASAR_SECRET_KEY=_SECRET,
+                   PUBLIC_BASE_URL='http://localhost:8000')
+class MoyasarCallbackTests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def _pending(self, c):
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        return Payment.objects.get(company=c)
+
+    def test_callback_records_but_does_not_activate(self):
+        c = _company()
+        self._login(c, 'mcb1@x.com')
+        pay = self._pending(c)
+        resp = self.client.get(reverse('billing:moyasar_callback'),
+                               {'ipid': pay.id, 'id': 'moyasar_pay_123', 'status': 'paid'})
+        self.assertRedirects(resp, reverse('billing:home'), fetch_redirect_response=False)
+        pay.refresh_from_db()
+        self.assertEqual(pay.provider_payment_id, 'moyasar_pay_123')
+        self.assertEqual(pay.status, 'pending')            # NOT paid
+        sub = bsvc.get_current_subscription(c)
+        self.assertEqual(sub.status, 'pending_payment')    # NOT activated
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_callback_shows_pending_verification_message(self):
+        c = _company()
+        self._login(c, 'mcb2@x.com')
+        pay = self._pending(c)
+        resp = self.client.get(reverse('billing:moyasar_callback'),
+                               {'ipid': pay.id, 'id': 'x1', 'status': 'paid'}, follow=True)
+        self.assertContains(resp, 'Subscription will be activated after verification')
+
+    def test_callback_failed_marks_payment_failed(self):
+        c = _company()
+        self._login(c, 'mcb3@x.com')
+        pay = self._pending(c)
+        self.client.get(reverse('billing:moyasar_callback'),
+                        {'ipid': pay.id, 'id': 'x2', 'status': 'failed'})
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'failed')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_callback_cancelled_marks_payment_cancelled(self):
+        c = _company()
+        self._login(c, 'mcb4@x.com')
+        pay = self._pending(c)
+        self.client.get(reverse('billing:moyasar_callback'),
+                        {'ipid': pay.id, 'id': 'x3', 'status': 'cancelled'})
+        pay.refresh_from_db()
+        self.assertEqual(pay.status, 'cancelled')
+
+    def test_callback_forged_other_company_no_effect(self):
+        c1 = _company(); c2 = _company()
+        pay1 = self._pending(c1)
+        self._login(c2, 'mcb5@x.com')   # attacker in c2 forges callback for c1's payment
+        resp = self.client.get(reverse('billing:moyasar_callback'),
+                               {'ipid': pay1.id, 'id': 'evil', 'status': 'paid'})
+        self.assertRedirects(resp, reverse('billing:home'), fetch_redirect_response=False)
+        pay1.refresh_from_db()
+        self.assertEqual(pay1.provider_payment_id, '')      # untouched
+        self.assertFalse(company_has_active_subscription(c1))
+
+    def test_callback_missing_ipid_no_500(self):
+        c = _company()
+        self._login(c, 'mcb6@x.com')
+        resp = self.client.get(reverse('billing:moyasar_callback'), {'status': 'paid'})
+        self.assertEqual(resp.status_code, 302)
+
+    def test_callback_invalid_ipid_no_500(self):
+        c = _company()
+        self._login(c, 'mcb7@x.com')
+        resp = self.client.get(reverse('billing:moyasar_callback'),
+                               {'ipid': 'notanumber', 'id': 'x', 'status': 'paid'})
+        self.assertEqual(resp.status_code, 302)
+
+    def test_callback_audited(self):
+        from core.models import AuditLog
+        c = _company()
+        self._login(c, 'mcb8@x.com')
+        pay = self._pending(c)
+        self.client.get(reverse('billing:moyasar_callback'),
+                        {'ipid': pay.id, 'id': 'x9', 'status': 'paid'})
+        self.assertTrue(AuditLog.objects.filter(action='moyasar_callback_received').exists())
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
+                   MOYASAR_PUBLISHABLE_KEY=_PK, MOYASAR_SECRET_KEY=_SECRET)
+class MoyasarCRMTests(TestCase):
+    def _staff(self, email='mcrmstaff@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    def test_crm_shows_provider_and_pending_moyasar(self):
+        from auditors import crm_services as crm
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        summary = crm.company_subscription_summary(c)
+        self.assertEqual(summary['pending_moyasar_payments'], 1)
+        self.assertEqual(summary['last_payment_provider'], 'Moyasar')
+
+    def test_crm_detail_page_no_secret(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('Pending Moyasar', body)
+        self.assertNotIn(_SECRET, body)
+
+
+class MoyasarSafetyTests(TestCase):
+    """Provider defaults keep manual behaviour intact (no override_settings here)."""
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_default_provider_is_manual(self):
+        self.assertFalse(bmoyasar.is_moyasar_provider())
+
+    def test_manual_flow_unchanged_when_provider_manual(self):
+        c = _company()
+        self._login(c, 'msafe1@x.com')
+        resp = self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        self.assertRedirects(resp, reverse('billing:home'), fetch_redirect_response=False)
+        pay = Payment.objects.get(company=c)
+        self.assertEqual(pay.provider, 'manual')
+
+    def test_checkout_safe_disclaimer(self):
+        with override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_PUBLISHABLE_KEY=_PK,
+                               PUBLIC_BASE_URL='http://localhost:8000'):
+            c = _company()
+            self._login(c, 'msafe2@x.com')
+            self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+            pay = Payment.objects.get(company=c)
+            body = self.client.get(reverse('billing:checkout', args=[pay.id])).content.decode()
+            self.assertIn('not an official certification', body.lower())
+            for w in ('certified by NCA', 'government accredited', 'official accreditation'):
+                self.assertNotIn(w, body)

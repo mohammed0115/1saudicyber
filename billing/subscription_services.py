@@ -65,23 +65,28 @@ def start_trial(company, plan, actor=None):
 
 
 @transaction.atomic
-def create_pending_subscription(company, plan, actor=None):
-    """Select a plan -> pending_payment subscription + a pending manual payment."""
+def create_pending_subscription(company, plan, actor=None, provider='manual'):
+    """Select a plan -> pending_payment subscription + a pending payment.
+
+    provider is 'manual' (default; unchanged behaviour) or 'moyasar' (sandbox checkout).
+    """
     if plan is None:
         raise SubscriptionError('الخطة غير موجودة · Plan not found.')
+    provider = 'moyasar' if provider == 'moyasar' else 'manual'
     sub = ensure_company_subscription(company)
     sub.status = 'pending_payment'
     sub.plan = plan
     sub.plan_name = plan.name
-    sub.provider = 'manual'
+    sub.provider = provider
     if getattr(actor, 'is_authenticated', False):
         sub.created_by = sub.created_by or actor
         sub.updated_by = actor
     sub.save()
     payment = create_manual_payment(sub, plan.price_amount, actor,
-                                    reference='plan:%s' % plan.code)
+                                    reference='plan:%s' % plan.code, provider=provider)
     _sub_audit(actor, company, 'subscription_created', sub,
-               extra={'plan': plan.code, 'payment_id': payment.id, 'status': 'pending_payment'})
+               extra={'plan': plan.code, 'payment_id': payment.id, 'status': 'pending_payment',
+                      'provider': provider})
     return sub, payment
 
 
@@ -129,15 +134,16 @@ def expire_subscription(subscription, actor=None, reason=''):
 # Payments (manual now; Moyasar-ready fields, no API calls)
 # ---------------------------------------------------------------------------
 @transaction.atomic
-def create_manual_payment(subscription, amount, actor=None, reference=''):
+def create_manual_payment(subscription, amount, actor=None, reference='', provider='manual'):
     company = subscription.company
+    provider = 'moyasar' if provider == 'moyasar' else 'manual'
     payment = Payment.objects.create(
-        company=company, subscription=subscription, provider='manual',
+        company=company, subscription=subscription, provider=provider,
         amount=amount, currency=getattr(subscription.plan, 'currency', 'SAR'),
         status='pending', reference=(reference or '')[:160],
         created_by=actor if getattr(actor, 'is_authenticated', False) else None)
     _sub_audit(actor, company, 'manual_payment_created', subscription,
-               extra={'payment_id': payment.id, 'amount': str(amount)})
+               extra={'payment_id': payment.id, 'amount': str(amount), 'provider': provider})
     return payment
 
 

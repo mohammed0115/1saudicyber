@@ -204,6 +204,15 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@1saudicyber.com')
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
 
+# ---- Payments / Moyasar (Phase 8I-B — sandbox checkout only) ----
+# Publishable key is safe for the browser; the SECRET key stays server-side and
+# is NEVER passed to templates. No live keys ship in code; defaults are empty.
+PAYMENT_PROVIDER = os.getenv('PAYMENT_PROVIDER', 'manual')          # 'manual' | 'moyasar'
+MOYASAR_MODE = os.getenv('MOYASAR_MODE', 'sandbox')                 # 'sandbox' | 'live'
+MOYASAR_PUBLISHABLE_KEY = os.getenv('MOYASAR_PUBLISHABLE_KEY', '')  # pk_test_... in sandbox
+MOYASAR_SECRET_KEY = os.getenv('MOYASAR_SECRET_KEY', '')            # server-side only; not used this phase
+PUBLIC_BASE_URL = os.getenv('PUBLIC_BASE_URL', SITE_URL)
+
 # ---- Content Security Policy (NFR-017) ----
 CONTENT_SECURITY_POLICY = (
     "default-src 'self'; "

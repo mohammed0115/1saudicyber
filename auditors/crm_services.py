@@ -254,7 +254,8 @@ def company_subscription_summary(company):
     """Phase 8I — staff-only subscription summary for a company (read-only, no card data)."""
     summary = {'plan': '', 'status': 'inactive', 'starts_at': None, 'ends_at': None,
                'trial_ends_at': None, 'pending_payments': 0, 'last_payment_status': '—',
-               'subscription_id': None}
+               'subscription_id': None, 'last_payment_provider': '—', 'last_payment_reference': '',
+               'last_payment_provider_id': '', 'pending_moyasar_payments': 0}
     try:
         from billing.subscription_access import get_company_subscription
         from billing.models import Payment
@@ -267,9 +268,15 @@ def company_subscription_summary(company):
                 'trial_ends_at': sub.trial_ends_at, 'subscription_id': sub.id,
             })
         summary['pending_payments'] = Payment.objects.filter(company=company, status='pending').count()
+        summary['pending_moyasar_payments'] = Payment.objects.filter(
+            company=company, status='pending', provider='moyasar').count()
         last = Payment.objects.filter(company=company).order_by('-created_at').first()
         if last is not None:
+            # Read-only, no card data: provider/status/reference/provider_payment_id only.
             summary['last_payment_status'] = last.get_status_display()
+            summary['last_payment_provider'] = last.get_provider_display()
+            summary['last_payment_reference'] = last.reference or ''
+            summary['last_payment_provider_id'] = last.provider_payment_id or ''
     except Exception:
         pass
     return summary

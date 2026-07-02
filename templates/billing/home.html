@@ -35,7 +35,14 @@
       <div class="mt-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 text-sm">
         <i class="fas fa-hourglass-half"></i>
         دفعة قيد الانتظار · Pending payment: {{ pending_payment.amount }} {{ pending_payment.currency }}.
-        الدفع الإلكتروني عبر Moyasar قادم لاحقًا · Online payment via Moyasar is coming next.
+        {% if pending_payment.provider == 'moyasar' %}
+          <a href="{% url 'billing:checkout' payment_id=pending_payment.id %}"
+             class="inline-block mt-2 bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg font-medium">
+            <i class="fas fa-credit-card mr-1"></i> ادفع عبر Moyasar (تجريبي) · Pay with Moyasar Sandbox
+          </a>
+        {% else %}
+          <span class="block mt-1">الدفع اليدوي قيد المراجعة · Manual payment is under review.</span>
+        {% endif %}
       </div>
       {% endif %}
 
