@@ -100,6 +100,7 @@ def crm_company_detail(request, company_id):
         'assignable_staff': crm.assignable_staff(),
         'evidence_summary': crm.company_evidence_summary(company),
         'gap_summary': crm.company_gap_summary(company),
+        'risk_summary': crm.company_risk_summary(company),
     })
 
 

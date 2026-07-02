@@ -44,7 +44,16 @@
             <td class="px-4 py-2 text-xs">{{ t.get_priority_display }}</td>
             <td class="px-4 py-2 text-xs">{{ t.get_status_display }}</td>
             <td class="px-4 py-2 text-xs">{{ t.due_date|default:"—" }}</td>
-            <td class="px-4 py-2"><a href="{% url 'risk:task_edit' t.id %}" class="text-gov-green-700 hover:underline text-xs">تعديل</a></td>
+            <td class="px-4 py-2">
+              <form method="post" action="{% url 'risk:task_set_status' t.id %}" class="flex items-center gap-1">
+                {% csrf_token %}
+                <select name="status" class="border border-gov-gray-300 rounded px-1 py-0.5 text-xs">
+                  {% for value, label in t.STATUS_CHOICES %}<option value="{{ value }}" {% if t.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="text-gov-green-700 hover:underline text-xs">تحديث</button>
+                <a href="{% url 'risk:task_edit' t.id %}" class="text-gov-gray-500 hover:underline text-xs">تعديل</a>
+              </form>
+            </td>
           </tr>
         {% empty %}
           <tr><td colspan="6" class="px-4 py-5 text-center text-gov-gray-500">لا توجد مهام معالجة بعد.</td></tr>

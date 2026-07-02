@@ -17,15 +17,22 @@ def risk_list(request):
     if not company:
         return render(request, 'dashboard/no_company.html')
     from compliance.journey import build_page_guide
+    from .risk_engine import risk_generation_summary
+    from django.db.models import Count
+    risks_qs = services.company_risks(company).select_related('control', 'framework_version')
+    status_counts = {row['status']: row['n'] for row in risks_qs.values('status').annotate(n=Count('id'))}
     return render(request, 'risk/risk_list.html', {
         'company': company,
-        'risks': services.company_risks(company).select_related('control', 'framework_version'),
+        'risks': risks_qs,
         'counts': services.risk_dashboard_counts(company),
+        'severity_counts': risk_generation_summary(company)['severity_counts'],
+        'status_counts': status_counts,
         'guide': build_page_guide(company, 'risks'),
     })
 
 
 @login_required
+@company_portal_required
 def risk_detail(request, risk_id):
     company = request.user.company
     risk = services.get_company_risk(company, risk_id)
@@ -34,6 +41,43 @@ def risk_detail(request, risk_id):
         return redirect('risk:list')
     return render(request, 'risk/risk_detail.html', {
         'company': company, 'risk': risk, 'tasks': risk.tasks.all()})
+
+
+# ============================================================
+# Phase 8G — deterministic Risk & Remediation generation from gap analysis.
+# ============================================================
+@login_required
+@company_portal_required
+@require_http_methods(["POST"])
+def generate_risks(request):
+    """POST-only: (re)generate internal risks + remediation from the gap analysis."""
+    from .risk_engine import generate_risks_from_gap
+    company = request.user.company
+    summary = generate_risks_from_gap(company, actor=request.user)
+    messages.success(
+        request, 'تم توليد/تحديث خطة المخاطر والمعالجة الداخلية '
+                 '(%d جديدة، %d محدّثة). · Internal risks & remediation generated (%d new, %d updated).'
+                 % (summary['created'], summary['updated'], summary['created'], summary['updated']))
+    return redirect('risk:list')
+
+
+@login_required
+@company_portal_required
+@require_http_methods(["POST"])
+def task_set_status(request, task_id):
+    """POST-only: update one remediation task's status (tenant-safe, audited)."""
+    from .risk_engine import set_task_status
+    company = request.user.company
+    task = services.get_company_task(company, task_id)
+    if task is None:
+        messages.error(request, 'المهمة غير موجودة أو لا تخصّ شركتك.')
+        return redirect('risk:list')
+    try:
+        set_task_status(company, task, request.POST.get('status', ''), actor=request.user)
+        messages.success(request, 'تم تحديث حالة المعالجة · Remediation status updated.')
+    except ValueError:
+        messages.error(request, 'حالة غير صالحة · Invalid status.')
+    return redirect('risk:detail', risk_id=task.risk_id)
 
 
 def _linked_objects(request, company):

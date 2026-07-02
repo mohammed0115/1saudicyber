@@ -376,3 +376,279 @@ class Phase5ABackwardCompatTests(TestCase):
         update_assessment_from_auditor_input(a, {'status': 'compliant'}, staff)
         a.refresh_from_db()
         self.assertEqual(a.status, 'compliant')
+
+
+# ============================================================
+# Phase 8G-RISK-REMEDIATION-A — Risk & Remediation Engine
+# ============================================================
+from compliance.gap_engine import recalculate_company_gap
+from compliance.models import ControlGapAssessment, ControlApplicabilityResult
+from risk.risk_engine import generate_risks_from_gap, set_task_status
+
+
+def _company_with_gaps(**subkw):
+    """Company with 2 official controls: one with evidence (needs_review), one missing."""
+    c, item, sub = _company_with_submission(**subkw)
+    recalculate_company_gap(c)
+    return c, item, sub
+
+
+class RiskGenerationTests(TestCase):
+    def test_missing_gap_creates_high_or_critical_risk(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        # the control without evidence is 'missing' -> high/critical risk
+        missing_ctrls = ControlGapAssessment.objects.filter(company=c, status='missing').values_list('control_id', flat=True)
+        risks = RiskItem.objects.filter(company=c, control_id__in=list(missing_ctrls), source='gap_analysis')
+        self.assertTrue(risks.exists())
+        self.assertIn(risks.first().severity, ('high', 'critical'))
+
+    def test_needs_review_gap_creates_medium_risk(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        nr = ControlGapAssessment.objects.filter(company=c, status='needs_review').values_list('control_id', flat=True)
+        r = RiskItem.objects.filter(company=c, control_id__in=list(nr), source='gap_analysis').first()
+        self.assertIsNotNone(r)
+        self.assertEqual(r.severity, 'medium')
+
+    def test_partial_gap_creates_low_or_medium_risk(self):
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(name='e.txt', content=b'access control policy', ftype='txt')
+        save_extraction_for_submission(sub)  # -> partially_compliant for that control
+        recalculate_company_gap(c)
+        generate_risks_from_gap(c)
+        ctrl = item.evidence_requirement.control
+        r = RiskItem.objects.get(company=c, control=ctrl, source='gap_analysis')
+        self.assertIn(r.severity, ('low', 'medium'))
+
+    def test_compliant_gap_creates_no_risk(self):
+        from compliance.models import ControlAssessment
+        c, fv, scope = _company_with_assessments()
+        a = ControlAssessment.objects.filter(company=c).first()
+        a.status = 'compliant'; a.save(update_fields=['status'])
+        recalculate_company_gap(c)
+        generate_risks_from_gap(c)
+        self.assertFalse(RiskItem.objects.filter(company=c, control=a.control, source='gap_analysis').exists())
+
+    def test_not_applicable_gap_creates_no_risk(self):
+        c, fv, scope = _company_with_official_plan_local()
+        car = ControlApplicabilityResult.objects.filter(company=c).first()
+        car.decision = 'not_applicable'; car.save(update_fields=['decision'])
+        recalculate_company_gap(c)
+        generate_risks_from_gap(c)
+        self.assertFalse(RiskItem.objects.filter(company=c, control=car.control, source='gap_analysis').exists())
+
+    def test_generation_idempotent(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        n1 = RiskItem.objects.filter(company=c, source='gap_analysis').count()
+        t1 = RemediationTask.objects.filter(company=c).count()
+        generate_risks_from_gap(c)
+        self.assertEqual(RiskItem.objects.filter(company=c, source='gap_analysis').count(), n1)
+        self.assertEqual(RemediationTask.objects.filter(company=c).count(), t1)
+
+    def test_no_gap_rows_no_500(self):
+        c = _company()
+        s = generate_risks_from_gap(c)  # no gap data at all
+        self.assertEqual(s['created'], 0)
+        self.assertEqual(RiskItem.objects.filter(company=c).count(), 0)
+
+    def test_generated_risk_has_remediation_task(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        r = RiskItem.objects.filter(company=c, source='gap_analysis').first()
+        self.assertTrue(r.tasks.exists())
+        self.assertTrue(r.tasks.first().description)  # remediation guidance present
+
+    def test_compliant_control_mitigates_existing_risk(self):
+        from compliance.models import ControlAssessment
+        c, fv, scope = _company_with_assessments()
+        recalculate_company_gap(c); generate_risks_from_gap(c)  # creates missing risks
+        a = ControlAssessment.objects.filter(company=c).first()
+        risk = RiskItem.objects.filter(company=c, control=a.control, source='gap_analysis').first()
+        self.assertIsNotNone(risk)
+        a.status = 'compliant'; a.save(update_fields=['status'])
+        recalculate_company_gap(c); generate_risks_from_gap(c)
+        risk.refresh_from_db()
+        self.assertEqual(risk.status, 'mitigated')
+
+    def test_generation_writes_audit(self):
+        from core.models import AuditLog
+        c, item, sub = _company_with_gaps()
+        # actor
+        u = _journey_user(c, email='rgaudit@x.com')
+        generate_risks_from_gap(c, actor=u)
+        self.assertTrue(AuditLog.objects.filter(action='risk_generated_from_gap').exists())
+
+    def test_generation_no_ai_gap_rows(self):
+        from ai_engine.models import GapAnalysis
+        before = GapAnalysis.objects.count()
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        self.assertEqual(GapAnalysis.objects.count(), before)
+
+
+def _company_with_official_plan_local(fv_code='ARAMCO-SACS-002'):
+    from compliance.tests import _company_with_official_plan
+    return _company_with_official_plan(fv_code)
+
+
+class RemediationStatusTests(TestCase):
+    def _task(self, c):
+        generate_risks_from_gap(c)
+        return RemediationTask.objects.filter(company=c).first()
+
+    def test_set_status_valid(self):
+        c, item, sub = _company_with_gaps()
+        t = self._task(c)
+        set_task_status(c, t, 'in_progress')
+        t.refresh_from_db()
+        self.assertEqual(t.status, 'in_progress')
+
+    def test_set_status_done_sets_completed(self):
+        c, item, sub = _company_with_gaps()
+        t = self._task(c)
+        set_task_status(c, t, 'done')
+        t.refresh_from_db()
+        self.assertEqual(t.status, 'done')
+        self.assertIsNotNone(t.completed_at)
+
+    def test_set_status_invalid_rejected(self):
+        c, item, sub = _company_with_gaps()
+        t = self._task(c)
+        with self.assertRaises(ValueError):
+            set_task_status(c, t, 'not_a_status')
+
+    def test_set_status_writes_audit(self):
+        from core.models import AuditLog
+        c, item, sub = _company_with_gaps()
+        t = self._task(c)
+        set_task_status(c, t, 'blocked')
+        self.assertTrue(AuditLog.objects.filter(action='remediation_status_changed').exists())
+
+    def test_accepted_risk_status_persists_and_not_overwritten(self):
+        # 'accepted_risk' maps to RiskItem.status='accepted' (existing vocabulary).
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        r = RiskItem.objects.filter(company=c, source='gap_analysis').first()
+        r.status = 'accepted'; r.save(update_fields=['status'])
+        generate_risks_from_gap(c)  # regeneration must preserve user's accepted status
+        r.refresh_from_db()
+        self.assertEqual(r.status, 'accepted')
+
+
+class RiskDashboardViewTests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_anonymous_redirected(self):
+        r = self.client.get(reverse('risk:list'))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/login', r.url)
+
+    def test_company_user_can_view(self):
+        c, item, sub = _company_with_gaps()
+        self._login(c, 'rdv@x.com')
+        self.assertEqual(self.client.get(reverse('risk:list')).status_code, 200)
+
+    def test_generate_requires_post(self):
+        c, item, sub = _company_with_gaps()
+        self._login(c, 'rdgp@x.com')
+        self.assertEqual(self.client.get(reverse('risk:generate')).status_code, 405)
+
+    def test_generate_creates_risks_and_audit(self):
+        from core.models import AuditLog
+        c, item, sub = _company_with_gaps()
+        self._login(c, 'rdgen@x.com')
+        self.client.post(reverse('risk:generate'))
+        self.assertTrue(RiskItem.objects.filter(company=c, source='gap_analysis').exists())
+        self.assertTrue(AuditLog.objects.filter(action='risk_generated_from_gap').exists())
+
+    def test_dashboard_shows_severity_and_status_distribution(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        self._login(c, 'rddist@x.com')
+        body = self.client.get(reverse('risk:list')).content.decode()
+        self.assertIn('Severity distribution', body)
+        self.assertIn('Risk status', body)
+
+    def test_smart_processing_animation_present(self):
+        c, item, sub = _company_with_gaps()
+        self._login(c, 'rdanim@x.com')
+        body = self.client.get(reverse('risk:list')).content.decode()
+        self.assertIn('data-smart-processing', body)
+        self.assertIn('Processing evidence', body)
+
+    def test_risk_detail_shows_source_and_reason(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        r = RiskItem.objects.filter(company=c, source='gap_analysis').first()
+        self._login(c, 'rddet@x.com')
+        body = self.client.get(reverse('risk:detail', args=[r.id])).content.decode()
+        self.assertIn(r.control.control_id, body)
+        self.assertIn('Gap Analysis', body)  # source display
+
+    def test_empty_company_dashboard_no_500(self):
+        c = _company()
+        self._login(c, 'rdempty@x.com')
+        self.assertEqual(self.client.get(reverse('risk:list')).status_code, 200)
+
+    def test_tenant_cannot_access_other_company_risk(self):
+        c1, i1, s1 = _company_with_gaps(name='a.txt')
+        c2, i2, s2 = _company_with_gaps(name='b.txt')
+        generate_risks_from_gap(c2)
+        other = RiskItem.objects.filter(company=c2, source='gap_analysis').first()
+        self._login(c1, 'rdten@x.com')
+        resp = self.client.get(reverse('risk:detail', args=[other.id]))
+        self.assertEqual(resp.status_code, 302)  # not this tenant's -> redirect
+
+    def test_task_status_update_via_view(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        t = RemediationTask.objects.filter(company=c).first()
+        self._login(c, 'rdtask@x.com')
+        self.client.post(reverse('risk:task_set_status', args=[t.id]), {'status': 'done'})
+        t.refresh_from_db()
+        self.assertEqual(t.status, 'done')
+
+    def test_auditor_denied_from_risk_list(self):
+        u, p = _auditor(status='active')
+        self.client.force_login(u)
+        resp = self.client.get(reverse('risk:list'))
+        self.assertContains(resp, 'Auditor account', status_code=200)
+
+    def test_staff_without_company_routed_to_crm(self):
+        st = User.objects.create_user(username='rgstaff@x.com', email='rgstaff@x.com',
+                                      password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(st)
+        resp = self.client.get(reverse('risk:list'))
+        self.assertContains(resp, 'Get Solution CRM', status_code=200)
+
+    def test_no_unsafe_wording_on_risk_page(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        self._login(c, 'rgsafe@x.com')
+        body = self.client.get(reverse('risk:list')).content.decode()
+        for w in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد حكومي',
+                  'certified by NCA', 'official accreditation', 'government accredited'):
+            self.assertNotIn(w, body)
+        if 'official certification' in body:
+            self.assertIn('Not an official certification', body)
+
+
+class RiskCRMSummaryTests(TestCase):
+    def test_crm_company_detail_shows_risk_summary(self):
+        c, item, sub = _company_with_gaps()
+        generate_risks_from_gap(c)
+        staff = User.objects.create_user(username='rgcrm@x.com', email='rgcrm@x.com',
+                                         password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(staff)
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Internal risk summary')
+
+    def test_crm_risk_summary_staff_only(self):
+        c, item, sub = _company_with_gaps()
+        self.client.force_login(_journey_user(c, email='rgnotstaff@x.com'))
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:company_detail', args=[c.id])).status_code, 403)

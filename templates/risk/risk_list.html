@@ -9,8 +9,24 @@
         <h1 class="text-2xl font-bold text-gov-green-800">سجل المخاطر وخطة المعالجة</h1>
         <p class="text-gov-gray-600">إدارة مخاطر شركتك ومهام المعالجة. القرار النهائي للامتثال يبقى للمدقّق.</p>
       </div>
-      <a href="{% url 'risk:create' %}" data-busy="جارٍ تحميل النموذج..."
-         class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">خطر جديد</a>
+      <div class="flex items-center gap-2">
+        <form method="post" action="{% url 'risk:generate' %}" data-smart-processing class="inline">
+          {% csrf_token %}
+          <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
+            <i class="fas fa-wand-magic-sparkles mr-1"></i> توليد من تحليل الفجوات · Generate from gap analysis
+          </button>
+        </form>
+        <a href="{% url 'risk:create' %}" data-busy="جارٍ تحميل النموذج..."
+           class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm">خطر جديد</a>
+      </div>
+    </div>
+    {% include "components/smart_processing.html" %}
+
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-4 text-sm text-gov-gray-600">
+      <i class="fas fa-circle-info text-gov-green-700"></i>
+      خطة مخاطر ومعالجة داخلية مبنية على الأدلة وتحليل الفجوات — تتطلب مراجعة بشرية ولا يُعد شهادة امتثال رسمية.
+      <span class="block text-xs text-gov-gray-400 mt-1">Evidence-based internal risk &amp; remediation plan — requires human review. Not an official certification.
+        <a href="{% url 'compliance:gap_dashboard' %}" class="text-gov-green-700 hover:underline">· تحليل الفجوات · Gap analysis</a></span>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -26,6 +42,27 @@
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
         <div class="text-2xl font-bold text-gov-green-700">{{ counts.mitigated }}</div>
         <div class="text-xs text-gov-gray-500 mt-1">مُعالَجة/مغلقة</div></div>
+    </div>
+
+    {# Severity + status distribution #}
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
+        <h3 class="font-semibold text-gov-green-800 text-sm mb-2">توزيع الخطورة · Severity distribution</h3>
+        <div class="grid grid-cols-4 gap-2 text-center text-sm">
+          <div><div class="text-lg font-bold text-red-700">{{ severity_counts.critical }}</div><div class="text-xs text-gov-gray-500">حرجة · Critical</div></div>
+          <div><div class="text-lg font-bold text-orange-700">{{ severity_counts.high }}</div><div class="text-xs text-gov-gray-500">عالية · High</div></div>
+          <div><div class="text-lg font-bold text-amber-600">{{ severity_counts.medium }}</div><div class="text-xs text-gov-gray-500">متوسطة · Medium</div></div>
+          <div><div class="text-lg font-bold text-gov-green-700">{{ severity_counts.low }}</div><div class="text-xs text-gov-gray-500">منخفضة · Low</div></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
+        <h3 class="font-semibold text-gov-green-800 text-sm mb-2">حالة المخاطر · Risk status</h3>
+        <div class="grid grid-cols-3 gap-2 text-center text-sm">
+          <div><div class="text-lg font-bold text-gov-gray-800">{{ status_counts.open|default:0 }}</div><div class="text-xs text-gov-gray-500">مفتوحة · Open</div></div>
+          <div><div class="text-lg font-bold text-blue-700">{{ status_counts.in_progress|default:0 }}</div><div class="text-xs text-gov-gray-500">قيد التنفيذ · In progress</div></div>
+          <div><div class="text-lg font-bold text-gov-green-700">{{ status_counts.mitigated|default:0 }}</div><div class="text-xs text-gov-gray-500">مُعالَجة · Mitigated</div></div>
+        </div>
+      </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
