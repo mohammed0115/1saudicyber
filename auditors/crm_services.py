@@ -250,6 +250,31 @@ def assignable_staff():
     return User.objects.filter(Q(is_staff=True) | Q(is_superuser=True)).order_by('email')
 
 
+def company_report_summary(company):
+    """Phase 8H — staff-only internal readiness-report summary (read-only, counts only)."""
+    summary = {'readiness_percent': 0, 'missing': 0, 'open_risks': 0,
+               'overdue_tasks': 0, 'report_date': None}
+    try:
+        from compliance.gap_engine import get_company_gap_summary
+        from risk import services as risk_services
+        from core.models import AuditLog
+        g = get_company_gap_summary(company)
+        counts = risk_services.risk_dashboard_counts(company)
+        summary.update({
+            'readiness_percent': g.get('overall_readiness_percent', 0),
+            'missing': g.get('missing_count', 0),
+            'open_risks': counts['open'],
+            'overdue_tasks': counts['overdue_tasks'],
+        })
+        log = (AuditLog.objects.filter(action__in=['report_viewed', 'report_refreshed'])
+               .filter(metadata__company_id=company.id).order_by('-created_at').first())
+        if log is not None:
+            summary['report_date'] = log.created_at
+    except Exception:
+        pass
+    return summary
+
+
 def company_risk_summary(company):
     """Phase 8G — staff-only internal risk summary for a company (read-only, counts only)."""
     summary = {'open': 0, 'high_critical': 0, 'overdue_tasks': 0, 'total': 0, 'last_generated': None}

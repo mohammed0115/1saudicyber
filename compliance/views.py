@@ -919,6 +919,43 @@ def run_gap_recalc(request):
     return redirect('compliance:gap_dashboard')
 
 
+# ============================================================
+# Phase 8H-REPORTING-A — internal commercial readiness report.
+# Read-only aggregation of gap/risk/evidence; NOT an official certification.
+# Not subscription-gated (internal readiness the company can always see).
+# ============================================================
+@login_required
+@company_portal_required
+def commercial_readiness_report(request):
+    """Internal readiness report for the user's company (read-only)."""
+    from .report_engine import build_commercial_readiness_report, record_report_audit
+    company = request.user.company
+    report = build_commercial_readiness_report(company)
+    record_report_audit(request.user, company, report, action='viewed')
+    return render(request, 'compliance/commercial_readiness_report.html', {
+        'company': company, 'report': report})
+
+
+@login_required
+@company_portal_required
+@require_http_methods(["POST"])
+def refresh_commercial_report(request):
+    """POST-only: refresh the underlying data (gap + risks) then show the report."""
+    from .gap_engine import recalculate_company_gap
+    from .report_engine import build_commercial_readiness_report, record_report_audit
+    from risk.risk_engine import generate_risks_from_gap
+    company = request.user.company
+    recalculate_company_gap(company, actor=request.user)
+    generate_risks_from_gap(company, actor=request.user)
+    report = build_commercial_readiness_report(company)
+    record_report_audit(request.user, company, report, action='refreshed')
+    messages.success(request, 'تم تجهيز تقرير الجاهزية الداخلي (%d%%). '
+                              '· Internal readiness report prepared (%d%%).'
+                              % (report['executive']['overall_readiness_percent'],
+                                 report['executive']['overall_readiness_percent']))
+    return redirect('compliance:commercial_readiness_report')
+
+
 @login_required
 @company_portal_required
 def report_evidence_matrix(request):

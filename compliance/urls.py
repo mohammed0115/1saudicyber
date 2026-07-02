@@ -63,6 +63,9 @@ urlpatterns = [
     # Phase 8F — deterministic internal-readiness gap dashboard + recalculation
     path('gap-analysis/', views.gap_dashboard, name='gap_dashboard'),
     path('gap-analysis/recalculate/', views.run_gap_recalc, name='run_gap_recalc'),
+    # Phase 8H — internal commercial readiness report
+    path('reports/commercial-readiness/', views.commercial_readiness_report, name='commercial_readiness_report'),
+    path('reports/commercial-readiness/refresh/', views.refresh_commercial_report, name='refresh_commercial_report'),
     path('reports/evidence-matrix/', views.report_evidence_matrix, name='report_evidence_matrix'),
     path('reports/evidence-matrix.csv', views.export_evidence_matrix_csv, name='export_evidence_matrix_csv'),
     path('reports/evidence-matrix.xlsx', views.export_evidence_matrix_xlsx, name='export_evidence_matrix_xlsx'),

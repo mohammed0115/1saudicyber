@@ -198,6 +198,19 @@
       </div>
     </div>
 
+    {# Internal readiness report summary (counts only) #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-1">تقرير الجاهزية · Readiness report summary</h2>
+      <p class="text-xs text-gov-gray-500 mb-3">ملخص تقرير جاهزية داخلي — أعداد فقط، ويتطلب مراجعة بشرية.</p>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ report_summary.readiness_percent }}%</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية · Readiness</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ report_summary.missing }}</div><div class="text-xs text-gov-gray-500 mt-1">مفقود · Missing</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-orange-700">{{ report_summary.open_risks }}</div><div class="text-xs text-gov-gray-500 mt-1">مخاطر مفتوحة · Open risks</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ report_summary.overdue_tasks }}</div><div class="text-xs text-gov-gray-500 mt-1">متأخرة · Overdue</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-600">{{ report_summary.report_date|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر تقرير · Last report</div></div>
+      </div>
+    </div>
+
     {# Operational snapshot #}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
       <h2 class="font-bold text-gov-green-800 mb-3">الحالة التشغيلية · Operational status</h2>

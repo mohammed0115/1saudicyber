@@ -101,6 +101,7 @@ def crm_company_detail(request, company_id):
         'evidence_summary': crm.company_evidence_summary(company),
         'gap_summary': crm.company_gap_summary(company),
         'risk_summary': crm.company_risk_summary(company),
+        'report_summary': crm.company_report_summary(company),
     })
 
 

@@ -6443,3 +6443,183 @@ class GapDashboardViewTests(TestCase):
             self.assertIn('Not an official certification', body)
         if 'شهادة امتثال رسمية' in body:
             self.assertIn('لا تُعد شهادة امتثال رسمية', body)
+
+
+# ============================================================
+# Phase 8H-REPORTING-A — Commercial (internal readiness) Report Engine
+# ============================================================
+class CommercialReportEngineTests(TestCase):
+    def _prepared(self, **subkw):
+        from compliance.gap_engine import recalculate_company_gap
+        from risk.risk_engine import generate_risks_from_gap
+        c, item, sub = _company_with_submission(**subkw)
+        recalculate_company_gap(c)
+        generate_risks_from_gap(c)
+        return c, item, sub
+
+    def test_build_report_shape(self):
+        from compliance.report_engine import build_commercial_readiness_report
+        c, item, sub = self._prepared()
+        rep = build_commercial_readiness_report(c)
+        for key in ('executive', 'framework_readiness', 'evidence', 'gap', 'risk', 'remediation', 'next_actions'):
+            self.assertIn(key, rep)
+        self.assertGreaterEqual(len(rep['framework_readiness']), 1)
+        self.assertTrue(rep['next_actions'])
+
+    def test_empty_company_report_no_error(self):
+        from compliance.report_engine import build_commercial_readiness_report
+        rep = build_commercial_readiness_report(_company())
+        self.assertFalse(rep['has_data'])
+        self.assertEqual(rep['executive']['overall_readiness_percent'], 0)
+        self.assertTrue(rep['next_actions'])  # still gives a safe default action
+
+    def test_report_aggregates_gap_and_risk(self):
+        from compliance.report_engine import build_commercial_readiness_report
+        c, item, sub = self._prepared()
+        rep = build_commercial_readiness_report(c)
+        self.assertGreaterEqual(rep['gap']['total'], 1)
+        self.assertGreaterEqual(rep['risk']['total'], 1)
+        self.assertGreaterEqual(rep['remediation']['total'], 1)
+
+
+class CommercialReportViewTests(TestCase):
+    def _prepared(self, **subkw):
+        from compliance.gap_engine import recalculate_company_gap
+        from risk.risk_engine import generate_risks_from_gap
+        c, item, sub = _company_with_submission(**subkw)
+        recalculate_company_gap(c); generate_risks_from_gap(c)
+        return c, item, sub
+
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    URL = 'compliance:commercial_readiness_report'
+    REFRESH = 'compliance:refresh_commercial_report'
+
+    # ---- access ----
+    def test_anonymous_redirected(self):
+        r = self.client.get(reverse(self.URL))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/login', r.url)
+
+    def test_company_user_can_view(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'crv@x.com')
+        self.assertEqual(self.client.get(reverse(self.URL)).status_code, 200)
+
+    def test_unlinked_user_safe_no_company(self):
+        from core.models import User
+        u = User.objects.create_user(username='crorph@x.com', email='crorph@x.com',
+                                     password='longenough12', role='company_admin')
+        self.client.force_login(u)
+        resp = self.client.get(reverse(self.URL))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'not linked to a company')
+
+    def test_auditor_denied(self):
+        from auditors.models import AuditorProfile
+        from core.models import User
+        au = User.objects.create_user(username='craud@x.com', email='craud@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        self.assertContains(self.client.get(reverse(self.URL)), 'Auditor account', status_code=200)
+
+    def test_staff_without_company_routed_to_crm(self):
+        from core.models import User
+        st = User.objects.create_user(username='crstaff@x.com', email='crstaff@x.com',
+                                      password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(st)
+        self.assertContains(self.client.get(reverse(self.URL)), 'Get Solution CRM', status_code=200)
+
+    # ---- content ----
+    def test_report_shows_company_and_disclaimer(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'crc@x.com')
+        body = self.client.get(reverse(self.URL)).content.decode()
+        self.assertIn(c.name, body)
+        self.assertIn('Internal readiness report', body)
+        self.assertIn('لا يُعد شهادة امتثال رسمية', body)  # safe negated disclaimer
+        self.assertIn('Not an official certification', body)
+
+    def test_report_sections_present(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'crs@x.com')
+        body = self.client.get(reverse(self.URL)).content.decode()
+        for section in ('Executive summary', 'Framework readiness', 'Evidence summary',
+                        'Gap summary', 'Risk summary', 'Remediation plan'):
+            self.assertIn(section, body)
+        self.assertIn('Readiness', body)  # overall readiness card
+        self.assertIn('Recommended next actions', body)
+
+    def test_report_empty_company_no_500(self):
+        c = _company()
+        self._login(c, 'cre@x.com')
+        self.assertEqual(self.client.get(reverse(self.URL)).status_code, 200)
+
+    def test_print_friendly_layout(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'crp@x.com')
+        body = self.client.get(reverse(self.URL)).content.decode()
+        self.assertIn('window.print()', body)
+        self.assertIn('@media print', body)
+
+    # ---- refresh action ----
+    def test_refresh_requires_post(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'crrp@x.com')
+        self.assertEqual(self.client.get(reverse(self.REFRESH)).status_code, 405)
+
+    def test_refresh_has_smart_processing(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'cranim@x.com')
+        body = self.client.get(reverse(self.URL)).content.decode()
+        self.assertIn('data-smart-processing', body)
+        self.assertIn('Processing evidence', body)
+
+    def test_refresh_writes_audit(self):
+        from core.models import AuditLog
+        c, item, sub = self._prepared()
+        self._login(c, 'craudit@x.com')
+        self.client.post(reverse(self.REFRESH))
+        self.assertTrue(AuditLog.objects.filter(action='report_refreshed').exists())
+
+    def test_view_writes_audit(self):
+        from core.models import AuditLog
+        c, item, sub = self._prepared()
+        self._login(c, 'crvaudit@x.com')
+        self.client.get(reverse(self.URL))
+        self.assertTrue(AuditLog.objects.filter(action='report_viewed').exists())
+
+    # ---- safety ----
+    def test_no_unsafe_wording(self):
+        c, item, sub = self._prepared()
+        self._login(c, 'crsafe@x.com')
+        body = self.client.get(reverse(self.URL)).content.decode()
+        for w in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد حكومي',
+                  'certified by NCA', 'official accreditation', 'government accredited'):
+            self.assertNotIn(w, body)
+        if 'official certification' in body:
+            self.assertIn('Not an official certification', body)
+        if 'شهادة امتثال رسمية' in body:
+            self.assertIn('لا يُعد شهادة امتثال رسمية', body)
+
+
+class CommercialReportCRMSummaryTests(TestCase):
+    def test_crm_detail_shows_report_summary(self):
+        from core.models import User
+        from compliance.gap_engine import recalculate_company_gap
+        c, item, sub = _company_with_submission()
+        recalculate_company_gap(c)
+        staff = User.objects.create_user(username='crcrm@x.com', email='crcrm@x.com',
+                                         password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(staff)
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Readiness report summary')
+
+    def test_crm_report_summary_staff_only(self):
+        c, item, sub = _company_with_submission()
+        self.client.force_login(_journey_user(c, email='crns@x.com'))
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:company_detail', args=[c.id])).status_code, 403)

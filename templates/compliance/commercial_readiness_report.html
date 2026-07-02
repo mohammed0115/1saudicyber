@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}تقرير الجاهزية الداخلي · Internal Readiness Report - 1SaudiCyber{% endblock %}
+{% block extra_head %}
+<style>@media print { nav, footer, .no-print { display:none !important; } body { background:#fff; } }</style>
+{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+    {# Header #}
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-gov-green-700 font-semibold text-sm mb-1">تقرير جاهزية داخلي · Internal readiness report</p>
+        <h1 class="text-2xl font-bold text-gov-green-800">{{ company.name_ar|default:company.name }}</h1>
+        <p class="text-gov-gray-600 text-sm mt-1">تاريخ التقرير · Report date: {{ report.executive.report_date|date:"Y-m-d H:i" }}</p>
+      </div>
+      <div class="flex items-center gap-2 no-print">
+        <form method="post" action="{% url 'compliance:refresh_commercial_report' %}" data-smart-processing class="inline">
+          {% csrf_token %}
+          <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
+            <i class="fas fa-rotate mr-1"></i> تجهيز/تحديث التقرير · Refresh report
+          </button>
+        </form>
+        <button onclick="window.print()" class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-print mr-1"></i> طباعة · Print</button>
+      </div>
+    </div>
+    {% include "components/smart_processing.html" %}
+
+    {# Safe disclaimer #}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm leading-7">
+      <i class="fas fa-circle-info"></i>
+      هذا <strong>تقرير جاهزية داخلي</strong> مبني على البيانات والأدلة المتوفّرة في المنصة وتحليل حتمي للفجوات والمخاطر، ويتطلب مراجعة بشرية.
+      <strong>لا يُعد شهادة امتثال رسمية ولا يمثل اعتمادًا حكوميًا أو تنظيميًا</strong>.
+      <span class="block text-xs text-amber-700 mt-1">Internal, evidence-based preliminary readiness report — requires human review. Not an official certification and not a government accreditation.</span>
+    </div>
+
+    {% if messages %}{% for m in messages %}
+      <div class="rounded-lg p-3 text-sm bg-green-50 border border-green-200 text-green-800 no-print">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    {# A) Executive summary #}
+    <section class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">الملخص التنفيذي · Executive summary</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center mb-4">
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-2xl font-bold text-gov-green-800">{{ report.executive.overall_readiness_percent }}%</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية · Readiness</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-2xl font-bold text-gov-gray-800">{{ report.executive.controls_assessed }}</div><div class="text-xs text-gov-gray-500 mt-1">ضوابط مُقيّمة · Controls assessed</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-2xl font-bold text-red-700">{{ report.executive.open_risks }}</div><div class="text-xs text-gov-gray-500 mt-1">مخاطر مفتوحة · Open risks</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-2xl font-bold text-orange-700">{{ report.executive.high_critical_risks }}</div><div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة · High/Critical</div></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-sm">
+        <div><div class="font-bold text-gov-green-700">{{ report.executive.counts.compliant|default:0 }}</div><div class="text-xs text-gov-gray-500">جاهز · Compliant</div></div>
+        <div><div class="font-bold text-blue-700">{{ report.executive.counts.partially_compliant|default:0 }}</div><div class="text-xs text-gov-gray-500">جزئي · Partial</div></div>
+        <div><div class="font-bold text-red-700">{{ report.executive.counts.missing|default:0 }}</div><div class="text-xs text-gov-gray-500">مفقود · Missing</div></div>
+        <div><div class="font-bold text-amber-600">{{ report.executive.counts.needs_review|default:0 }}</div><div class="text-xs text-gov-gray-500">مراجعة · Needs review</div></div>
+        <div><div class="font-bold text-gov-gray-500">{{ report.executive.counts.not_applicable|default:0 }}</div><div class="text-xs text-gov-gray-500">غير منطبق · N/A</div></div>
+      </div>
+      <div class="mt-4">
+        <h3 class="font-semibold text-gov-green-800 text-sm mb-1">الإجراءات الموصى بها · Recommended next actions</h3>
+        <ul class="list-disc pr-5 text-sm text-gov-gray-700 space-y-1">
+          {% for a in report.next_actions %}<li>{{ a }}</li>{% endfor %}
+        </ul>
+      </div>
+    </section>
+
+    {# B) Framework readiness #}
+    <section class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">جاهزية الأطر · Framework readiness</h2>
+      {% if report.framework_readiness %}
+      <table class="w-full text-sm">
+        <thead class="text-gov-gray-500"><tr>
+          <th class="text-right py-2">الإطار · Framework</th><th class="text-right py-2">الجاهزية · Readiness</th>
+          <th class="text-right py-2">جاهز</th><th class="text-right py-2">جزئي</th><th class="text-right py-2">مفقود</th>
+          <th class="text-right py-2">مراجعة</th><th class="text-right py-2">غير منطبق</th></tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+          {% for fw in report.framework_readiness %}
+          <tr>
+            <td class="py-2 font-medium text-gov-gray-800">{{ fw.code }}</td>
+            <td class="py-2">{{ fw.readiness_percent }}%</td>
+            <td class="py-2 text-gov-green-700">{{ fw.counts.compliant }}</td>
+            <td class="py-2 text-blue-700">{{ fw.counts.partially_compliant }}</td>
+            <td class="py-2 text-red-700">{{ fw.counts.missing }}</td>
+            <td class="py-2 text-amber-600">{{ fw.counts.needs_review }}</td>
+            <td class="py-2 text-gov-gray-500">{{ fw.counts.not_applicable }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<p class="text-sm text-gov-gray-500">لا توجد أطر معتمدة بعد · No approved frameworks yet.</p>{% endif %}
+    </section>
+
+    {# C) Evidence summary #}
+    <section class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">ملخص الأدلة · Evidence summary</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-sm">
+        <div><div class="text-lg font-bold text-gov-green-800">{{ report.evidence.uploaded }}</div><div class="text-xs text-gov-gray-500">مرفوعة · Uploaded</div></div>
+        <div><div class="text-lg font-bold text-gov-green-700">{{ report.evidence.extracted }}</div><div class="text-xs text-gov-gray-500">مُستخرجة · Extracted</div></div>
+        <div><div class="text-lg font-bold text-amber-600">{{ report.evidence.manual_review }}</div><div class="text-xs text-gov-gray-500">مراجعة يدوية · Manual review</div></div>
+        <div><div class="text-lg font-bold text-red-700">{{ report.evidence.failed }}</div><div class="text-xs text-gov-gray-500">فشل · Failed</div></div>
+      </div>
+    </section>
+
+    {# D) Gap summary #}
+    <section class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">ملخص الفجوات · Gap summary ({{ report.gap.total }})</h2>
+      {% if report.gap.rows %}
+      <table class="w-full text-sm">
+        <thead class="text-gov-gray-500"><tr><th class="text-right py-2">الضابط</th><th class="text-right py-2">الحالة</th><th class="text-right py-2">السبب · Reason</th></tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+          {% for r in report.gap.rows %}
+          <tr>
+            <td class="py-2 font-mono text-gov-green-700">{{ r.control.control_id }}</td>
+            <td class="py-2"><span class="text-xs px-2 py-0.5 rounded-full
+              {% if r.status == 'missing' %}bg-red-100 text-red-800{% elif r.status == 'needs_review' %}bg-amber-100 text-amber-800{% else %}bg-blue-100 text-blue-800{% endif %}">{{ r.get_status_display }}</span></td>
+            <td class="py-2 text-gov-gray-600">{{ r.reason }}{% if r.status == 'missing' %} <a href="{% url 'compliance:evidence_checklist' %}" class="text-gov-green-700 hover:underline no-print">· رفع الأدلة</a>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<p class="text-sm text-gov-gray-500">لا توجد فجوات مفتوحة · No open gaps.</p>{% endif %}
+    </section>
+
+    {# E) Risk summary #}
+    <section class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">ملخص المخاطر · Risk summary</h2>
+      <div class="grid grid-cols-4 gap-2 text-center text-sm mb-3">
+        <div><div class="font-bold text-red-700">{{ report.risk.severity_counts.critical }}</div><div class="text-xs text-gov-gray-500">حرجة</div></div>
+        <div><div class="font-bold text-orange-700">{{ report.risk.severity_counts.high }}</div><div class="text-xs text-gov-gray-500">عالية</div></div>
+        <div><div class="font-bold text-amber-600">{{ report.risk.severity_counts.medium }}</div><div class="text-xs text-gov-gray-500">متوسطة</div></div>
+        <div><div class="font-bold text-gov-green-700">{{ report.risk.severity_counts.low }}</div><div class="text-xs text-gov-gray-500">منخفضة</div></div>
+      </div>
+      <p class="text-xs text-gov-gray-500 mb-2">مقبولة · Accepted: {{ report.risk.accepted }} · مُعالَجة · Mitigated: {{ report.risk.mitigated }}</p>
+      {% if report.risk.high_critical %}
+      <ul class="text-sm space-y-1">
+        {% for r in report.risk.high_critical %}
+        <li class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-600"></span>{{ r.title }} <span class="text-xs text-gov-gray-400">({{ r.get_severity_display }})</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="text-sm text-gov-gray-500">لا توجد مخاطر عالية/حرجة مفتوحة · No open high/critical risks.</p>{% endif %}
+    </section>
+
+    {# F) Remediation plan #}
+    <section class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">خطة المعالجة · Remediation plan ({{ report.remediation.total }})</h2>
+      {% if report.remediation.tasks %}
+      <table class="w-full text-sm">
+        <thead class="text-gov-gray-500"><tr><th class="text-right py-2">المهمة · Task</th><th class="text-right py-2">الأولوية</th><th class="text-right py-2">الحالة</th><th class="text-right py-2">الاستحقاق</th><th class="text-right py-2">الضابط</th></tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+          {% for t in report.remediation.tasks %}
+          <tr>
+            <td class="py-2 text-gov-gray-800">{{ t.title }}</td>
+            <td class="py-2 text-xs">{{ t.get_priority_display }}</td>
+            <td class="py-2 text-xs">{{ t.get_status_display }}</td>
+            <td class="py-2 text-xs">{{ t.due_date|default:"—" }}</td>
+            <td class="py-2 text-xs font-mono text-gov-green-700">{% if t.risk.control %}{{ t.risk.control.control_id }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<p class="text-sm text-gov-gray-500">لا توجد مهام معالجة بعد · No remediation tasks yet.</p>{% endif %}
+    </section>
+
+    <p class="text-xs text-gov-gray-400">تقرير داخلي للقراءة فقط — القرار النهائي للامتثال يبقى مراجعة بشرية من المدقق، ولا يُعد شهادة امتثال رسمية.</p>
+  </div>
+</div>
+{% endblock %}
