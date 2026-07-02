@@ -103,7 +103,14 @@ def crm_company_detail(request, company_id):
         'risk_summary': crm.company_risk_summary(company),
         'report_summary': crm.company_report_summary(company),
         'subscription_summary': crm.company_subscription_summary(company),
+        'feature_summary': _plan_feature_summary(company),
     })
+
+
+def _plan_feature_summary(company):
+    """Safe plan feature/usage summary for CRM (no secrets, no card data)."""
+    from billing.access import plan_feature_summary
+    return plan_feature_summary(company)
 
 
 @platform_admin_required

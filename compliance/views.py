@@ -637,6 +637,12 @@ def evidence_upload_v2(request, item_id):
         return redirect('compliance:evidence_checklist')
 
     if request.method == 'POST':
+        # Plan gate: block only when the plan disables uploads or the file limit is reached.
+        from billing.access import enforce_feature
+        result, blocked = enforce_feature(request, request.user.company, 'evidence_upload')
+        if blocked:
+            messages.error(request, '%s · %s' % (result.message_ar, result.message_en))
+            return redirect('billing:home')
         form = EvidenceSubmissionForm(request.POST, request.FILES)
         if form.is_valid():
             f = form.cleaned_data['uploaded_file']
@@ -911,7 +917,12 @@ def gap_dashboard(request):
 def run_gap_recalc(request):
     """POST-only: recalculate the deterministic gap analysis for the user's company."""
     from .gap_engine import recalculate_company_gap
+    from billing.access import enforce_feature
     company = request.user.company
+    result, blocked = enforce_feature(request, company, 'gap_analysis')
+    if blocked:
+        messages.error(request, '%s · %s' % (result.message_ar, result.message_en))
+        return redirect('billing:home')
     summary = recalculate_company_gap(company, actor=request.user)
     messages.success(request, 'تم تحديث تحليل الفجوات (جاهزية أولية داخلية). '
                               '· Preliminary internal readiness recalculated (%d%%).'
@@ -929,7 +940,13 @@ def run_gap_recalc(request):
 def commercial_readiness_report(request):
     """Internal readiness report for the user's company (read-only)."""
     from .report_engine import build_commercial_readiness_report, record_report_audit
+    from billing.access import enforce_feature
     company = request.user.company
+    result, blocked = enforce_feature(request, company, 'commercial_reports')
+    if blocked:
+        return render(request, 'billing/feature_blocked.html', {
+            'company': company, 'access': result,
+            'feature_title': 'تقرير الجاهزية التجاري · Commercial readiness report'})
     report = build_commercial_readiness_report(company)
     record_report_audit(request.user, company, report, action='viewed')
     return render(request, 'compliance/commercial_readiness_report.html', {
@@ -944,7 +961,12 @@ def refresh_commercial_report(request):
     from .gap_engine import recalculate_company_gap
     from .report_engine import build_commercial_readiness_report, record_report_audit
     from risk.risk_engine import generate_risks_from_gap
+    from billing.access import enforce_feature
     company = request.user.company
+    result, blocked = enforce_feature(request, company, 'commercial_reports')
+    if blocked:
+        messages.error(request, '%s · %s' % (result.message_ar, result.message_en))
+        return redirect('billing:home')
     recalculate_company_gap(company, actor=request.user)
     generate_risks_from_gap(company, actor=request.user)
     report = build_commercial_readiness_report(company)
@@ -963,7 +985,13 @@ def commercial_readiness_report_pdf(request):
     from django.http import HttpResponse
     from .report_pdf import build_commercial_readiness_pdf
     from .report_engine import build_commercial_readiness_report, record_report_audit
+    from billing.access import enforce_feature
     company = request.user.company
+    # Plan gate: block when the plan disables PDF export or the export limit is reached.
+    result, blocked = enforce_feature(request, company, 'pdf_export')
+    if blocked:
+        messages.error(request, '%s · %s' % (result.message_ar, result.message_en))
+        return redirect('compliance:commercial_readiness_report')
     try:
         pdf = build_commercial_readiness_pdf(company)
     except Exception:

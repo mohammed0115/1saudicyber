@@ -1,0 +1,29 @@
+{% comment %}
+Phase 8I-D — reusable "feature not in plan / limit reached" upgrade notice.
+Context: `access` (FeatureAccessResult) OR message_ar/message_en/upgrade_url.
+Safe: internal readiness tools only — never claims an official certification.
+{% endcomment %}
+<div dir="rtl" class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-sm leading-7"
+     style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="flex items-start gap-3">
+    <i class="fas fa-lock text-amber-600 mt-1"></i>
+    <div class="flex-1">
+      {% if access.reason_code == 'limit_reached' %}
+        <p class="font-bold text-amber-900">وصلت إلى الحد المسموح في خطتك الحالية.</p>
+        <p class="text-amber-800">You have reached your plan limit
+          {% if access.limit %}({{ access.current_usage }}/{{ access.limit }}){% endif %}.</p>
+      {% else %}
+        <p class="font-bold text-amber-900">هذه الميزة غير متاحة في خطتك الحالية.</p>
+        <p class="text-amber-800">This feature is not included in your current plan.</p>
+      {% endif %}
+      <a href="{{ access.upgrade_url|default:'/billing/' }}"
+         class="inline-block mt-3 bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg font-medium">
+        <i class="fas fa-arrow-up-right-dots mr-1"></i> ترقية الخطة · Upgrade plan
+      </a>
+      <p class="text-xs text-amber-700 mt-3">
+        لا يُعد الاشتراك شهادة امتثال رسمية، ولا يمثل استخدام المنصة اعتمادًا رسميًا أو حكوميًا.
+        <span class="block" dir="ltr">Subscription provides access to internal readiness tools only. It is not an official certification.</span>
+      </p>
+    </div>
+  </div>
+</div>

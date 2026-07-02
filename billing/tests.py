@@ -1294,3 +1294,316 @@ class MoyasarPhase8ICSecurityUITests(TestCase):
                                     content_type='application/json')
         for w in ('official certification', 'government accredited', 'certified by NCA'):
             self.assertNotIn(w, resp.content.decode())
+
+
+# ============================================================
+# Phase 8I-D — Feature Limits + Access Control
+# ============================================================
+from datetime import timedelta as _td
+from billing import access as bacc
+from billing.models import Plan as _Plan
+
+
+def _feat_plan(**flags):
+    """A custom plan with all features on / unlimited, overridden by flags."""
+    n = _Plan.objects.count() + 1
+    defaults = dict(code='feat%d' % n, name='Feat%d' % n,
+                    evidence_upload_enabled=True, gap_analysis_enabled=True,
+                    risk_engine_enabled=True, commercial_reports_enabled=True,
+                    pdf_export_enabled=True, auditor_review_enabled=True,
+                    max_evidence_files=0, max_pdf_exports=0, max_frameworks=0)
+    defaults.update(flags)
+    return _Plan.objects.create(**defaults)
+
+
+def _activate(company, plan=None, days=30):
+    sub = bsvc.get_current_subscription(company)
+    sub.status = 'active'
+    sub.plan = plan
+    sub.starts_at = timezone.now()
+    sub.ends_at = timezone.now() + _td(days=days)
+    sub.save()
+    return sub
+
+
+class FeatureAccessHelperTests(TestCase):
+    def test_no_subscription_blocks(self):
+        c = _company()
+        r = bacc.check_feature_access(c, 'evidence_upload')
+        self.assertFalse(r.allowed)
+        self.assertEqual(r.reason_code, 'no_subscription')
+
+    def test_pending_payment_blocks(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'))
+        r = bacc.check_feature_access(c, 'gap_analysis')
+        self.assertFalse(r.allowed)
+
+    def test_active_allows_enabled_feature(self):
+        c = _company(); _activate(c, _feat_plan())
+        self.assertTrue(bacc.check_feature_access(c, 'evidence_upload').allowed)
+
+    def test_active_blocks_disabled_feature(self):
+        c = _company(); _activate(c, _feat_plan(evidence_upload_enabled=False))
+        r = bacc.check_feature_access(c, 'evidence_upload')
+        self.assertFalse(r.allowed)
+        self.assertEqual(r.reason_code, 'feature_disabled')
+
+    def test_trial_behaviour(self):
+        c = _company()
+        bsvc.start_trial(c, bsvc.get_plan('trial'))
+        self.assertTrue(bacc.check_feature_access(c, 'evidence_upload').allowed)
+        # trial plan does not include auditor review
+        self.assertFalse(bacc.check_feature_access(c, 'auditor_review').allowed)
+
+    def test_expired_and_cancelled_block(self):
+        c = _company(); sub = _activate(c, _feat_plan())
+        sub.status = 'expired'; sub.save()
+        self.assertFalse(bacc.check_feature_access(c, 'risk_engine').allowed)
+        sub.status = 'cancelled'; sub.save()
+        self.assertFalse(bacc.check_feature_access(c, 'risk_engine').allowed)
+
+    def test_limit_helper_returns_plan_limit(self):
+        c = _company(); _activate(c, _feat_plan(max_evidence_files=5))
+        self.assertEqual(bsvc.subscription_limit_value(c, 'max_evidence_files'), 5)
+
+    def test_result_has_safe_messages(self):
+        c = _company(); _activate(c, _feat_plan(pdf_export_enabled=False))
+        r = bacc.check_feature_access(c, 'pdf_export')
+        self.assertTrue(r.message_ar)
+        self.assertTrue(r.message_en)
+        self.assertIn('/billing', r.upgrade_url)
+        self.assertFalse(r.allowed)
+
+    def test_limit_reached_blocks_with_usage(self):
+        c = _company(); _activate(c, _feat_plan(max_evidence_files=2))
+        r = bacc.check_feature_access(c, 'evidence_upload', usage=2)
+        self.assertFalse(r.allowed)
+        self.assertEqual(r.reason_code, 'limit_reached')
+        self.assertEqual(r.limit, 2)
+
+    def test_tenant_isolation_usage_independent(self):
+        a = _company(); b = _company()
+        _activate(a, _feat_plan(max_evidence_files=5)); _activate(b, _feat_plan(max_evidence_files=5))
+        # usage helper counts per-company only; both start at 0 independently
+        self.assertEqual(bacc.feature_usage(a, 'evidence_upload'), 0)
+        self.assertEqual(bacc.feature_usage(b, 'evidence_upload'), 0)
+
+
+class FeatureEvidenceGateTests(TestCase):
+    def _setup(self, plan):
+        from compliance.tests import _company_with_checklist
+        from compliance.models import EvidenceChecklistItem
+        from core.models import User
+        c, fv, scope = _company_with_checklist()
+        _activate(c, plan)
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        u = User.objects.create_user(email='fev%d@x.com' % c.id, password='longenough12',
+                                     company=c, role='company_admin')
+        self.client.force_login(u)
+        return c, item
+
+    def _post(self, item):
+        from compliance.tests import _SUF
+        return self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
+                                {'uploaded_file': _SUF('p.pdf', b'%PDF-1.4 ok'), 'notes': 'n'})
+
+    def test_upload_blocked_when_feature_disabled(self):
+        from compliance.models import EvidenceSubmission
+        from core.models import AuditLog
+        c, item = self._setup(_feat_plan(evidence_upload_enabled=False))
+        resp = self._post(item)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(EvidenceSubmission.objects.filter(company=c).count(), 0)
+        self.assertTrue(AuditLog.objects.filter(action='evidence_upload_blocked').exists())
+
+    def test_upload_blocked_when_limit_reached(self):
+        from compliance.models import EvidenceSubmission
+        from core.models import AuditLog
+        c, item = self._setup(_feat_plan(max_evidence_files=1))
+        from compliance.tests import _SUF
+        EvidenceSubmission.objects.create(
+            company=c, checklist_item=item, uploaded_file=_SUF('a.pdf', b'%PDF-1.4'),
+            original_filename='a.pdf', file_type='pdf', file_size=7, version=1,
+            status='pending_review')
+        resp = self._post(item)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(EvidenceSubmission.objects.filter(company=c).count(), 1)   # not increased
+        self.assertTrue(AuditLog.objects.filter(action='limit_exceeded').exists())
+
+    def test_upload_allowed_below_limit(self):
+        from compliance.models import EvidenceSubmission
+        c, item = self._setup(_feat_plan(max_evidence_files=5))
+        resp = self._post(item)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(EvidenceSubmission.objects.filter(company=c).count(), 1)
+
+
+class FeatureGapRiskGateTests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_gap_run_blocked_when_disabled(self):
+        from core.models import AuditLog
+        c = _company(); _activate(c, _feat_plan(gap_analysis_enabled=False))
+        self._login(c, 'fgap1@x.com')
+        resp = self.client.post(reverse('compliance:run_gap_recalc'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/billing', resp.url)
+        self.assertTrue(AuditLog.objects.filter(action='gap_run_blocked').exists())
+
+    def test_gap_dashboard_still_renders_when_disabled(self):
+        c = _company(); _activate(c, _feat_plan(gap_analysis_enabled=False))
+        self._login(c, 'fgap2@x.com')
+        self.assertEqual(self.client.get(reverse('compliance:gap_dashboard')).status_code, 200)
+
+    def test_risk_generation_blocked_when_disabled(self):
+        from core.models import AuditLog
+        c = _company(); _activate(c, _feat_plan(risk_engine_enabled=False))
+        self._login(c, 'frisk1@x.com')
+        resp = self.client.post(reverse('risk:generate'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(AuditLog.objects.filter(action='risk_generation_blocked').exists())
+
+    def test_gap_run_allowed_when_enabled(self):
+        c = _company(); _activate(c, _feat_plan())
+        self._login(c, 'fgap3@x.com')
+        resp = self.client.post(reverse('compliance:run_gap_recalc'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('gap-analysis', resp.url)
+
+
+class FeatureReportPdfGateTests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_commercial_report_blocked_when_disabled(self):
+        c = _company(); _activate(c, _feat_plan(commercial_reports_enabled=False))
+        self._login(c, 'frep1@x.com')
+        resp = self.client.get(reverse('compliance:commercial_readiness_report'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'not included in your current plan')
+
+    def test_pdf_blocked_when_disabled(self):
+        from core.models import AuditLog
+        c = _company(); _activate(c, _feat_plan(pdf_export_enabled=False))
+        self._login(c, 'frep2@x.com')
+        resp = self.client.get(reverse('compliance:commercial_readiness_report_pdf'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertNotEqual(resp.get('Content-Type', ''), 'application/pdf')
+        self.assertTrue(AuditLog.objects.filter(action='pdf_export_blocked').exists())
+
+    def test_pdf_blocked_when_limit_reached(self):
+        from core.models import AuditLog
+        c = _company(); _activate(c, _feat_plan(max_pdf_exports=1))
+        # one prior export recorded in the same way the view records it
+        AuditLog.objects.create(action='report_pdf_exported',
+                                path='/compliance/reports/commercial-readiness/',
+                                metadata={'company_id': c.id})
+        self._login(c, 'frep3@x.com')
+        resp = self.client.get(reverse('compliance:commercial_readiness_report_pdf'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(AuditLog.objects.filter(action='limit_exceeded').exists())
+
+    def test_commercial_report_allowed_when_enabled(self):
+        c = _company(); _activate(c, _feat_plan())
+        self._login(c, 'frep4@x.com')
+        resp = self.client.get(reverse('compliance:commercial_readiness_report'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'not included in your current plan')
+
+
+class FeatureAuditorGateTests(TestCase):
+    def test_auditor_review_blocked_when_plan_disables(self):
+        from auditors.models import AuditorProfile
+        from auditors import services as asvc
+        c = _company(); _activate(c, _feat_plan(auditor_review_enabled=False))
+        p = AuditorProfile.objects.create(
+            user=User.objects.create_user(username='fauda@x.com', email='fauda@x.com',
+                                          password='longenough12', role='auditor'),
+            full_name='Aud', status='active', is_available=True)
+        self.client.force_login(_journey_user(c, email='fcompa@x.com'))
+        resp = self.client.post(reverse('auditors:assign', args=[p.id]))
+        self.assertContains(resp, 'not included in your current plan', status_code=200)
+
+    def test_auditor_review_allowed_when_plan_enables(self):
+        from auditors.models import AuditorProfile, AuditorAssignment
+        c = _company(); _activate(c, _feat_plan(auditor_review_enabled=True))
+        p = AuditorProfile.objects.create(
+            user=User.objects.create_user(username='faudb@x.com', email='faudb@x.com',
+                                          password='longenough12', role='auditor'),
+            full_name='Aud2', status='active', is_available=True)
+        self.client.force_login(_journey_user(c, email='fcompb@x.com'))
+        self.client.post(reverse('auditors:assign', args=[p.id]))
+        self.assertTrue(AuditorAssignment.objects.filter(company=c, auditor=p).exists())
+
+
+class FeatureBillingCrmUiTests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_billing_shows_features_limits_usage(self):
+        c = _company(); _activate(c, _feat_plan(max_evidence_files=100))
+        self._login(c, 'fbill1@x.com')
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertIn('Your plan features', body)
+        self.assertIn('evidence_upload', body)
+        self.assertIn('Usage limits', body)
+        self.assertIn('PDF exports', body)
+
+    def test_billing_links_to_select_plan(self):
+        c = _company(); _activate(c, _feat_plan())
+        self._login(c, 'fbill2@x.com')
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertIn(reverse('billing:select_plan'), body)
+
+    def test_crm_shows_feature_usage_summary(self):
+        c = _company(); _activate(c, _feat_plan())
+        staff = User.objects.create_user(username='fcrms@x.com', email='fcrms@x.com',
+                                         password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(staff)
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('Plan features', body)
+        self.assertNotIn(_SECRET, body)
+
+    def test_crm_summary_staff_only(self):
+        c = _company()
+        self._login(c, 'fcrmns@x.com')   # a company user, not staff
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertIn(resp.status_code, (302, 403))
+
+
+class FeaturePermissionSafetyTests(TestCase):
+    def test_anonymous_redirected(self):
+        r = self.client.get(reverse('billing:home'))
+        self.assertEqual(r.status_code, 302)
+
+    def test_auditor_cannot_bypass_company_gate(self):
+        # an auditor is not a company user -> company_portal_required serves an
+        # informational page and never runs the gated action.
+        from risk.models import RiskItem
+        au = User.objects.create_user(username='fauditg@x.com', email='fauditg@x.com',
+                                      password='longenough12', role='auditor')
+        from auditors.models import AuditorProfile
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        resp = self.client.post(reverse('risk:generate'))
+        self.assertContains(resp, 'Auditor account', status_code=200)  # blocked, action not run
+        self.assertEqual(RiskItem.objects.count(), 0)
+
+    def test_feature_blocked_component_safe_wording(self):
+        c = _company(); _activate(c, _feat_plan(commercial_reports_enabled=False))
+        self.client.force_login(_journey_user(c, email='fsafe1@x.com'))
+        body = self.client.get(reverse('compliance:commercial_readiness_report')).content.decode()
+        # Safe negated disclaimer must be present...
+        self.assertIn('not an official certification', body.lower())
+        self.assertIn('لا يُعد الاشتراك شهادة امتثال رسمية', body)
+        # ...but NO affirmative certification/accreditation claim.
+        for w in ('official accreditation', 'government accredited', 'certified by NCA',
+                  'certified by Aramco', 'معتمد من NCA', 'اعتماد حكومي رسمي'):
+            self.assertNotIn(w, body)
+
+    def test_no_card_fields_on_payment(self):
+        fields = {f.name for f in Payment._meta.get_fields()}
+        for banned in ('card', 'card_number', 'pan', 'cvv', 'cvc', 'card_holder'):
+            self.assertNotIn(banned, fields)

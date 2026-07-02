@@ -67,6 +67,34 @@
         </button>
       </form>
       {% endif %}
+
+      {# Plan features + limits + usage #}
+      <div class="mt-6 border-t border-gov-gray-100 pt-4">
+        <h3 class="font-bold text-gov-green-800 mb-2 text-sm">ميزات خطتك · Your plan features</h3>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+          {% for f in feature_summary.features %}
+          <div class="flex items-center gap-2">
+            {% if f.enabled %}<i class="fas fa-check text-gov-green-700"></i>{% else %}<i class="fas fa-lock text-gov-gray-400"></i>{% endif %}
+            <span class="{% if not f.enabled %}text-gov-gray-400{% endif %}">{{ f.code }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <h3 class="font-bold text-gov-green-800 mt-4 mb-2 text-sm">حدود الاستخدام · Usage limits</h3>
+        <div class="grid sm:grid-cols-3 gap-3 text-sm">
+          <div class="rounded-lg bg-gov-gray-50 p-3">
+            <div class="font-bold text-gov-gray-800">الأدلة · Evidence: {{ feature_summary.evidence_used|default:"0" }}{% if feature_summary.evidence_limit %} / {{ feature_summary.evidence_limit }}{% else %} / ∞{% endif %}</div>
+          </div>
+          <div class="rounded-lg bg-gov-gray-50 p-3">
+            <div class="font-bold text-gov-gray-800">تصدير PDF · PDF exports: {{ feature_summary.pdf_used|default:"0" }}{% if feature_summary.pdf_limit %} / {{ feature_summary.pdf_limit }}{% else %} / ∞{% endif %}</div>
+          </div>
+          <div class="rounded-lg bg-gov-gray-50 p-3">
+            <div class="font-bold text-gov-gray-800">الأطر · Frameworks: {{ feature_summary.frameworks_used|default:"0" }}{% if feature_summary.frameworks_limit %} / {{ feature_summary.frameworks_limit }}{% else %} / ∞{% endif %}</div>
+          </div>
+        </div>
+        <p class="text-xs text-gov-gray-500 mt-3">
+          للترقية اختر خطة أعلى من الأسفل · To upgrade, choose a higher plan below.
+        </p>
+      </div>
     </div>
 
     {# Available plans #}

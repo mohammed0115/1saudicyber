@@ -235,6 +235,24 @@
       {% if subscription_summary.last_payment_provider_id %}
       <p class="text-xs text-gov-gray-500 mb-3" dir="ltr">Provider payment id: <span class="font-mono">{{ subscription_summary.last_payment_provider_id }}</span></p>
       {% endif %}
+
+      {# Phase 8I-D — plan feature + usage summary (staff-only; no card data / no secrets) #}
+      <div class="border-t border-gov-gray-100 pt-4 mb-4">
+        <p class="text-xs font-bold text-gov-gray-600 mb-2">ميزات الخطة والاستخدام · Plan features &amp; usage</p>
+        <div class="flex flex-wrap gap-2 mb-3">
+          {% for f in feature_summary.features %}
+          <span class="text-xs px-2 py-1 rounded {% if f.enabled %}bg-gov-green-50 text-gov-green-800{% else %}bg-gov-gray-100 text-gov-gray-400{% endif %}">
+            {% if f.enabled %}✓{% else %}✕{% endif %} {{ f.code }}
+          </span>
+          {% endfor %}
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="rounded-lg bg-gov-gray-50 p-2"><div class="text-sm font-bold text-gov-gray-700">{{ feature_summary.evidence_used|default:"0" }}{% if feature_summary.evidence_limit %}/{{ feature_summary.evidence_limit }}{% endif %}</div><div class="text-xs text-gov-gray-500">أدلة · Evidence</div></div>
+          <div class="rounded-lg bg-gov-gray-50 p-2"><div class="text-sm font-bold text-gov-gray-700">{{ feature_summary.pdf_used|default:"0" }}{% if feature_summary.pdf_limit %}/{{ feature_summary.pdf_limit }}{% endif %}</div><div class="text-xs text-gov-gray-500">PDF</div></div>
+          <div class="rounded-lg bg-gov-gray-50 p-2"><div class="text-sm font-bold text-gov-gray-700">{{ feature_summary.frameworks_used|default:"0" }}{% if feature_summary.frameworks_limit %}/{{ feature_summary.frameworks_limit }}{% endif %}</div><div class="text-xs text-gov-gray-500">أطر · Frameworks</div></div>
+        </div>
+      </div>
+
       <div class="flex flex-wrap gap-3 border-t border-gov-gray-100 pt-4">
         <form method="post" action="{% url 'platform_admin:subscription_action' company.id %}" class="flex items-center gap-2">
           {% csrf_token %}<input type="hidden" name="action" value="activate">

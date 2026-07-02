@@ -30,6 +30,7 @@ def billing_home(request):
     if pending_payment is None and (sub is None or sub.status != 'active'):
         failed_payment = company.payments.filter(
             provider='moyasar', status__in=('failed', 'cancelled')).order_by('-created_at').first()
+    from .access import plan_feature_summary
     return render(request, 'billing/home.html', {
         'company': company,
         'subscription': sub,
@@ -37,6 +38,7 @@ def billing_home(request):
         'status_message': svc.get_subscription_status_message(company),
         'pending_payment': pending_payment,
         'failed_payment': failed_payment,
+        'feature_summary': plan_feature_summary(company),
         'can_start_trial': sub is None or sub.status in ('inactive', 'expired', 'cancelled'),
     })
 

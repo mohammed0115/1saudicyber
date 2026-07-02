@@ -169,6 +169,13 @@ def assign(request, auditor_id):
     if not services.can_company_assign(company):
         return render(request, 'compliance/subscription_required.html',
                       {'company': company, 'mode': 'assign'})
+    # Plan gate: auditor review must be enabled on the plan (permissive when no plan).
+    from billing.access import enforce_feature
+    result, blocked = enforce_feature(request, company, 'auditor_review')
+    if blocked:
+        return render(request, 'billing/feature_blocked.html', {
+            'company': company, 'access': result,
+            'feature_title': 'مراجعة المدقّق · Auditor review'})
     auditor = AuditorProfile.objects.filter(id=auditor_id, status='active', is_available=True).first()
     if auditor is None:
         messages.error(request, 'المدقّق غير متاح للإسناد.')

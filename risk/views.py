@@ -52,7 +52,12 @@ def risk_detail(request, risk_id):
 def generate_risks(request):
     """POST-only: (re)generate internal risks + remediation from the gap analysis."""
     from .risk_engine import generate_risks_from_gap
+    from billing.access import enforce_feature
     company = request.user.company
+    result, blocked = enforce_feature(request, company, 'risk_engine')
+    if blocked:
+        messages.error(request, '%s · %s' % (result.message_ar, result.message_en))
+        return redirect('billing:home')
     summary = generate_risks_from_gap(company, actor=request.user)
     messages.success(
         request, 'تم توليد/تحديث خطة المخاطر والمعالجة الداخلية '
