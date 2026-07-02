@@ -302,3 +302,258 @@ class Phase4BBackwardCompatTests(TestCase):
                 'size': 'small', 'first_name': 'A', 'last_name': 'B', 'email': 'leg4b@x.com',
                 'password': 'longenough12', 'target_nca': 'on', 'accept_terms': 'on'})
         self.assertEqual(resp.status_code, 302)
+
+
+# ============================================================
+# Phase 8I-SUBSCRIPTION-A — Plans + Subscription Foundation
+# ============================================================
+from compliance.tests import _company
+from billing.models import Plan, Payment, CompanySubscription
+from billing import subscription_services as bsvc
+from billing.subscription_access import company_has_active_subscription
+
+
+class SubscriptionFoundationServiceTests(TestCase):
+    def _plan(self, code='basic'):
+        return bsvc.get_plan(code)
+
+    def test_starter_plans_seeded(self):
+        for code in ('trial', 'basic', 'professional', 'enterprise'):
+            self.assertTrue(Plan.objects.filter(code=code, is_active=True).exists(), code)
+
+    def test_start_trial(self):
+        c = _company()
+        sub = bsvc.start_trial(c, self._plan('professional'))
+        self.assertEqual(sub.status, 'trial')
+        self.assertTrue(company_has_active_subscription(c))
+        self.assertIsNotNone(sub.trial_ends_at)
+
+    def test_single_subscription_no_duplicates(self):
+        c = _company()
+        bsvc.start_trial(c, self._plan('trial'))
+        bsvc.create_pending_subscription(c, self._plan('basic'))
+        self.assertEqual(CompanySubscription.objects.filter(company=c).count(), 1)
+
+    def test_create_pending_subscription(self):
+        c = _company()
+        sub, pay = bsvc.create_pending_subscription(c, self._plan('basic'))
+        self.assertEqual(sub.status, 'pending_payment')
+        self.assertEqual(pay.status, 'pending')
+        self.assertEqual(pay.provider, 'manual')
+        self.assertEqual(pay.provider_payment_id, '')   # no Moyasar id yet
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_activate_subscription(self):
+        c = _company()
+        sub = bsvc.get_current_subscription(c)
+        bsvc.activate_subscription(sub, reason='paid offline')
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'active')
+        self.assertTrue(company_has_active_subscription(c))
+
+    def test_cancel_subscription(self):
+        c = _company()
+        sub = bsvc.start_trial(c, self._plan('basic'))
+        bsvc.cancel_subscription(sub, reason='customer request')
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'cancelled')
+        self.assertIsNotNone(sub.cancelled_at)
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_expire_subscription(self):
+        c = _company()
+        sub = bsvc.start_trial(c, self._plan('basic'))
+        bsvc.expire_subscription(sub, reason='ended')
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'expired')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_create_manual_payment(self):
+        c = _company()
+        sub = bsvc.get_current_subscription(c)
+        pay = bsvc.create_manual_payment(sub, 100, reference='ref1')
+        self.assertEqual(pay.status, 'pending')
+        self.assertEqual(pay.company_id, c.id)
+
+    def test_mark_payment_paid_activates_pending(self):
+        c = _company()
+        sub, pay = bsvc.create_pending_subscription(c, self._plan('basic'))
+        bsvc.mark_payment_paid(pay)
+        pay.refresh_from_db(); sub.refresh_from_db()
+        self.assertEqual(pay.status, 'paid')
+        self.assertIsNotNone(pay.paid_at)
+        self.assertEqual(sub.status, 'active')
+
+    def test_active_helper(self):
+        c = _company()
+        self.assertFalse(company_has_active_subscription(c))
+        bsvc.start_trial(c, self._plan('basic'))
+        self.assertTrue(company_has_active_subscription(c))
+
+    def test_feature_enabled_helper(self):
+        c = _company()
+        bsvc.start_trial(c, self._plan('enterprise'))
+        self.assertTrue(bsvc.subscription_feature_enabled(c, 'auditor_review_enabled'))
+        c2 = _company()
+        bsvc.start_trial(c2, self._plan('basic'))
+        self.assertFalse(bsvc.subscription_feature_enabled(c2, 'auditor_review_enabled'))
+
+    def test_feature_disabled_without_subscription(self):
+        c = _company()
+        self.assertFalse(bsvc.subscription_feature_enabled(c, 'pdf_export_enabled'))
+        self.assertFalse(bsvc.can_access_feature(c, 'pdf_export_enabled'))
+
+    def test_limit_helper(self):
+        c = _company()
+        bsvc.start_trial(c, self._plan('professional'))
+        self.assertEqual(bsvc.subscription_limit_value(c, 'max_frameworks'), 3)
+
+    def test_expired_not_active(self):
+        c = _company()
+        sub = bsvc.start_trial(c, self._plan('basic'))
+        bsvc.expire_subscription(sub)
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_pending_not_active(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, self._plan('basic'))
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_lifecycle_writes_audit(self):
+        from core.models import AuditLog
+        c = _company()
+        u = _journey_user(c, email='subaudit@x.com')
+        bsvc.start_trial(c, self._plan('basic'), actor=u)
+        self.assertTrue(AuditLog.objects.filter(action='subscription_trial_started').exists())
+
+    def test_no_card_fields_on_payment(self):
+        fields = {f.name for f in Payment._meta.get_fields()}
+        for banned in ('card', 'card_number', 'pan', 'cvv', 'cvc', 'card_holder'):
+            self.assertNotIn(banned, fields)
+
+
+class BillingViewTests(TestCase):
+    def _login(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    def test_anonymous_redirected(self):
+        r = self.client.get(reverse('billing:home'))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/login', r.url)
+
+    def test_company_user_can_view(self):
+        c = _company()
+        self._login(c, 'bvv@x.com')
+        resp = self.client.get(reverse('billing:home'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Current subscription')
+        self.assertContains(resp, 'Available plans')
+
+    def test_unlinked_user_safe_no_company(self):
+        u = User.objects.create_user(username='bvorph@x.com', email='bvorph@x.com',
+                                     password='longenough12', role='company_admin')
+        self.client.force_login(u)
+        self.assertContains(self.client.get(reverse('billing:home')), 'not linked to a company', status_code=200)
+
+    def test_auditor_denied(self):
+        from auditors.models import AuditorProfile
+        au = User.objects.create_user(username='bvaud@x.com', email='bvaud@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        self.assertContains(self.client.get(reverse('billing:home')), 'Auditor account', status_code=200)
+
+    def test_staff_without_company_routed_to_crm(self):
+        st = User.objects.create_user(username='bvstaff@x.com', email='bvstaff@x.com',
+                                      password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(st)
+        self.assertContains(self.client.get(reverse('billing:home')), 'Get Solution CRM', status_code=200)
+
+    def test_start_trial_requires_post(self):
+        c = _company()
+        self._login(c, 'bvtp@x.com')
+        self.assertEqual(self.client.get(reverse('billing:start_trial')).status_code, 405)
+
+    def test_start_trial_creates_trial(self):
+        c = _company()
+        self._login(c, 'bvt@x.com')
+        self.client.post(reverse('billing:start_trial'), {'plan_code': 'trial'})
+        self.assertTrue(company_has_active_subscription(c))
+
+    def test_select_plan_creates_pending(self):
+        c = _company()
+        self._login(c, 'bvsp@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        sub = bsvc.get_current_subscription(c)
+        self.assertEqual(sub.status, 'pending_payment')
+        self.assertTrue(Payment.objects.filter(company=c, status='pending').exists())
+
+    def test_no_moyasar_checkout_link(self):
+        c = _company()
+        self._login(c, 'bvmoy@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertNotIn('api.moyasar.com', body)
+        self.assertNotIn('https://checkout', body)
+        pay = Payment.objects.filter(company=c).first()
+        self.assertEqual(pay.provider, 'manual')
+        self.assertEqual(pay.provider_payment_id, '')
+
+    def test_billing_page_safe_disclaimer(self):
+        c = _company()
+        self._login(c, 'bvsafe@x.com')
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertIn('not an official certification', body.lower())
+        for w in ('معتمد من NCA', 'اعتماد حكومي', 'certified by NCA', 'official accreditation',
+                  'government accredited'):
+            self.assertNotIn(w, body)
+
+
+class BillingCRMTests(TestCase):
+    def _staff(self, email='billstaff@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    def test_crm_detail_shows_subscription_summary(self):
+        c = _company()
+        bsvc.start_trial(c, bsvc.get_plan('basic'))
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Subscription')
+
+    def test_staff_can_activate_subscription(self):
+        c = _company()
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                         {'action': 'activate', 'reason': 'offline payment'})
+        self.assertTrue(company_has_active_subscription(c))
+
+    def test_activate_requires_reason(self):
+        c = _company()
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                         {'action': 'activate', 'reason': ''})
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_subscription_action_requires_post(self):
+        c = _company()
+        self.client.force_login(self._staff())
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:subscription_action', args=[c.id])).status_code, 405)
+
+    def test_non_staff_cannot_access_subscription_action(self):
+        c = _company()
+        self.client.force_login(_journey_user(c, email='billns@x.com'))
+        resp = self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                                {'action': 'activate', 'reason': 'x'})
+        self.assertEqual(resp.status_code, 403)
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_crm_action_writes_audit(self):
+        from core.models import AuditLog
+        c = _company()
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                         {'action': 'activate', 'reason': 'r'})
+        self.assertTrue(AuditLog.objects.filter(action='subscription_activated').exists())

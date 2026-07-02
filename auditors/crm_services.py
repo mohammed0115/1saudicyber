@@ -250,6 +250,31 @@ def assignable_staff():
     return User.objects.filter(Q(is_staff=True) | Q(is_superuser=True)).order_by('email')
 
 
+def company_subscription_summary(company):
+    """Phase 8I — staff-only subscription summary for a company (read-only, no card data)."""
+    summary = {'plan': '', 'status': 'inactive', 'starts_at': None, 'ends_at': None,
+               'trial_ends_at': None, 'pending_payments': 0, 'last_payment_status': '—',
+               'subscription_id': None}
+    try:
+        from billing.subscription_access import get_company_subscription
+        from billing.models import Payment
+        sub = get_company_subscription(company)
+        if sub is not None:
+            summary.update({
+                'plan': (sub.plan.name if sub.plan_id else sub.plan_name) or '—',
+                'status': sub.status, 'status_display': sub.get_status_display(),
+                'starts_at': sub.starts_at, 'ends_at': sub.ends_at,
+                'trial_ends_at': sub.trial_ends_at, 'subscription_id': sub.id,
+            })
+        summary['pending_payments'] = Payment.objects.filter(company=company, status='pending').count()
+        last = Payment.objects.filter(company=company).order_by('-created_at').first()
+        if last is not None:
+            summary['last_payment_status'] = last.get_status_display()
+    except Exception:
+        pass
+    return summary
+
+
 def company_report_summary(company):
     """Phase 8H — staff-only internal readiness-report summary (read-only, counts only)."""
     summary = {'readiness_percent': 0, 'missing': 0, 'open_risks': 0,

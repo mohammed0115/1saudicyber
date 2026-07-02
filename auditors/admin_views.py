@@ -102,7 +102,36 @@ def crm_company_detail(request, company_id):
         'gap_summary': crm.company_gap_summary(company),
         'risk_summary': crm.company_risk_summary(company),
         'report_summary': crm.company_report_summary(company),
+        'subscription_summary': crm.company_subscription_summary(company),
     })
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_subscription_action(request, company_id):
+    """POST-only: staff subscription action (activate / cancel / start_trial). Reason required
+    for activate/cancel. Tenant-safe; audited via the billing service layer."""
+    from core.models import Company
+    from billing import subscription_services as bsvc
+    company = get_object_or_404(Company, id=company_id)
+    action = request.POST.get('action', '')
+    reason = (request.POST.get('reason', '') or '').strip()
+    sub = bsvc.get_current_subscription(company)
+    if action in ('activate', 'cancel') and not reason:
+        messages.error(request, 'السبب مطلوب لهذا الإجراء · Reason required for this action.')
+        return redirect('platform_admin:company_detail', company_id=company.id)
+    if action == 'activate':
+        bsvc.activate_subscription(sub, actor=request.user, reason=reason)
+        messages.success(request, 'تم تفعيل الاشتراك · Subscription activated.')
+    elif action == 'cancel':
+        bsvc.cancel_subscription(sub, actor=request.user, reason=reason)
+        messages.success(request, 'تم إلغاء الاشتراك · Subscription cancelled.')
+    elif action == 'start_trial':
+        bsvc.start_trial(company, bsvc.get_plan('trial'), actor=request.user)
+        messages.success(request, 'تم بدء الفترة التجريبية · Trial started.')
+    else:
+        messages.error(request, 'إجراء غير معروف · Unknown action.')
+    return redirect('platform_admin:company_detail', company_id=company.id)
 
 
 @platform_admin_required

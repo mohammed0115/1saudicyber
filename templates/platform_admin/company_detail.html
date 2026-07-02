@@ -211,6 +211,34 @@
       </div>
     </div>
 
+    {# Subscription summary + staff actions #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-1">الاشتراك · Subscription</h2>
+      <p class="text-xs text-gov-gray-500 mb-3">ملخص اشتراك داخلي — لا يتم حفظ بيانات بطاقات ولا أسرار Moyasar.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center mb-4">
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-green-800">{{ subscription_summary.status_display|default:subscription_summary.status }}</div><div class="text-xs text-gov-gray-500 mt-1">الحالة · Status</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.plan|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">الخطة · Plan</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.ends_at|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">فعّال حتى · Active until</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-amber-600">{{ subscription_summary.pending_payments }}</div><div class="text-xs text-gov-gray-500 mt-1">دفعات معلّقة · Pending</div></div>
+      </div>
+      <div class="flex flex-wrap gap-3 border-t border-gov-gray-100 pt-4">
+        <form method="post" action="{% url 'platform_admin:subscription_action' company.id %}" class="flex items-center gap-2">
+          {% csrf_token %}<input type="hidden" name="action" value="activate">
+          <input type="text" name="reason" required placeholder="السبب (مطلوب)" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-40">
+          <button type="submit" class="text-gov-green-700 hover:underline text-xs font-medium">تفعيل · Activate</button>
+        </form>
+        <form method="post" action="{% url 'platform_admin:subscription_action' company.id %}" class="flex items-center gap-2">
+          {% csrf_token %}<input type="hidden" name="action" value="cancel">
+          <input type="text" name="reason" required placeholder="السبب (مطلوب)" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-40">
+          <button type="submit" class="text-red-700 hover:underline text-xs font-medium">إلغاء · Cancel</button>
+        </form>
+        <form method="post" action="{% url 'platform_admin:subscription_action' company.id %}">
+          {% csrf_token %}<input type="hidden" name="action" value="start_trial">
+          <button type="submit" class="text-gov-gray-600 hover:underline text-xs font-medium">بدء تجربة · Start trial</button>
+        </form>
+      </div>
+    </div>
+
     {# Operational snapshot #}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
       <h2 class="font-bold text-gov-green-800 mb-3">الحالة التشغيلية · Operational status</h2>

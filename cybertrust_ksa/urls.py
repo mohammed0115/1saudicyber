@@ -29,6 +29,7 @@ urlpatterns = [
     path('auditors/', include('auditors.urls')),
     path('platform-admin/', include('auditors.admin_urls')),
     path('monitoring/', include('monitoring.urls')),
+    path('billing/', include('billing.urls')),
 ]
 
 if settings.DEBUG:
