@@ -48,7 +48,7 @@ reportlab==4.2.5
 python-docx==1.1.2
 openpyxl==3.1.5
 PyYAML==6.0.2
-djangorestframework-simplejwt==5.3.1
+djangorestframework-simplejwt==5.5.1
 # PostgreSQL driver — used only when POSTGRES_DB is set (Docker deployment).
 # Local development/tests default to SQLite and do not require this package.
 psycopg[binary]>=3.1,<4
