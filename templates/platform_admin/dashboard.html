@@ -31,6 +31,22 @@
         <div class="text-xs text-gov-gray-500 mt-1">إجمالي المدققين · Auditors</div></div>
     </div>
 
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-5">
+      <h2 class="font-bold text-gov-green-800 mb-3">صحة بيانات الأطر الرسمية · Official data health</h2>
+      <div class="grid grid-cols-3 gap-4 text-center mb-3">
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ data_health.framework_count }}</div><div class="text-xs text-gov-gray-500 mt-1">أطر · Frameworks</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ data_health.framework_version_count }}</div><div class="text-xs text-gov-gray-500 mt-1">إصدارات · Versions</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold {% if data_health.status == 'empty' %}text-red-700{% elif data_health.status == 'pilot' %}text-amber-600{% else %}text-gov-green-800{% endif %}">{{ data_health.control_count }}</div><div class="text-xs text-gov-gray-500 mt-1">ضوابط رسمية · Controls</div></div>
+      </div>
+      {% if data_health.status == 'empty' %}
+      <div class="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm"><i class="fas fa-triangle-exclamation mr-1"></i>{{ data_health.message }}</div>
+      {% elif data_health.status == 'pilot' %}
+      <div class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-sm"><i class="fas fa-flask mr-1"></i>{{ data_health.message }}</div>
+      {% else %}
+      <div class="rounded-lg bg-gov-green-50 border border-gov-green-200 text-gov-green-800 px-3 py-2 text-sm"><i class="fas fa-circle-check mr-1"></i>{{ data_health.message }}</div>
+      {% endif %}
+    </div>
+
     {# Quick links #}
     <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-5">
       <h2 class="font-bold text-gov-green-800 mb-3">روابط سريعة · Quick links</h2>

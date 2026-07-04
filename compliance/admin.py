@@ -6,8 +6,16 @@ from .models import (
     CompanyFrameworkScope, ControlApplicabilityResult,
     EvidenceRequirement, EvidenceChecklistItem, EvidenceSubmission, EvidenceAnalysisResult,
     ControlAssessment, EvidenceTextExtraction, EvidenceAIAnalysis, EvidenceRuleEvaluation,
-    AuditorFinalVerdict,
+    AuditorFinalVerdict, ControlGapAssessment,
 )
+
+
+@admin.register(ControlGapAssessment)
+class ControlGapAssessmentAdmin(admin.ModelAdmin):
+    """Deterministic preliminary readiness per control (always requires human review)."""
+    list_display = ['company', 'control', 'framework_version', 'status', 'score', 'evidence_count']
+    list_filter = ['status', 'framework_version']
+    search_fields = ['company__name', 'control__control_id']
 
 
 @admin.register(EvidenceTextExtraction)

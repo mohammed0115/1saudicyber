@@ -71,6 +71,7 @@ def crm_dashboard(request):
     """Internal Get Solution operations console home: summary + navigation."""
     return render(request, 'platform_admin/dashboard.html', {
         'summary': crm.crm_summary(),
+        'data_health': crm.platform_data_health(),
     })
 
 

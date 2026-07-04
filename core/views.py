@@ -155,8 +155,15 @@ def login_view(request):
             login(request, user)
             next_url = request.GET.get('next', '/dashboard/')
             return redirect(next_url)
-        else:
-            messages.error(request, _('بيانات الدخول غير صحيحة. حاول مرة أخرى.'))
+        # PILOT-HOTFIX-B (C): surface the failure INLINE on /login/ via template
+        # context — NOT via global django messages, which persist in the session and
+        # leaked onto unrelated pages (password reset / platform-admin / get-started).
+        # Preserve the email for convenience; never echo the password back.
+        return render(request, 'core/login.html', {
+            'login_error': 'بيانات الدخول غير صحيحة. حاول مرة أخرى. '
+                           '· Invalid credentials. Please try again.',
+            'email': username,
+        })
     return render(request, 'core/login.html')
 
 
@@ -331,8 +338,29 @@ def company_self_register(request):
             messages.success(request, 'تم إنشاء حساب شركتك بنجاح. تحقّق من بريدك الإلكتروني '
                                       'للحصول على رمز التحقق · Check your email for the verification code.')
             return redirect('core:onboarding')
-        return render(request, 'onboarding/register.html', {'form': form})
+        # PILOT-HOTFIX-B (F): on validation error, keep the user on the step that
+        # actually failed (default: the last step, where the submit + non-field
+        # errors live) instead of collapsing every step onto one long page.
+        return render(request, 'onboarding/register.html',
+                      {'form': form, 'error_step': _wizard_error_step(form)})
     return render(request, 'onboarding/register.html', {'form': SelfServiceRegistrationForm()})
+
+
+# Which registration-wizard step each field belongs to (mirrors onboarding/register.html).
+_WIZARD_STEP_FIELDS = {
+    0: ('first_name', 'last_name', 'email', 'phone', 'password', 'password_confirm'),
+    1: ('company_name_ar', 'company_name', 'cr_number', 'sector', 'size', 'city',
+        'country', 'description'),
+    2: ('target_nca', 'target_aramco', 'target_sabic', 'accept_terms'),
+}
+
+
+def _wizard_error_step(form):
+    """Index (0-2) of the first wizard step with a field error; non-field errors -> last step."""
+    for step in (0, 1, 2):
+        if any(name in form.errors for name in _WIZARD_STEP_FIELDS[step]):
+            return step
+    return 2
 
 
 @login_required

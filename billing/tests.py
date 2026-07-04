@@ -4,7 +4,7 @@ from io import StringIO
 from unittest import mock
 
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -488,6 +488,7 @@ class BillingViewTests(TestCase):
         self.assertEqual(sub.status, 'pending_payment')
         self.assertTrue(Payment.objects.filter(company=c, status='pending').exists())
 
+    @override_settings(PAYMENT_PROVIDER='manual')
     def test_no_moyasar_checkout_link(self):
         c = _company()
         self._login(c, 'bvmoy@x.com')
@@ -818,9 +819,13 @@ class MoyasarSafetyTests(TestCase):
     def _login(self, c, email):
         self.client.force_login(_journey_user(c, email=email))
 
+    @override_settings(PAYMENT_PROVIDER='manual')
     def test_default_provider_is_manual(self):
+        # Pin the provider so the test is independent of the local .env (a pilot .env
+        # may set PAYMENT_PROVIDER=moyasar). Verifies the manual branch deterministically.
         self.assertFalse(bmoyasar.is_moyasar_provider())
 
+    @override_settings(PAYMENT_PROVIDER='manual')
     def test_manual_flow_unchanged_when_provider_manual(self):
         c = _company()
         self._login(c, 'msafe1@x.com')

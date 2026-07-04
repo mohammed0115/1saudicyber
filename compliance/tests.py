@@ -2485,7 +2485,7 @@ class EvidenceV2TenantTests(TestCase):
             company=self.other, checklist_item=self.other_item,
             uploaded_file=_SUF('p.txt', b'x'), original_filename='p.txt', file_type='txt')
         resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[s.id]))
-        self.assertEqual(resp.status_code, 302)  # redirected away (not this company)
+        self.assertEqual(resp.status_code, 404)  # other company -> non-enumerable 404
 
     def test_user_cannot_list_other_company_submissions(self):
         resp = self.client.get(reverse('compliance:evidence_submission_list', args=[self.other_item.id]))
@@ -2759,7 +2759,7 @@ class AnalysisViewTests(TestCase):
                                               checklist_item=oitem, control=oitem.evidence_requirement.control)
         self.client.force_login(self.user)
         resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[osub.id]))
-        self.assertEqual(resp.status_code, 302)  # cannot view other company's submission/analysis
+        self.assertEqual(resp.status_code, 404)  # other company -> 404 (tenant-isolated)
 
 
 class Phase3FBackwardCompatTests(TestCase):
@@ -3420,7 +3420,7 @@ class JourneyEmptyStateTests(TestCase):
         self.client.force_login(user)
         resp = self.client.get(reverse('compliance:evidence_checklist'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Generate checklist after control plan')
+        self.assertContains(resp, 'Complete Smart Classification first')
 
     def test_auditor_review_empty_state(self):
         c = _company()
@@ -3598,13 +3598,13 @@ class SecurityTenantIsolationTests(TestCase):
 
     def test_user_cannot_view_other_company_submission(self):
         resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[self.osub.id]))
-        self.assertEqual(resp.status_code, 302)  # tenant-scoped redirect
+        self.assertEqual(resp.status_code, 404)  # tenant-scoped 404
 
     def test_user_cannot_view_other_company_analysis(self):
         # Analysis is surfaced via the submission detail; B's submission is not reachable.
         self.assertTrue(EvidenceAnalysisResult.objects.filter(evidence_submission=self.osub).exists())
         resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[self.osub.id]))
-        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.status_code, 404)
 
     def test_user_cannot_view_other_company_assessment(self):
         resp = self.client.get(reverse('compliance:auditor_review_detail', args=[self.oassessment.id]))
@@ -6159,7 +6159,7 @@ class EvidenceOCRMVPTests(TestCase):
         c2, i2, s2 = _company_with_submission(name='b.txt')
         self._login_company(c1, 'ocrt1@x.com')
         resp = self.client.get(reverse('compliance:evidence_submission_detail', args=[s2.id]))
-        self.assertEqual(resp.status_code, 302)  # not found for this tenant -> safe redirect
+        self.assertEqual(resp.status_code, 404)  # not found for this tenant -> 404
 
     def test_company_cannot_run_extraction_for_other_company(self):
         from compliance.models import EvidenceTextExtraction

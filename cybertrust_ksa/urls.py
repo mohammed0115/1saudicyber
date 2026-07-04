@@ -4,6 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
+from django.views.generic import RedirectView
 
 
 def healthz(request):
@@ -23,6 +24,8 @@ urlpatterns = [
     path('', include('core.urls')),
     path('compliance/risks/', include('risk.urls')),
     path('compliance/', include('compliance.urls')),
+    # Convenience redirect: bare /company/ -> the (login-guarded) main dashboard.
+    path('company/', RedirectView.as_view(pattern_name='dashboard:main', permanent=False)),
     path('dashboard/', include('dashboard.urls')),
     path('ai/', include('ai_engine.urls')),
     path('auditor/', include('auditor_portal.urls')),

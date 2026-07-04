@@ -500,3 +500,34 @@ def _activity_detail(action, meta):
     if action == 'crm_status_changed':
         return '%s → %s' % (meta.get('old_status', ''), meta.get('new_status', ''))
     return ''
+
+
+def platform_data_health():
+    """PILOT-HOTFIX-B (B) — official-data health for the platform-admin console.
+
+    Staff-only, read-only counts (no secrets). Flags when the official control dataset
+    is missing or only a small pilot subset is loaded.
+    """
+    from compliance.models import Framework, FrameworkVersion, Control
+    EXPECTED_CONTROLS = 417
+    health = {'framework_count': 0, 'framework_version_count': 0, 'control_count': 0,
+              'expected_controls': EXPECTED_CONTROLS, 'status': 'ok', 'message': ''}
+    try:
+        health['framework_count'] = Framework.objects.count()
+        health['framework_version_count'] = FrameworkVersion.objects.count()
+        controls = Control.objects.filter(is_legacy_import=False).count()
+        health['control_count'] = controls
+        if controls == 0:
+            health['status'] = 'empty'
+            health['message'] = ('لا توجد ضوابط رسمية محمّلة · No official controls loaded — '
+                                 'the compliance dataset is not installed.')
+        elif controls < EXPECTED_CONTROLS:
+            health['status'] = 'pilot'
+            health['message'] = ('ضوابط تجريبية محمّلة · Pilot controls loaded — the full '
+                                 'official dataset (%d) is not loaded yet.' % EXPECTED_CONTROLS)
+        else:
+            health['status'] = 'ok'
+            health['message'] = 'مجموعة الضوابط الرسمية محمّلة · Official control dataset loaded.'
+    except Exception:
+        health['status'] = 'unknown'
+    return health

@@ -1214,10 +1214,12 @@ class BilingualSwitcherTests(TestCase):
         self.assertIn('العربية', body)
 
     def _login_messages(self):
-        from django.contrib.messages import get_messages
+        # PILOT-HOTFIX-B (C): a failed login now renders an INLINE error on /login/
+        # (no global django messages, which leaked onto unrelated pages). Read the
+        # rendered login page instead of the message framework.
         resp = self.client.post(reverse('core:login'),
                                 {'username': 'no@x.com', 'password': 'wrongwrong'})
-        return [m.message for m in get_messages(resp.wsgi_request)]
+        return resp.content.decode()
 
     def test_login_invalid_message_arabic_by_default(self):
         self.assertIn('بيانات الدخول غير صحيحة. حاول مرة أخرى.', self._login_messages())

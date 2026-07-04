@@ -27,11 +27,26 @@
     {% endfor %}{% endif %}
 
     {% if not items %}
+    {% if has_any_scope and not has_approved_scope %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-hourglass-half mr-1"></i>
+        نطاق الأطر قيد الاعتماد. ستتوفّر قائمة الأدلة بعد اعتماد النطاق.
+        <span class="block text-amber-700 mt-1">Framework scope is pending approval. Evidence checklist will be available after approval.</span>
+        <div class="mt-2 flex flex-wrap gap-3">
+            <a href="{% url 'compliance:applicability_review' %}" class="underline font-medium">مراجعة الأطر · Review frameworks</a>
+        </div>
+    </div>
+    {% else %}
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
         <i class="fas fa-circle-info mr-1"></i>
-        لا توجد عناصر قائمة بعد. ولّد القائمة بعد خطة الضوابط. (No checklist items yet. Generate checklist after control plan.)
-        <a href="{% url 'compliance:control_plan' %}" class="underline font-medium ml-1">خطة الضوابط</a>
+        لم يتم توليد قائمة أدلة بعد. أكمل التصنيف الذكي أولًا لتحديد الأطر والضوابط المنطبقة.
+        <span class="block text-amber-700 mt-1">No evidence checklist has been generated yet. Complete Smart Classification first.</span>
+        <div class="mt-2 flex flex-wrap gap-3">
+            <a href="{% url 'compliance:intake' %}" class="underline font-medium">التصنيف الذكي · Smart Classification</a>
+            <a href="{% url 'compliance:control_plan' %}" class="underline font-medium">خطة الضوابط · Control plan</a>
+        </div>
     </div>
+    {% endif %}
     {% endif %}
 
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">

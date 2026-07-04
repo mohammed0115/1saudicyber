@@ -67,8 +67,14 @@
                     <span class="text-white font-bold text-lg sm:text-xl">1SaudiCyber</span>
                 </a>
 
-                {# Desktop menu — primary items + "المزيد" dropdown. flex-wrap prevents overflow. #}
                 <div class="hidden md:flex items-center gap-1 flex-1 min-w-0 flex-wrap">
+                    {% if user.is_staff or user.is_superuser %}
+                    <a href="{% url 'platform_admin:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "Get Solution CRM" %}</a>
+                    <a href="{% url 'platform_admin:companies_list' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الشركات" %}</a>
+                    <a href="{% url 'platform_admin:auditor_list' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المدققون" %}</a>
+                    {% elif user.role == 'auditor' %}
+                    <a href="{% url 'auditors:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة المدقق" %}</a>
+                    {% else %}
                     <a href="{% url 'dashboard:main' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة التحكم" %}</a>
                     <a href="{% url 'compliance:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مسار الامتثال" %}</a>
                     <a href="{% url 'compliance:applicability_review' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأطر" %}</a>
@@ -81,9 +87,9 @@
                             <a href="{% url 'compliance:controls_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
                             <a href="{% url 'compliance:control_plan' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
                             <a href="{% url 'compliance:auditor_review_queue' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراجعة" %}</a>
-                            {% if user.role == 'auditor' %}<a href="{% url 'auditors:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "لوحة المدقق" %}</a>{% endif %}
                         </div>
                     </details>
+                    {% endif %}
                 </div>
 
                 {# Account + language switcher + mobile hamburger #}

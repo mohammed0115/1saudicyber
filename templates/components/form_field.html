@@ -1,0 +1,10 @@
+<div style="margin-bottom:1.1rem;">
+  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }}
+  {% if field.help_text %}
+  <p style="font-size:.78rem;color:#667085;margin:.35rem 0 0;">{{ field.help_text|safe }}</p>
+  {% endif %}
+  {% for e in field.errors %}
+  <p style="font-size:.8rem;color:#9B2C2C;margin:.35rem 0 0;">{{ e }}</p>
+  {% endfor %}
+</div>

@@ -517,7 +517,25 @@ def approve_framework_scope_view(request, scope_id):
     scope = _get_company_scope(request, scope_id)
     if scope:
         approve_framework_scope(scope, user=request.user)
-        messages.success(request, f'تم اعتماد الإطار {scope.framework_version.code}.')
+        # Chain generation so an approved scope immediately yields a control plan and
+        # an evidence checklist — otherwise companies are stranded with 0 checklist
+        # items (approved scope but nothing to upload against). Best-effort: a failure
+        # here must never 500 the approval itself.
+        planned = 0
+        try:
+            from .framework_scope import generate_control_applicability_plan
+            from .evidence_planning import (generate_evidence_requirements,
+                                            generate_evidence_checklist_for_company)
+            generate_control_applicability_plan(request.user.company, scope, apply=True)
+            generate_evidence_requirements(apply=True)
+            res = generate_evidence_checklist_for_company(request.user.company, apply=True)
+            planned = res.get('planned', 0) if isinstance(res, dict) else 0
+        except Exception:
+            planned = 0
+        messages.success(
+            request, 'تم اعتماد الإطار %s وتوليد خطة الضوابط وقائمة الأدلة (%d عنصر). '
+                     '· Framework approved; control plan and evidence checklist generated.'
+                     % (scope.framework_version.code, planned))
     return redirect('compliance:applicability_review')
 
 
@@ -586,10 +604,17 @@ def evidence_checklist(request):
                              'evidence_requirement__control__framework_version',
                              'control_applicability_result')
              .prefetch_related('submissions'))
+    # Scope state drives a clear empty-state: no scopes -> classify; scopes pending
+    # approval -> wait for approval; approved but empty -> (staff) generate.
+    from .models import CompanyFrameworkScope
+    scope_qs = CompanyFrameworkScope.objects.filter(company=company)
+    has_any_scope = scope_qs.exists()
+    has_approved_scope = scope_qs.filter(status='approved').exists()
     from .workflow_stepper import build_company_workflow_stepper
     from .journey import build_page_guide
     return render(request, 'compliance/evidence_checklist.html', {
         'company': company, 'items': items, 'can_generate': request.user.is_staff,
+        'has_any_scope': has_any_scope, 'has_approved_scope': has_approved_scope,
         'stepper': build_company_workflow_stepper(company),
         'guide': build_page_guide(company, 'evidence'),
     })
@@ -645,25 +670,38 @@ def evidence_upload_v2(request, item_id):
             return redirect('billing:home')
         form = EvidenceSubmissionForm(request.POST, request.FILES)
         if form.is_valid():
-            f = form.cleaned_data['uploaded_file']
-            ext = os.path.splitext(f.name)[1].lower().lstrip('.')
-            digest = hashlib.sha256()
-            for chunk in f.chunks():
-                digest.update(chunk)
-            f.seek(0)
-            version = item.submissions.count() + 1
-            EvidenceSubmission.objects.create(
-                company=request.user.company, checklist_item=item, uploaded_file=f,
-                original_filename=f.name, file_type=ext, file_size=f.size,
-                file_hash=digest.hexdigest(), version=version, status='pending_review',
-                uploaded_by=request.user, notes=form.cleaned_data.get('notes', ''))
-            sub = EvidenceSubmission.objects.filter(checklist_item=item).order_by('-id').first()
-            record_evidence_audit(request.user, request.user.company, 'uploaded', sub,
-                                  status='pending_review')
-            # Reflect progress on the checklist item (NOT a compliance decision).
-            if item.status in ('planned', 'in_progress'):
-                item.status = 'submitted'
-                item.save(update_fields=['status', 'updated_at'])
+            # URGENT hotfix: the upload must NEVER return 500, even if storage, hashing,
+            # auditing, or an incomplete control/framework mapping misbehaves. Any
+            # unexpected failure becomes a safe bilingual message + redirect.
+            try:
+                f = form.cleaned_data['uploaded_file']
+                ext = os.path.splitext(f.name)[1].lower().lstrip('.')
+                digest = hashlib.sha256()
+                for chunk in f.chunks():
+                    digest.update(chunk)
+                f.seek(0)
+                version = item.submissions.count() + 1
+                sub = EvidenceSubmission.objects.create(
+                    company=request.user.company, checklist_item=item, uploaded_file=f,
+                    original_filename=f.name, file_type=ext, file_size=f.size,
+                    file_hash=digest.hexdigest(), version=version, status='pending_review',
+                    uploaded_by=request.user, notes=form.cleaned_data.get('notes', ''))
+            except Exception:
+                messages.error(request, 'تعذّر حفظ الدليل بأمان. حاول مرة أخرى. '
+                                        '· Could not save the evidence safely. Please try again.')
+                return redirect('compliance:evidence_submission_list', item_id=item.id)
+            # Auditing + checklist status are best-effort and must never crash the upload.
+            try:
+                record_evidence_audit(request.user, request.user.company, 'uploaded', sub,
+                                      status='pending_review')
+            except Exception:
+                pass
+            try:
+                if item.status in ('planned', 'in_progress'):
+                    item.status = 'submitted'
+                    item.save(update_fields=['status', 'updated_at'])
+            except Exception:
+                pass
             messages.success(request, 'تم رفع الدليل وربطه بعنصر القائمة (قيد المراجعة).')
             return redirect('compliance:evidence_submission_list', item_id=item.id)
     else:
@@ -686,12 +724,14 @@ def evidence_submission_list(request, item_id):
 @login_required
 @company_portal_required
 def evidence_submission_detail(request, submission_id):
-    """Submission detail (tenant-scoped to the user's company)."""
+    """Submission detail (tenant-scoped to the user's company).
+
+    Non-enumerable tenant isolation: a submission that is not the user's own
+    (other company, unknown id, or no company) returns a safe 404 — it never
+    reveals existence and never 500s. Anonymous users hit @login_required first.
+    """
     from .models import EvidenceSubmission
-    sub = EvidenceSubmission.objects.filter(id=submission_id, company=request.user.company).first()
-    if sub is None:
-        messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
-        return redirect('compliance:evidence_checklist')
+    sub = get_object_or_404(EvidenceSubmission, id=submission_id, company=request.user.company)
     analysis = getattr(sub, 'analysis', None)
     extraction = getattr(sub, 'text_extraction', None)
     return render(request, 'compliance/evidence_submission_detail.html',

@@ -1,9 +1,13 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 app_name = 'compliance'
 
 urlpatterns = [
+    # Bare /compliance/ -> the guarded journey dashboard (which routes anonymous ->
+    # login and staff/auditor -> their portal-mismatch page). Prevents a bare 404.
+    path('', RedirectView.as_view(pattern_name='compliance:dashboard', permanent=False)),
     # Phase 3I — read-only journey dashboard / overview
     path('dashboard/', views.journey_dashboard, name='dashboard'),
 

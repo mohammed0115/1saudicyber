@@ -1,7 +1,26 @@
 from django.contrib import admin
 
-from .models import AuditorProfile, AuditorAssignment
+from .models import (AuditorProfile, AuditorAssignment,
+                     CompanyCRMProfile, CompanyCRMNote)
 from . import admin_services as svc
+
+
+@admin.register(CompanyCRMProfile)
+class CompanyCRMProfileAdmin(admin.ModelAdmin):
+    """Operational CRM profile (staff-only). Internal summary is business context, no secrets."""
+    list_display = ('company', 'crm_status', 'assigned_staff', 'next_follow_up_date', 'updated_at')
+    list_filter = ('crm_status', 'assigned_staff')
+    search_fields = ('company__name', 'company__name_ar', 'company__cr_number')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CompanyCRMNote)
+class CompanyCRMNoteAdmin(admin.ModelAdmin):
+    """Internal follow-up notes (staff-only; never surfaced to company/auditor users)."""
+    list_display = ('company', 'author', 'visibility', 'created_at')
+    list_filter = ('visibility',)
+    search_fields = ('company__name', 'text')
+    readonly_fields = ('created_at', 'updated_at')
 
 
 @admin.register(AuditorProfile)
