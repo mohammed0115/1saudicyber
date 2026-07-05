@@ -1,0 +1,25 @@
+{% load i18n %}
+{% if submission.status == 'accepted' %}
+  <span class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
+    <i class="fas fa-circle-check text-[10px]"></i> {% trans "مقبول" %} · Accepted</span>
+
+{% elif submission.status == 'rejected' %}
+  <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
+    <i class="fas fa-circle-xmark text-[10px]"></i> {% trans "مرفوض" %} · Rejected</span>
+
+{% elif submission.status == 'needs_reupload' %}
+  <span class="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-medium text-orange-700">
+    <i class="fas fa-rotate-left text-[10px]"></i> {% trans "يحتاج إعادة رفع" %} · Needs re-upload</span>
+
+{% elif submission.status == 'archived' %}
+  <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+    <i class="fas fa-box-archive text-[10px]"></i> {% trans "مؤرشف" %} · Archived</span>
+
+{% elif submission.status == 'uploaded' %}
+  <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+    <i class="fas fa-file-arrow-up text-[10px]"></i> {% trans "مرفوع" %} · Uploaded</span>
+
+{% else %}
+  <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+    <i class="fas fa-user-clock text-[10px]"></i> {% trans "بانتظار مراجعة المدقق" %} · Pending auditor review</span>
+{% endif %}
