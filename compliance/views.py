@@ -95,7 +95,11 @@ def upload_evidence(request, control_id):
 
     control = get_object_or_404(Control, id=control_id)
     company = request.user.company
-    company_control, _ = CompanyControl.objects.get_or_create(company=company, control=control)
+    # Tenant guard: uploads always require the user's own company context; never crash
+    # (e.g. a staff/unlinked account has no company -> get_or_create(company=None) would fail).
+    if company is None:
+        messages.error(request, 'رفع الأدلة يتطلّب سياق شركة · Evidence upload requires a company context.')
+        return redirect('compliance:control_detail', control_id=control_id)
 
     uploaded_file = request.FILES.get('evidence_file')
     if not uploaded_file:
@@ -122,32 +126,45 @@ def upload_evidence(request, control_id):
         )
         return redirect('compliance:control_detail', control_id=control_id)
 
-    # Create evidence record
-    evidence = Evidence.objects.create(
-        company_control=company_control,
-        uploaded_by=request.user,
-        file=uploaded_file,
-        original_filename=uploaded_file.name,
-        file_type=file_ext,
-        file_size=uploaded_file.size,
-        status='processing',
-    )
+    # Create the evidence record. A file-storage or DB failure (e.g. MEDIA_ROOT not
+    # writable) must NEVER 500 or leak a server path — fail with a safe message.
+    # NB: use `created` (not `_`) so the gettext alias `_` is not shadowed.
+    try:
+        company_control, created = CompanyControl.objects.get_or_create(
+            company=company, control=control)
+        evidence = Evidence.objects.create(
+            company_control=company_control,
+            uploaded_by=request.user,
+            file=uploaded_file,
+            original_filename=uploaded_file.name,
+            file_type=file_ext,
+            file_size=uploaded_file.size,
+            status='processing',
+        )
+    except Exception:
+        messages.error(request, 'تعذّر حفظ الدليل بأمان. حاول مرة أخرى. '
+                                '· Could not save the evidence safely. Please try again.')
+        return redirect('compliance:control_detail', control_id=control_id)
 
-    # Run OCR + AI through the shared pipeline. Use Celery if a broker is reachable,
-    # otherwise process synchronously so the platform works without extra infra.
+    # Advisory OCR/AI pipeline (best-effort). Use Celery if a broker is reachable,
+    # otherwise process synchronously. A failure keeps the evidence record and shows a
+    # safe status — it never 500s and never exposes an exception/path to the user.
     from compliance.services import process_evidence_pipeline
     try:
         try:
             from monitoring.tasks import analyze_evidence_async
             analyze_evidence_async.delay(evidence.id)
-            messages.success(request, _('تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا.'))
         except Exception:
-            result = process_evidence_pipeline(evidence.id)
-            messages.success(request, f'Evidence analyzed. AI Verdict: {result.get("verdict", "pending")}')
-    except Exception as e:
-        evidence.status = 'uploaded'
-        evidence.save()
-        messages.error(request, f'Error processing file: {str(e)}')
+            process_evidence_pipeline(evidence.id)
+        messages.success(request, _('تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا.'))
+    except Exception:
+        try:
+            evidence.status = 'uploaded'
+            evidence.save(update_fields=['status'])
+        except Exception:
+            pass
+        messages.warning(request, 'تم حفظ الدليل، وتعذّر إكمال التحليل الاستشاري الآن. '
+                                  '· Evidence saved; advisory analysis could not complete right now.')
 
     return redirect('compliance:control_detail', control_id=control_id)
 

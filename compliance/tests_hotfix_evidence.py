@@ -150,3 +150,103 @@ class EvidenceScopeApprovalTests(TestCase):
                                 {'uploaded_file': _SUF('p.pdf', b'%PDF-1.4 ok'), 'notes': ''})
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(EvidenceSubmission.objects.filter(company=c).count(), 1)
+
+
+# ============================================================
+# EVIDENCE-UPLOAD-HOTFIX-A — both upload endpoints must never 500
+# ============================================================
+class EvidenceUploadNo500Tests(TestCase):
+    def setUp(self):
+        self.c, self.fv, self.scope = _company_with_checklist()
+        self.item = EvidenceChecklistItem.objects.filter(company=self.c).first()
+        self.control = self.item.evidence_requirement.control
+        self.user = _journey_user(self.c, email='no500@x.com')
+        self.client.force_login(self.user)
+
+    # ---- Checklist (v2) endpoint ----
+    def test_checklist_txt_upload_succeeds(self):
+        resp = self.client.post(
+            reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+            {'uploaded_file': _SUF('policy.txt', b'Access control policy approved.'), 'notes': ''})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(EvidenceSubmission.objects.filter(company=self.c).count(), 1)
+
+    def test_checklist_unsupported_type_no_500(self):
+        resp = self.client.post(
+            reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+            {'uploaded_file': _SUF('m.exe', b'MZ', content_type='application/octet-stream')})
+        self.assertIn(resp.status_code, (200, 302))
+        self.assertEqual(EvidenceSubmission.objects.filter(company=self.c).count(), 0)
+
+    def test_checklist_missing_file_no_500(self):
+        resp = self.client.post(reverse('compliance:evidence_upload_v2', args=[self.item.id]), {})
+        self.assertIn(resp.status_code, (200, 302))
+        self.assertEqual(EvidenceSubmission.objects.filter(company=self.c).count(), 0)
+
+    def test_checklist_storage_failure_no_500(self):
+        with mock.patch.object(EvidenceSubmission.objects, 'create',
+                               side_effect=OSError('disk full')):
+            resp = self.client.post(
+                reverse('compliance:evidence_upload_v2', args=[self.item.id]),
+                {'uploaded_file': _SUF('p.txt', b'x')})
+        self.assertEqual(resp.status_code, 302)
+
+    # ---- Control-detail (legacy) endpoint ----
+    def test_control_txt_upload_succeeds(self):
+        from compliance.models import Evidence
+        resp = self.client.post(reverse('compliance:upload_evidence', args=[self.control.id]),
+                                {'evidence_file': _SUF('policy.txt', b'Access control policy.')})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(
+            Evidence.objects.filter(company_control__company=self.c).count(), 1)
+
+    def test_control_upload_no_500_when_celery_dispatch_succeeds(self):
+        # Root-cause regression: the success path must not blow up on a shadowed gettext
+        # alias, and must not leak an internal exception string to the user.
+        with mock.patch('monitoring.tasks.analyze_evidence_async.delay', return_value=None):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[self.control.id]),
+                                    {'evidence_file': _SUF('p.txt', b'ok')}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        body = resp.content.decode()
+        self.assertNotIn('object is not callable', body)
+        self.assertNotIn('Error processing file:', body)
+
+    def test_control_unsupported_type_no_500(self):
+        from compliance.models import Evidence
+        resp = self.client.post(reverse('compliance:upload_evidence', args=[self.control.id]),
+                                {'evidence_file': _SUF('m.exe', b'MZ')})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Evidence.objects.filter(company_control__company=self.c).count(), 0)
+
+    def test_control_missing_file_no_500(self):
+        resp = self.client.post(reverse('compliance:upload_evidence', args=[self.control.id]), {})
+        self.assertEqual(resp.status_code, 302)
+
+    def test_control_storage_failure_no_500_no_path_leak(self):
+        from compliance.models import Evidence
+        with mock.patch.object(Evidence.objects, 'create', side_effect=OSError('/srv/media denied')):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[self.control.id]),
+                                    {'evidence_file': _SUF('p.txt', b'x')}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn('/srv/media', resp.content.decode())      # no server path leaked
+
+    def test_control_pipeline_failure_keeps_evidence_no_500(self):
+        from compliance.models import Evidence
+        with mock.patch('compliance.services.process_evidence_pipeline',
+                        side_effect=RuntimeError('ocr boom')), \
+             mock.patch('monitoring.tasks.analyze_evidence_async.delay',
+                        side_effect=Exception('no broker')):
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[self.control.id]),
+                                    {'evidence_file': _SUF('p.txt', b'x')}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn('ocr boom', resp.content.decode())        # exception not exposed
+        self.assertEqual(Evidence.objects.filter(company_control__company=self.c).count(), 1)
+
+    def test_control_upload_without_company_is_safe(self):
+        from core.models import User
+        staff = User.objects.create_user(username='no500staff@x.com', email='no500staff@x.com',
+                                         password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(staff)                             # staff has no company
+        resp = self.client.post(reverse('compliance:upload_evidence', args=[self.control.id]),
+                                {'evidence_file': _SUF('p.txt', b'x')})
+        self.assertIn(resp.status_code, (302, 403))               # safe, never 500
