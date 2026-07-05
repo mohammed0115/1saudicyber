@@ -1678,3 +1678,157 @@ class CommercialTenantIsolationTests(TestCase):
         sa = bacc.plan_feature_summary(a)
         self.assertEqual(sa['evidence_used'], 0)
         self.assertEqual(sa['pdf_used'], 0)
+
+
+# ============================================================
+# MANUAL-PAYMENT-HOTFIX-A — dedup pending + idempotent confirm + payment reconciliation
+# ============================================================
+class ManualPaymentReconciliationTests(TestCase):
+    def _staff(self, email='mphstaff@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    def _login_company(self, c, email):
+        self.client.force_login(_journey_user(c, email=email))
+
+    @override_settings(PAYMENT_PROVIDER='manual')
+    def test_bug1_repeated_select_reuses_single_pending_payment(self):
+        c = _company()
+        self._login_company(c, 'mph1@x.com')
+        for _ in range(4):
+            self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pending = Payment.objects.filter(company=c, status='pending', provider='manual')
+        self.assertEqual(pending.count(), 1)                       # no duplicate rows
+        self.assertEqual(CompanySubscription.objects.filter(company=c).count(), 1)
+
+    @override_settings(PAYMENT_PROVIDER='manual')
+    def test_bug1_switching_plan_updates_same_pending_payment(self):
+        c = _company()
+        self._login_company(c, 'mph1b@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'professional'})
+        pending = Payment.objects.filter(company=c, status='pending', provider='manual')
+        self.assertEqual(pending.count(), 1)
+        self.assertEqual(pending.first().reference, 'plan:professional')
+
+    def test_bug3_staff_confirm_marks_payment_paid_and_activates(self):
+        c = _company()
+        sub, pay = bsvc.create_pending_subscription(c, bsvc.get_plan('basic'))
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                         {'action': 'activate', 'reason': 'Manual QA confirmation'})
+        sub.refresh_from_db(); pay.refresh_from_db()
+        self.assertEqual(sub.status, 'active')
+        self.assertEqual(pay.status, 'paid')                       # reconciled, no stale pending
+        self.assertIsNotNone(pay.paid_at)
+        self.assertEqual(Payment.objects.filter(company=c, status='pending').count(), 0)
+
+    def test_bug3_no_stale_pending_banner_after_confirm(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'))
+        staff = self._staff('mph3s@x.com'); self.client.force_login(staff)
+        self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                         {'action': 'activate', 'reason': 'confirmed'})
+        # company views billing -> active, NOT "under review"
+        self.client.force_login(_journey_user(c, email='mph3c@x.com'))
+        body = self.client.get(reverse('billing:home')).content.decode()
+        self.assertNotIn('Manual payment is under review', body)
+        self.assertNotIn('Pending payment', body)
+
+    def test_bug2_reconfirm_does_not_extend_ends_at(self):
+        c = _company()
+        sub, pay = bsvc.create_pending_subscription(c, bsvc.get_plan('basic'))
+        self.client.force_login(self._staff('mph2s@x.com'))
+        url = reverse('platform_admin:subscription_action', args=[c.id])
+        self.client.post(url, {'action': 'activate', 'reason': 'first'})
+        sub.refresh_from_db(); ends_after_first = sub.ends_at
+        self.client.post(url, {'action': 'activate', 'reason': 'second'})
+        sub.refresh_from_db()
+        self.assertEqual(sub.ends_at, ends_after_first)            # not extended
+        self.assertEqual(sub.status, 'active')
+        self.assertEqual(CompanySubscription.objects.filter(company=c, status='active').count(), 1)
+
+    def test_reject_does_not_activate_and_clears_pending(self):
+        c = _company()
+        sub, pay = bsvc.create_pending_subscription(c, bsvc.get_plan('basic'))
+        self.client.force_login(self._staff('mphrs@x.com'))
+        self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                         {'action': 'cancel', 'reason': 'Manual QA rejection'})
+        sub.refresh_from_db(); pay.refresh_from_db()
+        self.assertEqual(sub.status, 'cancelled')
+        self.assertFalse(company_has_active_subscription(c))
+        self.assertEqual(pay.status, 'cancelled')                  # stale pending cleared
+        from core.models import AuditLog
+        self.assertTrue(AuditLog.objects.filter(action='manual_payment_cancelled').exists())
+
+    def test_company_cannot_confirm_or_reject(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'))
+        self.client.force_login(_journey_user(c, email='mphco@x.com'))
+        resp = self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                                {'action': 'activate', 'reason': 'x'})
+        self.assertEqual(resp.status_code, 403)
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_auditor_cannot_confirm_or_reject(self):
+        from auditors.models import AuditorProfile
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'))
+        au = User.objects.create_user(username='mphaud@x.com', email='mphaud@x.com',
+                                      password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=au, full_name='A', status='active')
+        self.client.force_login(au)
+        resp = self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                                {'action': 'activate', 'reason': 'x'})
+        self.assertEqual(resp.status_code, 403)
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_confirm_reject_are_post_only(self):
+        c = _company()
+        self.client.force_login(self._staff('mphpo@x.com'))
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:subscription_action', args=[c.id])).status_code, 405)
+
+    def test_already_active_message_and_no_duplicate(self):
+        c = _company()
+        bsvc.create_pending_subscription(c, bsvc.get_plan('basic'))
+        self.client.force_login(self._staff('mphaa@x.com'))
+        url = reverse('platform_admin:subscription_action', args=[c.id])
+        self.client.post(url, {'action': 'activate', 'reason': 'first'})
+        resp = self.client.post(url, {'action': 'activate', 'reason': 'again'}, follow=True)
+        self.assertContains(resp, 'already active')
+        self.assertEqual(CompanySubscription.objects.filter(company=c).count(), 1)
+
+    @override_settings(PAYMENT_PROVIDER='manual')
+    def test_manual_pages_have_no_card_fields_or_secret(self):
+        c = _company()
+        self._login_company(c, 'mphsec@x.com')
+        self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        body = self.client.get(reverse('billing:home')).content.decode()
+        for bad in ('card_number', 'cvv', 'cvc', 'name="pan"', 'sk_test_', 'sk_live_',
+                    'MOYASAR_SECRET'):
+            self.assertNotIn(bad, body)
+
+
+@override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
+                   MOYASAR_PUBLISHABLE_KEY=_PK, MOYASAR_SECRET_KEY=_SECRET,
+                   PUBLIC_BASE_URL='http://localhost:8000')
+class ManualHotfixDoesNotAffectMoyasarTests(TestCase):
+    """The manual-payment fixes must not change Moyasar checkout behaviour."""
+
+    def test_moyasar_select_still_creates_moyasar_payment_and_routes_to_checkout(self):
+        c = _company()
+        self.client.force_login(_journey_user(c, email='mhx1@x.com'))
+        resp = self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
+        pay = Payment.objects.get(company=c)
+        self.assertEqual(pay.provider, 'moyasar')
+        self.assertEqual(pay.status, 'pending')
+        self.assertRedirects(resp, reverse('billing:checkout', args=[pay.id]),
+                             fetch_redirect_response=False)
+
+    def test_manual_dedup_does_not_apply_to_moyasar(self):
+        # Moyasar payment creation is unchanged (manual-only dedup does not touch it).
+        c = _company()
+        sub, pay = bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
+        self.assertEqual(pay.provider, 'moyasar')
+        self.assertEqual(Payment.objects.filter(company=c, provider='moyasar').count(), 1)

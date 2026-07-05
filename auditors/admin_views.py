@@ -129,10 +129,27 @@ def crm_subscription_action(request, company_id):
         messages.error(request, 'السبب مطلوب لهذا الإجراء · Reason required for this action.')
         return redirect('platform_admin:company_detail', company_id=company.id)
     if action == 'activate':
-        bsvc.activate_subscription(sub, actor=request.user, reason=reason)
-        messages.success(request, 'تم تفعيل الاشتراك · Subscription activated.')
+        from billing.models import Payment
+        # BUG-2: confirming an already-active subscription must NOT extend it again.
+        if sub is not None and sub.status == 'active' and sub.is_active():
+            messages.info(request, 'الاشتراك مُفعّل بالفعل · Subscription is already active.')
+        else:
+            # BUG-3: confirm the pending MANUAL payment (marks it paid AND activates the
+            # subscription), so no stale 'under review' banner remains. Falls back to a
+            # plain activation only when there is no pending manual payment to confirm.
+            pending = (Payment.objects.filter(company=company, subscription=sub,
+                                              status='pending', provider='manual')
+                       .order_by('-created_at').first())
+            if pending is not None:
+                bsvc.mark_payment_paid(pending, actor=request.user, reason=reason)
+            else:
+                bsvc.activate_subscription(sub, actor=request.user, reason=reason)
+            messages.success(request, 'تم تفعيل الاشتراك وتأكيد الدفع اليدوي · '
+                                      'Subscription activated and manual payment confirmed.')
     elif action == 'cancel':
         bsvc.cancel_subscription(sub, actor=request.user, reason=reason)
+        # Reject flow: clear any stale pending manual payment (does not activate).
+        bsvc.cancel_pending_manual_payments(company, sub, actor=request.user, reason=reason)
         messages.success(request, 'تم إلغاء الاشتراك · Subscription cancelled.')
     elif action == 'start_trial':
         bsvc.start_trial(company, bsvc.get_plan('trial'), actor=request.user)

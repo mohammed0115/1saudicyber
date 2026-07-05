@@ -82,8 +82,21 @@ def create_pending_subscription(company, plan, actor=None, provider='manual'):
         sub.created_by = sub.created_by or actor
         sub.updated_by = actor
     sub.save()
-    payment = create_manual_payment(sub, plan.price_amount, actor,
-                                    reference='plan:%s' % plan.code, provider=provider)
+    # BUG-1: reuse an existing pending MANUAL payment for this subscription instead of
+    # creating a duplicate row on repeated plan selection. (Moyasar behaviour unchanged.)
+    payment = None
+    if provider == 'manual':
+        payment = (Payment.objects.filter(company=company, subscription=sub,
+                                          status='pending', provider='manual')
+                   .order_by('-created_at').first())
+        if payment is not None:
+            payment.amount = plan.price_amount
+            payment.currency = getattr(plan, 'currency', 'SAR')
+            payment.reference = ('plan:%s' % plan.code)[:160]
+            payment.save(update_fields=['amount', 'currency', 'reference', 'updated_at'])
+    if payment is None:
+        payment = create_manual_payment(sub, plan.price_amount, actor,
+                                        reference='plan:%s' % plan.code, provider=provider)
     _sub_audit(actor, company, 'subscription_created', sub,
                extra={'plan': plan.code, 'payment_id': payment.id, 'status': 'pending_payment',
                       'provider': provider})
@@ -145,6 +158,23 @@ def create_manual_payment(subscription, amount, actor=None, reference='', provid
     _sub_audit(actor, company, 'manual_payment_created', subscription,
                extra={'payment_id': payment.id, 'amount': str(amount), 'provider': provider})
     return payment
+
+
+@transaction.atomic
+def cancel_pending_manual_payments(company, subscription, actor=None, reason=''):
+    """Mark any pending MANUAL payment(s) for a subscription as cancelled (reject flow).
+
+    Keeps the company's billing state unambiguous (no stale 'under review' banner) and
+    never activates anything. Moyasar payments are left untouched.
+    """
+    qs = Payment.objects.filter(company=company, subscription=subscription,
+                                status='pending', provider='manual')
+    ids = list(qs.values_list('id', flat=True))
+    n = qs.update(status='cancelled', updated_at=timezone.now())
+    if n:
+        _sub_audit(actor, company, 'manual_payment_cancelled', subscription,
+                   extra={'payment_ids': ids, 'reason': (reason or '')[:500]})
+    return n
 
 
 @transaction.atomic
