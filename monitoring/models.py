@@ -57,6 +57,12 @@ class Alert(models.Model):
     class Meta:
         db_table = 'alerts'
         ordering = ['-created_at']
+        # Hot tenant path: filter(company).order_by('-created_at')[:N] in dashboards/hub.
+        # Unlike ComplianceScore/MonthlyReport (covered by their unique_together composite),
+        # Alert had only the FK index -> a filesort on created_at at scale. Index it.
+        indexes = [
+            models.Index(fields=['company', '-created_at'], name='alert_company_created_idx'),
+        ]
 
 
 class MonthlyReport(models.Model):
