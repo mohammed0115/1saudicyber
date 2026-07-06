@@ -1,32 +1,69 @@
 """
-Auditor Portal Views - Review evidence, add notes, submit reports
+Auditor Portal Views — internal human review of a company's controls/evidence.
+
+INTERNAL review only. This portal NEVER issues an official certification or
+accreditation and never marks a company "certified" — that would contradict the
+platform's stated positioning. It records auditor notes, document requests, and a
+final internal audit report. Access + object scoping are enforced per auditor.
 """
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.utils import timezone
 from compliance.models import Assessment, CompanyControl, Evidence
 from .models import AuditorNote, DocumentRequest, AuditReport
 
 
+def _active_auditor_profile(user):
+    """Return the user's AuditorProfile only if it is an ACTIVE auditor, else None."""
+    if not getattr(user, 'is_authenticated', False):
+        return None
+    from auditors.services import get_auditor_profile
+    p = get_auditor_profile(user)
+    # is_active_auditor is a METHOD — must be called, not used as a truthy attribute.
+    return p if (p is not None and p.is_active_auditor()) else None
+
+
 def auditor_required(view_func):
-    """Decorator to ensure user is an auditor."""
+    """Only staff/superuser or an ACTIVE auditor may use the auditor portal.
+
+    (Was: any user whose role == 'auditor', which let pending/suspended auditors in.)
+    """
     def wrapper(request, *args, **kwargs):
-        if request.user.role != 'auditor':
-            messages.error(request, 'Access denied. Auditor role required.')
+        if not (request.user.is_staff or request.user.is_superuser
+                or _active_auditor_profile(request.user) is not None):
+            messages.error(request, 'Access denied. An active auditor account is required.')
             return redirect('dashboard:main')
         return view_func(request, *args, **kwargs)
     return wrapper
 
 
+def ensure_assessments_for_auditor(user):
+    """Idempotently create an internal Assessment for each ACCEPTED auditor assignment.
+
+    Wires the portal to the existing auditors.AuditorAssignment flow so an assigned,
+    active auditor sees the company's controls for review. Never issues certificates.
+    """
+    profile = _active_auditor_profile(user)
+    if profile is None:
+        return
+    from auditors.models import AuditorAssignment
+    for asg in (AuditorAssignment.objects.filter(auditor=profile, status='accepted')
+                .select_related('company')):
+        Assessment.objects.get_or_create(
+            company=asg.company, assigned_auditor=user,
+            defaults=dict(assessment_type='formal_audit', status='auditor_review',
+                          started_at=timezone.now()),
+        )
+
+
 @login_required
 @auditor_required
 def auditor_dashboard(request):
-    """Auditor main dashboard - assigned assessments."""
-    assessments = Assessment.objects.filter(
-        assigned_auditor=request.user
-    ).select_related('company').order_by('-created_at')
-
+    """Auditor main dashboard — assessments from the auditor's accepted assignments."""
+    ensure_assessments_for_auditor(request.user)
+    assessments = (Assessment.objects.filter(assigned_auditor=request.user)
+                   .select_related('company').order_by('-created_at'))
     context = {
         'assessments': assessments,
         'pending': assessments.filter(status='auditor_review').count(),
@@ -38,12 +75,11 @@ def auditor_dashboard(request):
 @login_required
 @auditor_required
 def review_assessment(request, assessment_id):
-    """Review a specific assessment - view all controls and evidence."""
+    """Review a specific assessment — view all controls and evidence (own assignment only)."""
     assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
-    company_controls = CompanyControl.objects.filter(
-        company=assessment.company
-    ).select_related('control', 'control__framework', 'control__domain').order_by('control__domain__order', 'control__control_id')
-
+    company_controls = (CompanyControl.objects.filter(company=assessment.company)
+                        .select_related('control', 'control__framework', 'control__domain')
+                        .order_by('control__domain__order', 'control__control_id'))
     context = {
         'assessment': assessment,
         'company_controls': company_controls,
@@ -56,11 +92,10 @@ def review_assessment(request, assessment_id):
 @login_required
 @auditor_required
 def review_control(request, assessment_id, control_id):
-    """Review a specific control's evidence."""
+    """Review a specific control's evidence (own assignment + own company only)."""
     assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
     company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
     evidences = Evidence.objects.filter(company_control=company_control).order_by('-uploaded_at')
-
     context = {
         'assessment': assessment,
         'company_control': company_control,
@@ -73,15 +108,13 @@ def review_control(request, assessment_id, control_id):
 @login_required
 @auditor_required
 def add_note(request, assessment_id, control_id):
-    """Add auditor note to a control."""
+    """Add an auditor note to a control (POST-only; tenant-scoped to the assessment)."""
     if request.method == 'POST':
         assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
-        company_control = get_object_or_404(CompanyControl, id=control_id)
-
+        # SECURITY: scope the control to THIS assessment's company (was: id only -> cross-tenant).
+        company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
         AuditorNote.objects.create(
-            assessment=assessment,
-            company_control=company_control,
-            auditor=request.user,
+            assessment=assessment, company_control=company_control, auditor=request.user,
             note=request.POST.get('note', ''),
             is_finding=request.POST.get('is_finding') == 'on',
             requires_action=request.POST.get('requires_action') == 'on',
@@ -93,15 +126,12 @@ def add_note(request, assessment_id, control_id):
 @login_required
 @auditor_required
 def request_document(request, assessment_id, control_id):
-    """Request additional document from company."""
+    """Request an additional document (POST-only; tenant-scoped to the assessment)."""
     if request.method == 'POST':
         assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
-        company_control = get_object_or_404(CompanyControl, id=control_id)
-
+        company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
         DocumentRequest.objects.create(
-            assessment=assessment,
-            company_control=company_control,
-            auditor=request.user,
+            assessment=assessment, company_control=company_control, auditor=request.user,
             description=request.POST.get('description', ''),
             description_ar=request.POST.get('description_ar', ''),
         )
@@ -112,41 +142,24 @@ def request_document(request, assessment_id, control_id):
 @login_required
 @auditor_required
 def submit_report(request, assessment_id):
-    """Submit final audit report."""
+    """Submit the final INTERNAL audit report (POST-only; own assignment only).
+
+    Records the internal report and closes the assessment. It does NOT issue any
+    certificate and NEVER marks the company "certified" — this is an internal
+    readiness review, not an official certification/accreditation.
+    """
     if request.method == 'POST':
         assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
-
-        AuditReport.objects.create(
+        AuditReport.objects.update_or_create(
             assessment=assessment,
-            auditor=request.user,
-            verdict=request.POST.get('verdict', 'fail'),
-            executive_summary=request.POST.get('executive_summary', ''),
-            executive_summary_ar=request.POST.get('executive_summary_ar', ''),
+            defaults=dict(auditor=request.user, verdict=request.POST.get('verdict', 'fail'),
+                          executive_summary=request.POST.get('executive_summary', ''),
+                          executive_summary_ar=request.POST.get('executive_summary_ar', '')),
         )
-
         assessment.status = 'completed'
-        assessment.save()
-
-        # UC-004 step 11: issue a certificate on a passing/conditional verdict.
-        verdict = request.POST.get('verdict', 'fail')
-        if verdict in ('pass', 'conditional_pass'):
-            from datetime import timedelta
-            from django.utils import timezone
-            from monitoring.models import CertificateTracker
-            company = assessment.company
-            today = timezone.localdate()
-            expiry = today + timedelta(days=365)
-            for fw in assessment.frameworks.all():
-                cert_no = f'CT-{company.cr_number}-{fw.code}-{today:%Y%m%d}'
-                CertificateTracker.objects.update_or_create(
-                    company=company, framework_code=fw.code,
-                    defaults={'certificate_number': cert_no, 'issued_date': today,
-                              'expiry_date': expiry, 'days_remaining': 365, 'is_active': True},
-                )
-            company.status = 'certified'
-            company.save(update_fields=['status'])
-
-        messages.success(request, 'Audit report submitted successfully.')
+        assessment.completed_at = timezone.now()
+        assessment.save(update_fields=['status', 'completed_at'])
+        messages.success(request, 'Internal audit report submitted. This is an internal '
+                                  'review and is not an official certification.')
         return redirect('auditor_portal:dashboard')
-
     return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)

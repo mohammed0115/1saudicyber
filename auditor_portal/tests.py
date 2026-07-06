@@ -1,3 +1,108 @@
+"""Auditor Portal — access guard, Assessment wiring, tenant scoping, no-certificate."""
 from django.test import TestCase
+from django.urls import reverse
 
-# Create your tests here.
+from core.models import User, Company
+from compliance.models import CompanyControl, Assessment
+from compliance.tests import _company_with_control, _assigned_auditor_user, _journey_user
+from auditor_portal.models import AuditorNote, AuditReport
+from monitoring.models import CertificateTracker
+
+
+def _company_control(company, control):
+    return CompanyControl.objects.get_or_create(company=company, control=control)[0]
+
+
+class AuditorPortalGuardTests(TestCase):
+    def test_active_assigned_auditor_can_open_dashboard(self):
+        c, control = _company_with_control()
+        aud = _assigned_auditor_user(c, email='apt_ok@x.com')
+        self.client.force_login(aud)
+        self.assertEqual(self.client.get(reverse('auditor_portal:dashboard')).status_code, 200)
+
+    def test_inactive_auditor_denied(self):
+        c, control = _company_with_control()
+        from auditors.models import AuditorProfile
+        u = User.objects.create_user(email='apt_pending@x.com', password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=u, full_name='Pend', status='pending_review')  # not active
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(reverse('auditor_portal:dashboard')).status_code, 302)
+
+    def test_company_user_denied(self):
+        c, control = _company_with_control()
+        self.client.force_login(_journey_user(c, email='apt_co@x.com'))
+        self.assertEqual(self.client.get(reverse('auditor_portal:dashboard')).status_code, 302)
+
+
+class AuditorPortalWiringTests(TestCase):
+    def test_dashboard_creates_assessment_from_accepted_assignment(self):
+        c, control = _company_with_control()
+        aud = _assigned_auditor_user(c, email='apt_wire@x.com')
+        self.assertEqual(Assessment.objects.filter(company=c, assigned_auditor=aud).count(), 0)
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        self.assertEqual(Assessment.objects.filter(company=c, assigned_auditor=aud).count(), 1)
+
+    def test_dashboard_is_idempotent(self):
+        c, control = _company_with_control()
+        aud = _assigned_auditor_user(c, email='apt_idem@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        self.client.get(reverse('auditor_portal:dashboard'))
+        self.assertEqual(Assessment.objects.filter(company=c, assigned_auditor=aud).count(), 1)
+
+
+class AuditorPortalTenantTests(TestCase):
+    def _assessment_for(self, auditor):
+        self.client.force_login(auditor)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        return Assessment.objects.get(assigned_auditor=auditor)
+
+    def test_auditor_cannot_open_another_auditors_assessment(self):
+        cA, ctlA = _company_with_control()
+        audA = _assigned_auditor_user(cA, email='apt_a@x.com')
+        aA = self._assessment_for(audA)
+        cB = Company.objects.create(name='B', cr_number='2020202020', sector='technology',
+                                    size='small', contact_email='b@x.com')
+        audB = _assigned_auditor_user(cB, email='apt_b@x.com')
+        self.client.force_login(audB)
+        self.assertEqual(self.client.get(
+            reverse('auditor_portal:review_assessment', args=[aA.id])).status_code, 404)
+
+    def test_add_note_rejects_cross_tenant_control(self):
+        cA, ctlA = _company_with_control()
+        audA = _assigned_auditor_user(cA, email='apt_note@x.com')
+        aA = self._assessment_for(audA)
+        cB = Company.objects.create(name='B2', cr_number='3030303030', sector='technology',
+                                    size='small', contact_email='b2@x.com')
+        ccB = _company_control(cB, ctlA)          # a control that belongs to a DIFFERENT company
+        self.client.force_login(audA)
+        resp = self.client.post(reverse('auditor_portal:add_note', args=[aA.id, ccB.id]), {'note': 'x'})
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(AuditorNote.objects.count(), 0)
+
+    def test_add_note_own_control_succeeds(self):
+        cA, ctlA = _company_with_control()
+        audA = _assigned_auditor_user(cA, email='apt_note2@x.com')
+        aA = self._assessment_for(audA)
+        ccA = _company_control(cA, ctlA)
+        self.client.force_login(audA)
+        self.client.post(reverse('auditor_portal:add_note', args=[aA.id, ccA.id]), {'note': 'ok'})
+        self.assertEqual(AuditorNote.objects.filter(assessment=aA, company_control=ccA).count(), 1)
+
+
+class AuditorPortalNoCertificateTests(TestCase):
+    def test_submit_report_does_not_issue_certificate_or_certify(self):
+        c, control = _company_with_control()
+        aud = _assigned_auditor_user(c, email='apt_cert@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]),
+                         {'verdict': 'pass', 'executive_summary': 'internal review'})
+        a.refresh_from_db(); c.refresh_from_db()
+        self.assertTrue(AuditReport.objects.filter(assessment=a).exists())
+        self.assertEqual(a.status, 'completed')
+        # Internal review must NEVER issue a certificate or mark the company certified.
+        self.assertEqual(CertificateTracker.objects.filter(company=c).count(), 0)
+        self.assertNotEqual(c.status, 'certified')

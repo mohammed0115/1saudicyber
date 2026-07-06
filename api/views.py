@@ -147,6 +147,14 @@ def evidence_upload(request):
 @permission_classes([IsAuthenticated])
 def evidence_analyze(request, evidence_id):
     from compliance.services import process_evidence_pipeline
+    # TENANT ISOLATION: IsAuthenticated only proves login, NOT ownership. Without this
+    # scope any authenticated user could analyze (and read the result of) another
+    # company's evidence via its id — a cross-tenant IDOR / data leak.
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    if not Evidence.objects.filter(id=evidence_id, company_control__company=company).exists():
+        return Response({'detail': 'Evidence not found.'}, status=status.HTTP_404_NOT_FOUND)
     result = process_evidence_pipeline(evidence_id)
     return Response(result)
 

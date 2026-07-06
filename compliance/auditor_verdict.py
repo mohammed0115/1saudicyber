@@ -10,6 +10,8 @@ CompanyControl, and never calls AI or external services.
 Authorization: staff/superuser, or an ACTIVE auditor with an ACCEPTED assignment
 to the submission's company. Company users may only VIEW their own verdict.
 """
+from django.db import transaction
+
 from .rule_engine import _framework_type, FT_NCA, FT_ARAMCO_SABIC, _control_of
 
 # Allowed verdict statuses per framework type (+ shared needs_more_evidence).
@@ -27,7 +29,9 @@ def _is_assigned_auditor(user, company):
     from auditors.services import get_auditor_profile
     from auditors.models import AuditorAssignment
     profile = get_auditor_profile(user)
-    if profile is None or not profile.is_active_auditor:
+    # is_active_auditor is a METHOD — the missing () made a bound method (always truthy),
+    # so a pending/suspended auditor with an accepted assignment was wrongly allowed.
+    if profile is None or not profile.is_active_auditor():
         return False
     return AuditorAssignment.objects.filter(
         company=company, auditor=profile, status='accepted').exists()
@@ -82,10 +86,28 @@ def record_auditor_final_verdict(submission, reviewer, status, rationale,
         conf = 0
     conf = max(0, min(100, conf))
     actions = [a.strip()[:240] for a in (required_actions or []) if isinstance(a, str) and a.strip()][:12]
-    obj, _ = AuditorFinalVerdict.objects.update_or_create(
-        submission=submission,
-        defaults=dict(reviewer=reviewer, status=status, confidence=conf,
-                      rationale=rationale.strip(), required_actions=actions,
-                      framework_type=ft, source_rule_evaluation=getattr(submission, 'rule_evaluation', None)),
-    )
+    with transaction.atomic():
+        obj, _ = AuditorFinalVerdict.objects.update_or_create(
+            submission=submission,
+            defaults=dict(reviewer=reviewer, status=status, confidence=conf,
+                          rationale=rationale.strip(), required_actions=actions,
+                          framework_type=ft, source_rule_evaluation=getattr(submission, 'rule_evaluation', None)),
+        )
+        # Advance the evidence-FILE lifecycle so it no longer reads pending_review after a
+        # human review. status here = "was this file reviewed/accepted as evidence", NOT the
+        # compliance judgment (which stays in AuditorFinalVerdict). So any final verdict
+        # accepts the file; only 'needs_more_evidence' asks for a re-upload. A non-compliant
+        # verdict is NOT a rejected file.
+        new_status = 'needs_reupload' if status == 'needs_more_evidence' else 'accepted'
+        if submission.status != new_status:
+            update_fields = ['status', 'updated_at']
+            submission.status = new_status
+            if new_status == 'needs_reupload':
+                submission.rejection_reason = rationale.strip()[:1000]
+                update_fields.append('rejection_reason')
+            elif submission.rejection_reason:
+                # Clear a stale re-upload reason left over from a prior needs_more_evidence.
+                submission.rejection_reason = ''
+                update_fields.append('rejection_reason')
+            submission.save(update_fields=update_fields)
     return obj
