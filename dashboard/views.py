@@ -131,14 +131,17 @@ def it_security_dashboard(request):
         control__domain__name__in=technical_domains
     ).select_related('control', 'control__domain')
 
-    # Recent alerts
-    alerts = Alert.objects.filter(company=company).order_by('-created_at')[:20]
+    # Recent alerts. NOTE: count BEFORE slicing — filtering a sliced queryset raises
+    # "Cannot filter a query once a slice has been taken" (a guaranteed 500).
+    company_alerts = Alert.objects.filter(company=company)
+    critical_count = company_alerts.filter(severity='critical').count()
+    alerts = company_alerts.order_by('-created_at')[:20]
 
     context = {
         'company': company,
         'technical_controls': technical_controls,
         'alerts': alerts,
-        'critical_count': alerts.filter(severity='critical').count(),
+        'critical_count': critical_count,
     }
     return render(request, 'dashboard/it_security.html', context)
 
