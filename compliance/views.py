@@ -83,6 +83,9 @@ def control_detail(request, control_id):
         'company_control': company_control,
         'evidences': evidences,
         'mapped_controls': mapped_controls,
+        # Honest AI state: only claim "processing" when automated analysis is actually
+        # configured. Otherwise the evidence is simply awaiting human review.
+        'ai_enabled': bool((getattr(settings, 'OPENAI_API_KEY', '') or '').strip()),
     }
     return render(request, 'compliance/control_detail.html', context)
 
