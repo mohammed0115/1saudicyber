@@ -5,6 +5,17 @@
 # (those are documented manual steps in the runbook).
 set -eu
 
+# --- Self-heal volume ownership, then drop root privileges ---
+# Docker named volumes (media_volume, static_volume) keep the uid/gid from when they
+# were FIRST created. A stale root-owned media volume makes evidence uploads fail with
+# PermissionError. Fix ownership as root on every start, then re-exec this same script
+# as the unprivileged app user (uid 10001) via gosu so the app never runs as root.
+if [ "$(id -u)" = "0" ]; then
+    mkdir -p /app/media /app/staticfiles
+    chown -R appuser:appuser /app/media /app/staticfiles
+    exec gosu appuser "$0" "$@"
+fi
+
 # --- Wait for PostgreSQL (only when POSTGRES_DB is configured) ---
 if [ -n "${POSTGRES_DB:-}" ]; then
     host="${POSTGRES_HOST:-db}"

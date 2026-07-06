@@ -11,6 +11,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# gosu lets the entrypoint start as root (to self-heal mounted-volume ownership)
+# and then drop to the unprivileged app user before launching the app.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/*
+
 # psycopg[binary] ships its own libpq, so no extra apt packages are required for
 # PostgreSQL. Keep the image lean.
 COPY requirements.txt .
@@ -19,11 +25,13 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Application code (build context is filtered by .dockerignore: no .env, db, media).
 COPY . .
 
-# Run as a non-root user.
+# Create the unprivileged app user. NOTE: we intentionally do NOT `USER appuser`
+# here — the entrypoint starts as root to fix ownership of mounted named volumes
+# (which keep their first-create uid/gid), then drops to appuser via gosu. Running
+# the app itself as root is still avoided.
 RUN useradd --create-home --uid 10001 appuser \
     && mkdir -p /app/staticfiles /app/media \
     && chown -R appuser:appuser /app
-USER appuser
 
 EXPOSE 8000
 

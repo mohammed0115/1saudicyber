@@ -126,10 +126,16 @@ def evidence_upload(request):
         return Response({'detail': 'File too large.'}, status=400)
 
     cc, _ = CompanyControl.objects.get_or_create(company=company, control=control)
-    evidence = Evidence.objects.create(
-        company_control=cc, uploaded_by=request.user, file=f,
-        original_filename=f.name, file_type=ext, file_size=f.size, status='processing',
-    )
+    # A storage failure (e.g. MEDIA_ROOT not writable) must NOT surface as a 500 with a
+    # server path — return a clean 503 instead.
+    try:
+        evidence = Evidence.objects.create(
+            company_control=cc, uploaded_by=request.user, file=f,
+            original_filename=f.name, file_type=ext, file_size=f.size, status='processing',
+        )
+    except (OSError, IOError):
+        return Response({'detail': 'Evidence storage is temporarily unavailable.'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
     from compliance.services import process_evidence_pipeline
     # Only touch the broker when async is explicitly enabled (worker provisioned).
     # Otherwise process synchronously — no broker connection attempt, no hang.
