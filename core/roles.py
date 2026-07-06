@@ -122,7 +122,7 @@ def auditor_portal_guard(request, *, require_active=False):
         # Company / unlinked user: keep the existing safe redirect to auditor sign-up
         # (which itself blocks an authenticated non-auditor from switching session).
         return redirect('auditors:register')
-    if require_active and not profile.is_active_auditor():
+    if require_active and not profile.is_active_auditor:
         # Pending/suspended auditor on an operational page -> their status page.
         return redirect('auditors:onboarding')
     return None

@@ -29,9 +29,9 @@ def _is_assigned_auditor(user, company):
     from auditors.services import get_auditor_profile
     from auditors.models import AuditorAssignment
     profile = get_auditor_profile(user)
-    # is_active_auditor is a METHOD — the missing () made a bound method (always truthy),
-    # so a pending/suspended auditor with an accepted assignment was wrongly allowed.
-    if profile is None or not profile.is_active_auditor():
+    # is_active_auditor is a @property — a pending/suspended auditor evaluates False here
+    # (the old naked-method reference was always truthy = a silent auth bypass).
+    if profile is None or not profile.is_active_auditor:
         return False
     return AuditorAssignment.objects.filter(
         company=company, auditor=profile, status='accepted').exists()

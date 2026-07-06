@@ -35,7 +35,7 @@ def _signals(user):
     from compliance.models import AuditorFinalVerdict
 
     profile = get_auditor_profile(user)
-    is_active = bool(profile and profile.is_active_auditor())
+    is_active = bool(profile and profile.is_active_auditor)
     assignments = (AuditorAssignment.objects.filter(auditor=profile)
                    if profile else AuditorAssignment.objects.none())
     accepted = assignments.filter(status='accepted')

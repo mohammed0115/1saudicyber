@@ -38,7 +38,12 @@ class AuditorProfile(models.Model):
     def __str__(self):
         return f"{self.full_name} ({self.status})"
 
+    @property
     def is_active_auditor(self):
+        # A @property (not a plain method) on purpose: the name reads like a boolean, so a
+        # naked `profile.is_active_auditor` must evaluate the flag — not return an
+        # always-truthy bound method. As a property, a stray `()` now raises TypeError
+        # (loud) instead of silently bypassing the guard.
         return self.status == 'active'
 
     def is_listable(self):

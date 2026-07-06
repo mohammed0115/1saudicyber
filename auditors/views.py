@@ -82,7 +82,7 @@ def dashboard(request):
     profile = services.get_auditor_profile(request.user)
     if profile is None:
         return redirect('auditors:register')
-    assignments = services.assignments_for_user(request.user) if profile.is_active_auditor() else None
+    assignments = services.assignments_for_user(request.user) if profile.is_active_auditor else None
     return render(request, 'auditors/dashboard.html', {
         'profile': profile, 'assignments': assignments,
         'auditor_journey': build_auditor_journey(request.user)})
@@ -99,7 +99,7 @@ def assignment_detail(request, assignment_id):
     from .journey import build_auditor_journey
     journey = build_auditor_journey(request.user)
     profile = assignment.auditor
-    if not profile.is_active_auditor():
+    if not profile.is_active_auditor:
         # Pending/suspended/inactive auditor: no company data at all.
         return render(request, 'auditors/assignment_detail.html', {
             'assignment': assignment, 'profile': profile, 'context': None,
@@ -132,7 +132,7 @@ def assignment_respond(request, assignment_id):
     if assignment is None:
         messages.error(request, 'الطلب غير موجود أو لا يخصّك.')
         return redirect('auditors:dashboard')
-    if not assignment.auditor.is_active_auditor():
+    if not assignment.auditor.is_active_auditor:
         messages.error(request, 'حسابك كمدقّق قيد المراجعة ولا يمكنه اتخاذ إجراء بعد.')
         return redirect('auditors:dashboard')
     action = request.POST.get('action', '')

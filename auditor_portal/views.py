@@ -20,8 +20,8 @@ def _active_auditor_profile(user):
         return None
     from auditors.services import get_auditor_profile
     p = get_auditor_profile(user)
-    # is_active_auditor is a METHOD — must be called, not used as a truthy attribute.
-    return p if (p is not None and p.is_active_auditor()) else None
+    # is_active_auditor is a @property — evaluate it directly (never a bound method).
+    return p if (p is not None and p.is_active_auditor) else None
 
 
 def auditor_required(view_func):
