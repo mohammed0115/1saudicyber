@@ -176,6 +176,11 @@ OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o')
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'False') == 'True'
+# Evidence analysis dispatch. Default OFF: with no Celery worker/broker provisioned,
+# calling .delay() would attempt a broker connection (and can hang) before the sync
+# fallback. When off, uploads go straight to synchronous processing — deterministic,
+# no broker round-trip. Set True only once a real worker+broker is running.
+EVIDENCE_ASYNC_ENABLED = os.getenv('EVIDENCE_ASYNC_ENABLED', 'False') == 'True'
 
 # Celery beat schedule (FR-010): continuous monitoring jobs.
 from celery.schedules import crontab

@@ -131,13 +131,18 @@ def evidence_upload(request):
         original_filename=f.name, file_type=ext, file_size=f.size, status='processing',
     )
     from compliance.services import process_evidence_pipeline
-    try:
-        from monitoring.tasks import analyze_evidence_async
-        analyze_evidence_async.delay(evidence.id)
-        queued = True
-    except Exception:
+    # Only touch the broker when async is explicitly enabled (worker provisioned).
+    # Otherwise process synchronously — no broker connection attempt, no hang.
+    queued = False
+    if getattr(settings, 'EVIDENCE_ASYNC_ENABLED', False):
+        try:
+            from monitoring.tasks import analyze_evidence_async
+            analyze_evidence_async.delay(evidence.id)
+            queued = True
+        except Exception:
+            process_evidence_pipeline(evidence.id)
+    else:
         process_evidence_pipeline(evidence.id)
-        queued = False
     evidence.refresh_from_db()
     return Response({'evidence': EvidenceSerializer(evidence).data, 'queued': queued},
                     status=status.HTTP_201_CREATED)

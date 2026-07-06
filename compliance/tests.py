@@ -65,10 +65,12 @@ class EvidenceValidationTests(TestCase):
 
     def test_accepts_valid_file_and_creates_row(self):
         good = SimpleUploadedFile('policy.txt', b'Cybersecurity policy approved.', content_type='text/plain')
-        # Force the Celery branch with a no-op delay so no broker/OCR is touched.
-        with mock.patch('monitoring.tasks.analyze_evidence_async.delay') as delayed:
+        # Async is OFF by default (EVIDENCE_ASYNC_ENABLED=False) -> evidence is processed
+        # synchronously with no broker round-trip. Patch the sync pipeline to a no-op so no
+        # OCR/AI is touched; the row must still be created.
+        with mock.patch('compliance.services.process_evidence_pipeline', return_value=None) as pipe:
             resp = self.client.post(self.url, {'evidence_file': good})
-            delayed.assert_called_once()
+            pipe.assert_called_once()
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(Evidence.objects.filter(company_control__company=self.company).count(), 1)
         ev = Evidence.objects.get()

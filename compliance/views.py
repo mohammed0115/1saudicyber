@@ -154,10 +154,15 @@ def upload_evidence(request, control_id):
     # safe status — it never 500s and never exposes an exception/path to the user.
     from compliance.services import process_evidence_pipeline
     try:
-        try:
-            from monitoring.tasks import analyze_evidence_async
-            analyze_evidence_async.delay(evidence.id)
-        except Exception:
+        # Only dispatch to the broker when async is explicitly enabled (worker running);
+        # otherwise process synchronously with no broker connection attempt.
+        if getattr(settings, 'EVIDENCE_ASYNC_ENABLED', False):
+            try:
+                from monitoring.tasks import analyze_evidence_async
+                analyze_evidence_async.delay(evidence.id)
+            except Exception:
+                process_evidence_pipeline(evidence.id)
+        else:
             process_evidence_pipeline(evidence.id)
         messages.success(request, _('تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا.'))
     except Exception:
