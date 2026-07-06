@@ -142,13 +142,21 @@
 
     <!-- Previous Evidence -->
     {% if evidences %}
+    <style>
+        @keyframes evFadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        /* Rows animate in when the list renders (i.e. right after an upload redirect). */
+        .evidence-row { animation: evFadeInUp .35s ease-out both; }
+        .evidence-row:nth-child(2) { animation-delay: .05s; }
+        .evidence-row:nth-child(3) { animation-delay: .10s; }
+        @media (prefers-reduced-motion: reduce) { .evidence-row { animation: none; } }
+    </style>
     <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
         <h2 class="font-bold text-gov-green-800 mb-3 flex items-center gap-2">
             <i class="fas fa-folder-open"></i> Uploaded Evidence ({{ evidences.count }})
         </h2>
         <ul class="divide-y divide-gov-gray-100">
             {% for ev in evidences %}
-            <li class="flex items-center gap-3 py-3">
+            <li class="evidence-row flex items-center gap-3 py-3">
                 <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg
                     {% if ev.file_type == 'pdf' %}bg-red-50 text-red-600{% elif ev.file_type in 'docx,doc' %}bg-blue-50 text-blue-600{% elif ev.file_type in 'png,jpg,jpeg,tiff,bmp' %}bg-purple-50 text-purple-600{% else %}bg-gov-gray-100 text-gray-500{% endif %}">
                     <i class="fas {% if ev.file_type == 'pdf' %}fa-file-pdf{% elif ev.file_type in 'docx,doc' %}fa-file-word{% elif ev.file_type in 'png,jpg,jpeg,tiff,bmp' %}fa-file-image{% else %}fa-file{% endif %}"></i></span>
@@ -157,13 +165,21 @@
                     <div class="text-xs text-gov-gray-500" dir="ltr">{{ ev.uploaded_at|date:"M d, Y H:i" }} · {{ ev.file_size|filesizeformat }}</div>
                 </div>
                 {% if ev.ai_verdict == 'compliant' %}
-                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800"><i class="fas fa-check text-[10px]"></i> {{ ev.ai_verdict }}</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800"><i class="fas fa-check text-[10px]"></i> Compliant</span>
                 {% elif ev.ai_verdict == 'partially_compliant' %}
-                <span class="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">{{ ev.ai_verdict }}</span>
+                <span class="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">Partially compliant</span>
                 {% elif ev.ai_verdict == 'non_compliant' %}
-                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800"><i class="fas fa-xmark text-[10px]"></i> {{ ev.ai_verdict }}</span>
-                {% elif ai_enabled %}
-                <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500"></span> AI processing</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800"><i class="fas fa-xmark text-[10px]"></i> Non-compliant</span>
+                {% elif ev.ai_verdict == 'error' %}
+                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800" title="Automated analysis failed — please retry or await human review"><i class="fas fa-triangle-exclamation text-[10px]"></i> Analysis failed</span>
+                {% elif ev.status == 'uploaded' or ev.status == 'processing' or ev.status == 'ai_analyzing' %}
+                    {% if ai_enabled %}
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700"><i class="fas fa-circle-notch fa-spin text-[11px]"></i> AI processing…</span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600" title="Automated analysis is not enabled on this environment"><i class="fas fa-user-clock text-[10px]"></i> Pending human review</span>
+                    {% endif %}
+                {% elif ev.ai_verdict %}
+                <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">{{ ev.ai_verdict }}</span>
                 {% else %}
                 <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600" title="Automated analysis is not enabled on this environment"><i class="fas fa-user-clock text-[10px]"></i> Pending human review</span>
                 {% endif %}
