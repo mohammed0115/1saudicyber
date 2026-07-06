@@ -1,7 +1,12 @@
 {% load i18n %}
+{# Two INDEPENDENT dimensions, shown as separate badges to avoid cognitive conflation:
+   (1) the evidence FILE lifecycle (uploaded/accepted/needs re-upload/…) and
+   (2) the auditor's COMPLIANCE verdict (compliant/non-compliant/…). "Evidence accepted"
+   means the file was accepted for review — NOT that the control is compliant. #}
+<span class="inline-flex flex-wrap items-center gap-1.5">
 {% if submission.status == 'accepted' %}
-  <span class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-    <i class="fas fa-circle-check text-[10px]"></i> {% trans "مقبول" %} · Accepted</span>
+  <span class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700" title="{% trans 'حالة الملف: قُبل كدليل للمراجعة (ليست حكم امتثال)' %}">
+    <i class="fas fa-file-circle-check text-[10px]"></i> {% trans "دليل مقبول" %} · Evidence accepted</span>
 
 {% elif submission.status == 'rejected' %}
   <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
@@ -23,3 +28,25 @@
   <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
     <i class="fas fa-user-clock text-[10px]"></i> {% trans "بانتظار مراجعة المدقق" %} · Pending auditor review</span>
 {% endif %}
+{# Separate COMPLIANCE-verdict badge — only when the auditor has recorded a final verdict. #}
+{% with v=submission.auditor_final_verdict %}
+{% if v %}
+  {% if v.status == 'final_c' or v.status == 'final_compliance' %}
+    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800" title="{% trans 'حكم امتثال المدقق' %}">
+      <i class="fas fa-shield-halved text-[10px]"></i> {% trans "الامتثال: متوافق" %} · Compliant</span>
+  {% elif v.status == 'final_pc' %}
+    <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800" title="{% trans 'حكم امتثال المدقق' %}">
+      <i class="fas fa-shield-halved text-[10px]"></i> {% trans "الامتثال: جزئي" %} · Partially compliant</span>
+  {% elif v.status == 'final_nc' or v.status == 'final_noncompliance' %}
+    <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800" title="{% trans 'حكم امتثال المدقق' %}">
+      <i class="fas fa-shield-halved text-[10px]"></i> {% trans "الامتثال: غير متوافق" %} · Non-compliant</span>
+  {% elif v.status == 'final_na' or v.status == 'final_not_applicable' %}
+    <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600" title="{% trans 'حكم امتثال المدقق' %}">
+      <i class="fas fa-shield-halved text-[10px]"></i> {% trans "الامتثال: غير منطبق" %} · Not applicable</span>
+  {% elif v.status == 'needs_more_evidence' %}
+    <span class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-800" title="{% trans 'حكم امتثال المدقق' %}">
+      <i class="fas fa-shield-halved text-[10px]"></i> {% trans "الامتثال: بحاجة أدلة إضافية" %} · Needs more evidence</span>
+  {% endif %}
+{% endif %}
+{% endwith %}
+</span>

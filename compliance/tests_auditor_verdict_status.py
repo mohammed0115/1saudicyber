@@ -88,15 +88,30 @@ class VerdictSubmissionStatusTests(TestCase):
         self.assertEqual(sub.status, before)                # unchanged (still pending_review)
         self.assertEqual(sub.status, 'pending_review')
 
-    def test_evidence_list_shows_accepted_after_verdict(self):
+    def test_evidence_list_shows_file_and_compliance_badges_after_verdict(self):
+        # UX: the FILE badge ("Evidence accepted") and the COMPLIANCE badge ("Compliant")
+        # are two SEPARATE dimensions — the file being accepted is NOT a compliance pass.
         c, item, sub = self._nca()
         record_auditor_final_verdict(sub, _staff_user('a6@x.com'), status='final_c', rationale='تم.')
         self.client.force_login(_journey_user(c, email='co_list@x.com'))
         body = self.client.get(
             reverse('compliance:evidence_submission_list', args=[item.id])).content.decode()
-        self.assertIn('Accepted', body)
+        self.assertIn('Evidence accepted', body)          # file lifecycle badge
+        self.assertIn('Compliant', body)                  # separate compliance-verdict badge
         self.assertIn('مقبول', body)
         self.assertNotIn('Pending auditor review', body)
+
+    def test_noncompliant_verdict_still_shows_evidence_accepted(self):
+        # A non-compliant CONTROL must not read as a rejected FILE, and must not read as
+        # compliant either — both badges must be present and distinct.
+        c, item, sub = self._nca()
+        record_auditor_final_verdict(sub, _staff_user('a7@x.com'), status='final_nc', rationale='غير متوافق.')
+        self.client.force_login(_journey_user(c, email='co_nc@x.com'))
+        body = self.client.get(
+            reverse('compliance:evidence_submission_list', args=[item.id])).content.decode()
+        self.assertIn('Evidence accepted', body)          # file accepted
+        self.assertIn('Non-compliant', body)              # but control is NOT compliant
+        self.assertNotIn('Rejected', body)
 
 
 class VerdictAuditorGuardTests(TestCase):
