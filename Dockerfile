@@ -11,10 +11,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# gosu lets the entrypoint start as root (to self-heal mounted-volume ownership)
-# and then drop to the unprivileged app user before launching the app.
+# System packages:
+# - gosu: entrypoint starts as root (self-heal volume ownership) then drops to appuser.
+# - tesseract-ocr (+ Arabic) & poppler-utils: OCR/text extraction for scanned PDFs and
+#   images (pytesseract + pdf2image). Without these, PDF/image evidence yields no text.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gosu \
+    && apt-get install -y --no-install-recommends \
+        gosu tesseract-ocr tesseract-ocr-ara poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # psycopg[binary] ships its own libpq, so no extra apt packages are required for
