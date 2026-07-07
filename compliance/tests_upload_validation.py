@@ -17,10 +17,21 @@ EXE = b'MZ\x90\x00' + b'\x00' * 40
 
 
 def _docx_bytes():
+    # A REAL python-docx file (multi-entry OOXML) — its 'word/' marker sits well past a short
+    # header, which is exactly what broke real .docx uploads (MAT3 DEF-02). A toy 2-entry zip
+    # would fit in 262 bytes and give a false pass, so use the real writer.
+    from docx import Document
     b = io.BytesIO()
-    with zipfile.ZipFile(b, 'w') as z:
-        z.writestr('[Content_Types].xml', '<?xml version="1.0"?><Types/>')
-        z.writestr('word/document.xml', '<x/>')
+    d = Document()
+    d.add_paragraph('Approved cybersecurity policy. ' * 40)
+    d.save(b)
+    return b.getvalue()
+
+
+def _xlsx_bytes():
+    from openpyxl import Workbook
+    b = io.BytesIO()
+    Workbook().save(b)
     return b.getvalue()
 
 
@@ -46,8 +57,12 @@ class ValidateEvidenceFileUnitTests(SimpleTestCase):
         self.assertTrue(ok)
 
     def test_real_docx_ok(self):
-        ok, ext, _ = validate_evidence_file(_f('doc.docx', _docx_bytes()), ALLOWED)
-        self.assertTrue(ok); self.assertEqual(ext, 'docx')
+        ok, ext, err = validate_evidence_file(_f('doc.docx', _docx_bytes()), ALLOWED)
+        self.assertTrue(ok, err); self.assertEqual(ext, 'docx')   # MAT3 DEF-02 regression guard
+
+    def test_real_xlsx_ok(self):
+        ok, ext, err = validate_evidence_file(_f('book.xlsx', _xlsx_bytes()), ALLOWED)
+        self.assertTrue(ok, err); self.assertEqual(ext, 'xlsx')
 
     def test_text_file_no_magic_ok(self):
         ok, _, _ = validate_evidence_file(_f('note.txt', b'just plain policy text'), ALLOWED)

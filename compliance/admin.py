@@ -88,7 +88,8 @@ class ControlAdmin(admin.ModelAdmin):
     list_display = ['control_id', 'title', 'framework', 'framework_version', 'domain',
                     'priority', 'is_legacy_import']
     list_filter = ['framework', 'framework_version', 'domain', 'priority', 'is_legacy_import']
-    search_fields = ['control_id', 'title', 'external_reference', 'source_reference']
+    search_fields = ['control_id', 'title', 'external_reference', 'source_reference',
+                     'framework_version__code', 'framework__code', 'domain__name']
 
 
 @admin.register(CompanyControl)

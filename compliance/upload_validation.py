@@ -39,8 +39,12 @@ def validate_evidence_file(uploaded_file, allowed_exts):
     if not ext or ext not in allowed:
         return False, ext, f'Unsupported file type ".{ext}".'
 
+    # Read the full content for sniffing: OOXML files (docx/xlsx are ZIP containers) are only
+    # recognised when the internal markers (e.g. b'word/') are present — those sit several KB
+    # in, well past a short header, so a truncated read mis-detects a real .docx as 'zip'.
+    # Bounded by the evidence size cap enforced by the caller / Django upload settings.
     try:
-        head = uploaded_file.read(_SNIFF_BYTES)
+        head = uploaded_file.read()
     finally:
         try:
             uploaded_file.seek(0)
