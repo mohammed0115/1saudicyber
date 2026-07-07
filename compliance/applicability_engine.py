@@ -125,12 +125,25 @@ def _control_tags(control, framework_code):
     return tags
 
 
-def _refine_for_control(base_status, company, control):
-    """Conservative per-control refinement using EXISTING control scope fields.
+# R2 — condition tag -> "is this condition true for the company?" (intake signal).
+# Only conditions with ONE reliable signal are here, so we can NARROW safely (never
+# under-scope). A tag with no entry here never narrows anything.
+CONDITION_SIGNALS = {
+    'cloud': lambda p: bool(p.uses_cloud_services or p.provides_cloud_services),
+    'critical_system': lambda p: bool(p.is_critical_system_operator),
+    'remote_work': lambda p: bool(p.has_remote_work),
+    'social_media': lambda p: bool(p.manages_official_social_media_accounts),
+    'ot_ics': lambda p: bool(p.has_ot_environment),
+}
 
-    Only narrows an 'applicable' framework result to 'not_applicable' when the
-    control explicitly scopes itself to sectors/sizes that exclude the company.
-    Never widens scope; never overfits on free text.
+
+def _refine_for_control(base_status, company, control):
+    """Conservative per-control refinement using EXISTING control scope fields + condition tags.
+
+    Narrows an 'applicable' framework result to 'not_applicable' only when the control
+    explicitly excludes the company by sector/size, OR carries a condition tag (e.g. 'cloud')
+    whose intake signal is definitively False. Requires an intake profile to narrow on a
+    condition; never widens scope; never under-scopes on uncertainty.
     """
     if base_status != APPLICABLE:
         return base_status, None
@@ -140,6 +153,14 @@ def _refine_for_control(base_status, company, control):
         return NOT_APPLICABLE, 'هذا الضابط مخصّص لقطاعات محددة لا تشمل قطاع الشركة.'
     if sizes and company.size and company.size not in sizes:
         return NOT_APPLICABLE, 'هذا الضابط مخصّص لأحجام منشآت محددة لا تشمل حجم الشركة.'
+    # R2: condition tags vs intake signals. Only narrow when an intake profile exists and the
+    # required condition is definitively False (else stay applicable — no under-scoping).
+    profile = getattr(company, 'intake_profile', None)
+    if profile is not None:
+        for tag in control.applicability_tags.values_list('tag', flat=True):
+            check = CONDITION_SIGNALS.get(tag)
+            if check is not None and not check(profile):
+                return NOT_APPLICABLE, f'هذا الضابط مشروط بـ«{tag}» ولا ينطبق بناءً على بيانات إدخال الشركة.'
     return base_status, None
 
 

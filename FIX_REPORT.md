@@ -202,9 +202,24 @@ behind config until the account agreement + `.env` keys are added.
   `ai_engine/tests_data_residency.py::AiAdvisoryStateTests`.
 - **Migration:** none. **Status:** ✅ 11/11 tests OK.
 
-### R2 / R3 — pending (deep items)
-R2 (conditional per-control applicability) and R3 (v1↔v2 evidence consolidation) require deliberate
-data/architecture work; scheduled as dedicated steps, not rushed.
+### R2 — Conditional per-control applicability (cloud/OT/critical/remote/social)
+- **Was:** `_refine_for_control` narrowed only by sector/size; condition-specific controls (e.g.
+  ECC cloud controls) applied to every company. `ControlApplicabilityTag` existed but was empty.
+- **Now:** `tag_conditional_controls [--apply]` populates conservative condition tags from the
+  OFFICIAL structure (whole CCC/CSCC/TCC/OSMACC/OTCC frameworks + precise control-title keywords
+  like ECC 4-2-x "cloud"). `_refine_for_control` narrows a control to not_applicable ONLY when it
+  carries a condition tag AND the company's intake signal is definitively False AND an intake
+  profile exists — never under-scopes. General third-party/personal-data are intentionally not
+  tagged (no reliable single signal). deploy.sh runs the tagging after import.
+- **Files:** `compliance/management/commands/tag_conditional_controls.py` (new),
+  `compliance/applicability_engine.py`, `deployment/deploy.sh`.
+- **Test:** `compliance/tests_conditional_applicability.py` (no-cloud → cloud control narrowed;
+  cloud → kept; no intake → never narrows; untagged → always applicable; command tags + idempotent).
+  Real dev-DB apply tagged 133 controls.
+- **Migration:** none (model existed). **Status:** ✅ 6/6 new + 38 applicability tests OK.
+
+### R3 — pending (architectural)
+v1↔v2 evidence-path consolidation requires a deliberate migration plan; scheduled as its own step.
 
 ## Deploy note (surfaced by P0-1/P0-2 fail-closed)
 After P0, a production container (`DEBUG=False`) **will refuse to boot** unless the server `.env`

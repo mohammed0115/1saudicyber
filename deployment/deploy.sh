@@ -77,6 +77,8 @@ docker compose exec -T web python manage.py collectstatic --noinput
 # Full official catalogue: 417 controls across 7 frameworks (idempotent, non-destructive).
 say "Importing FULL official control catalogue (417 across 7 frameworks) ..."
 docker compose exec -T web python manage.py import_all_official_controls --apply || warn "control import skipped/failed — review manually."
+say "Tagging conditional controls (cloud/OT/critical/remote/social) ..."
+docker compose exec -T web python manage.py tag_conditional_controls --apply || warn "conditional tagging skipped/failed — review manually."
 
 # --- 7) Smoke test ---------------------------------------------------------
 say "Smoke test ..."
