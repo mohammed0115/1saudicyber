@@ -100,6 +100,10 @@ class VerdictSubmissionStatusTests(TestCase):
         self.assertIn('Compliant', body)                  # separate compliance-verdict badge
         self.assertIn('مقبول', body)
         self.assertNotIn('Pending auditor review', body)
+        # Regression: the evidence_status component must not leak its developer comment
+        # (a multi-line {# #} does NOT comment in Django and would render into the page).
+        self.assertNotIn('cognitive conflation', body)
+        self.assertNotIn('INDEPENDENT dimensions', body)
 
     def test_noncompliant_verdict_still_shows_evidence_accepted(self):
         # A non-compliant CONTROL must not read as a rejected FILE, and must not read as
@@ -129,3 +133,22 @@ class VerdictAuditorGuardTests(TestCase):
             record_auditor_final_verdict(sub, u, status='final_c', rationale='محاولة معلّق.')
         sub.refresh_from_db()
         self.assertEqual(sub.status, 'pending_review')
+
+
+class VerdictIndependenceTests(TestCase):
+    """P1-5: nobody affiliated with the audited company may sign its verdict."""
+
+    def test_company_affiliated_staff_cannot_sign(self):
+        from compliance.auditor_verdict import can_submit_final_verdict
+        from core.models import User
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        insider = User.objects.create_user(email='insider@x.com', password='longenough12',
+                                           is_staff=True, company=c)  # staff BUT of this company
+        self.assertFalse(can_submit_final_verdict(insider, sub))
+        with self.assertRaises(VerdictError):
+            record_auditor_final_verdict(sub, insider, status='final_c', rationale='تعارض مصالح.')
+
+    def test_independent_staff_can_sign(self):
+        from compliance.auditor_verdict import can_submit_final_verdict
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.assertTrue(can_submit_final_verdict(_staff_user('indep@x.com'), sub))  # no company link

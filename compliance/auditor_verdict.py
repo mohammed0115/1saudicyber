@@ -38,8 +38,15 @@ def _is_assigned_auditor(user, company):
 
 
 def can_submit_final_verdict(user, submission):
-    """Only staff/superuser or an assigned active auditor may submit a verdict."""
+    """Only staff/superuser or an assigned active auditor may submit a verdict.
+
+    Independence (P1-5): nobody affiliated with the audited company may sign its verdict —
+    a conflict of interest — even a staff member who belongs to that company. Auditors are
+    platform-side (no company link) so this only blocks true self-audits.
+    """
     if not getattr(user, 'is_authenticated', False):
+        return False
+    if getattr(user, 'company_id', None) is not None and user.company_id == submission.company_id:
         return False
     if user.is_staff or user.is_superuser:
         return True
