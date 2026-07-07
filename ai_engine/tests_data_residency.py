@@ -8,7 +8,7 @@ from unittest import mock
 from django.test import SimpleTestCase, override_settings
 
 from ai_engine.services import (
-    analyze_evidence, external_ai_allowed, ai_data_residency_mode)
+    analyze_evidence, external_ai_allowed, ai_data_residency_mode, ai_advisory_state)
 
 _CONTROL = {'control_id': 'C-1', 'framework': 'NCA', 'title': 't', 'description': 'd'}
 
@@ -40,6 +40,26 @@ class ResidencyLocalNotYetExternalTests(SimpleTestCase):
 class ResidencyExternalStillNeedsKeyTests(SimpleTestCase):
     def test_external_without_key_blocked(self):
         self.assertFalse(external_ai_allowed())
+
+
+class AiAdvisoryStateTests(SimpleTestCase):
+    """R1: honest, specific availability reasons (never a vague 'unavailable')."""
+    @override_settings(OPENAI_API_KEY='', AI_DATA_RESIDENCY_MODE='external')
+    def test_no_key_reason(self):
+        ok, reason = ai_advisory_state()
+        self.assertFalse(ok)
+        self.assertIn('مفتاح', reason)
+
+    @override_settings(OPENAI_API_KEY='sk-test-key', AI_DATA_RESIDENCY_MODE='disabled')
+    def test_residency_reason(self):
+        ok, reason = ai_advisory_state()
+        self.assertFalse(ok)
+        self.assertIn('سيادة البيانات', reason)
+
+    @override_settings(OPENAI_API_KEY='sk-test-key', AI_DATA_RESIDENCY_MODE='external')
+    def test_available(self):
+        ok, reason = ai_advisory_state()
+        self.assertTrue(ok)
 
 
 @override_settings(OPENAI_API_KEY='sk-test-key', AI_DATA_RESIDENCY_MODE='disabled')

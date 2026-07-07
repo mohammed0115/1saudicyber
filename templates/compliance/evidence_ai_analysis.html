@@ -18,14 +18,17 @@
     </div>
 
     {% if not can_run %}
-    {# Extraction gate not satisfied #}
+    {# Honest, specific reason: extraction gate OR AI-service state (residency / no key). #}
     <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:18px;color:#667085;margin-bottom:18px;">
-      {% trans "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري." %}
+      {{ gate_reason|default:"خدمة التحليل الاستشاري غير متاحة حاليًا." }}
+      {% if ai_available %}
+      {# AI service is up — the only blocker is text extraction; offer the extract action. #}
       <div style="margin-top:12px;">
         <a href="{% url 'compliance:evidence_extraction' submission.id %}"
            style="background:#0F5D46;color:#fff;font-weight:600;padding:10px 20px;border-radius:10px;text-decoration:none;">
           {% trans "استخراج النص من الدليل" %}</a>
       </div>
+      {% endif %}
     </div>
     {% else %}
     {# Run / re-run action #}

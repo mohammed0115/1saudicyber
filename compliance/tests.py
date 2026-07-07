@@ -4772,7 +4772,10 @@ class AIAnalyzerServiceTests(TestCase):
             self.assertNotIn(bad, blob)
 
 
+@override_settings(OPENAI_API_KEY='sk-test-key', AI_DATA_RESIDENCY_MODE='external')
 class AIAnalyzerUITests(TestCase):
+    # R1: the "run analysis" button only shows when the AI service is actually available
+    # (key + residency=external). These UI tests therefore run under AI-available settings.
     def _patch_provider(self, provider):
         import compliance.evidence_ai_analyzer as mod
         self._orig = mod.default_provider

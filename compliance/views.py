@@ -280,11 +280,17 @@ def evidence_ai_analysis_preview(request, submission_id):
         messages.error(request, 'الدليل غير موجود أو لا يخصّ شركتك.')
         return redirect('compliance:evidence_checklist')
     can_run, reason = can_analyze_submission(sub)
+    # R1: reflect the AI-service availability (residency/key), not just the extraction gate,
+    # so the user knows upfront why analysis may be unavailable and how to enable it.
+    from ai_engine.services import ai_advisory_state
+    ai_available, ai_reason = ai_advisory_state()
     return render(request, 'compliance/evidence_ai_analysis.html', {
         'submission': sub,
         'analysis': getattr(sub, 'ai_analysis', None),
-        'can_run': can_run,
-        'gate_reason': reason,
+        'can_run': can_run and ai_available,
+        'gate_reason': reason if not can_run else (ai_reason if not ai_available else ''),
+        'ai_available': ai_available,
+        'ai_reason': ai_reason,
     })
 
 
@@ -306,7 +312,8 @@ def run_evidence_ai_analysis(request, submission_id):
     if obj.status == 'completed':
         messages.success(request, 'تم تشغيل التحليل الاستشاري. النتيجة استشارية ولا تُعد قرارًا نهائيًا.')
     elif obj.status == 'skipped':
-        messages.warning(request, 'خدمة التحليل الاستشاري غير متاحة حاليًا.')
+        # R1: surface the SPECIFIC reason (residency / no key / extraction) instead of a vague one.
+        messages.warning(request, obj.error_message or 'خدمة التحليل الاستشاري غير متاحة حاليًا.')
     else:
         messages.error(request, 'تعذر تنفيذ التحليل الاستشاري بأمان.')
     return redirect('compliance:evidence_ai_analysis', submission_id=sub.id)

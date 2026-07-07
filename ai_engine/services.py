@@ -29,6 +29,19 @@ def external_ai_allowed():
     return ai_data_residency_mode() == 'external' and ai_enabled()
 
 
+def ai_advisory_state():
+    """(available, reason_ar) for the advisory AI service — an honest, user-facing state.
+
+    Distinguishes the two fail-closed reasons so the UI never shows a vague 'unavailable'.
+    """
+    if not ai_enabled():
+        return False, 'التحليل الآلي غير مُفعّل على هذه البيئة (لا يوجد مفتاح).'
+    if ai_data_residency_mode() != 'external':
+        return False, ('التحليل الآلي معطّل بسياسة سيادة البيانات — '
+                       'لتفعيله اضبط AI_DATA_RESIDENCY_MODE=external.')
+    return True, 'التحليل الاستشاري مُفعّل (استشاري فقط، ليس قرارًا نهائيًا).'
+
+
 def get_openai_client():
     """Initialize OpenAI client with a bounded timeout and limited retries."""
     return OpenAI(api_key=settings.OPENAI_API_KEY, timeout=30.0, max_retries=2)
