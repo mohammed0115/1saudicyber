@@ -14,12 +14,29 @@ from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table, Tab
 
 GOV_GREEN = colors.HexColor('#1a4731')
 
+# R5 — every generated document must state, verbatim, that it is NOT an official
+# certification / government accreditation and does not represent NCA / Aramco / SABIC.
+DISCLAIMER_EN = ('This document is an internal readiness assessment produced by CyberTrust KSA. '
+                 'It is NOT an official cybersecurity certification or government accreditation, '
+                 'and does not represent NCA, Aramco, or SABIC.')
+DISCLAIMER_AR = ('هذا المستند تقييم جاهزية داخلي من CyberTrust KSA، وليس شهادة امتثال رسمية أو '
+                 'اعتمادًا حكوميًا، ولا يمثّل الهيئة الوطنية للأمن السيبراني أو أرامكو أو سابك.')
+
 
 def _styles():
     ss = getSampleStyleSheet()
     ss.add(ParagraphStyle('H1x', parent=ss['Heading1'], textColor=GOV_GREEN))
     ss.add(ParagraphStyle('Smallx', parent=ss['Normal'], fontSize=8, textColor=colors.grey))
     return ss
+
+
+def _disclaimer_elements(ss):
+    """Bilingual legal disclaimer block appended to every report/PDF."""
+    return [
+        Spacer(1, 8 * mm),
+        Paragraph(DISCLAIMER_EN, ss['Smallx']),
+        Paragraph(DISCLAIMER_AR, ss['Smallx']),
+    ]
 
 
 def gap_analysis_pdf(company):
@@ -57,6 +74,7 @@ def gap_analysis_pdf(company):
     elements.append(Spacer(1, 6 * mm))
     elements.append(Paragraph(f'Overall compliance: {company.overall_compliance_score:.1f}%', ss['Normal']))
     elements.append(Paragraph('تقرير تحليل الفجوات — ملخّص الامتثال عبر الأطر الثلاثة.', ss['Normal']))
+    elements.extend(_disclaimer_elements(ss))
     doc.build(elements)
     return buf.getvalue()
 
@@ -90,25 +108,32 @@ def compliance_excel(company):
 
 
 def certificate_pdf(company, framework_code, certificate_number, expiry):
-    """Compliance certificate PDF (issued on a passing audit, UC-004 step 11)."""
+    """Internal readiness ACKNOWLEDGEMENT PDF — NOT an official certificate.
+
+    R5: the platform is not a certification body, so this document never claims official
+    compliance. It records that an internal readiness review was completed and carries the
+    same non-certification disclaimer as every other report.
+    """
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, title='Certificate of Compliance')
+    doc = SimpleDocTemplate(buf, pagesize=A4, title='Cybersecurity Readiness Acknowledgement')
     ss = _styles()
     center = ParagraphStyle('C', parent=ss['Title'], alignment=1, textColor=GOV_GREEN)
     elements = [
         Spacer(1, 30 * mm),
-        Paragraph('Certificate of Cybersecurity Compliance', center),
+        Paragraph('Cybersecurity Readiness Acknowledgement', center),
         Spacer(1, 6 * mm),
-        Paragraph('شهادة الامتثال للأمن السيبراني', ParagraphStyle('Cc', parent=ss['Title'], alignment=1)),
+        Paragraph('إقرار جاهزية للأمن السيبراني (ليس شهادة رسمية)',
+                  ParagraphStyle('Cc', parent=ss['Title'], alignment=1)),
         Spacer(1, 14 * mm),
-        Paragraph(f'This certifies that <b>{company.name}</b> (CR {company.cr_number})',
+        Paragraph(f'This acknowledges that <b>{company.name}</b> (CR {company.cr_number})',
                   ParagraphStyle('B', parent=ss['Normal'], alignment=1, fontSize=12)),
-        Paragraph(f'has met the requirements of <b>{framework_code}</b>.',
+        Paragraph(f'completed an internal readiness review for <b>{framework_code}</b>.',
                   ParagraphStyle('B2', parent=ss['Normal'], alignment=1, fontSize=12)),
         Spacer(1, 10 * mm),
-        Paragraph(f'Certificate No: {certificate_number}', ParagraphStyle('m', parent=ss['Normal'], alignment=1)),
-        Paragraph(f'Issued: {date.today():%Y-%m-%d}   ·   Valid until: {expiry:%Y-%m-%d}',
+        Paragraph(f'Reference No: {certificate_number}', ParagraphStyle('m', parent=ss['Normal'], alignment=1)),
+        Paragraph(f'Issued: {date.today():%Y-%m-%d}   ·   Review window until: {expiry:%Y-%m-%d}',
                   ParagraphStyle('m2', parent=ss['Normal'], alignment=1)),
     ]
+    elements.extend(_disclaimer_elements(ss))
     doc.build(elements)
     return buf.getvalue()
