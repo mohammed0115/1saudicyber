@@ -218,8 +218,23 @@ behind config until the account agreement + `.env` keys are added.
   Real dev-DB apply tagged 133 controls.
 - **Migration:** none (model existed). **Status:** ✅ 6/6 new + 38 applicability tests OK.
 
-### R3 — pending (architectural)
-v1↔v2 evidence-path consolidation requires a deliberate migration plan; scheduled as its own step.
+### R3 — Evidence v1/v2: single source of truth (no risky merge)
+- **Finding:** the two evidence models coexist by UX path and the compliance/gap "status truth" is
+  ALREADY centralized — `ControlGapAssessment` (via `gap_engine`) is the derived source of truth;
+  `AuditorFinalVerdict` holds the human verdict; the auditor-verdict and control-assessment paths
+  deliberately never write `CompanyControl.status`. A full model merge was NOT warranted (data risk,
+  migration) and NOT done.
+- **The one real conflict fixed:** the advisory AI path (`process_evidence_pipeline`) could overwrite
+  `CompanyControl.status` → `ai_reviewed`, clobbering a human/compliance decision. Now guarded: AI
+  moves a control to `ai_reviewed` ONLY from a pre-decision state; it never overwrites
+  compliant/non_compliant/partially_compliant/not_applicable (`HUMAN_AUTHORITATIVE_STATUSES`).
+- **Canonical boundaries documented** in `compliance/services.py`:
+  Evidence = advisory OCR/AI · EvidenceSubmission = human review lifecycle ·
+  ControlGapAssessment = derived gap/compliance status · AuditorFinalVerdict = human final verdict.
+- **Files:** `compliance/services.py`.
+- **Test:** `compliance/tests_source_of_truth.py` (AI keeps human compliant/non_compliant;
+  AI sets ai_reviewed only from not_started; the authoritative set is the 4 final states).
+- **Migration:** none. **Status:** ✅ 4/4 new + evidence pipeline 4/4 OK.
 
 ## Deploy note (surfaced by P0-1/P0-2 fail-closed)
 After P0, a production container (`DEBUG=False`) **will refuse to boot** unless the server `.env`

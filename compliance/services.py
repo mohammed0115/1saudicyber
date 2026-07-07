@@ -16,6 +16,17 @@ from ai_engine.models import AIAuditLog
 
 logger = logging.getLogger(__name__)
 
+# R3 — canonical source-of-truth boundaries (evidence v1/v2 coexist by UX path, NOT merged):
+#   * Evidence           — control-detail upload; ADVISORY OCR/AI only. Never authoritative.
+#   * EvidenceSubmission  — checklist upload; the HUMAN review file lifecycle (auditor verdict).
+#   * ControlGapAssessment (gap_engine) — the derived compliance/gap status used in reports.
+#   * AuditorFinalVerdict — the human final verdict.
+# CompanyControl.status is a display roll-up; a human/compliance decision below must never be
+# overwritten by the advisory AI path.
+HUMAN_AUTHORITATIVE_STATUSES = {
+    'compliant', 'non_compliant', 'partially_compliant', 'not_applicable',
+}
+
 # Terminal Evidence.status used when analysis finished (success OR handled failure). We
 # reuse 'reviewed' (a valid model choice — no migration) and carry the failure signal in
 # ai_verdict='error', which the template renders as a red "Analysis failed" badge.
@@ -97,7 +108,11 @@ def process_evidence_pipeline(evidence_id):
         cc.ai_reasoning_ar = ai.get('reasoning_ar', '')
         cc.ai_recommendations = '\n'.join(ai.get('recommendations_en', []))
         cc.ai_recommendations_ar = '\n'.join(ai.get('recommendations_ar', []))
-        cc.status = 'ai_reviewed'
+        # R3 — single source of truth: advisory AI is NEVER authoritative. It may move a
+        # control into the advisory 'ai_reviewed' state, but must NOT overwrite a status that
+        # reflects a human/compliance decision (compliant/non_compliant/partial/not_applicable).
+        if cc.status not in HUMAN_AUTHORITATIVE_STATUSES:
+            cc.status = 'ai_reviewed'
         cc.last_assessed = timezone.now()
         cc.save()
 
