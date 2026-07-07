@@ -11,13 +11,25 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+from .env_checks import DEFAULT_SECRET_KEY, validate_secret_key, validate_allowed_hosts
+
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', DEFAULT_SECRET_KEY)
+# Safe-by-default: DEBUG is OFF unless explicitly enabled via the environment.
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+# Explicit hostnames only in production (no wildcard default). Empty in DEBUG lets Django
+# fall back to localhost; validated fail-closed below when DEBUG is off.
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h.strip()]
 # CSRF trusted origins (scheme + host), e.g. "https://app.example.sa". Empty by default
 # so local development is unaffected; set via env for HTTPS deployments.
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
 TESTING = any(arg in {'test', 'pytest'} for arg in sys.argv[1:])
+if TESTING:
+    # The Django test client uses these hosts; keep tests independent of env config.
+    ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS + ['testserver', 'localhost', '127.0.0.1']))
+
+# Fail-closed: refuse to boot in production with an unsafe secret key or host config.
+validate_secret_key(SECRET_KEY, DEBUG, TESTING)
+validate_allowed_hosts(ALLOWED_HOSTS, DEBUG, TESTING)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -136,6 +148,13 @@ STORAGES = {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
+if TESTING:
+    # Tests run without `collectstatic`, so the manifest storage would raise
+    # "Missing staticfiles manifest entry" on any {% static %}. Use the plain,
+    # non-manifest backend so the suite is green from a clean venv.
+    STORAGES['staticfiles'] = {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    }
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -172,6 +191,14 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o')
+# Data sovereignty (PDPL / NCA data classification). Controls whether evidence/company
+# text may leave the Kingdom for an external LLM:
+#   disabled (default) — no evidence text is ever sent to an external AI; advisory results
+#                        are produced locally/deferred to human review.
+#   external           — explicit opt-in: text MAY be sent to the configured external LLM.
+#   local              — reserved for an in-Kingdom LLM adapter (not yet wired → treated as
+#                        disabled for external calls).
+AI_DATA_RESIDENCY_MODE = os.getenv('AI_DATA_RESIDENCY_MODE', 'disabled').strip().lower()
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')

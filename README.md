@@ -67,7 +67,7 @@ python manage.py runserver
 Create a `.env` file in the project root:
 
 ```env
-SECRET_KEY=your-secret-key-here
+DJANGO_SECRET_KEY=your-secret-key-here
 DEBUG=True
 OPENAI_API_KEY=sk-your-openai-api-key
 OPENAI_MODEL=gpt-4o
