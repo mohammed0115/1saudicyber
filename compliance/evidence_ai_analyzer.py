@@ -52,10 +52,12 @@ class OpenAIEvidenceProvider(EvidenceAnalyzerProvider):
 
     def analyze(self, prompt):
         from django.conf import settings
-        key = getattr(settings, 'OPENAI_API_KEY', '') or ''
-        if not key:
-            raise ProviderUnavailable('AI provider not configured.')
-        from ai_engine.services import get_openai_client
+        # Data sovereignty (P1-6): this checklist AI path obeys the SAME residency gate as
+        # ai_engine — evidence text is not sent externally unless AI_DATA_RESIDENCY_MODE=
+        # external AND a key is set. Otherwise the advisory analysis is simply unavailable.
+        from ai_engine.services import external_ai_allowed, get_openai_client
+        if not external_ai_allowed():
+            raise ProviderUnavailable('External AI disabled by data-residency policy or no key.')
         client = get_openai_client()
         resp = client.chat.completions.create(
             model=getattr(settings, 'OPENAI_MODEL', 'gpt-4o'),
