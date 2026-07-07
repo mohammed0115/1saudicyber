@@ -154,6 +154,58 @@ behind config until the account agreement + `.env` keys are added.
 
 ---
 
+---
+
+## R0–R6 — Doc-to-code alignment (make pasted_content.md 100% real)
+
+### R0 — Load the full official catalogue (417 controls) — the headline claim
+- **Was:** the 417-control datasets shipped in-repo (`compliance/data/official_controls/*.yaml`,
+  exact counts 108/55/32/15/21/92/94) but were NOT loaded by default; deploy ran only the ≤9 pilot.
+- **Now:** one idempotent command `import_all_official_controls [--apply]` seeds the FrameworkVersion
+  registry then imports all 7 datasets; `deploy.sh` now runs it (full catalogue, not pilot).
+- **Files:** `compliance/management/commands/import_all_official_controls.py` (new),
+  `deployment/deploy.sh`.
+- **Test:** `compliance/tests_official_catalogue.py` (fresh DB → exactly 417 with correct
+  per-framework counts; idempotent re-run stays 417). Real dev-DB apply printed "417 controls
+  across 7 frameworks."
+- **Migration:** none. **Status:** ✅ `check` clean · no migrations · 2/2 tests OK.
+
+### R5 — Non-certification disclaimer on every PDF; neutralize `certificate_pdf`
+- **Was:** `gap_analysis_pdf` (the live report endpoint) carried no legal disclaimer; `certificate_pdf`
+  (dead code) was titled "Certificate of Cybersecurity Compliance" claiming the company "has met the
+  requirements" — a false official-certification claim contradicting the platform's positioning.
+- **Now:** shared bilingual `DISCLAIMER_EN/AR` ("NOT an official certification… does not represent
+  NCA/Aramco/SABIC") appended to every PDF; `certificate_pdf` reworded to a neutral "Cybersecurity
+  Readiness Acknowledgement" (no compliance claim) + disclaimer.
+- **Files:** `dashboard/reports.py`.
+- **Test:** `dashboard/tests_report_disclaimer.py` (reads generated PDF text via pdfplumber: gap PDF
+  has the disclaimer; acknowledgement PDF has no "certificate/has met the requirements" claim).
+- **Migration:** none. **Status:** ✅ 2/2 tests OK · existing `test_pdf_bytes` still green.
+
+### R4 — Gap-analysis states vs the doc
+- **Finding:** `CompanyControl.STATUS_CHOICES` already has 8 states (not_started, in_progress,
+  evidence_uploaded, ai_reviewed, compliant, non_compliant, partially_compliant, not_applicable) that
+  fully COVER the doc's 5 (Missing≈not_started, Needs Review≈ai_reviewed). No functional gap.
+- **Decision:** NO code change — renaming enum values would require a migration for a cosmetic label
+  and touch many call sites. Recommend the *management doc* adopt the code's (more precise) terms.
+- **Status:** ✅ verified complete; doc-wording correction listed in the audit (section F).
+
+### R1 — Advisory AI: honest, specific availability state
+- **Was:** when analysis couldn't run, the checklist AI page showed a hardcoded "extract text first"
+  message and a generic "service unavailable" — even when the real reason was the data-residency
+  gate or a missing key. The reason was captured but never surfaced.
+- **Now:** `ai_advisory_state()` returns (available, specific_reason); the preview reflects BOTH the
+  extraction gate and the AI-service state (residency/key) and prints the exact reason + how to
+  enable (`AI_DATA_RESIDENCY_MODE=external`); the run view surfaces the provider's specific message.
+- **Files:** `ai_engine/services.py`, `compliance/views.py`, `templates/compliance/evidence_ai_analysis.html`.
+- **Test:** `compliance/tests_ai_visibility.py` (preview shows residency/no-key reason) +
+  `ai_engine/tests_data_residency.py::AiAdvisoryStateTests`.
+- **Migration:** none. **Status:** ✅ 11/11 tests OK.
+
+### R2 / R3 — pending (deep items)
+R2 (conditional per-control applicability) and R3 (v1↔v2 evidence consolidation) require deliberate
+data/architecture work; scheduled as dedicated steps, not rushed.
+
 ## Deploy note (surfaced by P0-1/P0-2 fail-closed)
 After P0, a production container (`DEBUG=False`) **will refuse to boot** unless the server `.env`
 sets a strong `DJANGO_SECRET_KEY` **and** an explicit `ALLOWED_HOSTS` (no `*`). This is the intended
