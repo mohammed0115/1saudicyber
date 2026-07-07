@@ -52,3 +52,20 @@ djangorestframework-simplejwt==5.5.1
 # PostgreSQL driver — used only when POSTGRES_DB is set (Docker deployment).
 # Local development/tests default to SQLite and do not require this package.
 psycopg[binary]>=3.1,<4
+
+# PDF text-layer extraction — RUNTIME dependency of compliance/evidence_extraction.py
+# (_read_pdf). Absent here, the container marks every PDF as 'unsupported_type' and the
+# commercial-report tests fail with ModuleNotFoundError: pdfplumber. pdfplumber pulls
+# pdfminer.six + pypdfium2; pinned with their transitive deps for reproducible builds
+# (Pillow is already pinned above).
+pdfplumber==0.11.9
+pdfminer.six==20251230
+pypdfium2==5.9.0
+cryptography==48.0.0
+cffi==2.0.0
+pycparser==3.0
+charset-normalizer==3.4.7
+
+# Real upload content-type detection via magic bytes (compliance/upload_validation.py).
+# Pure-Python (no libmagic system dependency).
+filetype==1.2.0

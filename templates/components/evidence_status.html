@@ -1,8 +1,10 @@
 {% load i18n %}
-{# Two INDEPENDENT dimensions, shown as separate badges to avoid cognitive conflation:
-   (1) the evidence FILE lifecycle (uploaded/accepted/needs re-upload/…) and
-   (2) the auditor's COMPLIANCE verdict (compliant/non-compliant/…). "Evidence accepted"
-   means the file was accepted for review — NOT that the control is compliant. #}
+{% comment %}
+Two INDEPENDENT dimensions, shown as separate badges to avoid cognitive conflation:
+(1) the evidence FILE lifecycle (uploaded/accepted/needs re-upload/…) and
+(2) the auditor's COMPLIANCE verdict (compliant/non-compliant/…). "Evidence accepted"
+means the file was accepted for review — NOT that the control is compliant.
+{% endcomment %}
 <span class="inline-flex flex-wrap items-center gap-1.5">
 {% if submission.status == 'accepted' %}
   <span class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700" title="{% trans 'حالة الملف: قُبل كدليل للمراجعة (ليست حكم امتثال)' %}">

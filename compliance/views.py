@@ -109,17 +109,14 @@ def upload_evidence(request, control_id):
         messages.error(request, _('يرجى اختيار ملف للرفع.'))
         return redirect('compliance:control_detail', control_id=control_id)
 
-    # Determine file type
-    file_ext = os.path.splitext(uploaded_file.name)[1].lower().replace('.', '')
-
-    # Server-side validation (FR-005.11): reject unsupported types / oversized files.
+    # Server-side validation (FR-005.11 + P0-6): reject spoofed types via magic bytes,
+    # unsupported types, and oversized files.
+    from .upload_validation import validate_evidence_file
     allowed = getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
     max_size = getattr(settings, 'MAX_EVIDENCE_FILE_SIZE', 50 * 1024 * 1024)
-    if file_ext not in allowed:
-        messages.error(
-            request,
-            f'Unsupported file type ".{file_ext}". Allowed types: {", ".join(allowed)}.'
-        )
+    ok, file_ext, err = validate_evidence_file(uploaded_file, allowed)
+    if not ok:
+        messages.error(request, f'{err} Allowed types: {", ".join(allowed)}.')
         return redirect('compliance:control_detail', control_id=control_id)
     if uploaded_file.size > max_size:
         messages.error(
@@ -698,9 +695,15 @@ def evidence_upload_v2(request, item_id):
             # URGENT hotfix: the upload must NEVER return 500, even if storage, hashing,
             # auditing, or an incomplete control/framework mapping misbehaves. Any
             # unexpected failure becomes a safe bilingual message + redirect.
+            f = form.cleaned_data['uploaded_file']
+            # P0-6: reject spoofed content types (magic-byte check) on this path too.
+            from .upload_validation import validate_evidence_file
+            _allowed = getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
+            _ok, ext, _err = validate_evidence_file(f, _allowed)
+            if not _ok:
+                messages.error(request, '%s · %s' % ('محتوى الملف لا يطابق امتداده.', _err))
+                return redirect('compliance:evidence_submission_list', item_id=item.id)
             try:
-                f = form.cleaned_data['uploaded_file']
-                ext = os.path.splitext(f.name)[1].lower().lstrip('.')
                 digest = hashlib.sha256()
                 for chunk in f.chunks():
                     digest.update(chunk)
