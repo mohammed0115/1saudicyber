@@ -74,9 +74,9 @@ docker compose exec -T web python manage.py migrate --noinput
 docker compose exec -T web python manage.py collectstatic --noinput
 
 # --- 6) Load control catalogue --------------------------------------------
-# Pilot (<=9) ships in-repo. Replace with the FULL official import when the dataset is ready.
-say "Importing control catalogue (pilot) ..."
-docker compose exec -T web python manage.py import_official_controls_pilot || warn "control import skipped/failed — review manually."
+# Full official catalogue: 417 controls across 7 frameworks (idempotent, non-destructive).
+say "Importing FULL official control catalogue (417 across 7 frameworks) ..."
+docker compose exec -T web python manage.py import_all_official_controls --apply || warn "control import skipped/failed — review manually."
 
 # --- 7) Smoke test ---------------------------------------------------------
 say "Smoke test ..."
