@@ -12,7 +12,7 @@
         <p class="text-gov-gray-500 text-sm">{{ fv.display_name_en }} · {{ fv.code }} — {{ control_count }} ضابط رسمي</p>
         <p class="text-gov-gray-500 text-xs mt-1">معاينة للقراءة فقط للضوابط الرسمية قبل اعتماد النطاق. لا تُنشأ خطة ضوابط أو أدلة من هذه المعاينة.</p>
         <span class="inline-block mt-2 text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded px-2 py-1">
-            النصوص العربية المساعدة هنا شرح توضيحي وليست ترجمة رسمية؛ النص الرسمي المعتمد هو الأصل بالإنجليزية.
+            النص العربي المساعد لتسهيل الفهم، والنص الرسمي المعتمد هو النص الأصلي للضابط.
         </span>
     </div>
 
@@ -26,7 +26,6 @@
                     <th class="text-right px-4 py-3">المجال</th>
                     <th class="text-right px-4 py-3">متطلبات الأدلة</th>
                     <th class="text-right px-4 py-3">الحالة</th>
-                    <th class="text-right px-4 py-3">التفاصيل</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gov-gray-100">
@@ -44,41 +43,39 @@
                     <td class="px-4 py-3 text-xs text-gov-gray-600">{{ c.domain.name|domain_ar|default:"—" }}</td>
                     <td class="px-4 py-3 text-xs text-gov-gray-600">
                         {% for er in c.evidence_requirements.all %}
-                        <div class="mb-1"><i class="fas fa-file-lines text-gov-gray-400 ml-1"></i>{{ er.title }}
+                        <div class="mb-1"><i class="fas fa-file-lines text-gov-gray-400 ml-1"></i>{{ er.title|req_title_ar }}
                             <span class="text-gov-gray-400">({{ er.evidence_type|evtype_ar }})</span></div>
                         {% empty %}
                         <span class="text-gov-gray-500">{{ c.evidence_type|evtype_ar }}</span>
                         {% endfor %}
                     </td>
                     <td class="px-4 py-3">
-                        <span class="inline-block px-2 py-0.5 rounded bg-gov-gray-100 text-gov-gray-600 text-xs">
-                            سيتم إنشاء مهمة هذا الضابط ضمن خطة الضوابط بعد اعتماد نطاق الأطر.
-                        </span>
+                        <span class="inline-block px-2 py-0.5 rounded bg-gov-gray-100 text-gov-gray-600 text-xs">مخطط</span>
                     </td>
-                    <td class="px-4 py-3">
-                        <details>
-                            <summary class="cursor-pointer text-gov-green-700 text-xs font-medium select-none">عرض التفاصيل</summary>
-                            <div class="mt-2 space-y-2 text-xs text-gov-gray-700 max-w-xl">
+                </tr>
+                {# Full-width details row (colspan) so the table columns never break. #}
+                <tr class="bg-gov-gray-50/40">
+                    <td colspan="5" class="px-4 pb-3 pt-0">
+                        <details class="group">
+                            <summary class="cursor-pointer text-gov-green-700 text-xs font-medium select-none py-1">عرض التفاصيل</summary>
+                            <div class="mt-2 grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs text-gov-gray-700 leading-6 border-t border-gov-gray-100 pt-3">
                                 <div><span class="text-gov-gray-500">رقم الضابط:</span> <span class="font-mono" dir="ltr">{{ c.control_id }}</span></div>
                                 <div><span class="text-gov-gray-500">المجال:</span> {{ c.domain.name|domain_ar|default:"—" }}</div>
-                                <div>
-                                    <span class="text-gov-gray-500 font-semibold">ما المطلوب من الشركة؟</span>
-                                    <p class="mt-1 leading-6">{{ c|company_requirement }}</p>
-                                </div>
-                                <div>
+                                <div class="md:col-span-2"><span class="text-gov-gray-500 font-semibold">ما المطلوب من الشركة؟</span>
+                                    <p class="mt-1">{{ c|company_requirement }}</p></div>
+                                <div class="md:col-span-2"><span class="text-gov-gray-500">نوع الدليل المطلوب:</span> {{ c.evidence_type|evtype_ar }}</div>
+                                <div class="md:col-span-2">
+                                    <span class="text-gov-gray-500 font-semibold">النص الرسمي الأصلي بالإنجليزية:</span>
                                     {% if c.description_ar %}
-                                    <span class="text-gov-gray-500 font-semibold">النص الرسمي (بالعربية):</span>
-                                    <p class="mt-1 leading-6">{{ c.description_ar }}</p>
-                                    <span class="text-gov-gray-500 font-semibold">النص الرسمي الأصلي بالإنجليزية:</span>
-                                    <p class="mt-1 leading-6" dir="ltr">{{ c.description|normalize_en }}</p>
+                                    <p class="mt-1">{{ c.description_ar }}</p>
+                                    <p class="mt-1" dir="ltr">{{ c.description|normalize_en }}</p>
                                     {% else %}
-                                    <span class="text-gov-gray-500 font-semibold">النص الرسمي الأصلي بالإنجليزية:</span>
-                                    <span class="inline-block text-[0.7rem] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5 mr-1">شرح مساعد وليس ترجمة رسمية</span>
-                                    <p class="mt-1 leading-6" dir="ltr">{{ c.description|normalize_en }}</p>
+                                    <p class="mt-1" dir="ltr">{{ c.description|normalize_en }}</p>
+                                    <p class="mt-1 text-amber-700">شرح مساعد وليس ترجمة رسمية.</p>
                                     {% endif %}
                                 </div>
-                                <div><span class="text-gov-gray-500">نوع الدليل المطلوب:</span> {{ c.evidence_type|evtype_ar }}</div>
-                                <div><span class="text-gov-gray-500">الحالة:</span> سيتم إنشاء مهمة هذا الضابط ضمن خطة الضوابط بعد اعتماد نطاق الأطر.</div>
+                                <div class="md:col-span-2"><span class="text-gov-gray-500">الحالة:</span> مخطط</div>
+                                <div class="md:col-span-2 text-gov-gray-500">ملاحظة: سيتم إنشاء مهمة هذا الضابط ضمن خطة الضوابط بعد اعتماد نطاق الأطر.</div>
                             </div>
                         </details>
                     </td>

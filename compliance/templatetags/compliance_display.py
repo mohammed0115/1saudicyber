@@ -62,10 +62,52 @@ _GENERIC_REQUIREMENT = ('جهّز الأدلة والوثائق التي تُث�
                         'لمراجعة المدقق. هذا وصف مساعد وليس نصًا رسميًا.')
 
 
+# Requirement level / priority / checklist status / submission status -> Arabic (display only).
+_LEVEL_AR = {'mandatory': 'إلزامي', 'recommended': 'موصى به', 'optional': 'اختياري'}
+_PRIORITY_AR = {'high': 'عالي', 'medium': 'متوسط', 'low': 'منخفض', 'critical': 'حرج'}
+_CHECKLIST_STATUS_AR = {
+    'planned': 'مخطط', 'in_progress': 'قيد التنفيذ', 'submitted': 'مُرسل', 'waived': 'مُعفى',
+}
+_SUBMISSION_STATUS_AR = {
+    'uploaded': 'مرفوع', 'pending_review': 'بانتظار المراجعة', 'accepted': 'مقبول',
+    'rejected': 'مرفوض', 'needs_reupload': 'يحتاج إعادة رفع', 'archived': 'مؤرشف',
+    # extraction/analysis states that may surface in the same column.
+    'extracted': 'مستخرج', 'failed': 'فشل', 'manual_review': 'مراجعة يدوية',
+}
+# Known English default evidence-requirement titles -> Arabic (display only).
+_REQ_TITLE_AR = {'Primary supporting evidence': 'دليل داعم أساسي'}
+
+
 @register.filter
 def evtype_ar(code):
     """Arabic label for an evidence-type code; unknown codes return as-is."""
     return _EVTYPE_AR.get(str(code or '').strip().lower(), code)
+
+
+@register.filter
+def level_ar(code):
+    return _LEVEL_AR.get(str(code or '').strip().lower(), code)
+
+
+@register.filter
+def priority_ar(code):
+    return _PRIORITY_AR.get(str(code or '').strip().lower(), code)
+
+
+@register.filter
+def checklist_status_ar(code):
+    return _CHECKLIST_STATUS_AR.get(str(code or '').strip().lower(), code)
+
+
+@register.filter
+def submission_status_ar(code):
+    return _SUBMISSION_STATUS_AR.get(str(code or '').strip().lower(), code)
+
+
+@register.filter
+def req_title_ar(title):
+    """Arabic label for a known English default requirement title; unknown titles unchanged."""
+    return _REQ_TITLE_AR.get(str(title or '').strip(), title)
 
 
 @register.filter

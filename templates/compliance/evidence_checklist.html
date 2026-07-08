@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load compliance_display %}
 {% block title %}قائمة الأدلة - 1SaudiCyber{% endblock %}
 
 {% block content %}
@@ -81,15 +82,15 @@
                 <tr>
                     <td class="px-4 py-2 font-mono text-xs">{{ it.evidence_requirement.control.control_id }}</td>
                     <td class="px-4 py-2 text-xs text-gov-gray-500">{{ it.evidence_requirement.control.framework_version.code }}</td>
-                    <td class="px-4 py-2 text-gov-gray-700">{{ it.evidence_requirement.title }}</td>
-                    <td class="px-4 py-2 text-xs">{{ it.evidence_requirement.get_requirement_level_display }}</td>
-                    <td class="px-4 py-2 text-xs">{{ it.get_priority_display }}</td>
-                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">{{ it.get_status_display }}</span></td>
+                    <td class="px-4 py-2 text-gov-gray-700">{{ it.evidence_requirement.title|req_title_ar }}</td>
+                    <td class="px-4 py-2 text-xs">{{ it.evidence_requirement.requirement_level|level_ar }}</td>
+                    <td class="px-4 py-2 text-xs">{{ it.priority|priority_ar }}</td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">{{ it.status|checklist_status_ar }}</span></td>
                     <td class="px-4 py-2 text-xs">
                         {% with subs=it.submissions.all %}
                         {% if subs %}
                             <a href="{% url 'compliance:evidence_submission_list' it.id %}" class="text-gov-green-700 hover:underline">
-                                {{ subs|length }} ملف — آخرها: {{ subs.0.get_status_display }}
+                                {{ subs|length }} ملف — آخرها: {{ subs.0.status|submission_status_ar }}
                             </a>
                         {% else %}
                             <span class="text-gov-gray-400">لا دليل مرفوع بعد</span>
@@ -107,6 +108,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        <div class="px-4 py-2">{% include "components/pagination.html" %}</div>
     </div>
 
     <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">

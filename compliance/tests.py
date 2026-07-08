@@ -2411,6 +2411,47 @@ class EvidenceChecklistViewTests(TestCase):
         for it in resp.context['items']:
             self.assertEqual(it.company, self.c)
 
+    def _seed_checklist_items(self, n):
+        from compliance.models import (Control, Domain, EvidenceRequirement,
+                                        EvidenceChecklistItem, ControlApplicabilityResult)
+        dom, _ = Domain.objects.get_or_create(framework=self.fv.framework, code='ECD',
+                                              defaults={'name': 'ECD'})
+        for i in range(n):
+            ctrl = Control.objects.create(framework=self.fv.framework, framework_version=self.fv,
+                                          domain=dom, control_id=f'ECI-{i:02d}', title='t',
+                                          description='d', evidence_type='policy')
+            car = ControlApplicabilityResult.objects.create(company=self.c, framework_scope=self.scope,
+                                                            control=ctrl, decision='applicable')
+            req = EvidenceRequirement.objects.create(control=ctrl,
+                                                     title='Primary supporting evidence',
+                                                     evidence_type='policy',
+                                                     requirement_level='mandatory')
+            EvidenceChecklistItem.objects.create(company=self.c, evidence_requirement=req,
+                                                 control_applicability_result=car,
+                                                 priority='medium', status='planned')
+
+    def test_checklist_paginates_20_per_page_and_page2(self):
+        self._seed_checklist_items(25)
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertGreaterEqual(resp.context['items_total'], 25)
+        self.assertEqual(len(resp.context['page_obj'].object_list), 20)   # not all at once
+        self.assertTrue(resp.context['page_obj'].has_next)
+        resp2 = self.client.get(reverse('compliance:evidence_checklist') + '?page=2')
+        self.assertEqual(resp2.context['page_obj'].number, 2)
+
+    def test_checklist_arabic_labels_no_operational_english(self):
+        self._seed_checklist_items(1)
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertContains(resp, 'مخطط')            # Planned
+        self.assertContains(resp, 'متوسط')           # Medium
+        self.assertContains(resp, 'إلزامي')          # Mandatory
+        self.assertContains(resp, 'دليل داعم أساسي')  # Primary supporting evidence
+        self.assertNotContains(resp, 'Planned')
+        self.assertNotContains(resp, 'Mandatory')
+        self.assertNotContains(resp, 'Primary supporting evidence')
+
 
 class Phase3DGuardrailTests(TestCase):
     def test_upload_flow_untouched(self):
@@ -7216,3 +7257,11 @@ class FrameworkControlsPreviewTests(TestCase):
         self.assertGreaterEqual(resp.context['plan_total'], 25)
         self.assertEqual(len(resp.context['page_obj'].object_list), 20)   # not all 25 at once
         self.assertContains(resp, 'إجمالي الضوابط المخططة')
+
+    def test_preview_details_row_is_full_width_colspan(self):
+        # "عرض التفاصيل" opens a full-width colspan row (does not break the table columns).
+        body = self.client.get(self._url()).content.decode()
+        self.assertIn('عرض التفاصيل', body)
+        self.assertIn('colspan="5"', body)
+        self.assertIn('ما المطلوب من الشركة', body)
+        self.assertIn('النص الرسمي الأصلي بالإنجليزية', body)

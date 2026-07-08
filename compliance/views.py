@@ -780,7 +780,13 @@ def evidence_checklist(request):
              .select_related('evidence_requirement', 'evidence_requirement__control',
                              'evidence_requirement__control__framework_version',
                              'control_applicability_result')
-             .prefetch_related('submissions'))
+             .prefetch_related('submissions')
+             .order_by('evidence_requirement__control__framework_version__code',
+                       'evidence_requirement__control__control_id'))
+    # Paginate (backend) — a full checklist can be hundreds of items; never render all at once.
+    from django.core.paginator import Paginator
+    items_total = items.count()
+    items_page = Paginator(items, 20).get_page(request.GET.get('page'))
     # Scope state drives a clear empty-state: no scopes -> classify; scopes pending
     # approval -> wait for approval; approved but empty -> (staff) generate.
     from .models import CompanyFrameworkScope, ControlApplicabilityResult
@@ -793,7 +799,8 @@ def evidence_checklist(request):
     from .workflow_stepper import build_company_workflow_stepper
     from .journey import build_page_guide, build_journey_nav
     return render(request, 'compliance/evidence_checklist.html', {
-        'company': company, 'items': items, 'can_generate': request.user.is_staff,
+        'company': company, 'items': items_page, 'page_obj': items_page,
+        'items_total': items_total, 'can_generate': request.user.is_staff,
         'has_any_scope': has_any_scope, 'has_approved_scope': has_approved_scope,
         'has_control_plan': has_control_plan,
         'stepper': build_company_workflow_stepper(company),
