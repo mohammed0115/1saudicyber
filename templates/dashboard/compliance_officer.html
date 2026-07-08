@@ -1,60 +1,83 @@
 {% extends "base.html" %}
-{% block title %}Compliance Dashboard - 1SaudiCyber{% endblock %}
+{% block title %}لوحة الامتثال - 1SaudiCyber{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
+<div class="space-y-8" dir="rtl">
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gov-green-800">Compliance Dashboard</h1>
-            <p class="text-gov-gray-600">{{ company.name }} — Compliance Officer View</p>
+            <h1 class="text-2xl font-bold text-gov-green-800">لوحة الامتثال</h1>
+            <p class="text-gov-gray-600">{{ company.name }} — عرض مسؤول الامتثال</p>
         </div>
+        {% if has_approved_scope and has_control_plan %}
         <div class="flex gap-3">
             <a href="{% url 'ai_engine:gap_analysis' %}" class="bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-gov-green-700 transition">
-                <i class="fas fa-magnifying-glass-chart mr-2"></i> Run Gap Analysis
+                <i class="fas fa-magnifying-glass-chart ml-2"></i> تشغيل تحليل الفجوات
             </a>
             <a href="{% url 'compliance:controls_list' %}" class="border border-gov-green-800 text-gov-green-800 px-5 py-2.5 rounded-lg font-medium hover:bg-gov-green-50 transition">
-                <i class="fas fa-list-check mr-2"></i> All Controls
+                <i class="fas fa-list-check ml-2"></i> جميع الضوابط
             </a>
         </div>
+        {% endif %}
     </div>
 
+    {% include "compliance/_workflow_stepper.html" %}
+
+    {% if not has_approved_scope %}
+    {# State 1: no approved scope -> no cards, no counts, no gap analysis. #}
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center">
+        <i class="fas fa-clipboard-check text-amber-500 text-4xl mb-4"></i>
+        <p class="text-gov-gray-700 text-lg mb-4">لم يتم اعتماد نطاق الأطر بعد. يرجى مراجعة التصنيف واعتماد النطاق للمتابعة.</p>
+        <a href="{% url 'compliance:applicability_review' %}" class="inline-block bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+            مراجعة واعتماد نطاق الأطر
+        </a>
+    </div>
+
+    {% elif not has_control_plan %}
+    {# State 2: approved scope, but the control plan has not been generated yet. #}
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-8 text-center">
+        <i class="fas fa-list-check text-blue-500 text-4xl mb-4"></i>
+        <p class="text-gov-gray-700 text-lg mb-4">تم اعتماد نطاق الأطر، لكن خطة الضوابط لم تُنشأ بعد.</p>
+        <a href="{% url 'compliance:control_plan' %}" class="inline-block bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+            إنشاء خطة الضوابط
+        </a>
+    </div>
+
+    {% else %}
+    {# State 3: control plan exists -> real counts + approved frameworks only. #}
     <!-- Score Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-gov-gray-500">Total Controls</span>
+                <span class="text-sm font-medium text-gov-gray-500">إجمالي الضوابط</span>
                 <i class="fas fa-list text-gov-green-600"></i>
             </div>
             <div class="text-3xl font-bold text-gov-green-800">{{ total_controls }}</div>
         </div>
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-gov-gray-500">Compliant</span>
+                <span class="text-sm font-medium text-gov-gray-500">ممتثل</span>
                 <i class="fas fa-check-circle text-green-600"></i>
             </div>
             <div class="text-3xl font-bold text-green-700">{{ compliant_controls }}</div>
-            <div class="text-sm text-gov-gray-500 mt-1">
-                {% if total_controls > 0 %}{{ compliant_controls|floatformat:0 }}% of total{% endif %}
-            </div>
         </div>
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-gov-gray-500">In Progress</span>
+                <span class="text-sm font-medium text-gov-gray-500">قيد العمل</span>
                 <i class="fas fa-spinner text-yellow-600"></i>
             </div>
             <div class="text-3xl font-bold text-yellow-700">{{ status_counts.in_progress|default:0 }}</div>
         </div>
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium text-gov-gray-500">Not Started</span>
+                <span class="text-sm font-medium text-gov-gray-500">لم يبدأ</span>
                 <i class="fas fa-circle-xmark text-red-600"></i>
             </div>
             <div class="text-3xl font-bold text-red-700">{{ status_counts.not_started|default:0 }}</div>
         </div>
     </div>
 
-    <!-- Framework Scores -->
+    <!-- Framework Scores (approved scope only) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {% for code, fw in framework_scores.items %}
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
@@ -67,7 +90,7 @@
             <div class="w-full bg-gov-gray-200 rounded-full h-3 mb-3">
                 <div class="bg-gov-green-600 h-3 rounded-full transition-all" style="width: {{ fw.score }}%"></div>
             </div>
-            <div class="text-sm text-gov-gray-500">{{ fw.compliant }}/{{ fw.total }} controls compliant</div>
+            <div class="text-sm text-gov-gray-500">{{ fw.compliant }}/{{ fw.total }} ضابط ممتثل</div>
         </div>
         {% endfor %}
     </div>
@@ -76,28 +99,29 @@
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100">
         <div class="p-6 border-b border-gov-gray-100">
             <h2 class="text-lg font-bold text-gov-green-800">
-                <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
-                Pending Controls (Action Required)
+                <i class="fas fa-exclamation-triangle text-yellow-600 ml-2"></i>
+                ضوابط تحتاج إجراء
             </h2>
         </div>
         <div class="divide-y divide-gov-gray-100">
-            {% for cc in pending_controls %}
+            {% for r in pending_controls %}
             <div class="p-4 hover:bg-gov-gray-50 transition flex items-center justify-between">
                 <div class="flex-1">
-                    <div class="font-medium text-gov-green-800">{{ cc.control.control_id }} — {{ cc.control.title }}</div>
-                    <div class="text-sm text-gov-gray-500">{{ cc.control.framework.name }} | {{ cc.control.domain.name }}</div>
+                    <div class="font-medium text-gov-green-800">{{ r.control.control_id }} — {{ r.control.title }}</div>
+                    <div class="text-sm text-gov-gray-500">{{ r.control.framework_version.display_name_ar }} | {{ r.control.domain.name }}</div>
                 </div>
-                <a href="{% url 'compliance:control_detail' cc.control.id %}" class="text-gov-green-700 hover:text-gov-green-900 font-medium text-sm">
-                    View <i class="fas fa-arrow-right ml-1"></i>
+                <a href="{% url 'compliance:control_detail' r.control.id %}" class="text-gov-green-700 hover:text-gov-green-900 font-medium text-sm">
+                    عرض <i class="fas fa-arrow-left mr-1"></i>
                 </a>
             </div>
             {% empty %}
             <div class="p-8 text-center text-gov-gray-500">
                 <i class="fas fa-check-circle text-green-500 text-3xl mb-3"></i>
-                <p>All controls are being addressed. Great work!</p>
+                <p>جميع الضوابط قيد المعالجة. عمل رائع!</p>
             </div>
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
