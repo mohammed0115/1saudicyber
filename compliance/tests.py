@@ -2061,6 +2061,18 @@ class ScopeViewTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(resp.context['plan']), 2)
 
+    def test_control_plan_page_is_arabic_no_operational_english(self):
+        # Language UAT: decision + reason render in Arabic, not "Applicable" / English reason.
+        self.client.force_login(self.staff)
+        self.client.get(reverse('compliance:applicability_review'))
+        s = approve_framework_scope(CompanyFrameworkScope.objects.get(company=self.c, framework_version=self.fv))
+        generate_control_applicability_plan(self.c, s, apply=True)
+        resp = self.client.get(reverse('compliance:control_plan'))
+        self.assertContains(resp, 'منطبق')
+        self.assertNotContains(resp, 'Applicable')
+        self.assertContains(resp, 'تم إدراج هذا الضابط لأن الإطار الأصلي معتمد')
+        self.assertNotContains(resp, 'Included because the parent framework was approved')
+
     def test_control_plan_page_does_not_show_upload_form(self):
         self.client.force_login(self.user)
         resp = self.client.get(reverse('compliance:control_plan'))
@@ -3496,7 +3508,7 @@ class JourneyEmptyStateTests(TestCase):
         self.client.force_login(user)
         resp = self.client.get(reverse('compliance:control_plan'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Start with framework review')
+        self.assertContains(resp, 'ابدأ بمراجعة الأطر')
 
     def test_evidence_checklist_empty_state(self):
         c = _company()
@@ -6284,7 +6296,7 @@ class EvidenceOCRMVPTests(TestCase):
         self.client.force_login(staff)
         resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Evidence summary')
+        self.assertContains(resp, 'ملخص الأدلة')
 
     # ---- smart processing animation + safety ----
     def test_processing_animation_present_on_extraction_page(self):
@@ -6513,7 +6525,7 @@ class GapDashboardViewTests(TestCase):
         self.client.force_login(staff)
         resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Preliminary readiness')
+        self.assertContains(resp, 'الجاهزية الأولية')
 
     def test_no_unsafe_wording_on_gap_page(self):
         from compliance.gap_engine import recalculate_company_gap
@@ -6703,7 +6715,7 @@ class CommercialReportCRMSummaryTests(TestCase):
         self.client.force_login(staff)
         resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Readiness report summary')
+        self.assertContains(resp, 'تقرير الجاهزية')
 
     def test_crm_report_summary_staff_only(self):
         c, item, sub = _company_with_submission()

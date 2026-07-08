@@ -613,7 +613,7 @@ class GetSolutionCRMConsoleTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, c.name)
         self.assertContains(resp, cu.email)  # linked user shown
-        self.assertContains(resp, 'Operational status')
+        self.assertContains(resp, 'الحالة التشغيلية')
 
     def test_companies_list_no_500_when_empty(self):
         # No companies at all -> must render an empty-state, not crash.
@@ -1013,7 +1013,7 @@ class CRMCompanyUserLinkingTests(TestCase):
         self._unlinked_user()
         self.client.force_login(self._staff())
         body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
-        self.assertIn('Link user to company', body)
+        self.assertIn('ربط حساب بالشركة', body)
         # Affirmative certification/accreditation CLAIMS must never appear (the CRM
         # footer's negated disclaimer "لا يمثّل ... شهادة امتثال رسمية" is safe).
         for w in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد حكومي',
@@ -1251,8 +1251,8 @@ class CRMCompanyFollowUpTests(TestCase):
         self.client.force_login(self._staff())
         resp = self.client.get(self._detail_url(c))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'No internal notes yet')
-        self.assertContains(resp, 'No internal activity yet')
+        self.assertContains(resp, 'لا توجد ملاحظات داخلية بعد')
+        self.assertContains(resp, 'لا يوجد نشاط داخلي بعد')
 
     # ---- notes ----
     def test_staff_can_add_note_and_it_appears(self):
@@ -1374,7 +1374,7 @@ class CRMCompanyFollowUpTests(TestCase):
         self.assertIn('crm_status_changed', actions)
         self.assertIn('crm_note_added', actions)
         body = self.client.get(self._detail_url(c)).content.decode()
-        self.assertIn('Activity timeline', body)
+        self.assertIn('سجل النشاط الداخلي', body)
 
     def test_timeline_scoped_to_company(self):
         c1 = self._company(cr='8282828282', name='C1')
@@ -1389,8 +1389,8 @@ class CRMCompanyFollowUpTests(TestCase):
         c = self._company()
         self.client.force_login(self._staff())
         body = self.client.get(self._detail_url(c)).content.decode()
-        self.assertIn('Follow-up status', body)
-        self.assertIn('Internal notes', body)
+        self.assertIn('حالة المتابعة', body)
+        self.assertIn('ملاحظات داخلية', body)
         for w in ('معتمد من NCA', 'معتمد من أرامكو', 'معتمد من سابك', 'اعتماد حكومي',
                   'certified by NCA', 'official accreditation', 'government accredited',
                   'official certification'):

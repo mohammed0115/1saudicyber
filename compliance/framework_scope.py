@@ -89,6 +89,6 @@ def generate_control_applicability_plan(company, framework_scope, *, apply=False
             ControlApplicabilityResult.objects.update_or_create(
                 company=company, control=c,
                 defaults={'framework_scope': framework_scope, 'decision': 'applicable',
-                          'reason': 'Included because the parent framework was approved.',
+                          'reason': 'تم إدراج هذا الضابط لأن الإطار الأصلي معتمد.',
                           'source': 'framework_scope', 'confidence': 1.0})
     return len(planned), planned

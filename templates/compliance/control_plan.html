@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load compliance_display %}
 {% block title %}خطة الضوابط - 1SaudiCyber{% endblock %}
 
 {% block content %}
@@ -16,8 +17,7 @@
     {# Prerequisite guard (soft): no plan data is shown until a scope is approved. #}
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
         <i class="fas fa-lock mr-1"></i>
-        يرجى اعتماد نطاق الأطر قبل المتابعة.
-        لا توجد أطر معتمدة بعد. ابدأ بمراجعة الأطر. (No approved frameworks yet. Start with framework review.)
+        يرجى اعتماد نطاق الأطر قبل المتابعة. لا توجد أطر معتمدة بعد؛ ابدأ بمراجعة الأطر.
         <a href="{% url 'compliance:applicability_review' %}" class="underline font-medium ml-1">مراجعة واعتماد نطاق الأطر</a>
     </div>
     {% endif %}
@@ -30,7 +30,7 @@
                 {% for s in approved %}
                 <tr>
                     <td class="px-4 py-3 font-medium text-gov-gray-800">{{ s.framework_version.code }}</td>
-                    <td class="px-4 py-3 text-gov-gray-500 text-xs">{{ s.framework_version.framework.name }}</td>
+                    <td class="px-4 py-3 text-gov-gray-500 text-xs">{{ s.framework_version.display_name_ar }}</td>
                     {% if can_generate %}
                     <td class="px-4 py-3 text-left">
                         <form method="post" action="{% url 'compliance:generate_plan' s.id %}" class="inline" data-busy="جارٍ توليد خطة الضوابط...">
@@ -68,9 +68,9 @@
                 <tr>
                     <td class="px-4 py-2 font-mono text-xs">{{ r.control.control_id }}</td>
                     <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.control.framework_version.code }}</td>
-                    <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.control.domain.name }}</td>
-                    <td class="px-4 py-2 text-gov-gray-700">{{ r.control.title|truncatechars:70 }}</td>
-                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-gov-green-100 text-gov-green-800 text-xs">{{ r.get_decision_display }}</span></td>
+                    <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.control.domain.name|domain_ar }}</td>
+                    <td class="px-4 py-2 text-gov-gray-700" dir="ltr">{{ r.control.title|normalize_en|truncatechars:70 }}</td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-gov-green-100 text-gov-green-800 text-xs">{% if r.decision == 'applicable' %}منطبق{% elif r.decision == 'not_applicable' %}غير منطبق{% else %}{{ r.get_decision_display }}{% endif %}</span></td>
                     <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.reason }}</td>
                 </tr>
                 {% empty %}
