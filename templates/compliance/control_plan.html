@@ -50,7 +50,7 @@
     <!-- planned controls -->
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
         <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">
-            الضوابط المخطّطة ({{ plan|length }})
+            إجمالي الضوابط المخططة: {{ plan_total }}
         </div>
         <table class="w-full text-sm">
             <thead class="text-gov-gray-600">
@@ -78,6 +78,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        <div class="px-4 py-2">{% include "components/pagination.html" %}</div>
     </div>
 
     <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">

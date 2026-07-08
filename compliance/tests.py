@@ -7160,3 +7160,59 @@ class FrameworkControlsPreviewTests(TestCase):
         self.client.get(self._url())
         c.refresh_from_db()
         self.assertEqual(c.description, 'Inadditionto theECC')
+
+    # --- Pagination (UAT-COMPANY-FRAMEWORK-CONTROLS-PAGINATION-FIX-A) ---
+    def _seed_extra_controls(self, n, prefix='PG'):
+        from compliance.models import Control, Domain
+        dom, _ = Domain.objects.get_or_create(framework=self.fv.framework, code='PG',
+                                              defaults={'name': 'PG'})
+        for i in range(n):
+            Control.objects.create(framework=self.fv.framework, framework_version=self.fv,
+                                   domain=dom, control_id=f'{prefix}-{i:02d}', title='t',
+                                   description='d')
+
+    def test_preview_paginates_long_list_first_page_only(self):
+        self._seed_extra_controls(20)  # + 2 seeded = 22
+        resp = self.client.get(self._url())
+        self.assertEqual(resp.context['page_obj'].paginator.count, resp.context['control_count'])
+        self.assertEqual(len(resp.context['page_obj'].object_list), 15)   # first page only
+        self.assertTrue(resp.context['page_obj'].has_next)
+
+    def test_preview_page_2_works(self):
+        self._seed_extra_controls(20)
+        resp = self.client.get(self._url() + '?page=2')
+        self.assertEqual(resp.context['page_obj'].number, 2)
+
+    def test_preview_pagination_labels_are_arabic(self):
+        self._seed_extra_controls(20)
+        body = self.client.get(self._url()).content.decode()
+        self.assertIn('السابق', body)
+        self.assertIn('التالي', body)
+        self.assertNotIn('Previous', body)
+        self.assertNotIn('Next', body)
+
+    def test_preview_pagination_is_company_and_framework_scoped(self):
+        self._seed_extra_controls(20)
+        resp = self.client.get(self._url())
+        for c in resp.context['page_obj'].object_list:
+            self.assertEqual(c.framework_version_id, self.fv.id)   # only this framework's controls
+
+    def test_control_plan_paginates_large_plan(self):
+        from compliance.models import (Control, Domain, ControlApplicabilityResult,
+                                        CompanyFrameworkScope)
+        from compliance.framework_scope import approve_framework_scope
+        scope = CompanyFrameworkScope.objects.get(company=self.c, framework_version=self.fv)
+        approve_framework_scope(scope)
+        dom, _ = Domain.objects.get_or_create(framework=self.fv.framework, code='CP',
+                                              defaults={'name': 'CP'})
+        for i in range(25):
+            ctrl = Control.objects.create(framework=self.fv.framework, framework_version=self.fv,
+                                          domain=dom, control_id=f'CP-{i:02d}', title='t',
+                                          description='d')
+            ControlApplicabilityResult.objects.create(company=self.c, framework_scope=scope,
+                                                       control=ctrl, decision='applicable')
+        resp = self.client.get(reverse('compliance:control_plan'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertGreaterEqual(resp.context['plan_total'], 25)
+        self.assertEqual(len(resp.context['page_obj'].object_list), 20)   # not all 25 at once
+        self.assertContains(resp, 'إجمالي الضوابط المخططة')

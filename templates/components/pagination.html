@@ -1,0 +1,27 @@
+{% comment %}
+Reusable backend pagination controls. Expects `page_obj` (a Django Page). Optional `querystring`
+= extra query params WITHOUT `page` (e.g. "framework=NCA-ECC-2-2024"), preserved across pages.
+Arabic labels in the Arabic (RTL) UI; English otherwise.
+{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 text-sm" dir="rtl">
+    <div class="text-gov-gray-500">
+        {% if LANGUAGE_BIDI %}عرض {{ page_obj.start_index }}–{{ page_obj.end_index }} من {{ page_obj.paginator.count }}{% else %}Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}{% endif %}
+    </div>
+    <div class="flex items-center gap-2">
+        {% if page_obj.has_previous %}
+        <a href="?{% if querystring %}{{ querystring }}&amp;{% endif %}page={{ page_obj.previous_page_number }}"
+           class="px-3 py-1.5 rounded border border-gov-gray-300 hover:bg-gov-gray-50 text-gov-gray-700">{% if LANGUAGE_BIDI %}السابق{% else %}Previous{% endif %}</a>
+        {% else %}
+        <span class="px-3 py-1.5 rounded border border-gov-gray-200 text-gov-gray-300">{% if LANGUAGE_BIDI %}السابق{% else %}Previous{% endif %}</span>
+        {% endif %}
+        <span class="text-gov-gray-600">{% if LANGUAGE_BIDI %}الصفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}{% else %}Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}{% endif %}</span>
+        {% if page_obj.has_next %}
+        <a href="?{% if querystring %}{{ querystring }}&amp;{% endif %}page={{ page_obj.next_page_number }}"
+           class="px-3 py-1.5 rounded border border-gov-gray-300 hover:bg-gov-gray-50 text-gov-gray-700">{% if LANGUAGE_BIDI %}التالي{% else %}Next{% endif %}</a>
+        {% else %}
+        <span class="px-3 py-1.5 rounded border border-gov-gray-200 text-gov-gray-300">{% if LANGUAGE_BIDI %}التالي{% else %}Next{% endif %}</span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

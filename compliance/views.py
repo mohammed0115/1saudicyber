@@ -608,9 +608,13 @@ def framework_controls_preview(request, code):
     from .models import ControlApplicabilityResult
     plan_generated = ControlApplicabilityResult.objects.filter(
         company=company, control__framework_version=fv, decision='applicable').exists()
+    # Paginate (backend) — long official-control lists (e.g. 108) must not render all at once.
+    from django.core.paginator import Paginator
+    total_controls = controls.count()
+    page_obj = Paginator(controls, 15).get_page(request.GET.get('page'))
     return render(request, 'compliance/framework_controls_preview.html', {
-        'company': company, 'fv': fv, 'controls': controls,
-        'control_count': controls.count(), 'plan_generated': plan_generated,
+        'company': company, 'fv': fv, 'controls': page_obj, 'page_obj': page_obj,
+        'control_count': total_controls, 'plan_generated': plan_generated,
     })
 
 
@@ -745,12 +749,17 @@ def control_plan(request):
                 .select_related('framework_version', 'framework_version__framework'))
     plan = (ControlApplicabilityResult.objects.filter(company=company)
             .select_related('control', 'control__framework', 'control__domain',
-                            'framework_scope__framework_version'))
+                            'framework_scope__framework_version')
+            .order_by('control__framework_version__code', 'control__control_id'))
+    # Paginate (backend) — a full plan can be 417 controls; never render them all at once.
+    from django.core.paginator import Paginator
+    plan_total = plan.count()
+    plan_page = Paginator(plan, 20).get_page(request.GET.get('page'))
     from .journey import build_journey_nav
     from .workflow_stepper import build_company_workflow_stepper
     return render(request, 'compliance/control_plan.html', {
-        'company': company, 'approved': approved, 'plan': plan,
-        'can_generate': request.user.is_staff,
+        'company': company, 'approved': approved, 'plan': plan_page, 'page_obj': plan_page,
+        'plan_total': plan_total, 'can_generate': request.user.is_staff,
         'stepper': build_company_workflow_stepper(company),
         'nav': build_journey_nav(company, 'controls'),
     })
