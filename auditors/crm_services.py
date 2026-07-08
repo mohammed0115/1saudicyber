@@ -103,7 +103,9 @@ def company_journey_summary(company):
     summary = {
         'classification_done': False,
         'proposed_frameworks': 0,
+        'approved_frameworks': 0,
         'expected_controls': 0,
+        'generated_controls': 0,
         'risk_level': '',
         'risk_level_ar': '—',
         'scope_approved': False,
@@ -118,8 +120,11 @@ def company_journey_summary(company):
         summary['classification_done'] = has_intake
         scopes = CompanyFrameworkScope.objects.filter(company=company)
         summary['scope_approved'] = scopes.filter(status='approved').exists()
-        summary['control_plan_generated'] = ControlApplicabilityResult.objects.filter(
-            company=company, decision='applicable').exists()
+        summary['approved_frameworks'] = scopes.filter(status='approved').count()
+        # Controls ACTUALLY generated into the plan (distinct from the advisory expected count).
+        gen = ControlApplicabilityResult.objects.filter(company=company, decision='applicable')
+        summary['generated_controls'] = gen.count()
+        summary['control_plan_generated'] = gen.exists()
         if has_intake:
             # Same advisory engine the company sees — keeps CRM and company views consistent.
             from compliance.smart_classification import classify_company
@@ -551,6 +556,13 @@ def get_company_activity_timeline(company, limit=25):
     return events
 
 
+# Arabic labels for CRM follow-up statuses (for readable activity messages).
+CRM_STATUS_AR = {
+    'new': 'جديدة', 'onboarding': 'تهيئة', 'active': 'نشطة',
+    'needs_follow_up': 'تحتاج متابعة', 'blocked': 'محظورة', 'inactive': 'غير نشطة',
+}
+
+
 def _activity_detail(action, meta):
     if action == 'crm_link_user':
         return meta.get('target_user_email', '')
@@ -559,7 +571,9 @@ def _activity_detail(action, meta):
     if action == 'crm_note_added':
         return meta.get('note_excerpt', '')
     if action == 'crm_status_changed':
-        return '%s → %s' % (meta.get('old_status', ''), meta.get('new_status', ''))
+        old = CRM_STATUS_AR.get(meta.get('old_status', ''), meta.get('old_status', ''))
+        new = CRM_STATUS_AR.get(meta.get('new_status', ''), meta.get('new_status', ''))
+        return 'من «%s» إلى «%s»' % (old, new)
     return ''
 
 

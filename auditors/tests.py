@@ -1069,13 +1069,83 @@ class CRMCompanyJourneySummaryTests(TestCase):
         c = self._company(cr='6262626262')
         self.client.force_login(self._staff())
         body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
-        self.assertIn('خطوة التهيئة الترحيبية', body)          # clarified label
+        self.assertIn('أكمل شاشة الترحيب فقط', body)           # clarified, de-emphasized label
         self.assertNotIn('التهيئة مكتملة · Onboarded', body)   # old misleading label removed
 
     def test_company_user_cannot_access_company_detail(self):
         c = self._company(cr='6363636363')
         u = User.objects.create_user(username='cu9@x.com', email='cu9@x.com',
                                      password='longenough12', role='company_admin', company=c)
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:company_detail', args=[c.id])).status_code, 403)
+
+
+class CRMCompanyStateConsistencyTests(TestCase):
+    """UAT-ADMIN-COMPANY-DETAIL-STATE-CONSISTENCY-FIX-A — the CRM journey summary must reflect the
+    SAME source of truth (classify_company) as the company classification page."""
+
+    def _staff(self, email='cons_admin@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    def _company(self, cr='6161610000'):
+        return Company.objects.create(name='Cons Co', cr_number=cr, sector='technology',
+                                      size='small', contact_email='cons@co.example')
+
+    def _company_with_intake(self, cr='6161610001', **profile):
+        from compliance.models import CompanyIntakeProfile
+        c = self._company(cr=cr)
+        base = dict(uses_cloud_services=True, has_remote_work=True,
+                    manages_official_social_media_accounts=True, works_with_aramco=True)
+        base.update(profile)
+        CompanyIntakeProfile.objects.create(company=c, **base)
+        return c
+
+    def test_admin_summary_matches_company_classification_numbers(self):
+        from compliance.smart_classification import classify_company
+        from auditors.crm_services import company_journey_summary
+        c = self._company_with_intake(cr='6565650001')
+        r = classify_company(c)
+        j = company_journey_summary(c)
+        self.assertEqual(j['proposed_frameworks'], r.recommended_count)
+        self.assertEqual(j['expected_controls'], r.total_expected_controls)
+        self.assertEqual(j['risk_level_ar'], r.risk_level_ar)
+        # And the rendered admin page carries the same proposed count.
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertEqual(resp.context['journey']['proposed_frameworks'], r.recommended_count)
+
+    def test_admin_shows_scope_not_approved_and_next_action(self):
+        c = self._company_with_intake(cr='6767670001')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertContains(resp, 'غير معتمد')
+        self.assertContains(resp, 'الخطوة التالية من جهة الشركة: اعتماد نطاق الأطر')
+
+    def test_pre_plan_sections_show_unavailable_message(self):
+        c = self._company_with_intake(cr='6868680001')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('غير متاح قبل إنشاء خطة الضوابط', body)
+
+    def test_summary_separates_proposed_and_approved(self):
+        c = self._company_with_intake(cr='6969690001')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        for label in ('الأطر المقترحة', 'الأطر المعتمدة', 'الضوابط المتوقعة', 'الضوابط المنشأة فعليًا'):
+            self.assertContains(resp, label)
+        self.assertEqual(resp.context['journey']['approved_frameworks'], 0)
+        self.assertFalse(resp.context['journey']['control_plan_generated'])
+
+    def test_status_change_timeline_message_is_arabic(self):
+        from auditors.crm_services import _activity_detail
+        d = _activity_detail('crm_status_changed', {'old_status': 'onboarding', 'new_status': 'active'})
+        self.assertEqual(d, 'من «تهيئة» إلى «نشطة»')
+
+    def test_auditor_cannot_access_company_detail(self):
+        c = self._company(cr='6464640002')
+        u, _p = _auditor(status='active')
         self.client.force_login(u)
         self.assertEqual(self.client.get(
             reverse('platform_admin:company_detail', args=[c.id])).status_code, 403)

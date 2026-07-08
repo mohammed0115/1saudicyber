@@ -19,30 +19,39 @@
         <div><span class="text-gov-gray-500">الحجم · Size:</span> {{ company.get_size_display }}</div>
         <div><span class="text-gov-gray-500">المدينة · City:</span> {{ company.city|default:"—" }}</div>
         <div><span class="text-gov-gray-500">بريد التواصل · Contact:</span> <span dir="ltr">{{ company.contact_email }}</span></div>
-        <div><span class="text-gov-gray-500">أكمل خطوة التهيئة الترحيبية · Welcome step:</span> {{ company.onboarding_completed|yesno:"نعم,لا" }}</div>
-        <div><span class="text-gov-gray-500">تاريخ الإنشاء · Created:</span> {{ company.created_at|date:"Y-m-d H:i" }}</div>
-        <div><span class="text-gov-gray-500">آخر تحديث · Updated:</span> {{ company.updated_at|date:"Y-m-d H:i" }}</div>
+        <div><span class="text-gov-gray-500">تاريخ الإنشاء:</span> {{ company.created_at|date:"Y-m-d H:i" }}</div>
+        <div><span class="text-gov-gray-500">آخر تحديث:</span> {{ company.updated_at|date:"Y-m-d H:i" }}</div>
+        <div class="md:col-span-2"><span class="text-gov-gray-500">أكمل شاشة الترحيب فقط:</span> {{ company.onboarding_completed|yesno:"نعم,لا" }}</div>
       </div>
-      <p class="text-xs text-gov-gray-400 mt-2">«خطوة التهيئة الترحيبية» تعني ضغط المستخدم زر إنهاء التهيئة فقط، ولا تعكس اكتمال التصنيف أو اعتماد النطاق. راجع ملخص رحلة الامتثال أدناه للحالة الفعلية.</p>
+      <p class="text-xs text-gov-gray-400 mt-2">«أكمل شاشة الترحيب فقط» لا يعكس حالة رحلة الامتثال — إنها مجرد ضغطة زر الترحيب. الحالة الفعلية في «ملخص رحلة الامتثال» أدناه.</p>
     </div>
 
-    {# Compliance journey summary — INTERNAL Get Solution CRM only (never shown to companies/auditors). #}
+    {% comment %}Compliance journey summary — INTERNAL Get Solution CRM only (never shown to companies/auditors). Numbers use the SAME classify_company engine as the company classification page.{% endcomment %}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
-      <h2 class="font-bold text-gov-green-800 mb-3">ملخص رحلة الامتثال · Compliance journey (داخلي)</h2>
+      <h2 class="font-bold text-gov-green-800 mb-3">ملخص رحلة الامتثال <span class="text-xs text-gov-gray-400 font-normal">(داخلي)</span></h2>
       <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gov-gray-500">حالة التسجيل:</span> <span class="text-green-700 font-medium">مكتمل</span></div>
         <div><span class="text-gov-gray-500">حالة التصنيف:</span>
           {% if journey.classification_done %}<span class="text-green-700 font-medium">مكتمل</span>{% else %}<span class="text-gov-gray-500">لم يبدأ</span>{% endif %}</div>
         <div><span class="text-gov-gray-500">الأطر المقترحة:</span> {{ journey.proposed_frameworks }}</div>
-        <div><span class="text-gov-gray-500">عدد الضوابط المتوقع:</span> {{ journey.expected_controls }}</div>
+        <div><span class="text-gov-gray-500">الأطر المعتمدة:</span> {{ journey.approved_frameworks }}</div>
+        <div><span class="text-gov-gray-500">الضوابط المتوقعة:</span> {{ journey.expected_controls }}</div>
+        <div><span class="text-gov-gray-500">الضوابط المنشأة فعليًا:</span>
+          {% if journey.control_plan_generated %}{{ journey.generated_controls }}{% else %}<span class="text-gov-gray-400">لم تُنشأ بعد</span>{% endif %}</div>
         <div><span class="text-gov-gray-500">مستوى المخاطر:</span> {{ journey.risk_level_ar }}</div>
-        <div><span class="text-gov-gray-500">حالة اعتماد النطاق:</span>
-          {% if journey.scope_approved %}<span class="text-green-700 font-medium">معتمد</span>{% else %}<span class="text-gov-gray-500">غير معتمد</span>{% endif %}</div>
-        <div><span class="text-gov-gray-500">حالة خطة الضوابط:</span>
-          {% if journey.control_plan_generated %}<span class="text-green-700 font-medium">تم إنشاؤها</span>{% else %}<span class="text-gov-gray-500">لم تُنشأ</span>{% endif %}</div>
         <div><span class="text-gov-gray-500">حالة التحقق من البريد:</span>
           {% if journey.email_verified %}<span class="text-green-700 font-medium">تم التحقق</span>{% else %}<span class="text-red-700 font-medium">لم يتم</span>{% endif %}</div>
-        <div><span class="text-gov-gray-500">آخر نشاط:</span> {{ journey.last_activity|date:"Y-m-d H:i"|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">حالة اعتماد النطاق:</span>
+          {% if journey.scope_approved %}<span class="text-green-700 font-medium">معتمد</span>{% else %}<span class="text-amber-700 font-medium">غير معتمد</span>{% endif %}</div>
+        <div><span class="text-gov-gray-500">حالة خطة الضوابط:</span>
+          {% if journey.control_plan_generated %}<span class="text-green-700 font-medium">تم إنشاؤها</span>{% else %}<span class="text-gov-gray-500">لم تُنشأ</span>{% endif %}</div>
+        <div class="md:col-span-2"><span class="text-gov-gray-500">آخر نشاط:</span> {{ journey.last_activity|date:"Y-m-d H:i"|default:"—" }}</div>
       </div>
+      {% if not journey.scope_approved %}
+      <div class="mt-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-xs">
+        <i class="fas fa-arrow-left ml-1"></i> الخطوة التالية من جهة الشركة: اعتماد نطاق الأطر. لم تُنشأ خطة الضوابط بعد.
+      </div>
+      {% endif %}
     </div>
 
     {# Linked users #}
@@ -188,42 +197,49 @@
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
       <h2 class="font-bold text-gov-green-800 mb-1">ملخص الأدلة · Evidence summary</h2>
       <p class="text-xs text-gov-gray-500 mb-3">أعداد فقط للاطّلاع الداخلي — لا يتم عرض محتوى الأدلة في وحدة CRM.</p>
+      {% if journey.control_plan_generated %}
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ evidence_summary.uploaded }}</div><div class="text-xs text-gov-gray-500 mt-1">مرفوعة · Uploaded</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-700">{{ evidence_summary.extracted }}</div><div class="text-xs text-gov-gray-500 mt-1">مُستخرجة · Extracted</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ evidence_summary.manual_review }}</div><div class="text-xs text-gov-gray-500 mt-1">مراجعة يدوية · Manual review</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ evidence_summary.failed }}</div><div class="text-xs text-gov-gray-500 mt-1">فشل · Failed</div></div>
       </div>
+      {% else %}<p class="text-sm text-gov-gray-500">غير متاح قبل إنشاء خطة الضوابط.</p>{% endif %}
     </div>
 
     {# Gap readiness summary (preliminary internal readiness — counts only) #}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
       <h2 class="font-bold text-gov-green-800 mb-1">الجاهزية الأولية · Preliminary readiness</h2>
       <p class="text-xs text-gov-gray-500 mb-3">جاهزية داخلية أولية مبنية على الأدلة — تتطلب مراجعة بشرية ولا تُعد شهادة امتثال رسمية.</p>
+      {% if journey.control_plan_generated %}
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ gap_summary.readiness_percent }}%</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية · Readiness</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ gap_summary.missing }}</div><div class="text-xs text-gov-gray-500 mt-1">مفقود · Missing</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ gap_summary.needs_review }}</div><div class="text-xs text-gov-gray-500 mt-1">مراجعة · Needs review</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-600">{{ gap_summary.calculated_at|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر حساب · Last calc</div></div>
       </div>
+      {% else %}<p class="text-sm text-gov-gray-500">غير متاح قبل إنشاء خطة الضوابط.</p>{% endif %}
     </div>
 
     {# Internal risk summary (counts only) #}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
       <h2 class="font-bold text-gov-green-800 mb-1">المخاطر الداخلية · Internal risk summary</h2>
       <p class="text-xs text-gov-gray-500 mb-3">خطة مخاطر داخلية مبنية على الأدلة — أعداد فقط، وتتطلب مراجعة بشرية.</p>
+      {% if journey.control_plan_generated %}
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ risk_summary.open }}</div><div class="text-xs text-gov-gray-500 mt-1">مفتوحة · Open</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ risk_summary.high_critical }}</div><div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة · High/Critical</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ risk_summary.overdue_tasks }}</div><div class="text-xs text-gov-gray-500 mt-1">مهام متأخرة · Overdue</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-600">{{ risk_summary.last_generated|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر توليد · Last generated</div></div>
       </div>
+      {% else %}<p class="text-sm text-gov-gray-500">غير متاح قبل إنشاء خطة الضوابط.</p>{% endif %}
     </div>
 
     {# Internal readiness report summary (counts only) #}
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
       <h2 class="font-bold text-gov-green-800 mb-1">تقرير الجاهزية · Readiness report summary</h2>
       <p class="text-xs text-gov-gray-500 mb-3">ملخص تقرير جاهزية داخلي — أعداد فقط، ويتطلب مراجعة بشرية.</p>
+      {% if journey.control_plan_generated %}
       <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ report_summary.readiness_percent }}%</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية · Readiness</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ report_summary.missing }}</div><div class="text-xs text-gov-gray-500 mt-1">مفقود · Missing</div></div>
@@ -231,6 +247,7 @@
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ report_summary.overdue_tasks }}</div><div class="text-xs text-gov-gray-500 mt-1">متأخرة · Overdue</div></div>
         <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-600">{{ report_summary.report_date|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر تقرير · Last report</div></div>
       </div>
+      {% else %}<p class="text-sm text-gov-gray-500">غير متاح قبل إنشاء خطة الضوابط.</p>{% endif %}
     </div>
 
     {# Subscription summary + staff actions #}
