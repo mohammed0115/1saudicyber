@@ -128,6 +128,35 @@ def auditor_portal_guard(request, *, require_active=False):
     return None
 
 
+def email_verification_guard(request):
+    """Return None if the user may perform a compliance-affecting action, else a safe
+    response. UNVERIFIED company users are blocked from sensitive actions (evidence upload,
+    submit-to-auditor, final reports) — they may still browse onboarding/intake/classification.
+    Internal staff/superusers are trusted and pass through.
+    """
+    from django.contrib import messages
+    user = request.user
+    if not getattr(user, 'is_authenticated', False):
+        return redirect_to_login(request.get_full_path())
+    if is_platform_admin_user(user):
+        return None
+    if getattr(user, 'email_verified', False):
+        return None
+    messages.error(request, 'يرجى التحقق من بريدك الإلكتروني قبل تنفيذ هذه العملية.')
+    return redirect('core:onboarding')
+
+
+def email_verified_required(view):
+    """Guard a sensitive company action behind email verification (fail-closed)."""
+    @wraps(view)
+    def _wrapped(request, *args, **kwargs):
+        blocked = email_verification_guard(request)
+        if blocked is not None:
+            return blocked
+        return view(request, *args, **kwargs)
+    return _wrapped
+
+
 def auditor_portal_required(view=None, *, require_active=False):
     """Explicitly require a valid auditor profile for an auditor-portal view.
 

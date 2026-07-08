@@ -45,7 +45,7 @@ class EvidenceValidationTests(TestCase):
 
     def setUp(self):
         self.company, self.control = _company_with_control()
-        self.user = User.objects.create_user(
+        self.user = User.objects.create_user(email_verified=True, 
             email='u@x.com', password='longenough12', company=self.company, role='company_admin')
         self.client.force_login(self.user)
         self.url = reverse('compliance:upload_evidence', args=[self.control.id])
@@ -1598,7 +1598,7 @@ class Phase3ABackwardCompatTests(TestCase):
         from core.models import User, Company
         from django.core.files.uploadedfile import SimpleUploadedFile
         company, control = _company_with_control()
-        user = User.objects.create_user(email='up3a@x.com', password='longenough12',
+        user = User.objects.create_user(email_verified=True, email='up3a@x.com', password='longenough12',
                                         company=company, role='company_admin')
         self.client.force_login(user)
         good = SimpleUploadedFile('p.txt', b'policy ok', content_type='text/plain')
@@ -1638,7 +1638,7 @@ def _intake_user(company=None, **company_kw):
     from core.models import User
     if company is None:
         company = _company(**company_kw)
-    user = User.objects.create_user(email=f'iu{company.id}@x.com', password='longenough12',
+    user = User.objects.create_user(email_verified=True, email=f'iu{company.id}@x.com', password='longenough12',
                                     company=company, role='company_admin')
     return company, user
 
@@ -1706,7 +1706,18 @@ class IntakeViewTests(TestCase):
     def test_review_page_shows_reasons_and_sources(self):
         self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
         resp = self.client.get(reverse('compliance:applicability_review'))
-        self.assertContains(resp, 'Aramco')  # reason text mentions Aramco
+        self.assertContains(resp, 'أرامكو')  # user-facing Arabic reason mentions Aramco
+
+    def test_review_page_hides_internal_developer_labels(self):
+        # UAT-UI-4: no developer/internal terms leak to the company user.
+        self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
+        body = self.client.get(reverse('compliance:applicability_review')).content.decode()
+        for bad in ('Rule Engine', 'Legacy Checkbox', 'legacy_checkbox', 'is_critical_system_operator',
+                    'works_with_aramco', 'target_sabic', 'Company works with', 'Company operates'):
+            self.assertNotIn(bad, body)
+        # correct per-version Arabic display name shows (not the shared ECC framework name)
+        self.assertContains(self.client.get(reverse('compliance:applicability_review')),
+                            'معيار أرامكو')
 
     def test_review_page_marks_otcc_dcc_unavailable(self):
         self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
@@ -1838,7 +1849,7 @@ class ScopeServiceTests(TestCase):
         from core.models import User
         c, fv = _company_with_applicability(); propose_framework_scopes(c, apply=True)
         s = CompanyFrameworkScope.objects.get(company=c, framework_version=fv)
-        u = User.objects.create_user(email='ap@x.com', password='longenough12')
+        u = User.objects.create_user(email_verified=True, email='ap@x.com', password='longenough12')
         approve_framework_scope(s, user=u)
         s.refresh_from_db()
         self.assertEqual(s.status, 'approved')
@@ -1944,9 +1955,9 @@ class ScopeViewTests(TestCase):
     def setUp(self):
         from core.models import User
         self.c, self.fv = _company_with_applicability()
-        self.user = User.objects.create_user(email='sv@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='sv@x.com', password='longenough12',
                                               company=self.c, role='company_admin')
-        self.staff = User.objects.create_user(email='st@x.com', password='longenough12',
+        self.staff = User.objects.create_user(email_verified=True, email='st@x.com', password='longenough12',
                                                company=self.c, role='admin', is_staff=True)
 
     def test_framework_review_page_shows_proposed_scopes(self):
@@ -2284,9 +2295,9 @@ class EvidenceChecklistViewTests(TestCase):
     def setUp(self):
         from core.models import User
         self.c, self.fv, self.scope = _company_with_official_plan()
-        self.user = User.objects.create_user(email='ec@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='ec@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
-        self.staff = User.objects.create_user(email='ecs@x.com', password='longenough12',
+        self.staff = User.objects.create_user(email_verified=True, email='ecs@x.com', password='longenough12',
                                               company=self.c, role='admin', is_staff=True)
 
     def test_checklist_page_requires_login(self):
@@ -2388,7 +2399,7 @@ class EvidenceUploadV2ValidationTests(TestCase):
         from core.models import User
         self.c, self.fv, self.scope = _company_with_checklist()
         self.item = EvidenceChecklistItem.objects.filter(company=self.c).first()
-        self.user = User.objects.create_user(email='v2@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='v2@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
         self.client.force_login(self.user)
         self.url = reverse('compliance:evidence_upload_v2', args=[self.item.id])
@@ -2418,7 +2429,7 @@ class EvidenceUploadV2ViewTests(TestCase):
         from core.models import User
         self.c, self.fv, self.scope = _company_with_checklist()
         self.item = EvidenceChecklistItem.objects.filter(company=self.c).first()
-        self.user = User.objects.create_user(email='v2v@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='v2v@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
 
     def _upload(self):
@@ -2472,7 +2483,7 @@ class EvidenceV2TenantTests(TestCase):
         self.c, _, _ = _company_with_checklist()
         self.other, _, _ = _company_with_checklist('SABIC-CYBERTRUST-1-0')
         self.other_item = EvidenceChecklistItem.objects.filter(company=self.other).first()
-        self.user = User.objects.create_user(email='ten@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='ten@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
         self.client.force_login(self.user)
 
@@ -2498,7 +2509,7 @@ class Phase3EBackwardCompatTests(TestCase):
     def setUp(self):
         from core.models import User
         self.company, self.control = _company_with_control()
-        self.user = User.objects.create_user(email='bc3e@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='bc3e@x.com', password='longenough12',
                                              company=self.company, role='company_admin')
 
     def test_old_upload_evidence_flow_still_works(self):
@@ -2519,7 +2530,7 @@ class Phase3EBackwardCompatTests(TestCase):
         c, fv, scope = _company_with_checklist()
         item = EvidenceChecklistItem.objects.filter(company=c).first()
         from core.models import User
-        u = User.objects.create_user(email='cc3e@x.com', password='longenough12', company=c)
+        u = User.objects.create_user(email_verified=True, email='cc3e@x.com', password='longenough12', company=c)
         self.client.force_login(u)
         before = CompanyControl.objects.count()
         self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
@@ -2530,7 +2541,7 @@ class Phase3EBackwardCompatTests(TestCase):
         c, fv, scope = _company_with_checklist()
         item = EvidenceChecklistItem.objects.filter(company=c).first()
         from core.models import User
-        u = User.objects.create_user(email='le3e@x.com', password='longenough12', company=c)
+        u = User.objects.create_user(email_verified=True, email='le3e@x.com', password='longenough12', company=c)
         self.client.force_login(u)
         self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
                          {'uploaded_file': _SUF('p.pdf', b'%PDF')})
@@ -2542,7 +2553,7 @@ class Phase3EBackwardCompatTests(TestCase):
         c, fv, scope = _company_with_checklist()
         item = EvidenceChecklistItem.objects.filter(company=c).first()
         from core.models import User
-        u = User.objects.create_user(email='ai3e@x.com', password='longenough12', company=c)
+        u = User.objects.create_user(email_verified=True, email='ai3e@x.com', password='longenough12', company=c)
         self.client.force_login(u)
         self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
                          {'uploaded_file': _SUF('p.pdf', b'%PDF')})
@@ -2556,7 +2567,7 @@ class Phase3EBackwardCompatTests(TestCase):
         c, fv, scope = _company_with_checklist()
         item = EvidenceChecklistItem.objects.filter(company=c).first()
         from core.models import User
-        u = User.objects.create_user(email='ca3e@x.com', password='longenough12', company=c)
+        u = User.objects.create_user(email_verified=True, email='ca3e@x.com', password='longenough12', company=c)
         self.client.force_login(u)
         self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
                          {'uploaded_file': _SUF('p.pdf', b'%PDF')})
@@ -2735,9 +2746,9 @@ class AnalysisViewTests(TestCase):
     def setUp(self):
         from core.models import User
         self.c, self.item, self.sub = _company_with_submission()
-        self.user = User.objects.create_user(email='av@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='av@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
-        self.staff = User.objects.create_user(email='avs@x.com', password='longenough12',
+        self.staff = User.objects.create_user(email_verified=True, email='avs@x.com', password='longenough12',
                                               company=self.c, role='admin', is_staff=True)
 
     def test_submission_detail_shows_analysis_section(self):
@@ -2768,7 +2779,7 @@ class Phase3FBackwardCompatTests(TestCase):
     def test_old_upload_evidence_flow_still_works(self):
         from core.models import User
         company, control = _company_with_control()
-        user = User.objects.create_user(email='bc3f@x.com', password='longenough12',
+        user = User.objects.create_user(email_verified=True, email='bc3f@x.com', password='longenough12',
                                         company=company, role='company_admin')
         self.client.force_login(user)
         with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
@@ -2780,7 +2791,7 @@ class Phase3FBackwardCompatTests(TestCase):
     def test_evidence_upload_v2_still_works(self):
         from core.models import User
         c, item, _ = _company_with_submission()
-        u = User.objects.create_user(email='v23f@x.com', password='longenough12', company=c)
+        u = User.objects.create_user(email_verified=True, email='v23f@x.com', password='longenough12', company=c)
         self.client.force_login(u)
         resp = self.client.post(reverse('compliance:evidence_upload_v2', args=[item.id]),
                                 {'uploaded_file': _SUF('q.pdf', b'%PDF')})
@@ -2885,7 +2896,7 @@ class AssessmentServiceTests(TestCase):
         from core.models import User
         create_assessments_for_company(self.c, apply=True)
         a = ControlAssessment.objects.filter(company=self.c).first()
-        u = User.objects.create_user(email='aud@x.com', password='longenough12', company=self.c, is_staff=True)
+        u = User.objects.create_user(email_verified=True, email='aud@x.com', password='longenough12', company=self.c, is_staff=True)
         update_assessment_from_auditor_input(a, {'status': 'compliant', 'auditor_notes': 'ok'}, u)
         a.refresh_from_db()
         self.assertEqual(a.status, 'compliant')
@@ -2896,7 +2907,7 @@ class AssessmentServiceTests(TestCase):
         from core.models import User
         create_assessments_for_company(self.c, apply=True)
         a = ControlAssessment.objects.filter(company=self.c).first()
-        u = User.objects.create_user(email='aud2@x.com', password='longenough12', company=self.c, is_staff=True)
+        u = User.objects.create_user(email_verified=True, email='aud2@x.com', password='longenough12', company=self.c, is_staff=True)
         update_assessment_from_auditor_input(a, {'status': 'totally_compliant_auto'}, u)
         a.refresh_from_db()
         self.assertEqual(a.status, 'not_reviewed')  # invalid ignored
@@ -2926,9 +2937,9 @@ class AuditorReviewViewTests(TestCase):
         self.c, self.fv, self.scope = _company_with_official_plan()
         create_assessments_for_company(self.c, apply=True)
         self.a = ControlAssessment.objects.filter(company=self.c).first()
-        self.user = User.objects.create_user(email='arv@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='arv@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
-        self.staff = User.objects.create_user(email='arvs@x.com', password='longenough12',
+        self.staff = User.objects.create_user(email_verified=True, email='arvs@x.com', password='longenough12',
                                               company=self.c, role='admin', is_staff=True)
 
     def test_auditor_review_requires_login(self):
@@ -2983,7 +2994,7 @@ class Phase3GBackwardCompatTests(TestCase):
     def test_old_upload_evidence_flow_still_works(self):
         from core.models import User
         company, control = _company_with_control()
-        user = User.objects.create_user(email='bc3g@x.com', password='longenough12',
+        user = User.objects.create_user(email_verified=True, email='bc3g@x.com', password='longenough12',
                                         company=company, role='company_admin')
         self.client.force_login(user)
         with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
@@ -3110,7 +3121,7 @@ class ReportViewTests(TestCase):
         from billing.subscription_access import activate_company_subscription
         self.c, self.fv, self.scope = _company_with_assessments()
         activate_company_subscription(self.c, 'Test Plan', days=30)  # Phase 4B: reports gated
-        self.user = User.objects.create_user(email='rep@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='rep@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
 
     def test_reports_index_requires_login(self):
@@ -3154,7 +3165,7 @@ class ReportExportTests(TestCase):
         from billing.subscription_access import activate_company_subscription
         self.c, self.fv, self.scope = _company_with_assessments()
         activate_company_subscription(self.c, 'Test Plan', days=30)  # Phase 4B: exports gated
-        self.user = User.objects.create_user(email='exp@x.com', password='longenough12',
+        self.user = User.objects.create_user(email_verified=True, email='exp@x.com', password='longenough12',
                                              company=self.c, role='company_admin')
         self.client.force_login(self.user)
 
@@ -3187,7 +3198,7 @@ class Phase3HBackwardCompatTests(TestCase):
     def test_old_upload_evidence_flow_still_works(self):
         from core.models import User
         company, control = _company_with_control()
-        user = User.objects.create_user(email='bc3h@x.com', password='longenough12',
+        user = User.objects.create_user(email_verified=True, email='bc3h@x.com', password='longenough12',
                                         company=company, role='company_admin')
         self.client.force_login(user)
         with mock.patch('monitoring.tasks.analyze_evidence_async.delay'):
@@ -3200,7 +3211,7 @@ class Phase3HBackwardCompatTests(TestCase):
         c, fv, scope = _company_with_assessments()
         a = ControlAssessment.objects.filter(company=c).first()
         from core.models import User
-        u = User.objects.create_user(email='aud3h@x.com', password='longenough12', company=c, is_staff=True)
+        u = User.objects.create_user(email_verified=True, email='aud3h@x.com', password='longenough12', company=c, is_staff=True)
         update_assessment_from_auditor_input(a, {'status': 'compliant'}, u)
         a.refresh_from_db(); self.assertEqual(a.status, 'compliant')
 
@@ -3234,8 +3245,10 @@ def _stage(stages, key):
 def _journey_user(company, **kw):
     from core.models import User
     n = User.objects.count() + 1
+    # Verified by default (the normal post-onboarding state). Sensitive actions (evidence
+    # upload) are gated on email_verified; pass email_verified=False to test the blocked path.
     defaults = dict(email=f'journey{n}@x.com', password='longenough12',
-                    company=company, role='company_admin')
+                    company=company, role='company_admin', email_verified=True)
     defaults.update(kw)
     return User.objects.create_user(**defaults)
 
@@ -4068,7 +4081,7 @@ class SmartClassificationServiceTests(TestCase):
         r = self._classify()
         rec = {x.code: x for x in r.recommendations}['SABIC-CYBERTRUST-1-0']
         self.assertEqual(rec.status, 'not_indicated')
-        self.assertIn('بناءً على البيانات المتاحة', rec.reason_ar)
+        self.assertIn('لا توجد علاقة مع سابك', rec.reason_ar)   # Arabic, based on intake answers
 
     def test_incomplete_profile_lists_missing_inputs_and_lowers_confidence(self):
         r = self._classify()  # no intake profile
@@ -5123,13 +5136,13 @@ class RuleEngineSecurityTests(TestCase):
 # ============================================================
 def _staff_user(email='staff6f@x.com'):
     from core.models import User
-    return User.objects.create_user(email=email, password='longenough12', is_staff=True)
+    return User.objects.create_user(email_verified=True, email=email, password='longenough12', is_staff=True)
 
 
 def _assigned_auditor_user(company, email='aud6f@x.com'):
     from core.models import User
     from auditors.models import AuditorProfile, AuditorAssignment
-    u = User.objects.create_user(email=email, password='longenough12')
+    u = User.objects.create_user(email_verified=True, email=email, password='longenough12')
     p = AuditorProfile.objects.create(user=u, full_name='Auditor', status='active')
     AuditorAssignment.objects.create(company=company, auditor=p, status='accepted')
     return u
@@ -6130,7 +6143,7 @@ class EvidenceOCRMVPTests(TestCase):
         from core.models import User
         c, fv, scope = _company_with_checklist()
         item = EvidenceChecklistItem.objects.filter(company=c).first()
-        orphan = User.objects.create_user(username='ocrorphan@x.com', email='ocrorphan@x.com',
+        orphan = User.objects.create_user(email_verified=True, username='ocrorphan@x.com', email='ocrorphan@x.com',
                                           password='longenough12', role='company_admin')
         self.client.force_login(orphan)
         resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[item.id]))
@@ -6142,7 +6155,7 @@ class EvidenceOCRMVPTests(TestCase):
         from core.models import User
         c, fv, scope = _company_with_checklist()
         item = EvidenceChecklistItem.objects.filter(company=c).first()
-        au = User.objects.create_user(username='ocraud2@x.com', email='ocraud2@x.com',
+        au = User.objects.create_user(email_verified=True, username='ocraud2@x.com', email='ocraud2@x.com',
                                       password='longenough12', role='auditor')
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
@@ -6197,7 +6210,7 @@ class EvidenceOCRMVPTests(TestCase):
         from compliance.evidence_extraction import save_extraction_for_submission
         c, item, sub = _company_with_submission(name='e.txt', content=b'policy text', ftype='txt')
         save_extraction_for_submission(sub)
-        staff = User.objects.create_user(username='ocrstaff@x.com', email='ocrstaff@x.com',
+        staff = User.objects.create_user(email_verified=True, username='ocrstaff@x.com', email='ocrstaff@x.com',
                                          password='longenough12', role='admin', is_staff=True)
         self.client.force_login(staff)
         resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
@@ -6405,7 +6418,7 @@ class GapDashboardViewTests(TestCase):
     def test_auditor_denied(self):
         from auditors.models import AuditorProfile
         from core.models import User
-        au = User.objects.create_user(username='gapaud@x.com', email='gapaud@x.com',
+        au = User.objects.create_user(email_verified=True, username='gapaud@x.com', email='gapaud@x.com',
                                       password='longenough12', role='auditor')
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
@@ -6414,7 +6427,7 @@ class GapDashboardViewTests(TestCase):
 
     def test_staff_without_company_routed_to_crm(self):
         from core.models import User
-        st = User.objects.create_user(username='gapstaff@x.com', email='gapstaff@x.com',
+        st = User.objects.create_user(email_verified=True, username='gapstaff@x.com', email='gapstaff@x.com',
                                       password='longenough12', role='admin', is_staff=True)
         self.client.force_login(st)
         resp = self.client.get(reverse('compliance:gap_dashboard'))
@@ -6426,7 +6439,7 @@ class GapDashboardViewTests(TestCase):
         from core.models import User
         c, item, sub = _company_with_submission()
         recalculate_company_gap(c)
-        staff = User.objects.create_user(username='gapcrm@x.com', email='gapcrm@x.com',
+        staff = User.objects.create_user(email_verified=True, username='gapcrm@x.com', email='gapcrm@x.com',
                                          password='longenough12', role='admin', is_staff=True)
         self.client.force_login(staff)
         resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
@@ -6514,7 +6527,7 @@ class CommercialReportViewTests(TestCase):
 
     def test_unlinked_user_safe_no_company(self):
         from core.models import User
-        u = User.objects.create_user(username='crorph@x.com', email='crorph@x.com',
+        u = User.objects.create_user(email_verified=True, username='crorph@x.com', email='crorph@x.com',
                                      password='longenough12', role='company_admin')
         self.client.force_login(u)
         resp = self.client.get(reverse(self.URL))
@@ -6524,7 +6537,7 @@ class CommercialReportViewTests(TestCase):
     def test_auditor_denied(self):
         from auditors.models import AuditorProfile
         from core.models import User
-        au = User.objects.create_user(username='craud@x.com', email='craud@x.com',
+        au = User.objects.create_user(email_verified=True, username='craud@x.com', email='craud@x.com',
                                       password='longenough12', role='auditor')
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
@@ -6532,7 +6545,7 @@ class CommercialReportViewTests(TestCase):
 
     def test_staff_without_company_routed_to_crm(self):
         from core.models import User
-        st = User.objects.create_user(username='crstaff@x.com', email='crstaff@x.com',
+        st = User.objects.create_user(email_verified=True, username='crstaff@x.com', email='crstaff@x.com',
                                       password='longenough12', role='admin', is_staff=True)
         self.client.force_login(st)
         self.assertContains(self.client.get(reverse(self.URL)), 'Get Solution CRM', status_code=200)
@@ -6616,7 +6629,7 @@ class CommercialReportCRMSummaryTests(TestCase):
         from compliance.gap_engine import recalculate_company_gap
         c, item, sub = _company_with_submission()
         recalculate_company_gap(c)
-        staff = User.objects.create_user(username='crcrm@x.com', email='crcrm@x.com',
+        staff = User.objects.create_user(email_verified=True, username='crcrm@x.com', email='crcrm@x.com',
                                          password='longenough12', role='admin', is_staff=True)
         self.client.force_login(staff)
         resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
@@ -6666,7 +6679,7 @@ class CommercialReportPDFTests(TestCase):
 
     def test_unlinked_user_safe_no_company(self):
         from core.models import User
-        u = User.objects.create_user(username='pdforph@x.com', email='pdforph@x.com',
+        u = User.objects.create_user(email_verified=True, username='pdforph@x.com', email='pdforph@x.com',
                                      password='longenough12', role='company_admin')
         self.client.force_login(u)
         resp = self.client.get(reverse(self.URL))
@@ -6676,7 +6689,7 @@ class CommercialReportPDFTests(TestCase):
     def test_auditor_denied(self):
         from auditors.models import AuditorProfile
         from core.models import User
-        au = User.objects.create_user(username='pdfaud@x.com', email='pdfaud@x.com',
+        au = User.objects.create_user(email_verified=True, username='pdfaud@x.com', email='pdfaud@x.com',
                                       password='longenough12', role='auditor')
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
@@ -6684,7 +6697,7 @@ class CommercialReportPDFTests(TestCase):
 
     def test_staff_without_company_routed_to_crm(self):
         from core.models import User
-        st = User.objects.create_user(username='pdfstaff@x.com', email='pdfstaff@x.com',
+        st = User.objects.create_user(email_verified=True, username='pdfstaff@x.com', email='pdfstaff@x.com',
                                       password='longenough12', role='admin', is_staff=True)
         self.client.force_login(st)
         self.assertContains(self.client.get(reverse(self.URL)), 'Get Solution CRM', status_code=200)

@@ -13,7 +13,7 @@ from django.utils.translation import gettext as _
 from .models import Framework, Domain, Control, CompanyControl, Evidence, Assessment
 from ai_engine.services import process_uploaded_file, analyze_evidence
 from ai_engine.models import AIAuditLog
-from core.roles import company_portal_required
+from core.roles import company_portal_required, email_verified_required
 
 
 @login_required
@@ -91,6 +91,7 @@ def control_detail(request, control_id):
 
 
 @login_required
+@email_verified_required
 def upload_evidence(request, control_id):
     """Upload evidence for a specific control and trigger AI analysis."""
     if request.method != 'POST':
@@ -475,6 +476,21 @@ def intake_wizard(request):
             profile.save()
             # Deterministic applicability evaluation (writes FrameworkApplicabilityResult only).
             evaluate_company(company, apply=True)
+            # UAT-5: an intake change invalidates any previously APPROVED scope — it must be
+            # re-approved before final workflows (control plan / reports / submit) proceed.
+            from .models import CompanyFrameworkScope
+            invalidated = CompanyFrameworkScope.objects.filter(
+                company=company, status='approved').update(status='needs_review')
+            # UAT-7: audit the intake change (best-effort; never blocks the save).
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(user=request.user, company=company, action='intake_saved',
+                                        method='POST', path=request.path,
+                                        metadata={'scopes_invalidated': invalidated})
+            except Exception:
+                pass
+            if invalidated:
+                messages.info(request, 'تم تحديث الإدخال؛ يلزم إعادة اعتماد نطاق الأطر قبل المتابعة.')
             messages.success(request, 'تم حفظ ملف التصنيف وتحديد الأطر المنطبقة.')
             return redirect('compliance:applicability_review')
     else:
@@ -678,6 +694,7 @@ def _company_checklist_item(request, item_id):
 
 @login_required
 @company_portal_required
+@email_verified_required
 @require_http_methods(["GET", "POST"])
 def evidence_upload_v2(request, item_id):
     """Upload an EvidenceSubmission for a checklist item (tenant-scoped). No AI/OCR."""
