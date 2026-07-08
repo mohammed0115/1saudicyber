@@ -361,3 +361,61 @@ def build_page_guide(company, page_key):
         'cta_url_name': url_name,
         'cta_label': label,
     }
+
+
+# ============================================================
+# UAT-COMPANY-JOURNEY-NEXT-BACK-STEPPER-FIX-A
+# State-driven Next/Back navigation for every company journey page. The "next" button is
+# enabled only when THIS step's requirement is satisfied; otherwise it is a disabled button
+# with a short Arabic locked reason. "back" always points to the previous logical step (not
+# browser history). Derived purely from existing data signals — never writes, tenant-scoped
+# via `company`.
+# page_key -> dict(back=(url_name, label)|None, next_url, next_label, ready(f)->bool, locked)
+_JOURNEY_NAV = {
+    'intake': dict(
+        back=('dashboard:main', 'العودة للوحة الامتثال'),
+        next_url='compliance:classification', next_label='الخطوة التالية: التصنيف الذكي',
+        ready=lambda f: f['intake_profile'], locked='أكمل بيانات التصنيف أولًا'),
+    'classification': dict(
+        back=('compliance:intake', 'العودة: بيانات التصنيف'),
+        next_url='compliance:applicability_review', next_label='مراجعة بيانات التصنيف',
+        ready=lambda f: f['intake_profile'] or f['applicability'],
+        locked='أكمل بيانات التصنيف أولًا'),
+    'applicability': dict(
+        back=('compliance:classification', 'العودة: التصنيف الذكي'),
+        next_url='compliance:control_plan', next_label='اعتماد نطاق الأطر والمتابعة',
+        ready=lambda f: f['approved_scope'], locked='اعتمد نطاق الأطر أولًا'),
+    'controls': dict(
+        back=('compliance:applicability_review', 'العودة: مراجعة واعتماد الأطر'),
+        next_url='compliance:evidence_checklist', next_label='الخطوة التالية: قائمة الأدلة ورفعها',
+        ready=lambda f: f['control_plan'], locked='أنشئ خطة الضوابط أولًا'),
+    'evidence': dict(
+        back=('compliance:control_plan', 'العودة: خطة الضوابط'),
+        next_url='compliance:reports_index', next_label='الخطوة التالية: التقارير',
+        ready=lambda f: f['submissions'], locked='ارفع الأدلة المطلوبة أولًا'),
+    'reports': dict(
+        back=('compliance:evidence_checklist', 'العودة: قائمة الأدلة'),
+        next_url=None, next_label='', ready=lambda f: False, locked=''),
+}
+
+
+def build_journey_nav(company, page_key):
+    """Return {back, next} navigation for a company journey page, or None.
+
+    next_enabled reflects the REAL company state; when disabled, next_locked_reason explains
+    why in Arabic. Read-only; safe to call on any company-scoped page.
+    """
+    cfg = _JOURNEY_NAV.get(page_key)
+    if cfg is None:
+        return None
+    f = _signals(company)
+    ready = bool(cfg['ready'](f))
+    has_next = bool(cfg['next_url'])
+    return {
+        'back_url_name': cfg['back'][0] if cfg['back'] else None,
+        'back_label': cfg['back'][1] if cfg['back'] else 'العودة للخلف',
+        'next_url_name': cfg['next_url'],
+        'next_label': cfg['next_label'],
+        'next_enabled': has_next and ready,
+        'next_locked_reason': '' if (ready or not has_next) else cfg['locked'],
+    }

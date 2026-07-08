@@ -434,7 +434,7 @@ def classification_summary(request):
     never issues a final compliance decision.
     """
     from .smart_classification import classify_company
-    from .journey import build_page_guide
+    from .journey import build_page_guide, build_journey_nav
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
@@ -442,6 +442,7 @@ def classification_summary(request):
         'company': company,
         'classification': classify_company(company),
         'guide': build_page_guide(company, 'classification'),
+        'nav': build_journey_nav(company, 'classification'),
     })
 
 
@@ -495,8 +496,12 @@ def intake_wizard(request):
             return redirect('compliance:applicability_review')
     else:
         form = CompanyIntakeForm(instance=profile)
+    from .journey import build_journey_nav
+    from .workflow_stepper import build_company_workflow_stepper
     return render(request, 'compliance/intake.html', {'form': form, 'company': company,
-                                                       'has_profile': profile is not None})
+                                                       'has_profile': profile is not None,
+                                                       'stepper': build_company_workflow_stepper(company),
+                                                       'nav': build_journey_nav(company, 'intake')})
 
 
 @login_required
@@ -547,7 +552,7 @@ def applicability_review(request):
     # with frameworks the company does not need (backend split, not just template CSS).
     applicable_results = [r for r in results if r.decision != 'not_applicable']
     not_applicable_results = [r for r in results if r.decision == 'not_applicable']
-    from .journey import build_page_guide
+    from .journey import build_page_guide, build_journey_nav
     return render(request, 'compliance/applicability_review.html', {
         'company': company,
         'results': applicable_results,
@@ -559,6 +564,7 @@ def applicability_review(request):
         # UI: only surface the control-plan CTA once a scope is actually approved (a plan exists).
         'has_approved_scope': scopes.filter(status='approved').exists(),
         'guide': build_page_guide(company, 'applicability'),
+        'nav': build_journey_nav(company, 'applicability'),
     })
 
 
@@ -645,9 +651,13 @@ def control_plan(request):
     plan = (ControlApplicabilityResult.objects.filter(company=company)
             .select_related('control', 'control__framework', 'control__domain',
                             'framework_scope__framework_version'))
+    from .journey import build_journey_nav
+    from .workflow_stepper import build_company_workflow_stepper
     return render(request, 'compliance/control_plan.html', {
         'company': company, 'approved': approved, 'plan': plan,
         'can_generate': request.user.is_staff,
+        'stepper': build_company_workflow_stepper(company),
+        'nav': build_journey_nav(company, 'controls'),
     })
 
 
@@ -674,12 +684,13 @@ def evidence_checklist(request):
     has_any_scope = scope_qs.exists()
     has_approved_scope = scope_qs.filter(status='approved').exists()
     from .workflow_stepper import build_company_workflow_stepper
-    from .journey import build_page_guide
+    from .journey import build_page_guide, build_journey_nav
     return render(request, 'compliance/evidence_checklist.html', {
         'company': company, 'items': items, 'can_generate': request.user.is_staff,
         'has_any_scope': has_any_scope, 'has_approved_scope': has_approved_scope,
         'stepper': build_company_workflow_stepper(company),
         'guide': build_page_guide(company, 'evidence'),
+        'nav': build_journey_nav(company, 'evidence'),
     })
 
 
@@ -941,13 +952,15 @@ def reports_index(request):
     from .models import ControlAssessment
     from billing.subscription_access import company_has_active_subscription
     from .workflow_stepper import build_company_workflow_stepper
+    from .journey import build_journey_nav
     reviewed_count = (ControlAssessment.objects.filter(company=company)
                       .exclude(status='not_reviewed').count())
     return render(request, 'compliance/reports_index.html', {
         'company': company, 'frameworks': get_approved_framework_versions(company),
         'reviewed_assessment_count': reviewed_count,
         'subscription_active': company_has_active_subscription(company),
-        'stepper': build_company_workflow_stepper(company)})
+        'stepper': build_company_workflow_stepper(company),
+        'nav': build_journey_nav(company, 'reports')})
 
 
 @login_required

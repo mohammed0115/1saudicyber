@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto space-y-6">
+    {% include "compliance/_workflow_stepper.html" %}
     <div>
         <h1 class="text-2xl font-bold text-gov-green-800">تصنيف الشركة</h1>
         <p class="text-gov-gray-600">
@@ -65,6 +66,8 @@
             {% endif %}
         </div>
     </form>
+
+    {% include "components/journey_nav.html" %}
 </div>
 
 {% comment %}

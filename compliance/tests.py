@@ -6853,3 +6853,72 @@ class CommercialReportPDFTests(TestCase):
         body = self.client.get(reverse('compliance:commercial_readiness_report')).content.decode()
         self.assertIn(reverse(self.URL), body)  # Export PDF button link
         self.assertIn('window.print()', body)   # Print button still present
+
+
+class CompanyJourneyNavTests(TestCase):
+    """UAT-COMPANY-JOURNEY-NEXT-BACK-STEPPER-FIX-A — state-driven stepper + Next/Back on every
+    company journey page (soft-guard: locked next shows an Arabic reason, no data leak)."""
+
+    def setUp(self):
+        self.c = _company()
+        self.user = _journey_user(self.c)
+        self.client.force_login(self.user)
+
+    def _body(self, name):
+        return self.client.get(reverse(name)).content.decode()
+
+    def test_intake_has_stepper_back_and_locked_next(self):
+        body = self._body('compliance:intake')
+        self.assertIn('مسار عمل الشركة', body)              # stepper
+        self.assertIn('العودة للوحة الامتثال', body)         # back button
+        self.assertIn('أكمل بيانات التصنيف أولًا', body)     # next locked (no intake yet)
+
+    def test_intake_next_unlocks_after_profile(self):
+        CompanyIntakeProfile.objects.create(company=self.c, uses_cloud_services=True)
+        body = self._body('compliance:intake')
+        self.assertIn('الخطوة التالية: التصنيف الذكي', body)
+        self.assertNotIn('أكمل بيانات التصنيف أولًا', body)  # now enabled
+
+    def test_classification_next_is_review(self):
+        CompanyIntakeProfile.objects.create(company=self.c, uses_cloud_services=True)
+        body = self._body('compliance:classification')
+        self.assertIn('مراجعة بيانات التصنيف', body)         # next label -> review
+        self.assertIn('العودة: بيانات التصنيف', body)        # back -> intake
+
+    def test_review_next_locked_until_scope_approved(self):
+        CompanyIntakeProfile.objects.create(company=self.c, works_with_aramco=True)
+        body = self._body('compliance:applicability_review')
+        self.assertIn('اعتماد نطاق الأطر والمتابعة', body)   # next label
+        self.assertIn('اعتمد نطاق الأطر أولًا', body)        # locked reason
+        self.assertIn('العودة: التصنيف الذكي', body)         # back -> classification
+
+    def test_control_plan_has_stepper_back_and_locked_next(self):
+        body = self._body('compliance:control_plan')
+        self.assertIn('مسار عمل الشركة', body)
+        self.assertIn('العودة: مراجعة واعتماد الأطر', body)
+        self.assertIn('أنشئ خطة الضوابط أولًا', body)        # no plan yet -> locked
+
+    def test_evidence_next_locked_until_upload(self):
+        body = self._body('compliance:evidence_checklist')
+        self.assertIn('العودة: خطة الضوابط', body)
+        self.assertIn('ارفع الأدلة المطلوبة أولًا', body)
+
+    def test_reports_has_back_to_evidence(self):
+        body = self._body('compliance:reports_index')
+        self.assertIn('العودة: قائمة الأدلة', body)
+
+    def test_nav_does_not_expose_admin_or_auditor_links(self):
+        body = self._body('compliance:intake')
+        self.assertNotIn('/platform-admin/', body)
+        self.assertNotIn('auditor_portal', body)
+
+    def test_journey_nav_is_company_scoped(self):
+        # Another company's approval must not unlock THIS company's review->plan next button.
+        other = _company()
+        from compliance.models import Framework, FrameworkVersion, CompanyFrameworkScope
+        fw = Framework.objects.create(code='NCA', name='NCA')
+        fv = FrameworkVersion.objects.create(code='NCA-ECC-2-2024', framework=fw, version_label='ECC')
+        CompanyFrameworkScope.objects.create(company=other, framework_version=fv, status='approved')
+        CompanyIntakeProfile.objects.create(company=self.c, works_with_aramco=True)
+        body = self._body('compliance:applicability_review')
+        self.assertIn('اعتمد نطاق الأطر أولًا', body)  # still locked for THIS company

@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto space-y-6">
+    {% include "compliance/_workflow_stepper.html" %}
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gov-green-800">خطة الضوابط</h1>
@@ -81,5 +82,7 @@
         <i class="fas fa-lock"></i>
         متطلبات الأدلة وقائمة الرفع ستُولَّد في مرحلة لاحقة.
     </div>
+
+    {% include "components/journey_nav.html" %}
 </div>
 {% endblock %}
