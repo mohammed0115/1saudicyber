@@ -449,6 +449,16 @@ class BillingViewTests(TestCase):
         self.assertContains(resp, 'Current subscription')
         self.assertContains(resp, 'Available plans')
 
+    @override_settings(PAYMENT_PROVIDER='manual')
+    def test_billing_page_hides_provider_brand_and_secrets(self):
+        # DEF-01: in the shipped (manual) mode the client HTML must not expose the payment
+        # provider brand name or any key material.
+        c = _company()
+        self._login(c, 'brand@x.com')
+        body = self.client.get(reverse('billing:home')).content.decode()
+        for banned in ('Moyasar', 'moyasar', 'pk_live', 'sk_live', 'pk_test', 'sk_test'):
+            self.assertNotIn(banned, body)
+
     def test_unlinked_user_safe_no_company(self):
         u = User.objects.create_user(username='bvorph@x.com', email='bvorph@x.com',
                                      password='longenough12', role='company_admin')

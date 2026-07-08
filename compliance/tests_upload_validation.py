@@ -94,3 +94,15 @@ class UploadViewRejectionTests(TestCase):
                                 {'uploaded_file': _f('malware.pdf', EXE), 'notes': ''})
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(EvidenceSubmission.objects.count(), before)  # no new spoofed submission
+
+    def test_control_detail_accepts_real_docx(self):
+        # DEF-02: a valid .docx must be ACCEPTED and stored (was rejected as 'Unsupported').
+        from unittest import mock
+        c, control = _company_with_control()
+        self.client.force_login(_journey_user(c, email='p6docx@x.com'))
+        with mock.patch('compliance.services.process_evidence_pipeline'):  # skip OCR/AI
+            resp = self.client.post(reverse('compliance:upload_evidence', args=[control.id]),
+                                    {'evidence_file': _f('policy.docx', _docx_bytes())})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Evidence.objects.count(), 1)
+        self.assertEqual(Evidence.objects.get().file_type, 'docx')
