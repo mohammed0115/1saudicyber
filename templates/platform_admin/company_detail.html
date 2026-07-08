@@ -19,9 +19,29 @@
         <div><span class="text-gov-gray-500">الحجم · Size:</span> {{ company.get_size_display }}</div>
         <div><span class="text-gov-gray-500">المدينة · City:</span> {{ company.city|default:"—" }}</div>
         <div><span class="text-gov-gray-500">بريد التواصل · Contact:</span> <span dir="ltr">{{ company.contact_email }}</span></div>
-        <div><span class="text-gov-gray-500">التهيئة مكتملة · Onboarded:</span> {{ company.onboarding_completed|yesno:"نعم,لا" }}</div>
+        <div><span class="text-gov-gray-500">أكمل خطوة التهيئة الترحيبية · Welcome step:</span> {{ company.onboarding_completed|yesno:"نعم,لا" }}</div>
         <div><span class="text-gov-gray-500">تاريخ الإنشاء · Created:</span> {{ company.created_at|date:"Y-m-d H:i" }}</div>
         <div><span class="text-gov-gray-500">آخر تحديث · Updated:</span> {{ company.updated_at|date:"Y-m-d H:i" }}</div>
+      </div>
+      <p class="text-xs text-gov-gray-400 mt-2">«خطوة التهيئة الترحيبية» تعني ضغط المستخدم زر إنهاء التهيئة فقط، ولا تعكس اكتمال التصنيف أو اعتماد النطاق. راجع ملخص رحلة الامتثال أدناه للحالة الفعلية.</p>
+    </div>
+
+    {# Compliance journey summary — INTERNAL Get Solution CRM only (never shown to companies/auditors). #}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">ملخص رحلة الامتثال · Compliance journey (داخلي)</h2>
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gov-gray-500">حالة التصنيف:</span>
+          {% if journey.classification_done %}<span class="text-green-700 font-medium">مكتمل</span>{% else %}<span class="text-gov-gray-500">لم يبدأ</span>{% endif %}</div>
+        <div><span class="text-gov-gray-500">الأطر المقترحة:</span> {{ journey.proposed_frameworks }}</div>
+        <div><span class="text-gov-gray-500">عدد الضوابط المتوقع:</span> {{ journey.expected_controls }}</div>
+        <div><span class="text-gov-gray-500">مستوى المخاطر:</span> {{ journey.risk_level_ar }}</div>
+        <div><span class="text-gov-gray-500">حالة اعتماد النطاق:</span>
+          {% if journey.scope_approved %}<span class="text-green-700 font-medium">معتمد</span>{% else %}<span class="text-gov-gray-500">غير معتمد</span>{% endif %}</div>
+        <div><span class="text-gov-gray-500">حالة خطة الضوابط:</span>
+          {% if journey.control_plan_generated %}<span class="text-green-700 font-medium">تم إنشاؤها</span>{% else %}<span class="text-gov-gray-500">لم تُنشأ</span>{% endif %}</div>
+        <div><span class="text-gov-gray-500">حالة التحقق من البريد:</span>
+          {% if journey.email_verified %}<span class="text-green-700 font-medium">تم التحقق</span>{% else %}<span class="text-red-700 font-medium">لم يتم</span>{% endif %}</div>
+        <div><span class="text-gov-gray-500">آخر نشاط:</span> {{ journey.last_activity|date:"Y-m-d H:i"|default:"—" }}</div>
       </div>
     </div>
 
@@ -108,8 +128,10 @@
             <option value="0">— بدون · none —</option>
             {% for s in assignable_staff %}<option value="{{ s.id }}" {% if crm_profile.assigned_staff_id == s.id %}selected{% endif %}>{{ s.email }}</option>{% endfor %}
           </select></label>
-        <label class="text-sm"><span class="block text-gov-gray-500 mb-1">المتابعة التالية · Next follow-up</span>
-          <input type="date" name="next_follow_up_date" value="{{ crm_profile.next_follow_up_date|date:'Y-m-d' }}" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
+        <label class="text-sm"><span class="block text-gov-gray-500 mb-1">المتابعة التالية · Next follow-up <span class="text-gov-gray-400">(سنة-شهر-يوم)</span></span>
+          <input type="date" name="next_follow_up_date" lang="en-CA" pattern="\d{4}-\d{2}-\d{2}"
+                 value="{{ crm_profile.next_follow_up_date|date:'Y-m-d' }}"
+                 class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
         <label class="text-sm"><span class="block text-gov-gray-500 mb-1">السبب · Reason</span>
           <input type="text" name="reason" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
         <label class="text-sm md:col-span-2"><span class="block text-gov-gray-500 mb-1">ملخص داخلي · Internal summary</span>

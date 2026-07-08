@@ -93,6 +93,7 @@ def crm_company_detail(request, company_id):
     return render(request, 'platform_admin/company_detail.html', {
         'company': company,
         'snapshot': crm.company_operational_snapshot(company),
+        'journey': crm.company_journey_summary(company),
         'linkable_users': crm.linkable_users(),
         'crm_profile': crm.get_company_crm_profile(company),
         'crm_notes': crm.company_notes(company),

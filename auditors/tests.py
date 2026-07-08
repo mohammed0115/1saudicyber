@@ -790,6 +790,11 @@ class CRMCompanyUserLinkingTests(TestCase):
     def _unlink_url(self, c):
         return reverse('platform_admin:unlink_user', args=[c.id])
 
+    def _co_admin(self, c, email='coadmin@x.com'):
+        # A second active company_admin so a target is not the LAST admin (unlink guard).
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='company_admin', company=c)
+
     # ---- permissions ----
     def test_anonymous_cannot_link(self):
         c = self._company()
@@ -904,6 +909,7 @@ class CRMCompanyUserLinkingTests(TestCase):
     def test_staff_can_unlink_user(self):
         c = self._company()
         u = self._unlinked_user(); u.company = c; u.save()
+        self._co_admin(c)  # not the last admin
         self.client.force_login(self._staff())
         self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'left company'})
         u.refresh_from_db()
@@ -925,6 +931,7 @@ class CRMCompanyUserLinkingTests(TestCase):
     def test_unlink_does_not_delete_user_or_company(self):
         c = self._company()
         u = self._unlinked_user(); u.company = c; u.save()
+        self._co_admin(c)
         self.client.force_login(self._staff())
         self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
         self.assertTrue(User.objects.filter(id=u.id).exists())
@@ -933,6 +940,7 @@ class CRMCompanyUserLinkingTests(TestCase):
     def test_unlinked_user_reappears_in_unlinked_list(self):
         c = self._company()
         u = self._unlinked_user(); u.company = c; u.save()
+        self._co_admin(c)
         self.client.force_login(self._staff())
         self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
         body = self.client.get(reverse('platform_admin:unlinked_accounts')).content.decode()
@@ -941,6 +949,7 @@ class CRMCompanyUserLinkingTests(TestCase):
     def test_unlink_does_not_change_session(self):
         c = self._company()
         u = self._unlinked_user(); u.company = c; u.save()
+        self._co_admin(c)
         staff = self._staff()
         self.client.force_login(staff)
         self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
@@ -963,12 +972,40 @@ class CRMCompanyUserLinkingTests(TestCase):
         from core.models import AuditLog
         c = self._company()
         u = self._unlinked_user(); u.company = c; u.save()
+        self._co_admin(c)
         self.client.force_login(self._staff())
         self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'offboard'})
         log = AuditLog.objects.filter(action='crm_unlink_user').order_by('-id').first()
         self.assertIsNotNone(log)
         self.assertEqual(log.metadata.get('old_company_id'), c.id)
         self.assertEqual(log.metadata.get('reason'), 'offboard')
+
+    def test_last_company_admin_cannot_be_unlinked(self):
+        # Safety: unlinking the ONLY active company admin is blocked (would strand the company).
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()  # sole company_admin
+        self.client.force_login(self._staff())
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
+        u.refresh_from_db()
+        self.assertEqual(u.company_id, c.id)  # still linked (blocked)
+
+    def test_non_last_admin_can_be_unlinked(self):
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()
+        self._co_admin(c)
+        self.client.force_login(self._staff())
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
+        u.refresh_from_db()
+        self.assertIsNone(u.company_id)
+
+    def test_last_admin_unlink_block_is_not_audited_as_success(self):
+        from core.models import AuditLog
+        c = self._company()
+        u = self._unlinked_user(); u.company = c; u.save()
+        self.client.force_login(self._staff())
+        self.client.post(self._unlink_url(c), {'user_id': u.id, 'reason': 'r'})
+        self.assertFalse(AuditLog.objects.filter(action='crm_unlink_user',
+                                                 metadata__target_user_id=u.id).exists())
 
     # ---- safety ----
     def test_company_detail_link_ui_no_unsafe_wording(self):
@@ -985,6 +1022,63 @@ class CRMCompanyUserLinkingTests(TestCase):
             self.assertNotIn(w, body)
         if 'شهادة امتثال رسمية' in body:
             self.assertIn('لا يمثّل اعتمادًا رسميًا أو شهادة امتثال رسمية', body)
+
+
+class CRMCompanyJourneySummaryTests(TestCase):
+    """UAT-ADMIN-COMPANY-DETAIL-STATUS-FIX-A — internal compliance-journey summary on the CRM
+    company detail page (staff-only; never exposed to companies/auditors)."""
+
+    def _staff(self, email='js_admin@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    def _company(self, cr='6161616161'):
+        return Company.objects.create(name='Journey Co', cr_number=cr, sector='technology',
+                                      size='small', contact_email='j@co.example')
+
+    def test_company_appears_in_crm_list_after_registration(self):
+        c = self._company(cr='6060606060')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:companies_list')).content.decode()
+        self.assertIn(c.name, body)
+
+    def test_journey_summary_reflects_classification_and_scope(self):
+        from compliance.models import (CompanyIntakeProfile, Framework, FrameworkVersion,
+                                        CompanyFrameworkScope)
+        c = self._company()
+        cu = User.objects.create_user(username='jco@x.com', email='jco@x.com',
+                                      password='longenough12', role='company_admin', company=c,
+                                      email_verified=True)
+        CompanyIntakeProfile.objects.create(company=c, uses_cloud_services=True)
+        fw = Framework.objects.create(code='NCA', name='NCA')
+        fv = FrameworkVersion.objects.create(code='NCA-ECC-2-2024', framework=fw, version_label='ECC')
+        CompanyFrameworkScope.objects.create(company=c, framework_version=fv, status='approved')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'ملخص رحلة الامتثال')
+        self.assertContains(resp, 'حالة اعتماد النطاق')
+        j = resp.context['journey']
+        self.assertTrue(j['classification_done'])
+        self.assertTrue(j['scope_approved'])
+        self.assertTrue(j['email_verified'])
+        self.assertGreater(j['proposed_frameworks'], 0)
+        self.assertGreater(j['expected_controls'], 0)
+
+    def test_onboarded_label_is_clarified_not_misleading(self):
+        c = self._company(cr='6262626262')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('خطوة التهيئة الترحيبية', body)          # clarified label
+        self.assertNotIn('التهيئة مكتملة · Onboarded', body)   # old misleading label removed
+
+    def test_company_user_cannot_access_company_detail(self):
+        c = self._company(cr='6363636363')
+        u = User.objects.create_user(username='cu9@x.com', email='cu9@x.com',
+                                     password='longenough12', role='company_admin', company=c)
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:company_detail', args=[c.id])).status_code, 403)
 
 
 class CRMCompanyFollowUpTests(TestCase):

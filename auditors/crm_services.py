@@ -94,6 +94,59 @@ def company_operational_snapshot(company):
     return snap
 
 
+def company_journey_summary(company):
+    """Read-only compliance-journey summary for the Get Solution CRM console (INTERNAL ONLY).
+
+    Existence checks + the advisory classification engine — nothing is written or scored here.
+    Never exposed to company users or auditors. Guarded so the console never 500s.
+    """
+    summary = {
+        'classification_done': False,
+        'proposed_frameworks': 0,
+        'expected_controls': 0,
+        'risk_level': '',
+        'risk_level_ar': '—',
+        'scope_approved': False,
+        'control_plan_generated': False,
+        'email_verified': False,
+        'last_activity': getattr(company, 'updated_at', None),
+    }
+    try:
+        from compliance.models import (CompanyIntakeProfile, CompanyFrameworkScope,
+                                        ControlApplicabilityResult)
+        has_intake = CompanyIntakeProfile.objects.filter(company=company).exists()
+        summary['classification_done'] = has_intake
+        scopes = CompanyFrameworkScope.objects.filter(company=company)
+        summary['scope_approved'] = scopes.filter(status='approved').exists()
+        summary['control_plan_generated'] = ControlApplicabilityResult.objects.filter(
+            company=company, decision='applicable').exists()
+        if has_intake:
+            # Same advisory engine the company sees — keeps CRM and company views consistent.
+            from compliance.smart_classification import classify_company
+            r = classify_company(company)
+            summary['proposed_frameworks'] = r.recommended_count
+            summary['expected_controls'] = r.total_expected_controls
+            summary['risk_level'] = r.risk_level
+            summary['risk_level_ar'] = r.risk_level_ar
+        else:
+            # No intake yet: fall back to any non-rejected proposed scope rows.
+            summary['proposed_frameworks'] = scopes.exclude(status='rejected').count()
+    except Exception:
+        pass
+    try:
+        summary['email_verified'] = company.users.filter(email_verified=True).exists()
+    except Exception:
+        pass
+    try:
+        from core.models import AuditLog
+        last = AuditLog.objects.filter(company=company).order_by('-created_at').first()
+        if last is not None:
+            summary['last_activity'] = last.created_at
+    except Exception:
+        pass
+    return summary
+
+
 # ============================================================
 # Phase 8D-3D-CRM-B — Company/User linking actions (write, staff-only).
 # Business rules live here (service layer). Every action is audited via the
@@ -221,6 +274,14 @@ def unlink_user_from_company(actor, user, reason):
     old_company = getattr(user, 'company', None)
     if old_company is None:
         raise CRMLinkError('الحساب غير مرتبط بأي شركة.')
+    # Safety: never strand a company without an admin. If this is the ONLY active company admin,
+    # block the unlink — the operator must link another admin first (safe fallback).
+    if user.role == 'company_admin':
+        other_admins = (old_company.users.filter(role='company_admin', is_active=True)
+                        .exclude(id=user.id))
+        if not other_admins.exists():
+            raise CRMLinkError('لا يمكن إلغاء ربط آخر مسؤول للشركة. اربط مسؤولًا آخر أولًا '
+                               'لتفادي فقدان الشركة الوصول إلى حسابها.')
 
     user.company = None
     user.save(update_fields=['company'])
