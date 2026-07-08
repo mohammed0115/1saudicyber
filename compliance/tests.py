@@ -7092,3 +7092,59 @@ class FrameworkControlsPreviewTests(TestCase):
         body = self.client.get(self._url()).content.decode()
         self.assertIn(reverse('compliance:applicability_review'), body)
         self.assertIn('مراجعة الأطر المنطبقة', body)
+
+    # --- Arabic UX (UAT-COMPANY-FRAMEWORK-CONTROLS-ARABIC-UX-FIX-A) ---
+    def test_framework_controls_page_arabic_labels(self):
+        body = self.client.get(self._url()).content.decode()
+        self.assertIn('متطلبات الأدلة', body)
+        self.assertIn('ما المطلوب من الشركة', body)
+        self.assertIn('النص الرسمي الأصلي بالإنجليزية', body)
+        self.assertIn('العودة إلى مراجعة الأطر المنطبقة', body)
+
+    def test_evidence_type_arabic_mapping(self):
+        # Seeded controls default to evidence_type='policy' -> shown as "وثيقة سياسة".
+        body = self.client.get(self._url()).content.decode()
+        self.assertIn('وثيقة سياسة', body)
+        self.assertNotIn('Policy Document', body)
+
+    def test_domain_arabic_mapping(self):
+        from compliance.models import Control, Domain
+        dom = Domain.objects.create(framework=self.fv.framework, code='CLOUD',
+                                    name='Cloud Cybersecurity')
+        Control.objects.create(framework=self.fv.framework, framework_version=self.fv, domain=dom,
+                               control_id='ARAMCO-CLOUD-1', title='t', description='d')
+        body = self.client.get(self._url()).content.decode()
+        self.assertIn('الأمن السيبراني السحابي', body)
+        self.assertNotIn('Cloud Cybersecurity', body)
+
+    def test_control_count_unchanged_by_preview(self):
+        from compliance.models import Control
+        before = Control.objects.filter(framework_version=self.fv, is_legacy_import=False).count()
+        resp = self.client.get(self._url())
+        after = Control.objects.filter(framework_version=self.fv, is_legacy_import=False).count()
+        self.assertEqual(before, after)                      # count is stable (2 seeded)
+        self.assertEqual(resp.context['control_count'], before)
+
+    def test_no_scope_generation_before_approval(self):
+        from compliance.models import CompanyFrameworkScope, ControlApplicabilityResult
+        scope = CompanyFrameworkScope.objects.get(company=self.c, framework_version=self.fv)
+        self.assertEqual(scope.status, 'proposed')
+        cap_before = ControlApplicabilityResult.objects.count()
+        self.client.get(self._url())
+        scope.refresh_from_db()
+        self.assertEqual(scope.status, 'proposed')           # approval unchanged
+        self.assertEqual(ControlApplicabilityResult.objects.count(), cap_before)  # no plan created
+
+    def test_safe_english_display_normalization(self):
+        from compliance.templatetags.compliance_display import normalize_en
+        from compliance.models import Control
+        self.assertEqual(normalize_en('Inadditionto theECC'), 'In addition to the ECC')
+        self.assertEqual(normalize_en('see control2- and subcontrolsin scope'),
+                         'see control 2- and subcontrols in scope')
+        # DISPLAY ONLY: the stored DB value must never be modified by the normalizer.
+        c = Control.objects.filter(framework_version=self.fv).first()
+        c.description = 'Inadditionto theECC'
+        c.save(update_fields=['description'])
+        self.client.get(self._url())
+        c.refresh_from_db()
+        self.assertEqual(c.description, 'Inadditionto theECC')
