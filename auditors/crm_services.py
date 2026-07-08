@@ -149,6 +149,72 @@ def company_journey_summary(company):
             summary['last_activity'] = last.created_at
     except Exception:
         pass
+    # Proposed framework codes (for a compact read-only inline list) + the 8-step journey.
+    summary['proposed_framework_codes'] = []
+    summary['steps'] = []
+    summary['current_step_label'] = ''
+    summary['next_action_text'] = ''
+    try:
+        from compliance.models import (CompanyFrameworkScope, EvidenceSubmission, ControlAssessment)
+        summary['proposed_framework_codes'] = list(
+            CompanyFrameworkScope.objects.filter(company=company)
+            .exclude(status='rejected')
+            .values_list('framework_version__code', flat=True))
+        has_intake = summary['classification_done']
+        evidence_done = EvidenceSubmission.objects.filter(company=company).exists()
+        auditor_done = (ControlAssessment.objects.filter(company=company)
+                        .exclude(status='not_reviewed').exists())
+        reports_done = auditor_done  # reports become meaningful after auditor assessments exist
+        step_defs = [
+            ('registration', 'إنشاء حساب الشركة', True),
+            ('classification', 'ملف التصنيف', has_intake),
+            ('framework_review', 'مراجعة الأطر', has_intake and summary['proposed_frameworks'] > 0),
+            ('scope_approval', 'اعتماد نطاق الأطر', summary['scope_approved']),
+            ('control_plan', 'خطة الضوابط', summary['control_plan_generated']),
+            ('evidence', 'رفع الأدلة', evidence_done),
+            ('auditor_review', 'مراجعة المدقق', auditor_done),
+            ('reports', 'التقارير', reports_done),
+        ]
+        # First not-completed step is "current"; everything after it is "locked".
+        current_assigned = False
+        steps = []
+        for key, label, done in step_defs:
+            if done:
+                status = 'completed'
+            elif not current_assigned:
+                status = 'current'
+                current_assigned = True
+            else:
+                status = 'locked'
+            steps.append({'key': key, 'label': label, 'status': status})
+        summary['steps'] = steps
+        _WAITING = {
+            'classification': 'بانتظار إكمال ملف التصنيف',
+            'framework_review': 'بانتظار إكمال التصنيف لتحديد الأطر',
+            'scope_approval': 'بانتظار اعتماد نطاق الأطر',
+            'control_plan': 'بانتظار إنشاء خطة الضوابط',
+            'evidence': 'بانتظار رفع الأدلة',
+            'auditor_review': 'بانتظار مراجعة المدقق',
+            'reports': 'بانتظار توفّر التقارير',
+        }
+        _NEXT = {
+            'classification': 'الشركة تحتاج إكمال ملف التصنيف.',
+            'framework_review': 'الشركة تحتاج إكمال التصنيف لتحديد الأطر المقترحة.',
+            'scope_approval': 'الشركة تحتاج اعتماد نطاق الأطر قبل إنشاء خطة الضوابط.',
+            'control_plan': 'بانتظار إنشاء خطة الضوابط بعد اعتماد النطاق.',
+            'evidence': 'بانتظار رفع الأدلة المطلوبة من الشركة.',
+            'auditor_review': 'بانتظار مراجعة المدقق للأدلة.',
+            'reports': 'بانتظار توفّر التقارير بعد مراجعة المدقق.',
+        }
+        cur = next((s for s in steps if s['status'] == 'current'), None)
+        if cur is not None:
+            summary['current_step_label'] = _WAITING.get(cur['key'], cur['label'])
+            summary['next_action_text'] = _NEXT.get(cur['key'], '')
+        else:
+            summary['current_step_label'] = 'اكتملت الرحلة'
+            summary['next_action_text'] = 'اكتملت مراحل الرحلة الحالية.'
+    except Exception:
+        pass
     return summary
 
 

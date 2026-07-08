@@ -1069,7 +1069,7 @@ class CRMCompanyJourneySummaryTests(TestCase):
         c = self._company(cr='6262626262')
         self.client.force_login(self._staff())
         body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
-        self.assertIn('أكمل شاشة الترحيب فقط', body)           # clarified, de-emphasized label
+        self.assertIn('زر الترحيب فقط', body)                  # clarified, de-emphasized label
         self.assertNotIn('التهيئة مكتملة · Onboarded', body)   # old misleading label removed
 
     def test_company_user_cannot_access_company_detail(self):
@@ -1127,7 +1127,7 @@ class CRMCompanyStateConsistencyTests(TestCase):
         c = self._company_with_intake(cr='6868680001')
         self.client.force_login(self._staff())
         body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
-        self.assertIn('غير متاح قبل إنشاء خطة الضوابط', body)
+        self.assertIn('المراحل اللاحقة غير متاحة قبل اعتماد النطاق وإنشاء خطة الضوابط', body)
 
     def test_summary_separates_proposed_and_approved(self):
         c = self._company_with_intake(cr='6969690001')
@@ -1142,6 +1142,56 @@ class CRMCompanyStateConsistencyTests(TestCase):
         from auditors.crm_services import _activity_detail
         d = _activity_detail('crm_status_changed', {'old_status': 'onboarding', 'new_status': 'active'})
         self.assertEqual(d, 'من «تهيئة» إلى «نشطة»')
+
+    def test_admin_stepper_current_step_is_scope_approval(self):
+        # Classification done + proposed frameworks exist, scope not approved -> current = scope approval.
+        c = self._company_with_intake(cr='7070700001')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        j = resp.context['journey']
+        cur = next(s for s in j['steps'] if s['status'] == 'current')
+        self.assertEqual(cur['key'], 'scope_approval')
+        self.assertEqual(j['current_step_label'], 'بانتظار اعتماد نطاق الأطر')
+        self.assertContains(resp, 'الإجراء التالي:')
+        self.assertContains(resp, 'الشركة تحتاج اعتماد نطاق الأطر')
+
+    def test_downstream_locked_single_section_before_control_plan(self):
+        c = self._company_with_intake(cr='7171710001')
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertContains(resp, 'المراحل اللاحقة غير متاحة قبل اعتماد النطاق وإنشاء خطة الضوابط')
+        # The four detailed downstream cards must NOT render before the control plan exists.
+        self.assertNotContains(resp, 'الجاهزية · Readiness')
+
+    def test_welcome_flag_wording_is_deemphasized(self):
+        c = self._company(cr='7272720001')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('زر الترحيب فقط', body)
+        self.assertIn('لا تعكس تقدّم رحلة الامتثال', body)
+
+    def test_journey_isolation_between_companies(self):
+        # Company A has a full control plan; Company B (viewed) has only intake -> B shows locked.
+        from compliance.models import (CompanyIntakeProfile, Framework, FrameworkVersion,
+                                        CompanyFrameworkScope, Control, Domain,
+                                        ControlApplicabilityResult)
+        a = self._company_with_intake(cr='7373730001')
+        fw = Framework.objects.create(code='NCAZ', name='NCA')
+        fv = FrameworkVersion.objects.create(code='NCA-ECC-2-2024', framework=fw, version_label='ECC')
+        dom = Domain.objects.create(framework=fw, code='D', name='D')
+        sc = CompanyFrameworkScope.objects.create(company=a, framework_version=fv, status='approved')
+        ctrl = Control.objects.create(framework=fw, framework_version=fv, domain=dom,
+                                      control_id='E-1', title='t', description='d')
+        ControlApplicabilityResult.objects.create(company=a, framework_scope=sc, control=ctrl,
+                                                   decision='applicable')
+        b = self._company(cr='7474740001')
+        CompanyIntakeProfile.objects.create(company=b, uses_cloud_services=True)
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[b.id]))
+        # B's page must reflect B only: no control plan, downstream locked.
+        self.assertFalse(resp.context['journey']['control_plan_generated'])
+        self.assertEqual(resp.context['journey']['generated_controls'], 0)
+        self.assertContains(resp, 'المراحل اللاحقة غير متاحة')
 
     def test_auditor_cannot_access_company_detail(self):
         c = self._company(cr='6464640002')
