@@ -359,12 +359,37 @@ class FrameworkVersion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # UAT-6: correct per-version display names. All NCA versions share one Framework row
+    # (named after ECC), so framework.name is wrong for CCC/CSCC/TCC/OSMACC. Map by code.
+    DISPLAY_NAMES = {
+        'NCA-ECC-2-2024':      ('الضوابط الأساسية للأمن السيبراني', 'NCA Essential Cybersecurity Controls'),
+        'NCA-ECC-2018':        ('الضوابط الأساسية للأمن السيبراني (2018)', 'NCA Essential Cybersecurity Controls (2018)'),
+        'NCA-CCC-2-2024':      ('ضوابط الحوسبة السحابية', 'NCA Cloud Cybersecurity Controls'),
+        'NCA-CSCC-1-2019':     ('ضوابط الأنظمة الحساسة', 'NCA Critical Systems Cybersecurity Controls'),
+        'NCA-TCC-1-2021':      ('ضوابط العمل عن بُعد', 'NCA Telework Cybersecurity Controls'),
+        'NCA-OSMACC-1-2021':   ('ضوابط حسابات التواصل الرسمية', 'NCA Official Social Media Accounts Cybersecurity Controls'),
+        'NCA-OTCC-1-2022':     ('ضوابط التقنية التشغيلية', 'NCA Operational Technology Cybersecurity Controls'),
+        'NCA-DCC-1-2022':      ('ضوابط حماية البيانات', 'NCA Data Cybersecurity Controls'),
+        'ARAMCO-SACS-002':     ('معيار أرامكو SACS-002 للأطراف الثالثة', 'Saudi Aramco SACS-002'),
+        'SABIC-CYBERTRUST-1-0': ('سابك سايبر ترست', 'SABIC CyberTrust'),
+    }
+
     class Meta:
         db_table = 'framework_versions'
         ordering = ['framework', 'code']
 
     def __str__(self):
         return f"{self.code} ({self.get_status_display()})"
+
+    @property
+    def display_name_ar(self):
+        pair = self.DISPLAY_NAMES.get(self.code)
+        return pair[0] if pair else (self.version_label or (self.framework.name if self.framework_id else self.code))
+
+    @property
+    def display_name_en(self):
+        pair = self.DISPLAY_NAMES.get(self.code)
+        return pair[1] if pair else (self.version_label or (self.framework.name if self.framework_id else self.code))
 
 
 class ControlVersion(models.Model):

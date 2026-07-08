@@ -139,6 +139,13 @@ class Company(models.Model):
         return f"{self.name} ({self.cr_number})"
 
     @property
+    def country_display(self):
+        """UAT-10: human label for the Arabic UI while keeping the code ('SA') stored."""
+        if (self.country or '').strip().upper() in ('SA', 'KSA'):
+            return 'المملكة العربية السعودية'
+        return self.country or '—'
+
+    @property
     def applicable_frameworks(self):
         frameworks = []
         if self.target_nca:

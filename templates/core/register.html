@@ -105,13 +105,16 @@
                     <input type="email" name="email" required class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">Phone</label>
+                    <label class="block text-sm font-medium text-gov-gray-700 mb-1">رقم الجوال (اختياري)</label>
                     <input type="tel" name="phone" class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gov-gray-700 mb-1">Password *</label>
-                    <input type="password" name="password" required minlength="8" class="w-full px-4 py-2.5 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
-                    <p class="text-xs text-gov-gray-500 mt-1">Minimum 8 characters</p>
+                    <div class="relative">
+                        <input type="password" id="id_password" name="password" required minlength="8" class="w-full px-4 py-2.5 pl-16 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent">
+                        <button type="button" id="toggle_password" class="absolute inset-y-0 left-0 px-3 text-xs text-gov-green-700 font-medium" aria-label="إظهار/إخفاء كلمة المرور">إظهار</button>
+                    </div>
+                    <p class="text-xs text-gov-gray-500 mt-1">الحد الأدنى 8 أحرف · Minimum 8 characters</p>
                 </div>
             </div>
 
@@ -125,4 +128,17 @@
         </form>
     </div>
 </div>
+<script>
+(function () {
+  var btn = document.getElementById('toggle_password');
+  var inp = document.getElementById('id_password');
+  if (btn && inp) {
+    btn.addEventListener('click', function () {
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'إخفاء' : 'إظهار';
+    });
+  }
+})();
+</script>
 {% endblock %}

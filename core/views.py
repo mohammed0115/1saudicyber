@@ -336,7 +336,7 @@ def company_self_register(request):
             from . import otp_services as otp
             otp.issue_and_send(user)
             messages.success(request, 'تم إنشاء حساب شركتك بنجاح. تحقّق من بريدك الإلكتروني '
-                                      'للحصول على رمز التحقق · Check your email for the verification code.')
+                                      'للحصول على رمز التحقق.')
             return redirect('core:onboarding')
         # PILOT-HOTFIX-B (F): on validation error, keep the user on the step that
         # actually failed (default: the last step, where the submit + non-field

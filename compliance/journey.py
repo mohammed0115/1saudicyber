@@ -273,7 +273,10 @@ _PAGE_GUIDE = {
         done=lambda f: f['applicability'] or f['intake_profile'],
         prereq_ok=lambda f: True,
         blocked_msg='',
-        cta=('compliance:intake', 'إكمال بيانات التصنيف')),
+        cta=('compliance:intake', 'إكمال بيانات التصنيف'),
+        # UAT-UI-5: once the intake is complete, the CTA must not say "إكمال" (contradicts the
+        # "مكتمل" badge) — offer review/edit instead.
+        cta_done_label='مراجعة بيانات التصنيف'),
     'applicability': dict(
         n=4, title='تحليل الأطر القابلة للتطبيق',
         what='راجع الأطر المقترحة بناءً على إجابات التصنيف ثم اعتمد النطاق.',
@@ -345,6 +348,8 @@ def build_page_guide(company, page_key):
     else:
         status = 'current'
     url_name, label = cfg['cta']
+    if status == 'completed' and cfg.get('cta_done_label'):
+        label = cfg['cta_done_label']
     return {
         'step_number': cfg['n'],
         'total': GUIDE_TOTAL,

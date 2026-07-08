@@ -278,6 +278,14 @@ class Phase4ARegistrationOnboardingTests(TestCase):
         self.assertEqual(follow.status_code, 200)
         self.assertContains(follow, 'مرحبًا بك في 1SaudiCyber')
 
+    def test_registration_success_message_is_arabic_only(self):
+        # UAT-UI-1: the Arabic success message must not contain English.
+        resp = self.client.post(reverse('core:company_register'), self._payload(), follow=True)
+        body = resp.content.decode()
+        self.assertIn('تحقّق من بريدك الإلكتروني', body)
+        self.assertNotIn('Check your email', body)
+        self.assertNotIn('verification code', body)
+
     def test_onboarding_completion_redirects_to_journey(self):
         self.client.post(reverse('core:company_register'), self._payload())
         resp = self.client.post(reverse('core:onboarding_complete'))

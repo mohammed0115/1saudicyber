@@ -26,57 +26,57 @@ def _legacy(company, attr):
     return bool(getattr(company, attr, False))
 
 
+# UAT-4: user-facing reasons are clean Arabic — no raw field names, no "Legacy"/internal terms.
 def _rule_nca_ecc(p, company):
-    # Broad cybersecurity scope OR legacy target_nca -> applicable; else needs_review (never silent false).
     if p:
         signals = any([p.is_government_entity, p.is_critical_system_operator, p.uses_cloud_services,
                        p.provides_cloud_services, p.has_ot_environment, p.handles_sensitive_data,
                        p.handles_personal_data, p.has_remote_work])
         if signals:
-            return DECISION_APPLICABLE, 'Company has a cybersecurity scope per intake signals.', 'rule'
+            return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لوجود نطاق سيبراني واضح وفق إجابات التصنيف.', 'rule'
     if _legacy(company, 'target_nca'):
-        return DECISION_APPLICABLE, 'Legacy target_nca checkbox is set.', 'legacy_checkbox'
-    return DECISION_REVIEW, 'No clear NCA scope from intake or legacy flags; needs manual review.', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية الهيئة الوطنية للأمن السيبراني.', 'legacy_checkbox'
+    return DECISION_REVIEW, 'يحتاج تحديد نطاق الهيئة الوطنية إلى مراجعة يدوية بعد إكمال ملف التصنيف.', 'rule'
 
 
 def _rule_cscc(p, company):
     if p and p.is_critical_system_operator:
-        return DECISION_APPLICABLE, 'Company operates critical systems (is_critical_system_operator).', 'rule'
-    return DECISION_NOT, 'Company does not operate critical systems.', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة تشغّل أو تستضيف أنظمة حساسة أو بنية وطنية حرجة.', 'rule'
+    return DECISION_NOT, 'لا يوجد ما يشير إلى تشغيل أنظمة حساسة بناءً على إجابات التصنيف.', 'rule'
 
 
 def _rule_ccc(p, company):
     if p and (p.uses_cloud_services or p.provides_cloud_services):
-        return DECISION_APPLICABLE, 'Company uses or provides cloud services.', 'rule'
-    return DECISION_NOT, 'No cloud usage/provision indicated.', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة تستخدم أو تقدّم خدمات سحابية.', 'rule'
+    return DECISION_NOT, 'لا يوجد استخدام أو تقديم لخدمات سحابية بناءً على إجابات التصنيف.', 'rule'
 
 
 def _rule_tcc(p, company):
     if p and p.has_remote_work:
-        return DECISION_APPLICABLE, 'Company has remote work (telework).', 'rule'
-    return DECISION_NOT, 'No remote work indicated.', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة تعتمد نموذج العمل عن بُعد.', 'rule'
+    return DECISION_NOT, 'لا يوجد ما يشير إلى اعتماد العمل عن بُعد بناءً على إجابات التصنيف.', 'rule'
 
 
 def _rule_osmacc(p, company):
     if p and p.manages_official_social_media_accounts:
-        return DECISION_APPLICABLE, 'Company manages official social media accounts.', 'rule'
-    return DECISION_NOT, 'No official social media account management indicated.', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة تدير حسابات تواصل اجتماعي رسمية.', 'rule'
+    return DECISION_NOT, 'لا يوجد ما يشير إلى إدارة حسابات تواصل رسمية بناءً على إجابات التصنيف.', 'rule'
 
 
 def _rule_aramco(p, company):
     if p and p.works_with_aramco:
-        return DECISION_APPLICABLE, 'Company works with Saudi Aramco (intake).', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت التعامل مع أرامكو السعودية.', 'rule'
     if _legacy(company, 'target_aramco'):
-        return DECISION_APPLICABLE, 'Legacy target_aramco checkbox is set.', 'legacy_checkbox'
-    return DECISION_NOT, 'No Aramco relationship indicated.', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية أرامكو (SACS-002).', 'legacy_checkbox'
+    return DECISION_NOT, 'لا توجد علاقة مع أرامكو مُشار إليها بناءً على إجابات التصنيف.', 'rule'
 
 
 def _rule_sabic(p, company):
     if p and p.works_with_sabic:
-        return DECISION_APPLICABLE, 'Company works with SABIC (intake).', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت التعامل مع سابك.', 'rule'
     if _legacy(company, 'target_sabic'):
-        return DECISION_APPLICABLE, 'Legacy target_sabic checkbox is set.', 'legacy_checkbox'
-    return DECISION_NOT, 'No SABIC relationship indicated.', 'rule'
+        return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية سابك (SABIC CyberTrust).', 'legacy_checkbox'
+    return DECISION_NOT, 'لا توجد علاقة مع سابك مُشار إليها بناءً على إجابات التصنيف.', 'rule'
 
 
 RULES = {

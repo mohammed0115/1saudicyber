@@ -11,10 +11,15 @@
       <h1 style="color:#1F2933;font-size:1.6rem;font-weight:700;margin:0 0 8px;">
         أهلًا، {{ company.name_ar|default:company.name }}
       </h1>
-      <p style="color:#667085;font-size:.96rem;margin:0;">
+      <p style="color:#667085;font-size:.96rem;margin:0 0 18px;">
         تم إنشاء حساب شركتك بنجاح. هذه نظرة سريعة على رحلة الامتثال. ابدأ بإكمال ملف التصنيف،
-        ثم راجع الأطر المنطبقة، وستتولّى لوحة الرحلة إرشادك خطوة بخطوة.
+        ثم راجع الأطر المنطبقة, وستتولّى لوحة الرحلة إرشادك خطوة بخطوة.
       </p>
+      {# UAT-11: prominent top CTA (bottom CTA is kept for after the steps overview). #}
+      <a href="{% url 'compliance:intake' %}"
+         style="display:inline-block;background:#0F5D46;color:#fff;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">
+        ابدأ ملف التصنيف
+      </a>
     </div>
 
     <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:24px 28px;

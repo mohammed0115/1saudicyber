@@ -30,9 +30,9 @@ class CompanyIntakeForm(forms.ModelForm):
             'has_remote_work': 'تسمح بالعمل عن بُعد',
             'manages_official_social_media_accounts': 'تدير حسابات تواصل اجتماعي رسمية',
             'works_with_aramco': 'مورّد / تتعامل مع أرامكو السعودية',
-            'aramco_supplier_type': 'تصنيف المورّد لدى أرامكو (إن وُجد)',
+            'aramco_supplier_type': 'تصنيف المورّد لدى أرامكو (اختياري)',
             'works_with_sabic': 'مورّد / تتعامل مع سابك',
-            'sabic_supplier_type': 'فئة المورّد لدى سابك',
+            'sabic_supplier_type': 'فئة المورّد لدى سابك (اختياري)',
             'notes': 'ملاحظات',
         }
         help_texts = {
@@ -40,10 +40,42 @@ class CompanyIntakeForm(forms.ModelForm):
                                     'OpenAI API، التخزين السحابي، البريد السحابي، قواعد البيانات السحابية.'),
             'provides_cloud_services': 'تقديم منصّة SaaS/سحابية للعملاء (وليس مجرّد استخدامها).',
             'is_critical_system_operator': 'الأنظمة التي يؤثّر تعطّلها على الخدمات الوطنية/الحيوية.',
+            'aramco_supplier_type': 'حدّد تصنيف المورّد لدى أرامكو إن كان معروفًا (اختياري).',
+            'sabic_supplier_type': 'اختر فئة المورّد لدى سابك إن كانت معروفة (اختياري).',
         }
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+
+    # UAT-5: bilingual SABIC supplier-category options for the Arabic UI.
+    SABIC_BILINGUAL_CHOICES = [
+        ('', '— اختر (اختياري) —'),
+        ('NC', 'اتصال الشبكات / Network Connectivity'),
+        ('CCS', 'خدمات الحوسبة السحابية / Cloud Computing Services'),
+        ('OMS', 'الإسناد والخدمات المُدارة / Outsourcing and Managed Services'),
+        ('CS', 'الخدمات الاستشارية / Consultancy Services'),
+        ('SM', 'إدارة البرمجيات / Software Management'),
+        ('OT', 'منتجات وخدمات OT/ICS / OT/ICS Products and Services'),
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'sabic_supplier_type' in self.fields:
+            self.fields['sabic_supplier_type'].choices = self.SABIC_BILINGUAL_CHOICES
+            self.fields['sabic_supplier_type'].required = False
+        if 'aramco_supplier_type' in self.fields:
+            self.fields['aramco_supplier_type'].required = False
+
+    def clean(self):
+        # UAT-2/3: a supplier category is meaningful only when its supplier checkbox is set.
+        # If the checkbox is unchecked, clear any stale/hidden dropdown value so it can never
+        # influence framework proposal on the backend (defence beyond the frontend JS).
+        cleaned = super().clean()
+        if not cleaned.get('works_with_aramco'):
+            cleaned['aramco_supplier_type'] = ''
+        if not cleaned.get('works_with_sabic'):
+            cleaned['sabic_supplier_type'] = ''
+        return cleaned
 
 
 # ============================================================

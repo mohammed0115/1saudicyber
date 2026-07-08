@@ -122,6 +122,7 @@ class ClassificationResult:
     has_intake: bool = False
     overall_confidence: int = 0
     advisory_label: str = 'تصنيف أولي استشاري'
+    risk_reason_ar: str = ''
 
     @property
     def risk_level_ar(self):
@@ -193,16 +194,14 @@ def _classify_ecc(ci):
 
 
 def _classify_cscc(ci):
+    # UAT-A: CSCC is proposed ONLY when the company explicitly indicates it operates/hosts
+    # critical or national-critical systems. Sector alone must NEVER pull CSCC into scope.
     if ci.has_intake_profile and ci.is_critical_system_operator:
         return _rec('NCA-CSCC-1-2019', RECOMMENDED,
-                    'تشغيل أنظمة حساسة وفق إجابات التصنيف.',
+                    'تم اقتراح هذا الإطار لأن الشركة تشغّل أو تستضيف أنظمة حساسة أو بنية وطنية حرجة.',
                     'Operates critical systems per intake.', 90)
-    if ci.sector in HIGH_RISK_SECTORS:
-        return _rec('NCA-CSCC-1-2019', OPTIONAL,
-                    'قطاع حيوي — قد تنطبق ضوابط الأنظمة الحساسة (يتطلب تأكيد).',
-                    'Critical sector — CSCC may apply (needs confirmation).', 55)
     return _rec('NCA-CSCC-1-2019', NOT_INDICATED,
-                'لا يوجد ما يشير إلى تشغيل أنظمة حساسة بناءً على البيانات المتاحة.',
+                'لا يوجد ما يشير إلى تشغيل أنظمة حساسة بناءً على إجابات التصنيف.',
                 'No critical-systems operation indicated by available data.', 70)
 
 
@@ -241,38 +240,32 @@ def _classify_osmacc(ci):
 
 
 def _classify_aramco(ci):
+    # UAT-B: supplier frameworks depend ONLY on the explicit supplier signal (checkbox) or the
+    # explicit Aramco readiness goal — never on sector heuristics or a stale supplier dropdown.
     if ci.has_intake_profile and ci.works_with_aramco:
         return _rec('ARAMCO-SACS-002', REQUIRED,
-                    'علاقة عمل مع أرامكو السعودية وفق إجابات التصنيف.',
+                    'تم اقتراح هذا الإطار لأن الشركة اختارت التعامل مع أرامكو السعودية.',
                     'Works with Saudi Aramco per intake.', 90)
     if ci.target_aramco:
         return _rec('ARAMCO-SACS-002', REQUIRED,
-                    'تم اختيار جاهزية أرامكو (SACS-002).',
+                    'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية أرامكو (SACS-002).',
                     'Aramco (SACS-002) readiness goal was selected.', 80)
-    if ci.sector == 'oil_gas':
-        return _rec('ARAMCO-SACS-002', OPTIONAL,
-                    'قطاع النفط والغاز — قد تنطبق متطلبات موردي أرامكو (يتطلب تأكيد).',
-                    'Oil & gas sector — Aramco supplier requirements may apply (needs confirmation).', 50)
     return _rec('ARAMCO-SACS-002', NOT_INDICATED,
-                'لا توجد علاقة مع أرامكو مُشار إليها بناءً على البيانات المتاحة.',
+                'لا توجد علاقة مع أرامكو مُشار إليها بناءً على إجابات التصنيف.',
                 'No Aramco relationship indicated by available data.', 70)
 
 
 def _classify_sabic(ci):
     if ci.has_intake_profile and ci.works_with_sabic:
         return _rec('SABIC-CYBERTRUST-1-0', REQUIRED,
-                    'علاقة عمل مع سابك وفق إجابات التصنيف.',
+                    'تم اقتراح هذا الإطار لأن الشركة اختارت التعامل مع سابك.',
                     'Works with SABIC per intake.', 90)
     if ci.target_sabic:
         return _rec('SABIC-CYBERTRUST-1-0', REQUIRED,
-                    'تم اختيار جاهزية سابك (SABIC CyberTrust).',
+                    'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية سابك (SABIC CyberTrust).',
                     'SABIC (CyberTrust) readiness goal was selected.', 80)
-    if ci.sector in ('petrochemical', 'manufacturing'):
-        return _rec('SABIC-CYBERTRUST-1-0', OPTIONAL,
-                    'قطاع صناعي/بتروكيماوي — قد تنطبق متطلبات موردي سابك (يتطلب تأكيد).',
-                    'Industrial/petrochemical sector — SABIC supplier requirements may apply (needs confirmation).', 50)
     return _rec('SABIC-CYBERTRUST-1-0', NOT_INDICATED,
-                'لا توجد علاقة مع سابك مُشار إليها بناءً على البيانات المتاحة.',
+                'لا توجد علاقة مع سابك مُشار إليها بناءً على إجابات التصنيف.',
                 'No SABIC relationship indicated by available data.', 70)
 
 
@@ -292,6 +285,37 @@ def _risk_level(ci):
                                         or ci.works_with_aramco or ci.works_with_sabic))):
         return 'medium'
     return 'low'
+
+
+def _risk_reason(ci):
+    """UAT-8: an Arabic explanation of the risk level, built from the ACTUAL selected signals
+    (never a generic message that could contradict the intake answers)."""
+    drivers = []
+    if ci.sector in HIGH_RISK_SECTORS:
+        drivers.append('نشاط في قطاع حيوي')
+    if ci.has_intake_profile:
+        if ci.is_critical_system_operator:
+            drivers.append('تشغيل أنظمة حساسة/بنية وطنية حرجة')
+        if ci.has_ot_environment:
+            drivers.append('وجود بيئة تقنية تشغيلية (OT)')
+        if ci.uses_cloud_services or ci.provides_cloud_services:
+            drivers.append('استخدام أو تقديم خدمات سحابية')
+        if ci.has_remote_work:
+            drivers.append('اعتماد العمل عن بُعد')
+        if ci.works_with_aramco:
+            drivers.append('التعامل مع أرامكو')
+        if ci.works_with_sabic:
+            drivers.append('التعامل مع سابك')
+        if ci.handles_sensitive_data or ci.handles_personal_data:
+            drivers.append('التعامل مع بيانات حساسة/شخصية')
+    if ci.size in ('large', 'enterprise'):
+        drivers.append('حجم المنشأة كبير')
+    level = RISK_AR.get(_risk_level(ci), _risk_level(ci))
+    if not ci.sector:
+        return 'يتعذّر تحديد مستوى المخاطر بدقة قبل تحديد قطاع الشركة وإكمال ملف التصنيف.'
+    if not drivers:
+        return f'تم تصنيف مستوى المخاطر كـ«{level}» بناءً على القطاع وحجم النشاط وفق إجابات التصنيف.'
+    return f'تم تصنيف مستوى المخاطر كـ«{level}» بسبب: ' + '، '.join(drivers) + ' (حسب إجابات التصنيف).'
 
 
 def _missing_inputs(ci):
@@ -336,4 +360,5 @@ def classify_company(company) -> ClassificationResult:
         next_action=next_action,
         has_intake=ci.has_intake_profile,
         overall_confidence=overall,
+        risk_reason_ar=_risk_reason(ci),
     )

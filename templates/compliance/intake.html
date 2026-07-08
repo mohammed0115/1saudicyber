@@ -23,7 +23,7 @@
             <div class="text-red-600 text-sm">{{ form.non_field_errors }}</div>
         {% endif %}
         {% for field in form %}
-        <div class="border-b border-gov-gray-100 pb-4">
+        <div class="border-b border-gov-gray-100 pb-4" data-field="{{ field.name }}">
             <label class="flex items-start gap-3 cursor-pointer text-right">
                 <span class="pt-0.5 shrink-0">{{ field }}</span>
                 <span class="min-w-0">
@@ -38,7 +38,8 @@
             </label>
         </div>
         {% endfor %}
-        <div class="flex items-center gap-3">
+        {# Sticky save area so the primary action is always reachable on this long form. #}
+        <div class="flex items-center gap-3 sticky bottom-0 -mx-6 px-6 py-3 bg-white/95 backdrop-blur border-t border-gov-gray-100">
             <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-6 py-2.5 rounded-lg font-medium transition">
                 حفظ وتحديد الأطر المنطبقة
             </button>
@@ -50,4 +51,29 @@
         </div>
     </form>
 </div>
+
+{% comment %}
+UAT-3: show a supplier category ONLY when its supplier checkbox is ticked (backend also
+clears stale values in CompanyIntakeForm.clean, so this is progressive enhancement).
+{% endcomment %}
+<script>
+(function () {
+  function bind(checkboxId, fieldName) {
+    var cb = document.getElementById(checkboxId);
+    var wrap = document.querySelector('[data-field="' + fieldName + '"]');
+    if (!cb || !wrap) return;
+    function sync() {
+      wrap.style.display = cb.checked ? '' : 'none';
+      if (!cb.checked) {
+        var sel = wrap.querySelector('select, input');
+        if (sel) { sel.value = ''; }
+      }
+    }
+    cb.addEventListener('change', sync);
+    sync();
+  }
+  bind('id_works_with_aramco', 'aramco_supplier_type');
+  bind('id_works_with_sabic', 'sabic_supplier_type');
+})();
+</script>
 {% endblock %}
