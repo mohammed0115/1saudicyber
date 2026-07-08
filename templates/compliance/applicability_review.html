@@ -6,7 +6,7 @@
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gov-green-800">مراجعة الأطر المنطبقة</h1>
-            <p class="text-gov-gray-600">قرارات حتمية مبنية على إجابات التصنيف — مع سبب ومصدر كل قرار.</p>
+            <p class="text-gov-gray-600">قرارات حتمية مبنية على إجابات التصنيف — مع سبب كل قرار.</p>
         </div>
         <a href="{% url 'compliance:intake' %}" class="text-gov-green-700 hover:underline text-sm">تعديل التصنيف</a>
     </div>
@@ -49,7 +49,7 @@
                         {% endif %}
                     </td>
                     <td class="px-4 py-3 text-gov-gray-600">{{ r.reason }}</td>
-                    <td class="px-4 py-3 text-gov-gray-500">{{ r.confidence }}</td>
+                    <td class="px-4 py-3 text-gov-gray-500">{% widthratio r.confidence 1 100 %}%</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="4" class="px-5 py-6 text-gov-gray-600 text-right leading-7">
@@ -75,7 +75,7 @@
                         <span class="inline-block px-2 py-1 rounded bg-gov-gray-200 text-gov-gray-600 text-xs">غير متاح</span>
                     </td>
                     <td class="px-4 py-3 text-gov-gray-500" colspan="3">
-                        الضوابط الرسمية لهذا الإطار لم تُستورد بعد.
+                        الضوابط الرسمية لهذا الإطار لم تُستورد بعد، ولن يُدرَج ضمن التقييم أو خطة الضوابط الحالية حتى تُستورد ضوابطه.
                     </td>
                 </tr>
                 {% endfor %}
@@ -130,13 +130,17 @@
         </table>
     </div>
 
+    {% if has_approved_scope %}
+    {# A scope is approved -> the control plan actually exists, so link to it. #}
     <div class="flex items-center gap-3">
-        <a href="{% url 'compliance:control_plan' %}" class="text-gov-green-700 hover:underline text-sm">عرض خطة الضوابط</a>
+        <a href="{% url 'compliance:control_plan' %}" class="inline-block bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium">عرض خطة الضوابط</a>
     </div>
-
+    {% else %}
+    {# No approved scope yet -> no plan exists; guide the user instead of linking to an empty plan. #}
     <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
         <i class="fas fa-lock"></i>
-        قائمة الضوابط ومتطلبات الأدلة ستُولَّد في خطوة لاحقة بعد مراجعة الأطر.
+        سيتم إنشاء خطة الضوابط بعد اعتماد نطاق الأطر. قائمة الضوابط ومتطلبات الأدلة تُولَّد بعد مراجعة الأطر واعتماد النطاق.
     </div>
+    {% endif %}
 </div>
 {% endblock %}

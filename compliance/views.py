@@ -524,14 +524,24 @@ def applicability_review(request):
     counts = {fv: n for fv, n in Control.objects
               .filter(is_legacy_import=False, framework_version__isnull=False)
               .values_list('framework_version').annotate(n=Count('id'))}
+    # A framework is company-visible only if its official controls are imported (available).
+    # Filter in the BACKEND (not just templates): company users must never see legacy/unavailable
+    # frameworks — they would imply a compliance scope the product cannot actually deliver yet.
+    available_ids = set(counts.keys())
+    is_staff = request.user.is_staff
+    if not is_staff:
+        results = results.filter(framework_version_id__in=available_ids)
+        scopes = scopes.filter(framework_version_id__in=available_ids)
     for s in scopes:
         s.official_count = counts.get(s.framework_version_id, 0)
 
+    # Unavailable (not-yet-imported) frameworks are shown to internal/admin staff only.
     unavailable = []
-    for code in ('NCA-OTCC-1-2022', 'NCA-DCC-1-2022'):
-        fv = FrameworkVersion.objects.filter(code=code).first()
-        if fv and not _is_available(fv):
-            unavailable.append(fv)
+    if is_staff:
+        for code in ('NCA-OTCC-1-2022', 'NCA-DCC-1-2022'):
+            fv = FrameworkVersion.objects.filter(code=code).first()
+            if fv and not _is_available(fv):
+                unavailable.append(fv)
     from .journey import build_page_guide
     return render(request, 'compliance/applicability_review.html', {
         'company': company,
@@ -540,6 +550,8 @@ def applicability_review(request):
         'unavailable': unavailable,
         'can_approve': request.user.is_staff,
         'has_profile': CompanyIntakeProfile.objects.filter(company=company).exists(),
+        # UI: only surface the control-plan CTA once a scope is actually approved (a plan exists).
+        'has_approved_scope': scopes.filter(status='approved').exists(),
         'guide': build_page_guide(company, 'applicability'),
     })
 

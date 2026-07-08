@@ -65,6 +65,21 @@ class CompanyIntakeForm(forms.ModelForm):
             self.fields['sabic_supplier_type'].required = False
         if 'aramco_supplier_type' in self.fields:
             self.fields['aramco_supplier_type'].required = False
+        # UAT: give the non-checkbox inputs (selects / text / textarea) a visible, consistent
+        # bordered style. Previously they inherited the checkbox row layout and rendered as bare
+        # inline controls (invisible textarea, split select).
+        field_css = ('w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm '
+                     'text-gov-gray-800 bg-white focus:outline-none focus:ring-2 '
+                     'focus:ring-gov-green-500 focus:border-gov-green-500')
+        for name in ('aramco_supplier_type', 'sabic_supplier_type', 'notes'):
+            if name in self.fields:
+                self.fields[name].widget.attrs['class'] = field_css
+        if 'notes' in self.fields:
+            self.fields['notes'].widget.attrs.update({
+                'rows': 4,
+                'style': 'min-height:100px;',
+                'placeholder': 'اكتب أي ملاحظات إضافية حول نطاق التصنيف...',
+            })
 
     def clean(self):
         # UAT-2/3: a supplier category is meaningful only when its supplier checkbox is set.

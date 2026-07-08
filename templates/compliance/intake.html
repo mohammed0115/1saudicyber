@@ -23,6 +23,8 @@
             <div class="text-red-600 text-sm">{{ form.non_field_errors }}</div>
         {% endif %}
         {% for field in form %}
+        {% if field.field.widget.input_type == 'checkbox' %}
+        {# Yes/no answers keep the compact checkbox-beside-label layout. #}
         <div class="border-b border-gov-gray-100 pb-4" data-field="{{ field.name }}">
             <label class="flex items-start gap-3 cursor-pointer text-right">
                 <span class="pt-0.5 shrink-0">{{ field }}</span>
@@ -37,6 +39,19 @@
                 </span>
             </label>
         </div>
+        {% else %}
+        {# Selects / text / textarea: label above a full-width bordered input (RTL). #}
+        <div class="border-b border-gov-gray-100 pb-4 text-right" data-field="{{ field.name }}">
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gov-gray-800 mb-1">{{ field.label }}</label>
+            {% if field.help_text %}
+                <span class="block text-xs text-gov-gray-500 mb-2">{{ field.help_text }}</span>
+            {% endif %}
+            {{ field }}
+            {% if field.errors %}
+                <span class="block text-xs text-red-600 mt-1">{{ field.errors|striptags }}</span>
+            {% endif %}
+        </div>
+        {% endif %}
         {% endfor %}
         {# Sticky save area so the primary action is always reachable on this long form. #}
         <div class="flex items-center gap-3 sticky bottom-0 -mx-6 px-6 py-3 bg-white/95 backdrop-blur border-t border-gov-gray-100">

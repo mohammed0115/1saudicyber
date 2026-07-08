@@ -1719,14 +1719,70 @@ class IntakeViewTests(TestCase):
         self.assertContains(self.client.get(reverse('compliance:applicability_review')),
                             'معيار أرامكو')
 
-    def test_review_page_marks_otcc_dcc_unavailable(self):
+    def test_review_page_hides_unavailable_frameworks_from_company(self):
+        # Company-facing rule: legacy/not-yet-imported frameworks must not appear at all —
+        # not even with a "غير متاح" badge (false compliance scope).
         self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
         resp = self.client.get(reverse('compliance:applicability_review'))
-        self.assertContains(resp, 'NCA-OTCC-1-2022')
-        self.assertContains(resp, 'NCA-DCC-1-2022')
+        self.assertNotContains(resp, 'NCA-OTCC-1-2022')
+        self.assertNotContains(resp, 'NCA-DCC-1-2022')
+        self.assertNotContains(resp, 'غير متاح')
         # Neither appears as an applicable FrameworkApplicabilityResult.
         self.assertFalse(FrameworkApplicabilityResult.objects.filter(
             company=self.company, framework_version__code__in=['NCA-OTCC-1-2022', 'NCA-DCC-1-2022']).exists())
+
+    def test_review_page_shows_unavailable_frameworks_to_staff_only(self):
+        # Internal/admin visibility is kept separate: staff still see not-yet-imported frameworks
+        # (OTCC/DCC are seeded by seed_framework_versions but have no imported controls).
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
+        self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        self.assertContains(resp, 'NCA-OTCC-1-2022')
+        self.assertContains(resp, 'غير متاح')
+
+    def test_unavailable_framework_not_in_company_proposed_scope(self):
+        # Backend: not-yet-imported frameworks must never enter the company's proposed scope.
+        self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
+        self.client.get(reverse('compliance:applicability_review'))
+        from compliance.models import CompanyFrameworkScope
+        codes = set(CompanyFrameworkScope.objects.filter(company=self.company)
+                    .values_list('framework_version__code', flat=True))
+        self.assertNotIn('NCA-OTCC-1-2022', codes)
+        self.assertNotIn('NCA-DCC-1-2022', codes)
+
+    def test_review_confidence_renders_as_percent_not_raw_float(self):
+        # Business-friendly confidence: "100%", never a raw "1.0"/"1,0".
+        self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        self.assertContains(resp, '100%')
+        # The confidence cell must not show a raw float (tag-bounded to avoid matching CSS rgba()).
+        self.assertNotContains(resp, '>1.0<')
+        self.assertNotContains(resp, '>1,0<')
+
+    def test_review_plan_cta_hidden_until_scope_approved(self):
+        # Before any scope is approved: no active "عرض خطة الضوابط" link; show the wait message.
+        self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        self.assertNotContains(resp, 'عرض خطة الضوابط')
+        self.assertContains(resp, 'سيتم إنشاء خطة الضوابط بعد اعتماد نطاق الأطر')
+
+    def test_review_plan_cta_shown_after_scope_approved(self):
+        from compliance.models import CompanyFrameworkScope
+        self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
+        fv = FrameworkVersion.objects.get(code='ARAMCO-SACS-002')  # seeded with controls -> available
+        CompanyFrameworkScope.objects.update_or_create(
+            company=self.company, framework_version=fv, defaults={'status': 'approved'})
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        self.assertContains(resp, 'عرض خطة الضوابط')
+
+    def test_intake_supplier_and_notes_widgets_are_styled(self):
+        # Selects/textarea must render as clearly bordered, full-width inputs (not bare inline).
+        resp = self.client.get(reverse('compliance:intake'))
+        html = resp.content.decode()
+        self.assertIn('اكتب أي ملاحظات إضافية حول نطاق التصنيف', html)  # notes placeholder
+        self.assertIn('min-height:100px', html)                          # notes visible height
+        self.assertIn('border border-gov-gray-300', html)                # bordered field style
 
     def test_review_page_does_not_create_companycontrol(self):
         self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
