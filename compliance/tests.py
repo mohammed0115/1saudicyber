@@ -1741,6 +1741,19 @@ class IntakeViewTests(TestCase):
         self.assertContains(resp, 'NCA-OTCC-1-2022')
         self.assertContains(resp, 'غير متاح')
 
+    def test_review_non_applicable_frameworks_are_collapsed_not_in_main_table(self):
+        # Company-facing default view shows applicable/proposed only; non-applicable frameworks
+        # move to the collapsed "الأطر غير المنطبقة" section (backend split via context lists).
+        _seed_official('NCA-CSCC-1-2019', 'NCA_CSCC')  # available, but not-applicable without critical systems
+        self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
+        resp = self.client.get(reverse('compliance:applicability_review'))
+        applicable = {r.framework_version.code for r in resp.context['results']}
+        not_applicable = {r.framework_version.code for r in resp.context['not_applicable_results']}
+        self.assertNotIn('NCA-CSCC-1-2019', applicable)     # CSCC out of the default table
+        self.assertIn('NCA-CSCC-1-2019', not_applicable)    # into the collapsed section
+        self.assertIn('ARAMCO-SACS-002', applicable)        # applicable framework stays visible
+        self.assertContains(resp, 'الأطر غير المنطبقة')
+
     def test_unavailable_framework_not_in_company_proposed_scope(self):
         # Backend: not-yet-imported frameworks must never enter the company's proposed scope.
         self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})

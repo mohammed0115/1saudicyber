@@ -246,7 +246,9 @@ def _classify_aramco(ci):
         return _rec('ARAMCO-SACS-002', REQUIRED,
                     'تم اقتراح هذا الإطار لأن الشركة اختارت التعامل مع أرامكو السعودية.',
                     'Works with Saudi Aramco per intake.', 90)
-    if ci.target_aramco:
+    # Legacy readiness goal is a fallback ONLY when no structured intake exists. A completed intake
+    # is authoritative; a stale target_* flag must never re-add an un-selected supplier framework.
+    if not ci.has_intake_profile and ci.target_aramco:
         return _rec('ARAMCO-SACS-002', REQUIRED,
                     'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية أرامكو (SACS-002).',
                     'Aramco (SACS-002) readiness goal was selected.', 80)
@@ -260,7 +262,8 @@ def _classify_sabic(ci):
         return _rec('SABIC-CYBERTRUST-1-0', REQUIRED,
                     'تم اقتراح هذا الإطار لأن الشركة اختارت التعامل مع سابك.',
                     'Works with SABIC per intake.', 90)
-    if ci.target_sabic:
+    # Legacy flag only when there is no structured intake (see _classify_aramco).
+    if not ci.has_intake_profile and ci.target_sabic:
         return _rec('SABIC-CYBERTRUST-1-0', REQUIRED,
                     'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية سابك (SABIC CyberTrust).',
                     'SABIC (CyberTrust) readiness goal was selected.', 80)
@@ -280,7 +283,7 @@ def _risk_level(ci):
             (ci.has_intake_profile and (ci.is_critical_system_operator or ci.has_ot_environment))):
         return 'high'
     if (ci.sector in MEDIUM_RISK_SECTORS or ci.size in ('large', 'enterprise') or
-            ci.target_aramco or ci.target_sabic or
+            (not ci.has_intake_profile and (ci.target_aramco or ci.target_sabic)) or
             (ci.has_intake_profile and (ci.handles_sensitive_data or ci.handles_personal_data
                                         or ci.works_with_aramco or ci.works_with_sabic))):
         return 'medium'

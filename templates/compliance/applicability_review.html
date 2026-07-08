@@ -83,6 +83,42 @@
         </table>
     </div>
 
+    {% if not_applicable_results %}
+    {% comment %}
+    Non-applicable frameworks are collapsed by default: the company sees applicable/proposed
+    frameworks first, and can expand this for full transparency of the deterministic decision.
+    {% endcomment %}
+    <details class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <summary class="px-4 py-3 bg-gov-gray-50 text-gov-gray-700 font-medium cursor-pointer select-none">
+            الأطر غير المنطبقة ({{ not_applicable_results|length }})
+            <span class="text-xs text-gov-gray-500 font-normal">— اضغط للعرض</span>
+        </summary>
+        <table class="w-full text-sm">
+            <thead class="text-gov-gray-600">
+                <tr>
+                    <th class="text-right px-4 py-2">الإطار</th>
+                    <th class="text-right px-4 py-2">القرار</th>
+                    <th class="text-right px-4 py-2">السبب</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gov-gray-100">
+                {% for r in not_applicable_results %}
+                <tr>
+                    <td class="px-4 py-3 font-medium text-gov-gray-600">
+                        {{ r.framework_version.display_name_ar }}<br>
+                        <span class="text-xs text-gov-gray-400">{{ r.framework_version.display_name_en }} · {{ r.framework_version.code }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block px-2 py-1 rounded bg-gov-gray-100 text-gov-gray-600 text-xs">غير منطبق</span>
+                    </td>
+                    <td class="px-4 py-3 text-gov-gray-500">{{ r.reason }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </details>
+    {% endif %}
+
     <!-- Phase 3C: proposed/approved framework scopes -->
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
         <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">نطاق الأطر (الموافقة)</div>

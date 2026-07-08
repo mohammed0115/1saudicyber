@@ -66,7 +66,10 @@ def _rule_osmacc(p, company):
 def _rule_aramco(p, company):
     if p and p.works_with_aramco:
         return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت التعامل مع أرامكو السعودية.', 'rule'
-    if _legacy(company, 'target_aramco'):
+    # The legacy readiness flag is only a fallback for companies with NO structured intake.
+    # Once intake is completed, the explicit answer is authoritative — a stale target_* flag must
+    # NEVER re-add a supplier framework the company un-selected.
+    if p is None and _legacy(company, 'target_aramco'):
         return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية أرامكو (SACS-002).', 'legacy_checkbox'
     return DECISION_NOT, 'لا توجد علاقة مع أرامكو مُشار إليها بناءً على إجابات التصنيف.', 'rule'
 
@@ -74,7 +77,8 @@ def _rule_aramco(p, company):
 def _rule_sabic(p, company):
     if p and p.works_with_sabic:
         return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت التعامل مع سابك.', 'rule'
-    if _legacy(company, 'target_sabic'):
+    # Legacy flag only when there is no structured intake (see _rule_aramco).
+    if p is None and _legacy(company, 'target_sabic'):
         return DECISION_APPLICABLE, 'تم اقتراح هذا الإطار لأن الشركة اختارت جاهزية سابك (SABIC CyberTrust).', 'legacy_checkbox'
     return DECISION_NOT, 'لا توجد علاقة مع سابك مُشار إليها بناءً على إجابات التصنيف.', 'rule'
 

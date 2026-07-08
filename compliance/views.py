@@ -542,10 +542,16 @@ def applicability_review(request):
             fv = FrameworkVersion.objects.filter(code=code).first()
             if fv and not _is_available(fv):
                 unavailable.append(fv)
+    # Company-facing review defaults to applicable/proposed frameworks only. Non-applicable
+    # decisions are moved to a collapsed "advanced" section so the default view is not cluttered
+    # with frameworks the company does not need (backend split, not just template CSS).
+    applicable_results = [r for r in results if r.decision != 'not_applicable']
+    not_applicable_results = [r for r in results if r.decision == 'not_applicable']
     from .journey import build_page_guide
     return render(request, 'compliance/applicability_review.html', {
         'company': company,
-        'results': results,
+        'results': applicable_results,
+        'not_applicable_results': not_applicable_results,
         'scopes': scopes,
         'unavailable': unavailable,
         'can_approve': request.user.is_staff,

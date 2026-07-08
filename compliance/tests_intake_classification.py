@@ -80,6 +80,82 @@ class SupplierSignalTests(TestCase):
         self.assertEqual(form.cleaned_data['aramco_supplier_type'], '')
 
 
+class StaleLegacyFlagTests(TestCase):
+    """A completed intake is authoritative: a stale legacy target_* flag on the Company must NEVER
+    re-add a supplier framework the company un-selected (the SABIC-still-shows UAT blocker)."""
+
+    def test_sabic_ignored_when_intake_unchecked_despite_legacy_flag(self):
+        # Company still carries a stale target_sabic=True from onboarding, and a stale dropdown value,
+        # but the structured intake says works_with_sabic=False -> SABIC must NOT be proposed.
+        c = _company(target_sabic=True)
+        p = CompanyIntakeProfile.objects.create(company=c, works_with_sabic=False,
+                                                sabic_supplier_type='SM')
+        self.assertEqual(_status_map(c)['SABIC-CYBERTRUST-1-0'], 'not_indicated')   # classification
+        self.assertNotIn('SABIC-CYBERTRUST-1-0', _indicated_codes(c))
+        self.assertEqual(_rule_sabic(p, c)[0], DECISION_NOT)                        # applicability
+
+    def test_aramco_ignored_when_intake_unchecked_despite_legacy_flag(self):
+        c = _company(target_aramco=True)
+        p = CompanyIntakeProfile.objects.create(company=c, works_with_aramco=False,
+                                                aramco_supplier_type='critical')
+        self.assertEqual(_status_map(c)['ARAMCO-SACS-002'], 'not_indicated')
+        self.assertEqual(_rule_aramco(p, c)[0], DECISION_NOT)
+
+    def test_sabic_still_proposed_when_intake_checked(self):
+        c = _company(target_sabic=False)
+        p = CompanyIntakeProfile.objects.create(company=c, works_with_sabic=True)
+        self.assertEqual(_status_map(c)['SABIC-CYBERTRUST-1-0'], 'required')
+        self.assertEqual(_rule_sabic(p, c)[0], DECISION_APPLICABLE)
+
+    def test_legacy_flag_still_used_when_no_structured_intake(self):
+        # Backward-compat: a company that never completed the structured intake still gets the
+        # framework from its legacy readiness flag.
+        c = _company(target_sabic=True)   # no CompanyIntakeProfile
+        self.assertEqual(_status_map(c)['SABIC-CYBERTRUST-1-0'], 'required')
+        self.assertEqual(_rule_sabic(None, c)[0], DECISION_APPLICABLE)
+
+
+class UatScenarioTests(TestCase):
+    """The exact manual-UAT scenario: aramco on, sabic off (stale flag+dropdown), critical off,
+    cloud/remote/social/sensitive on -> ECC+CCC+TCC+OSMACC+ARAMCO = 5 frameworks / 291 controls."""
+
+    def _scenario_company(self):
+        c = _company(target_aramco=True, target_sabic=True)   # both stale legacy flags set
+        CompanyIntakeProfile.objects.create(
+            company=c, works_with_aramco=True, works_with_sabic=False, sabic_supplier_type='SM',
+            is_critical_system_operator=False, uses_cloud_services=True, has_remote_work=True,
+            manages_official_social_media_accounts=True, handles_sensitive_data=True)
+        return c
+
+    _EXPECTED = {'NCA-ECC-2-2024', 'NCA-CCC-2-2024', 'NCA-TCC-1-2021',
+                 'NCA-OSMACC-1-2021', 'ARAMCO-SACS-002'}
+
+    def test_scenario_five_frameworks_291_controls_medium_risk(self):
+        r = classify_company(self._scenario_company())
+        self.assertEqual({x.code for x in r.indicated}, self._EXPECTED)
+        self.assertNotIn('SABIC-CYBERTRUST-1-0', {x.code for x in r.indicated})
+        self.assertNotIn('NCA-CSCC-1-2019', {x.code for x in r.indicated})
+        self.assertEqual(r.recommended_count, 5)
+        self.assertEqual(r.total_expected_controls, 291)
+        self.assertEqual(r.risk_level, 'medium')
+        self.assertNotIn('سابك', r.risk_reason_ar)   # risk reason must not mention SABIC
+
+    def test_scenario_review_and_classification_agree_on_applicable_codes(self):
+        from compliance.framework_applicability import RULES, DECISION_APPLICABLE
+        c = self._scenario_company()
+        p = c.intake_profile
+        rule_applicable = {code for code, rule in RULES.items()
+                           if rule(p, c)[0] == DECISION_APPLICABLE}
+        self.assertEqual(rule_applicable, self._EXPECTED)          # applicability engine
+        self.assertEqual(_indicated_codes(c), self._EXPECTED)      # classification engine agrees
+
+    def test_cscc_appears_once_when_critical_selected(self):
+        c = _company()
+        CompanyIntakeProfile.objects.create(company=c, is_critical_system_operator=True)
+        codes = [x.code for x in classify_company(c).indicated]
+        self.assertEqual(codes.count('NCA-CSCC-1-2019'), 1)
+
+
 class ReasonsAndNamesTests(TestCase):
     _INTERNAL = ['Legacy', 'legacy_checkbox', 'Rule Engine', 'is_critical_system_operator',
                  'works_with_sabic', 'works_with_aramco', 'target_sabic', 'target_nca']
