@@ -568,6 +568,52 @@ def applicability_review(request):
     })
 
 
+@login_required
+@company_portal_required
+def framework_controls_preview(request, code):
+    """Read-only preview of the official controls under a framework (by code), for the company's OWN
+    applicable/proposed frameworks. Creates NOTHING (no control plan / evidence). Reused by BOTH the
+    classification page (advisory proposed) and the scope review page. GET only.
+    Validates the framework is applicable/proposed for request.user.company; otherwise 404.
+    """
+    from django.http import Http404
+    from .models import (FrameworkVersion, Control, CompanyFrameworkScope,
+                         FrameworkApplicabilityResult)
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    fv = FrameworkVersion.objects.filter(code=code).first()
+    if fv is None:
+        raise Http404('الإطار غير موجود.')
+    # Applicable to THIS company: a non-rejected scope row, an applicable result, OR an advisory
+    # "indicated" recommendation from the company's own smart classification (proposed frameworks).
+    applicable = (
+        CompanyFrameworkScope.objects.filter(company=company, framework_version=fv)
+        .exclude(status='rejected').exists()
+        or FrameworkApplicabilityResult.objects.filter(
+            company=company, framework_version=fv, decision='applicable').exists())
+    if not applicable:
+        try:
+            from .smart_classification import classify_company
+            applicable = fv.code in {r.code for r in classify_company(company).indicated}
+        except Exception:
+            applicable = False
+    if not applicable:
+        raise Http404('هذا الإطار غير منطبق على شركتك.')
+    controls = (Control.objects.filter(framework_version=fv, is_legacy_import=False)
+                .select_related('domain')
+                .prefetch_related('evidence_requirements')
+                .order_by('control_id'))
+    # Has the control plan been generated yet? (drives per-control status label; read-only).
+    from .models import ControlApplicabilityResult
+    plan_generated = ControlApplicabilityResult.objects.filter(
+        company=company, control__framework_version=fv, decision='applicable').exists()
+    return render(request, 'compliance/framework_controls_preview.html', {
+        'company': company, 'fv': fv, 'controls': controls,
+        'control_count': controls.count(), 'plan_generated': plan_generated,
+    })
+
+
 def _get_company_scope(request, scope_id):
     """Fetch a scope scoped to the user's company (tenant isolation) or None."""
     from .models import CompanyFrameworkScope
@@ -621,6 +667,55 @@ def reject_framework_scope_view(request, scope_id):
         reject_framework_scope(scope, request.POST.get('reason', ''), user=request.user)
         messages.success(request, f'تم رفض الإطار {scope.framework_version.code}.')
     return redirect('compliance:applicability_review')
+
+
+@login_required
+@company_portal_required
+@require_http_methods(["POST"])
+def approve_company_scope(request):
+    """Company-facing: the owner approves their OWN framework scope at journey step 4.
+
+    Approves all proposed/needs_review scopes for request.user.company, then chains control-plan
+    and evidence-checklist generation so the journey is never stranded. Tenant-scoped + audited.
+    Never touches another company's data, classification logic, or the auditor workflow.
+    """
+    from .models import CompanyFrameworkScope
+    from .framework_scope import (propose_framework_scopes, approve_framework_scope,
+                                  generate_control_applicability_plan)
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    # Idempotently sync proposals from applicability results (never clobbers approved/rejected).
+    propose_framework_scopes(company, apply=True)
+    pending = CompanyFrameworkScope.objects.filter(
+        company=company, status__in=['proposed', 'needs_review'])
+    already = CompanyFrameworkScope.objects.filter(company=company, status='approved')
+    if not pending.exists() and not already.exists():
+        messages.info(request, 'لا توجد أطر منطبقة لاعتمادها. أكمل التصنيف الذكي أولًا لتحديد الأطر.')
+        return redirect('compliance:classification')
+    approved_codes = []
+    for scope in pending:
+        approve_framework_scope(scope, user=request.user)
+        approved_codes.append(scope.framework_version.code)
+    # Chain generation (best-effort; a failure must never 500 the approval).
+    try:
+        from .evidence_planning import (generate_evidence_requirements,
+                                        generate_evidence_checklist_for_company)
+        for scope in CompanyFrameworkScope.objects.filter(company=company, status='approved'):
+            generate_control_applicability_plan(company, scope, apply=True)
+        generate_evidence_requirements(apply=True)
+        generate_evidence_checklist_for_company(company, apply=True)
+    except Exception:
+        pass
+    try:
+        from core.models import AuditLog
+        AuditLog.objects.create(user=request.user, company=company, action='scope_approved',
+                                method='POST', path=request.path,
+                                metadata={'approved_frameworks': approved_codes})
+    except Exception:
+        pass
+    messages.success(request, 'تم اعتماد نطاق الأطر. يمكنك الآن استعراض خطة الضوابط والمتابعة.')
+    return redirect('compliance:control_plan')
 
 
 @login_required
@@ -679,15 +774,19 @@ def evidence_checklist(request):
              .prefetch_related('submissions'))
     # Scope state drives a clear empty-state: no scopes -> classify; scopes pending
     # approval -> wait for approval; approved but empty -> (staff) generate.
-    from .models import CompanyFrameworkScope
+    from .models import CompanyFrameworkScope, ControlApplicabilityResult
     scope_qs = CompanyFrameworkScope.objects.filter(company=company)
     has_any_scope = scope_qs.exists()
     has_approved_scope = scope_qs.filter(status='approved').exists()
+    # Prerequisite for evidence: a generated control plan must exist.
+    has_control_plan = ControlApplicabilityResult.objects.filter(
+        company=company, decision='applicable').exists()
     from .workflow_stepper import build_company_workflow_stepper
     from .journey import build_page_guide, build_journey_nav
     return render(request, 'compliance/evidence_checklist.html', {
         'company': company, 'items': items, 'can_generate': request.user.is_staff,
         'has_any_scope': has_any_scope, 'has_approved_scope': has_approved_scope,
+        'has_control_plan': has_control_plan,
         'stepper': build_company_workflow_stepper(company),
         'guide': build_page_guide(company, 'evidence'),
         'nav': build_journey_nav(company, 'evidence'),

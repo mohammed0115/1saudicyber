@@ -142,7 +142,14 @@
                         {% elif s.status == 'needs_review' %}<span class="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs">يحتاج مراجعة</span>
                         {% else %}<span class="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">مقترح</span>{% endif %}
                     </td>
-                    <td class="px-4 py-3 text-gov-gray-600">{{ s.official_count }}</td>
+                    <td class="px-4 py-3 text-gov-gray-600">
+                        {% if s.official_count %}
+                        <a href="{% url 'compliance:framework_controls_preview' s.framework_version.code %}"
+                           class="text-gov-green-700 hover:underline font-medium">عرض {{ s.official_count }} ضابط</a>
+                        {% else %}
+                        <span class="text-gov-gray-400 text-xs">لا توجد ضوابط مستوردة لهذا الإطار بعد</span>
+                        {% endif %}
+                    </td>
                     <td class="px-4 py-3 text-gov-gray-600">{{ s.reason }}</td>
                     {% if can_approve %}
                     <td class="px-4 py-3">
@@ -171,11 +178,23 @@
     <div class="flex items-center gap-3">
         <a href="{% url 'compliance:control_plan' %}" class="inline-block bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium">عرض خطة الضوابط</a>
     </div>
+    {% elif results %}
+    {% comment %}Step 4: applicable frameworks exist and scope not approved -> primary CTA is ENABLED and performs the approval.{% endcomment %}
+    <div class="bg-white rounded-xl border border-gov-green-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p class="text-gov-gray-700 text-sm m-0">اعتمد الأطر المقترحة لمنشأتك للانتقال إلى خطة الضوابط.</p>
+        <form method="post" action="{% url 'compliance:approve_company_scope' %}" data-busy="جارٍ اعتماد نطاق الأطر...">
+            {% csrf_token %}
+            <button type="submit" class="inline-flex items-center bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium text-sm">
+                اعتماد نطاق الأطر والمتابعة <i class="fas fa-arrow-left mr-1"></i>
+            </button>
+        </form>
+    </div>
     {% else %}
-    {# No approved scope yet -> no plan exists; guide the user instead of linking to an empty plan. #}
-    <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
-        <i class="fas fa-lock"></i>
-        سيتم إنشاء خطة الضوابط بعد اعتماد نطاق الأطر. قائمة الضوابط ومتطلبات الأدلة تُولَّد بعد مراجعة الأطر واعتماد النطاق.
+    {# No applicable frameworks -> send the user back to complete classification. #}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-circle-info mr-1"></i>
+        لا توجد أطر منطبقة لاعتمادها بعد. أكمل التصنيف الذكي لتحديد الأطر المناسبة لمنشأتك.
+        <a href="{% url 'compliance:classification' %}" class="underline font-medium mr-1">العودة إلى التصنيف الذكي</a>
     </div>
     {% endif %}
 

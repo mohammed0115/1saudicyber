@@ -24,6 +24,8 @@ urlpatterns = [
     path('intake/review/', views.applicability_review, name='applicability_review'),
 
     # Phase 3C — Framework approval (scope) + control applicability plan
+    path('frameworks/scope/approve-all/', views.approve_company_scope, name='approve_company_scope'),
+    path('frameworks/<str:code>/controls/', views.framework_controls_preview, name='framework_controls_preview'),
     path('frameworks/scope/<int:scope_id>/approve/', views.approve_framework_scope_view, name='approve_scope'),
     path('frameworks/scope/<int:scope_id>/reject/', views.reject_framework_scope_view, name='reject_scope'),
     path('frameworks/scope/<int:scope_id>/generate-plan/', views.generate_control_plan_view, name='generate_plan'),

@@ -381,10 +381,12 @@ _JOURNEY_NAV = {
         next_url='compliance:applicability_review', next_label='مراجعة بيانات التصنيف',
         ready=lambda f: f['intake_profile'] or f['applicability'],
         locked='أكمل بيانات التصنيف أولًا'),
+    # NB: 'applicability' (review) is handled specially in build_journey_nav — step 4 is where the
+    # scope is APPROVED, so its forward action is the approve CTA on the page (a POST form), not a
+    # circular locked "next". Here we only need the Back target.
     'applicability': dict(
         back=('compliance:classification', 'العودة: التصنيف الذكي'),
-        next_url='compliance:control_plan', next_label='اعتماد نطاق الأطر والمتابعة',
-        ready=lambda f: f['approved_scope'], locked='اعتمد نطاق الأطر أولًا'),
+        next_url=None, next_label='', ready=lambda f: False, locked=''),
     'controls': dict(
         back=('compliance:applicability_review', 'العودة: مراجعة واعتماد الأطر'),
         next_url='compliance:evidence_checklist', next_label='الخطوة التالية: قائمة الأدلة ورفعها',
@@ -409,6 +411,17 @@ def build_journey_nav(company, page_key):
     if cfg is None:
         return None
     f = _signals(company)
+    # Review page (step 4): the approve CTA on the page is the forward action. Only once the scope
+    # is approved does the nav offer an enabled "next -> control plan"; it is never a circular lock.
+    if page_key == 'applicability':
+        approved = bool(f['approved_scope'])
+        return {
+            'back_url_name': cfg['back'][0], 'back_label': cfg['back'][1],
+            'next_url_name': 'compliance:control_plan' if approved else None,
+            'next_label': 'الخطوة التالية: خطة الضوابط' if approved else '',
+            'next_enabled': approved,
+            'next_locked_reason': '',
+        }
     ready = bool(cfg['ready'](f))
     has_next = bool(cfg['next_url'])
     return {

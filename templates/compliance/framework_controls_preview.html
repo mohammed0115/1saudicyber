@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}ضوابط الإطار - 1SaudiCyber{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6" dir="rtl">
+    <div>
+        <a href="{% url 'compliance:applicability_review' %}" class="text-gov-green-700 hover:underline text-sm">
+            <i class="fas fa-arrow-right ml-1"></i> العودة إلى مراجعة الأطر المنطبقة
+        </a>
+        <h1 class="text-2xl font-bold text-gov-green-800 mt-2">{{ fv.display_name_ar }}</h1>
+        <p class="text-gov-gray-500 text-sm">{{ fv.display_name_en }} · {{ fv.code }} — {{ control_count }} ضابط رسمي</p>
+        <p class="text-gov-gray-500 text-xs mt-1">معاينة للقراءة فقط للضوابط الرسمية قبل اعتماد النطاق. لا تُنشأ خطة ضوابط أو أدلة من هذه المعاينة.</p>
+    </div>
+
+    {% if controls %}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gov-green-50 text-gov-green-800">
+                <tr>
+                    <th class="text-right px-4 py-3">رقم الضابط</th>
+                    <th class="text-right px-4 py-3">الضابط</th>
+                    <th class="text-right px-4 py-3">المجال</th>
+                    <th class="text-right px-4 py-3">متطلبات الأدلة</th>
+                    <th class="text-right px-4 py-3">الحالة</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gov-gray-100">
+                {% for c in controls %}
+                <tr class="align-top">
+                    <td class="px-4 py-3 font-mono text-xs text-gov-gray-700">{{ c.control_id }}</td>
+                    <td class="px-4 py-3">
+                        <div class="font-medium text-gov-gray-800">{{ c.title_ar|default:c.title }}</div>
+                        {% if c.description_ar or c.description %}
+                        <div class="text-xs text-gov-gray-500 mt-1">{{ c.description_ar|default:c.description|truncatechars:180 }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-xs text-gov-gray-500">{{ c.domain.name|default:"—" }}</td>
+                    <td class="px-4 py-3 text-xs text-gov-gray-600">
+                        {% for er in c.evidence_requirements.all %}
+                        <div class="mb-1">
+                            <i class="fas fa-file-lines text-gov-gray-400 ml-1"></i>{{ er.title }}
+                            <span class="text-gov-gray-400">({{ er.get_evidence_type_display }})</span>
+                        </div>
+                        {% empty %}
+                        <span class="text-gov-gray-400">{{ c.get_evidence_type_display }}</span>
+                        {% endfor %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if plan_generated %}
+                        <span class="inline-block px-2 py-0.5 rounded bg-gov-green-100 text-gov-green-800 text-xs">ضمن خطة الضوابط</span>
+                        {% else %}
+                        <span class="inline-block px-2 py-0.5 rounded bg-gov-gray-100 text-gov-gray-600 text-xs">سيتم إنشاؤه بعد اعتماد النطاق</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-circle-info mr-1"></i>
+        لا توجد ضوابط مستوردة لهذا الإطار بعد.
+    </div>
+    {% endif %}
+
+    <div>
+        <a href="{% url 'compliance:applicability_review' %}" class="inline-flex items-center text-gov-gray-600 hover:text-gov-gray-900 text-sm font-medium">
+            <i class="fas fa-arrow-right ml-1"></i> العودة إلى مراجعة الأطر المنطبقة
+        </a>
+    </div>
+</div>
+{% endblock %}

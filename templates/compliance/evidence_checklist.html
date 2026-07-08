@@ -27,7 +27,17 @@
     {% endfor %}{% endif %}
 
     {% if not items %}
-    {% if has_any_scope and not has_approved_scope %}
+    {% if has_approved_scope and not has_control_plan %}
+    {# Prerequisite guard (soft): evidence needs a generated control plan first. #}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-lock mr-1"></i>
+        يرجى إنشاء خطة الضوابط قبل رفع الأدلة.
+        <span class="block text-amber-700 mt-1">The control plan must be generated before evidence upload.</span>
+        <div class="mt-2 flex flex-wrap gap-3">
+            <a href="{% url 'compliance:control_plan' %}" class="underline font-medium">إنشاء خطة الضوابط</a>
+        </div>
+    </div>
+    {% elif has_any_scope and not has_approved_scope %}
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
         <i class="fas fa-hourglass-half mr-1"></i>
         نطاق الأطر قيد الاعتماد. ستتوفّر قائمة الأدلة بعد اعتماد النطاق.

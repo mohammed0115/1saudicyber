@@ -43,7 +43,8 @@
 
     {% if not reviewed_assessment_count %}
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
-        <i class="fas fa-circle-info mr-1"></i>
+        <i class="fas fa-lock mr-1"></i>
+        التقارير غير متاحة بعد.
         ستصبح التقارير ذات معنى بعد إنشاء تقييمات المدقّق. (Reports will be meaningful after auditor assessments are created.)
         <a href="{% url 'compliance:auditor_review_queue' %}" class="underline font-medium ml-1">مراجعة المدقّق</a>
     </div>

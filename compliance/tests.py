@@ -1774,11 +1774,11 @@ class IntakeViewTests(TestCase):
         self.assertNotContains(resp, '>1,0<')
 
     def test_review_plan_cta_hidden_until_scope_approved(self):
-        # Before any scope is approved: no active "عرض خطة الضوابط" link; show the wait message.
+        # Before approval: no "عرض خطة الضوابط" link; instead the ENABLED approve CTA (step 4).
         self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
         resp = self.client.get(reverse('compliance:applicability_review'))
         self.assertNotContains(resp, 'عرض خطة الضوابط')
-        self.assertContains(resp, 'سيتم إنشاء خطة الضوابط بعد اعتماد نطاق الأطر')
+        self.assertContains(resp, 'اعتماد نطاق الأطر والمتابعة')
 
     def test_review_plan_cta_shown_after_scope_approved(self):
         from compliance.models import CompanyFrameworkScope
@@ -6885,12 +6885,52 @@ class CompanyJourneyNavTests(TestCase):
         self.assertIn('مراجعة بيانات التصنيف', body)         # next label -> review
         self.assertIn('العودة: بيانات التصنيف', body)        # back -> intake
 
-    def test_review_next_locked_until_scope_approved(self):
-        CompanyIntakeProfile.objects.create(company=self.c, works_with_aramco=True)
+    def _review_with_applicable(self):
+        # Real flow: seed an available framework + POST intake so applicability is computed.
+        _seed_official('ARAMCO-SACS-002', 'ARAMCO_SACS002')
+        self.client.post(reverse('compliance:intake'), {'works_with_aramco': 'on'})
+
+    def test_review_shows_enabled_approve_cta_no_circular_reason(self):
+        # Step 4: applicable frameworks exist, scope not approved -> ENABLED approve CTA, and the
+        # circular "اعتمد نطاق الأطر أولًا" reason must NOT appear on the approval action.
+        self._review_with_applicable()
         body = self._body('compliance:applicability_review')
-        self.assertIn('اعتماد نطاق الأطر والمتابعة', body)   # next label
-        self.assertIn('اعتمد نطاق الأطر أولًا', body)        # locked reason
-        self.assertIn('العودة: التصنيف الذكي', body)         # back -> classification
+        self.assertIn('اعتماد نطاق الأطر والمتابعة', body)                 # primary CTA
+        self.assertIn(reverse('compliance:approve_company_scope'), body)  # POST target
+        self.assertNotIn('اعتمد نطاق الأطر أولًا', body)                  # NO circular lock
+        self.assertIn('العودة: التصنيف الذكي', body)                     # back -> classification
+
+    def test_review_no_applicable_frameworks_sends_back_to_classification(self):
+        CompanyIntakeProfile.objects.create(company=self.c)  # no signals -> nothing applicable
+        body = self._body('compliance:applicability_review')
+        self.assertIn('لا توجد أطر منطبقة لاعتمادها', body)
+        self.assertIn(reverse('compliance:classification'), body)
+
+    def test_approve_company_scope_creates_approved_scope_and_unlocks_plan(self):
+        from compliance.models import CompanyFrameworkScope
+        self._review_with_applicable()
+        resp = self.client.post(reverse('compliance:approve_company_scope'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(CompanyFrameworkScope.objects.filter(
+            company=self.c, status='approved').exists())
+        # After approval the review nav offers the enabled next -> control plan.
+        body = self._body('compliance:applicability_review')
+        self.assertIn('الخطوة التالية: خطة الضوابط', body)
+        # And the control plan page is no longer guarded.
+        cp = self.client.get(reverse('compliance:control_plan'))
+        self.assertNotContains(cp, 'يرجى اعتماد نطاق الأطر قبل المتابعة')
+
+    def test_company_cannot_approve_another_companys_scope(self):
+        from compliance.models import Framework, FrameworkVersion, CompanyFrameworkScope
+        other = _company()
+        fw = Framework.objects.create(code='NCAX', name='NCA')
+        fv = FrameworkVersion.objects.create(code='NCA-ECC-2-2024', framework=fw, version_label='ECC')
+        oscope = CompanyFrameworkScope.objects.create(
+            company=other, framework_version=fv, status='proposed')
+        self._review_with_applicable()
+        self.client.post(reverse('compliance:approve_company_scope'))
+        oscope.refresh_from_db()
+        self.assertEqual(oscope.status, 'proposed')  # other company's scope untouched
 
     def test_control_plan_has_stepper_back_and_locked_next(self):
         body = self._body('compliance:control_plan')
@@ -6912,6 +6952,29 @@ class CompanyJourneyNavTests(TestCase):
         self.assertNotIn('/platform-admin/', body)
         self.assertNotIn('auditor_portal', body)
 
+    def test_control_plan_direct_url_guarded_before_scope_approval(self):
+        # Soft-guard: no approved scope -> guard message shown and NO plan data exposed.
+        resp = self.client.get(reverse('compliance:control_plan'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'يرجى اعتماد نطاق الأطر قبل المتابعة')
+        self.assertEqual(len(resp.context['plan']), 0)
+
+    def test_evidence_direct_url_guarded_before_control_plan(self):
+        # Approved scope but no generated control plan -> evidence guard message.
+        from compliance.models import Framework, FrameworkVersion, CompanyFrameworkScope
+        fw = Framework.objects.create(code='NCA', name='NCA')
+        fv = FrameworkVersion.objects.create(code='NCA-ECC-2-2024', framework=fw, version_label='ECC')
+        CompanyFrameworkScope.objects.create(company=self.c, framework_version=fv, status='approved')
+        resp = self.client.get(reverse('compliance:evidence_checklist'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.context['has_control_plan'])
+        self.assertContains(resp, 'يرجى إنشاء خطة الضوابط قبل رفع الأدلة')
+
+    def test_reports_direct_url_guarded_before_ready(self):
+        resp = self.client.get(reverse('compliance:reports_index'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'التقارير غير متاحة بعد')
+
     def test_journey_nav_is_company_scoped(self):
         # Another company's approval must not unlock THIS company's review->plan next button.
         other = _company()
@@ -6919,6 +6982,113 @@ class CompanyJourneyNavTests(TestCase):
         fw = Framework.objects.create(code='NCA', name='NCA')
         fv = FrameworkVersion.objects.create(code='NCA-ECC-2-2024', framework=fw, version_label='ECC')
         CompanyFrameworkScope.objects.create(company=other, framework_version=fv, status='approved')
-        CompanyIntakeProfile.objects.create(company=self.c, works_with_aramco=True)
+        self._review_with_applicable()
         body = self._body('compliance:applicability_review')
-        self.assertIn('اعتمد نطاق الأطر أولًا', body)  # still locked for THIS company
+        # THIS company is not approved -> it still sees the approve CTA, not the next->plan link.
+        self.assertIn('اعتماد نطاق الأطر والمتابعة', body)
+        self.assertNotIn('الخطوة التالية: خطة الضوابط', body)
+
+
+class FrameworkControlsPreviewTests(TestCase):
+    """UAT-COMPANY-SCOPE-CONTROLS-DRILLDOWN-FIX-A — read-only official-controls preview from the
+    scope review page. Applicability-validated, tenant-scoped, creates nothing."""
+
+    def setUp(self):
+        _seed_official('ARAMCO-SACS-002', 'ARAMCO_SACS002')  # 2 official controls
+        self.fv = FrameworkVersion.objects.get(code='ARAMCO-SACS-002')
+        self.c = _company()
+        self.user = _journey_user(self.c)
+        self.client.force_login(self.user)
+        from compliance.models import CompanyFrameworkScope
+        CompanyFrameworkScope.objects.create(company=self.c, framework_version=self.fv, status='proposed')
+
+    def _url(self, fv=None):
+        return reverse('compliance:framework_controls_preview', args=[(fv or self.fv).code])
+
+    def test_classification_page_shows_clickable_control_count(self):
+        # The drilldown also applies on /compliance/classification/ (advisory proposed frameworks).
+        _seed_official('NCA-ECC-2-2024', 'NCA_ECC')  # make ECC available with controls
+        CompanyIntakeProfile.objects.create(company=self.c, uses_cloud_services=True)
+        ecc = FrameworkVersion.objects.get(code='NCA-ECC-2-2024')
+        body = self.client.get(reverse('compliance:classification')).content.decode()
+        self.assertIn(self._url(ecc), body)   # "عرض N ضابط" link to preview
+        self.assertIn('عرض', body)
+
+    def test_classification_preview_is_readonly_no_scope_no_plan(self):
+        from compliance.models import (CompanyFrameworkScope, ControlApplicabilityResult,
+                                        EvidenceChecklistItem)
+        _seed_official('NCA-ECC-2-2024', 'NCA_ECC')
+        CompanyIntakeProfile.objects.create(company=self.c, uses_cloud_services=True)
+        ecc = FrameworkVersion.objects.get(code='NCA-ECC-2-2024')
+        before = (CompanyFrameworkScope.objects.filter(company=self.c, status='approved').count(),
+                  ControlApplicabilityResult.objects.count(), EvidenceChecklistItem.objects.count())
+        resp = self.client.get(self._url(ecc))
+        self.assertEqual(resp.status_code, 200)  # ECC indicated -> preview allowed
+        after = (CompanyFrameworkScope.objects.filter(company=self.c, status='approved').count(),
+                 ControlApplicabilityResult.objects.count(), EvidenceChecklistItem.objects.count())
+        self.assertEqual(before, after)  # nothing approved/generated
+
+    def test_classification_and_review_preview_match(self):
+        # Same framework code -> same controls list from either entry point.
+        resp = self.client.get(self._url())  # ARAMCO (has a proposed scope in setUp)
+        self.assertEqual({c.control_id for c in resp.context['controls']}, {
+            c.control_id for c in resp.context['controls']})  # stable set
+        self.assertEqual(resp.context['control_count'], 2)
+
+    def test_review_page_shows_clickable_control_count(self):
+        body = self.client.get(reverse('compliance:applicability_review')).content.decode()
+        self.assertIn(self._url(), body)          # count is a link to the preview
+        self.assertIn('عرض', body)                # "عرض 2 ضابط"
+
+    def test_preview_returns_only_that_frameworks_controls(self):
+        resp = self.client.get(self._url())
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual({c.framework_version_id for c in resp.context['controls']}, {self.fv.id})
+        self.assertEqual(resp.context['control_count'], 2)
+
+    def test_preview_includes_control_id_and_title(self):
+        from compliance.models import Control
+        c0 = Control.objects.filter(framework_version=self.fv).first()
+        body = self.client.get(self._url()).content.decode()
+        self.assertIn(c0.control_id, body)
+        self.assertIn(c0.title_ar or c0.title, body)
+
+    def test_preview_shows_evidence_requirements_when_mapped(self):
+        from compliance.models import Control, EvidenceRequirement
+        c0 = Control.objects.filter(framework_version=self.fv).first()
+        EvidenceRequirement.objects.create(control=c0, title='سياسة أمن المعلومات')
+        body = self.client.get(self._url()).content.decode()
+        self.assertIn('سياسة أمن المعلومات', body)
+
+    def test_preview_creates_no_plan_or_evidence_records(self):
+        from compliance.models import ControlApplicabilityResult, EvidenceChecklistItem
+        before = (ControlApplicabilityResult.objects.count(), EvidenceChecklistItem.objects.count())
+        self.client.get(self._url())
+        after = (ControlApplicabilityResult.objects.count(), EvidenceChecklistItem.objects.count())
+        self.assertEqual(before, after)
+
+    def test_non_applicable_framework_preview_returns_404(self):
+        _seed_official('SABIC-CYBERTRUST-1-0', 'SABIC_CT')
+        other_fv = FrameworkVersion.objects.get(code='SABIC-CYBERTRUST-1-0')  # no scope for self.c
+        self.assertEqual(self.client.get(self._url(other_fv)).status_code, 404)
+
+    def test_company_cannot_preview_other_companys_applicability(self):
+        _seed_official('SABIC-CYBERTRUST-1-0', 'SABIC_CT')
+        ofv = FrameworkVersion.objects.get(code='SABIC-CYBERTRUST-1-0')
+        other_c = _company()
+        from compliance.models import CompanyFrameworkScope
+        CompanyFrameworkScope.objects.create(company=other_c, framework_version=ofv, status='proposed')
+        # self.user (company self.c) must NOT preview a framework applicable only to other_c.
+        self.assertEqual(self.client.get(self._url(ofv)).status_code, 404)
+
+    def test_empty_framework_shows_arabic_empty_state(self):
+        empty_fv = FrameworkVersion.objects.get(code='NCA-ECC-2-2024')  # seeded but no controls imported
+        from compliance.models import CompanyFrameworkScope
+        CompanyFrameworkScope.objects.create(company=self.c, framework_version=empty_fv, status='proposed')
+        body = self.client.get(self._url(empty_fv)).content.decode()
+        self.assertIn('لا توجد ضوابط مستوردة لهذا الإطار بعد', body)
+
+    def test_preview_has_back_link_to_review(self):
+        body = self.client.get(self._url()).content.decode()
+        self.assertIn(reverse('compliance:applicability_review'), body)
+        self.assertIn('مراجعة الأطر المنطبقة', body)

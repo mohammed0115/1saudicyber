@@ -62,8 +62,9 @@
             {% else %}background:#F1F3F2;color:#667085;{% endif %}">{{ r.status_ar }}</span>
         </div>
         <div style="text-align:center;min-width:120px;">
-          <p style="margin:0;color:#1F2933;font-weight:600;">{{ r.control_count }}</p>
-          <p style="margin:0;color:#667085;font-size:.76rem;">{% trans "عدد الضوابط المتوقع" %}</p>
+          <a href="{% url 'compliance:framework_controls_preview' r.code %}" title="{% trans 'معاينة الضوابط المقترحة' %}"
+             style="color:#0F5D46;font-weight:700;text-decoration:underline;">{% trans "عرض" %} {{ r.control_count }} {% trans "ضابط" %}</a>
+          <p style="margin:4px 0 0;color:#667085;font-size:.76rem;">{% trans "عدد الضوابط المتوقع" %}</p>
         </div>
       </div>
       {% endfor %}
