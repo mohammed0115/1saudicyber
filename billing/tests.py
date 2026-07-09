@@ -925,7 +925,7 @@ class MoyasarCRMTests(TestCase):
         bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
         self.client.force_login(self._staff())
         body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
-        self.assertIn('Pending Moyasar', body)
+        self.assertIn('Moyasar معلّقة', body)
         self.assertNotIn(_SECRET, body)
 
 
@@ -1388,7 +1388,7 @@ class MoyasarPhase8ICSecurityUITests(TestCase):
                                          password='longenough12', role='admin', is_staff=True)
         self.client.force_login(staff)
         body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
-        self.assertIn('Failed Moyasar', body)
+        self.assertIn('Moyasar فاشلة', body)
         self.assertNotIn(_SECRET, body)
 
     def test_callback_still_does_not_activate(self):
@@ -1519,7 +1519,7 @@ class FeatureEvidenceGateTests(TestCase):
         _activate(c, plan)
         item = EvidenceChecklistItem.objects.filter(company=c).first()
         u = User.objects.create_user(email='fev%d@x.com' % c.id, password='longenough12',
-                                     company=c, role='company_admin')
+                                     company=c, role='company_admin', email_verified=True)
         self.client.force_login(u)
         return c, item
 
@@ -1683,7 +1683,7 @@ class FeatureBillingCrmUiTests(TestCase):
                                          password='longenough12', role='admin', is_staff=True)
         self.client.force_login(staff)
         body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
-        self.assertIn('Plan features', body)
+        self.assertIn('ميزات الخطة', body)
         self.assertNotIn(_SECRET, body)
 
     def test_crm_summary_staff_only(self):

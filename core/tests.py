@@ -654,7 +654,7 @@ class Phase4DLoadingStateTests(TestCase):
         _auditor()
         self.client.force_login(cu)
         resp = self.client.get(reverse('auditors:list'))
-        self.assertContains(resp, 'جارٍ إسناد الملف إلى المدقق')
+        self.assertContains(resp, 'جارٍ إرسال طلب المراجعة')
 
     def test_auditor_accept_reject_has_loading_state(self):
         from auditors.tests import _auditor, _assignment
