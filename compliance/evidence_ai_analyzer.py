@@ -108,8 +108,13 @@ def build_prompt(submission, extraction):
         f"Framework: {fcode}\n\n"
         f"Extracted evidence text (excerpt):\n\"\"\"\n{excerpt}\n\"\"\"\n\n"
         f"Assess only whether the evidence text appears RELEVANT to the control and what is "
-        f"present vs missing. Do NOT decide compliance. Respond with ONLY a JSON object of this "
-        f"exact shape (no prose):\n{RESPONSE_SHAPE}"
+        f"present vs missing. Do NOT decide compliance and do NOT issue any certification or final "
+        f"decision. Tie your assessment to the control above and the expected evidence type. "
+        f"If the text looks like a sample/test/placeholder file (e.g. a README) or does not prove "
+        f"the requirement, say so clearly.\n"
+        f"IMPORTANT: write the VALUES of summary, matched_signals, missing_items and recommendations "
+        f"in ARABIC (the user interface is Arabic). Keep the JSON keys exactly as given in English.\n"
+        f"Respond with ONLY a JSON object of this exact shape (no prose):\n{RESPONSE_SHAPE}"
     )
 
 

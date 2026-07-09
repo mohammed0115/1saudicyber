@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n compliance_display %}
 {% block title %}{% trans "التحليل الاستشاري للذكاء الاصطناعي" %} - 1SaudiCyber{% endblock %}
 {% block content %}
 <div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
@@ -7,7 +7,7 @@
 
     <div style="margin-bottom:14px;">
       <p style="color:#1F6B63;font-weight:600;margin:0 0 4px;">{% trans "التحليل الاستشاري للذكاء الاصطناعي" %}</p>
-      <h1 style="color:#1F2933;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;">{{ submission.original_filename }}</h1>
+      <h1 dir="auto" style="color:#1F2933;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;unicode-bidi:plaintext;">{{ submission|display_evidence_filename }}</h1>
       <p style="color:#667085;font-size:.9rem;margin:0;">{{ submission.checklist_item.evidence_requirement.title }}</p>
     </div>
 
@@ -56,12 +56,17 @@
       </div>
     </div>
 
-    {% if analysis.summary %}
     <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:14px;">
       <h2 style="color:#0F5D46;font-weight:700;font-size:1rem;margin:0 0 8px;">{% trans "ملخص التحليل" %}</h2>
+      {% if analysis.summary %}
       <p style="color:#1F2933;font-size:.92rem;line-height:1.8;margin:0;white-space:pre-wrap;">{{ analysis.summary }}</p>
+      {% else %}
+      <p style="color:#1F2933;font-size:.92rem;line-height:1.8;margin:0;">النص المرفوع لا يحتوي على دليل مباشر كافٍ يثبت تطبيق متطلب هذا الضابط؛ قد يكون ملفًا تجريبيًا أو عامًا.</p>
+      {% endif %}
+      {% if analysis.confidence == 0 %}
+      <p style="color:#7A5B16;font-size:.9rem;margin:8px 0 0;">تم التحليل، لكن الدليل غير كافٍ لإثبات الامتثال لهذا الضابط.</p>
+      {% endif %}
     </div>
-    {% endif %}
 
     {% if analysis.matched_signals %}
     <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:14px;">
@@ -72,23 +77,27 @@
     </div>
     {% endif %}
 
-    {% if analysis.missing_items %}
     <div style="background:#FFF8F0;border:1px solid #E6D7B8;border-radius:12px;padding:16px;margin-bottom:14px;">
       <h2 style="color:#7A5B16;font-weight:700;font-size:.98rem;margin:0 0 8px;">{% trans "عناصر ناقصة" %}</h2>
       <ul style="margin:0;padding-inline-start:18px;color:#7A5B16;font-size:.9rem;">
-        {% for m in analysis.missing_items %}<li style="margin:3px 0;">{{ m }}</li>{% endfor %}
+        {% for m in analysis.missing_items %}<li style="margin:3px 0;">{{ m }}</li>
+        {% empty %}
+        <li style="margin:3px 0;">دليل محدد يثبت تطبيق المتطلب</li>
+        <li style="margin:3px 0;">اعتماد أو مراجعة من الإدارة أو الجهة المختصة</li>
+        {% endfor %}
       </ul>
     </div>
-    {% endif %}
 
-    {% if analysis.recommendations %}
     <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:14px;">
       <h2 style="color:#0F5D46;font-weight:700;font-size:.98rem;margin:0 0 8px;">{% trans "توصيات استشارية" %}</h2>
       <ul style="margin:0;padding-inline-start:18px;color:#1F2933;font-size:.9rem;">
-        {% for r in analysis.recommendations %}<li style="margin:3px 0;">{{ r }}</li>{% endfor %}
+        {% for r in analysis.recommendations %}<li style="margin:3px 0;">{{ r }}</li>
+        {% empty %}
+        <li style="margin:3px 0;">ارفع مستندًا رسميًا يوضح الإجراء أو السياسة أو السجل المرتبط بهذا الضابط</li>
+        <li style="margin:3px 0;">تأكد من اعتماد الدليل قبل تقديمه للمراجعة</li>
+        {% endfor %}
       </ul>
     </div>
-    {% endif %}
     {% elif analysis and analysis.status != 'completed' %}
     <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:18px;color:#667085;">
       {% trans "حالة التحليل" %}: {{ analysis.status_ar }}{% if analysis.error_message %} — {{ analysis.error_message }}{% endif %}

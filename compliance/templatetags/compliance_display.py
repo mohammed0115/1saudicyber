@@ -111,6 +111,21 @@ def req_title_ar(title):
 
 
 @register.filter
+def display_evidence_filename(submission):
+    """Human-readable evidence filename: prefer the stored original_filename (real, possibly
+    Arabic) and only fall back to the storage basename. Display-only; never changes stored data."""
+    import os
+    name = (getattr(submission, 'original_filename', '') or '').strip()
+    if name:
+        return name
+    up = getattr(submission, 'uploaded_file', None)
+    try:
+        return os.path.basename(up.name) if up and getattr(up, 'name', '') else ''
+    except Exception:
+        return ''
+
+
+@register.filter
 def domain_ar(name):
     """Arabic label for a domain name; unknown names return unchanged (never breaks the page)."""
     if not name:

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load compliance_display %}
 {% load i18n %}
 {% block title %}أدلة العنصر - 1SaudiCyber{% endblock %}
 {% block content %}
@@ -22,7 +23,7 @@
           {% if s.file_type == 'pdf' %}bg-red-50 text-red-600{% elif s.file_type in 'docx,doc' %}bg-blue-50 text-blue-600{% elif s.file_type in 'png,jpg,jpeg' %}bg-purple-50 text-purple-600{% else %}bg-gov-gray-100 text-gray-500{% endif %}">
           <i class="fas {% if s.file_type == 'pdf' %}fa-file-pdf{% elif s.file_type in 'docx,doc' %}fa-file-word{% elif s.file_type in 'png,jpg,jpeg' %}fa-file-image{% else %}fa-file{% endif %}"></i></span>
         <div class="min-w-0 flex-1 text-start">
-          <p dir="auto" class="truncate text-sm font-semibold text-gov-gray-900">{{ s.original_filename }}</p>
+          <p dir="auto" class="truncate text-sm font-semibold text-gov-gray-900">{{ s|display_evidence_filename }}</p>
           <p class="text-xs text-gov-gray-400" dir="ltr">v{{ s.version }} · {{ s.file_type }} · {{ s.uploaded_at|date:"Y-m-d H:i" }}</p>
         </div>
         <a href="{% url 'compliance:evidence_submission_detail' s.id %}"

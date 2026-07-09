@@ -7320,3 +7320,59 @@ class FrameworkControlsPreviewTests(TestCase):
         self.assertIn('colspan="5"', body)
         self.assertIn('ما المطلوب من الشركة', body)
         self.assertIn('النص الرسمي الأصلي بالإنجليزية', body)
+
+
+class AIAnalysisPageI18NTests(TestCase):
+    """UAT-COMPANY-AI-ANALYSIS-I18N-FILENAME-FIX-A — Arabic advisory output + safe filename."""
+
+    def _user_for(self, c, email):
+        from core.models import User
+        return User.objects.create_user(email=email, password='longenough12', company=c,
+                                        role='company_admin', email_verified=True)
+
+    def _url(self, sub):
+        return reverse('compliance:evidence_ai_analysis', args=[sub.id])
+
+    def test_prompt_requests_arabic_output(self):
+        from compliance.evidence_ai_analyzer import build_prompt
+        c, item, sub = _extracted_submission()
+        prompt = build_prompt(sub, sub.text_extraction)
+        self.assertIn('ARABIC', prompt)                     # instructs the model to answer in Arabic
+
+    def test_completed_analysis_renders_arabic_values(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        c, item, sub = _extracted_submission()
+        analyze_submission_evidence(sub, provider=_FakeProvider())   # Arabic payload
+        self.client.force_login(self._user_for(c, 'aip@x.com'))
+        resp = self.client.get(self._url(sub))
+        self.assertContains(resp, 'ملخص التحليل')
+        self.assertContains(resp, 'عناصر ناقصة')
+        self.assertContains(resp, 'توصيات استشارية')
+        self.assertContains(resp, 'يبدو أن الدليل مرتبط بالضابط')     # Arabic summary value
+
+    def test_empty_completed_shows_arabic_fallback(self):
+        from compliance.models import EvidenceAIAnalysis
+        c, item, sub = _extracted_submission()
+        EvidenceAIAnalysis.objects.create(submission=sub, status='completed', relevance='low',
+                                          confidence=0, summary='', matched_signals=[],
+                                          missing_items=[], recommendations=[], raw_response={})
+        self.client.force_login(self._user_for(c, 'aif@x.com'))
+        resp = self.client.get(self._url(sub))
+        self.assertContains(resp, 'النص المرفوع لا يحتوي على دليل مباشر كافٍ')   # summary fallback
+        self.assertContains(resp, 'دليل محدد يثبت تطبيق المتطلب')               # missing fallback
+        self.assertContains(resp, 'ارفع مستندًا رسميًا')                        # recommendation fallback
+        self.assertContains(resp, 'تم التحليل، لكن الدليل غير كافٍ')            # confidence-0 note
+        self.assertNotContains(resp, 'Request formal evidence')
+        self.assertNotContains(resp, 'Specific evidence')
+
+    def test_arabic_filename_not_mangled_on_ai_page(self):
+        from compliance.evidence_ai_analyzer import analyze_submission_evidence
+        from compliance.evidence_extraction import save_extraction_for_submission
+        c, item, sub = _company_with_submission(name='سجل_MFA.txt',
+                                                content=b'Access control policy approved.',
+                                                ftype='txt')
+        save_extraction_for_submission(sub)
+        analyze_submission_evidence(sub, provider=_FakeProvider())
+        self.client.force_login(self._user_for(c, 'aifn@x.com'))
+        resp = self.client.get(self._url(sub))
+        self.assertContains(resp, 'سجل_MFA.txt')          # original name preserved (dir=auto for bidi)
