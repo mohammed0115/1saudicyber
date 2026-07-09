@@ -531,7 +531,7 @@ class BillingCRMTests(TestCase):
         self.client.force_login(self._staff())
         resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Subscription')
+        self.assertContains(resp, 'الاشتراك')
 
     def test_staff_can_activate_subscription(self):
         c = _company()
@@ -568,6 +568,111 @@ class BillingCRMTests(TestCase):
         self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
                          {'action': 'activate', 'reason': 'r'})
         self.assertTrue(AuditLog.objects.filter(action='subscription_activated').exists())
+
+    # --- Manual payment flow (service) ---
+    def test_add_manual_payment_pending_without_activation(self):
+        c = _company()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', reference='wire#1', note='r')
+        self.assertEqual(p.status, 'pending')
+        self.assertEqual(p.provider, 'manual')
+        self.assertFalse(company_has_active_subscription(c))     # NOT activated on creation
+
+    def test_confirm_manual_payment_activates_subscription(self):
+        c = _company()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='r')
+        bsvc.confirm_manual_payment(p, reason='received wire')
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'paid')
+        self.assertTrue(company_has_active_subscription(c))
+
+    def test_cannot_double_confirm_manual_payment(self):
+        c = _company()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='r')
+        bsvc.confirm_manual_payment(p, reason='r')
+        with self.assertRaises(bsvc.SubscriptionError):
+            bsvc.confirm_manual_payment(p, reason='again')
+
+    def test_reject_manual_payment_does_not_activate(self):
+        c = _company()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='r')
+        bsvc.reject_manual_payment(p, reason='invalid reference')
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'failed')
+        self.assertFalse(company_has_active_subscription(c))
+
+    def test_cannot_reject_confirmed_manual_payment(self):
+        c = _company()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='r')
+        bsvc.confirm_manual_payment(p, reason='r')
+        with self.assertRaises(bsvc.SubscriptionError):
+            bsvc.reject_manual_payment(p, reason='no')
+
+    def test_manual_payment_created_writes_audit(self):
+        from core.models import AuditLog
+        c = _company()
+        bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='r')
+        self.assertTrue(AuditLog.objects.filter(action='manual_payment_created').exists())
+
+    # --- Manual payment flow (views / permissions) ---
+    def test_company_detail_shows_add_manual_payment_for_staff(self):
+        c = _company()
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
+        self.assertContains(resp, 'إضافة دفعة يدوية')
+
+    def test_add_manual_payment_view_requires_reason(self):
+        from billing.models import Payment
+        c = _company()
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:add_manual_payment', args=[c.id]),
+                         {'plan': 'basic', 'amount': '499', 'reason': ''})
+        self.assertFalse(Payment.objects.filter(company=c).exists())
+
+    def test_add_manual_payment_view_creates_pending(self):
+        from billing.models import Payment
+        c = _company()
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:add_manual_payment', args=[c.id]),
+                         {'plan': 'basic', 'amount': '499', 'reason': 'wire received'})
+        p = Payment.objects.filter(company=c, provider='manual').first()
+        self.assertIsNotNone(p)
+        self.assertEqual(p.status, 'pending')
+        self.assertFalse(company_has_active_subscription(c))     # not activated yet
+
+    def test_confirm_manual_payment_view_activates(self):
+        c = _company()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='r')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:confirm_manual_payment', args=[c.id, p.id]),
+                         {'reason': 'confirmed'})
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'paid')
+        self.assertTrue(company_has_active_subscription(c))
+
+    def test_confirm_requires_post(self):
+        c = _company()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='r')
+        self.client.force_login(self._staff())
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:confirm_manual_payment', args=[c.id, p.id])).status_code, 405)
+
+    def test_company_user_cannot_add_manual_payment(self):
+        c = _company()
+        self.client.force_login(_journey_user(c, email='mpns@x.com'))
+        resp = self.client.post(reverse('platform_admin:add_manual_payment', args=[c.id]),
+                                {'plan': 'basic', 'amount': '499', 'reason': 'x'})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_cannot_confirm_payment_of_other_company(self):
+        c1 = _company()
+        c2 = _company()
+        p = bsvc.add_manual_payment(c1, bsvc.get_plan('basic'), '499', note='r')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:confirm_manual_payment', args=[c2.id, p.id]),
+                         {'reason': 'r'})                        # wrong company in URL
+        p.refresh_from_db()
+        self.assertEqual(p.status, 'pending')                   # untouched
+        self.assertFalse(company_has_active_subscription(c1))
 
 
 # ============================================================

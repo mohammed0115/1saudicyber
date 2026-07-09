@@ -19,6 +19,9 @@ urlpatterns = [
     path('companies/<int:company_id>/add-note/', admin_views.crm_add_note, name='add_note'),
     path('companies/<int:company_id>/update-status/', admin_views.crm_update_status, name='update_status'),
     path('companies/<int:company_id>/subscription-action/', admin_views.crm_subscription_action, name='subscription_action'),
+    path('companies/<int:company_id>/payments/manual/add/', admin_views.crm_add_manual_payment, name='add_manual_payment'),
+    path('companies/<int:company_id>/payments/<int:payment_id>/confirm/', admin_views.crm_confirm_manual_payment, name='confirm_manual_payment'),
+    path('companies/<int:company_id>/payments/<int:payment_id>/reject/', admin_views.crm_reject_manual_payment, name='reject_manual_payment'),
     path('unlinked-accounts/', admin_views.crm_unlinked_accounts, name='unlinked_accounts'),
 
     # Auditor approval (Phase 8D-3A)

@@ -192,6 +192,73 @@ def mark_payment_paid(payment, actor=None, reason=''):
 
 
 # ---------------------------------------------------------------------------
+# Manual payment admin flow (create / confirm / reject) — atomic, audited, no provider secrets.
+# ---------------------------------------------------------------------------
+@transaction.atomic
+def add_manual_payment(company, plan, amount, actor=None, reference='', note=''):
+    """Create a PENDING manual payment for a company (platform-admin action). Ensures a
+    subscription to attach it to (never touches an ACTIVE one's plan) but NEVER activates."""
+    from decimal import Decimal, InvalidOperation
+    if plan is None:
+        raise SubscriptionError('الخطة غير موجودة · Plan not found.')
+    try:
+        amount = Decimal(str(amount))
+    except (InvalidOperation, TypeError, ValueError):
+        raise SubscriptionError('المبلغ غير صالح · Invalid amount.')
+    if amount <= 0:
+        raise SubscriptionError('المبلغ يجب أن يكون أكبر من صفر · Amount must be greater than zero.')
+    sub = ensure_company_subscription(company)
+    if sub.status != 'active':
+        sub.plan = plan
+        sub.plan_name = plan.name
+        sub.provider = 'manual'
+        if sub.status in ('inactive', 'expired'):
+            sub.status = 'pending_payment'
+        sub.save()
+    payment = Payment.objects.create(
+        company=company, subscription=sub, provider='manual', amount=amount,
+        currency=getattr(plan, 'currency', 'SAR'), status='pending',
+        reference=(reference or '')[:160],
+        created_by=actor if getattr(actor, 'is_authenticated', False) else None)
+    _sub_audit(actor, company, 'manual_payment_created', sub,
+               extra={'payment_id': payment.id, 'amount': str(amount), 'plan': plan.code,
+                      'reason': (note or '')[:500]})
+    return payment
+
+
+@transaction.atomic
+def confirm_manual_payment(payment, actor=None, reason=''):
+    """Confirm a PENDING manual payment -> paid + activate/extend the subscription. Fail-closed:
+    never double-confirms; only a pending manual payment can be confirmed."""
+    payment = Payment.objects.select_for_update().select_related('subscription').get(pk=payment.pk)
+    if payment.provider != 'manual':
+        raise SubscriptionError('هذه ليست دفعة يدوية · Not a manual payment.')
+    if payment.status == 'paid':
+        raise SubscriptionError('الدفعة مؤكدة بالفعل · Payment already confirmed.')
+    if payment.status != 'pending':
+        raise SubscriptionError('لا يمكن تأكيد دفعة في حالتها الحالية · Payment is not pending.')
+    return mark_payment_paid(payment, actor=actor, reason=reason)
+
+
+@transaction.atomic
+def reject_manual_payment(payment, actor=None, reason=''):
+    """Reject a PENDING manual payment -> failed. Never activates; a confirmed (paid) payment
+    cannot be rejected (no reversal here)."""
+    payment = Payment.objects.select_for_update().select_related('subscription').get(pk=payment.pk)
+    if payment.provider != 'manual':
+        raise SubscriptionError('هذه ليست دفعة يدوية · Not a manual payment.')
+    if payment.status == 'paid':
+        raise SubscriptionError('لا يمكن رفض دفعة مؤكدة · Cannot reject a confirmed payment.')
+    if payment.status != 'pending':
+        raise SubscriptionError('لا يمكن رفض دفعة في حالتها الحالية · Payment is not pending.')
+    payment.status = 'failed'
+    payment.save(update_fields=['status', 'updated_at'])
+    _sub_audit(actor, payment.company, 'manual_payment_rejected', payment.subscription,
+               extra={'payment_id': payment.id, 'reason': (reason or '')[:500]})
+    return payment
+
+
+# ---------------------------------------------------------------------------
 # Feature / limit resolution
 # ---------------------------------------------------------------------------
 def subscription_feature_enabled(company, feature_code):

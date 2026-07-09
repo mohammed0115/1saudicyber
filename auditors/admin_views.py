@@ -110,7 +110,20 @@ def crm_company_detail(request, company_id):
         'feature_summary': _plan_feature_summary(company),
         'auditor_requests': AuditorAssignment.objects.filter(company=company)
             .select_related('auditor', 'auditor__user').order_by('-requested_at'),
+        'manual_payments': _manual_payments(company),
+        'billing_plans': _active_plans(),
     })
+
+
+def _manual_payments(company):
+    from billing.models import Payment
+    return (Payment.objects.filter(company=company, provider='manual')
+            .select_related('created_by').order_by('-created_at')[:20])
+
+
+def _active_plans():
+    from billing import subscription_services as bsvc
+    return bsvc.active_plans()
 
 
 def _plan_feature_summary(company):
@@ -161,6 +174,73 @@ def crm_subscription_action(request, company_id):
         messages.success(request, 'تم بدء الفترة التجريبية · Trial started.')
     else:
         messages.error(request, 'إجراء غير معروف · Unknown action.')
+    return redirect('platform_admin:company_detail', company_id=company.id)
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_add_manual_payment(request, company_id):
+    """POST-only: add a PENDING manual payment (never activates). Reason required. Staff-only."""
+    from core.models import Company
+    from billing import subscription_services as bsvc
+    company = get_object_or_404(Company, id=company_id)
+    reason = (request.POST.get('reason', '') or '').strip()
+    if not reason:
+        messages.error(request, 'السبب مطلوب لإضافة دفعة يدوية · Reason required.')
+        return redirect('platform_admin:company_detail', company_id=company.id)
+    try:
+        bsvc.add_manual_payment(company, bsvc.get_plan(request.POST.get('plan', '')),
+                                request.POST.get('amount', '0'), actor=request.user,
+                                reference=request.POST.get('reference', ''), note=reason)
+        messages.success(request, 'تمت إضافة الدفعة اليدوية بانتظار التأكيد.')
+    except bsvc.SubscriptionError as e:
+        messages.error(request, str(e))
+    return redirect('platform_admin:company_detail', company_id=company.id)
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_confirm_manual_payment(request, company_id, payment_id):
+    """POST-only: confirm a company's OWN pending manual payment -> activate subscription."""
+    from core.models import Company
+    from billing import subscription_services as bsvc
+    from billing.models import Payment
+    company = get_object_or_404(Company, id=company_id)
+    reason = (request.POST.get('reason', '') or '').strip()
+    payment = Payment.objects.filter(id=payment_id, company=company).first()
+    if payment is None:
+        messages.error(request, 'الدفعة غير موجودة أو لا تخصّ هذه الشركة.')
+    elif not reason:
+        messages.error(request, 'السبب مطلوب لتأكيد الدفعة · Reason required.')
+    else:
+        try:
+            bsvc.confirm_manual_payment(payment, actor=request.user, reason=reason)
+            messages.success(request, 'تم تأكيد الدفعة اليدوية وتفعيل الاشتراك.')
+        except bsvc.SubscriptionError as e:
+            messages.error(request, str(e))
+    return redirect('platform_admin:company_detail', company_id=company.id)
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_reject_manual_payment(request, company_id, payment_id):
+    """POST-only: reject a company's OWN pending manual payment. Never activates."""
+    from core.models import Company
+    from billing import subscription_services as bsvc
+    from billing.models import Payment
+    company = get_object_or_404(Company, id=company_id)
+    reason = (request.POST.get('reason', '') or '').strip()
+    payment = Payment.objects.filter(id=payment_id, company=company).first()
+    if payment is None:
+        messages.error(request, 'الدفعة غير موجودة أو لا تخصّ هذه الشركة.')
+    elif not reason:
+        messages.error(request, 'السبب مطلوب لرفض الدفعة · Reason required.')
+    else:
+        try:
+            bsvc.reject_manual_payment(payment, actor=request.user, reason=reason)
+            messages.success(request, 'تم رفض الدفعة اليدوية.')
+        except bsvc.SubscriptionError as e:
+            messages.error(request, str(e))
     return redirect('platform_admin:company_detail', company_id=company.id)
 
 
