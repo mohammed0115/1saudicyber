@@ -1579,3 +1579,36 @@ class AuditorSelectionFlowTests(TestCase):
         body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
         self.assertIn('طلبات المدققين', body)
         self.assertIn(ap.full_name, body)
+
+
+class CompanyStepperAuditorSelectionTests(TestCase):
+    """The company workflow stepper reflects the auditor-selection request state."""
+
+    def _stage(self, company):
+        from compliance.workflow_stepper import build_company_workflow_stepper
+        st = build_company_workflow_stepper(company)
+        return next(s for s in st['stages'] if s['key'] == 'auditor_selection')
+
+    def test_no_request_shows_choose_auditor(self):
+        c, _fv, _s = _company_with_assessments()
+        s = self._stage(c)
+        self.assertNotEqual(s['status'], 'completed')          # not done until accepted
+        self.assertEqual(s['action_label'], 'اختر مدققاً')
+
+    def test_pending_shows_waiting_for_approval(self):
+        from auditors.services import create_assignment
+        c, _fv, _s = _company_with_assessments()
+        _, ap = _auditor(status='active')
+        create_assignment(c, ap)
+        s = self._stage(c)
+        self.assertEqual(s['status'], 'current')
+        self.assertEqual(s['action_label'], 'بانتظار موافقة المدقق')
+
+    def test_accepted_marks_selection_completed(self):
+        from auditors.services import create_assignment, respond_to_assignment
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = create_assignment(c, ap)
+        respond_to_assignment(a, 'accept', responder=u)
+        s = self._stage(c)
+        self.assertEqual(s['status'], 'completed')

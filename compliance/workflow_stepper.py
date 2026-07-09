@@ -55,6 +55,10 @@ def _flags(company):
                           .exclude(status='not_reviewed').exists(),
         'assignment': AuditorAssignment.objects.filter(
             company=company, status__in=['requested', 'accepted', 'completed']).exists(),
+        'auditor_selection_pending': AuditorAssignment.objects.filter(
+            company=company, status='requested').exists(),
+        'auditor_selection_accepted': AuditorAssignment.objects.filter(
+            company=company, status__in=['accepted', 'completed']).exists(),
     }
 
 
@@ -69,6 +73,7 @@ _STAGE_DEFS = [
     ('checklist', 'قائمة الأدلة', 'evidence', 'compliance:evidence_checklist', 'ولّد قائمة الأدلة'),
     ('upload', 'رفع الأدلة', 'evidence', 'compliance:evidence_checklist', 'ارفع الأدلة'),
     ('analysis', 'التحليل الاستشاري', 'evidence', 'compliance:evidence_checklist', 'التحليل الاستشاري'),
+    ('auditor_selection', 'اختيار المدقق', 'review', 'auditors:list', 'اختر مدققاً'),
     ('auditor_review', 'مراجعة المدقق', 'review', 'compliance:auditor_review_queue', 'مراجعة المدقق'),
     ('risk_register', 'سجل المخاطر والمعالجة', 'review', 'risk:list', 'إدارة المخاطر والمعالجة'),
     ('subscription', 'تفعيل الاشتراك', 'review', 'compliance:reports_index', 'فعّل الاشتراك لتنزيل التقارير'),
@@ -98,6 +103,19 @@ def build_company_workflow_stepper(company, user=None):
             status = NEEDS_ACTION if f['risk_open_high_critical'] else COMPLETED
         elif key == 'subscription':
             status = COMPLETED if sub_active else NEEDS_ACTION
+        elif key == 'auditor_selection':
+            # Company-driven: accepted -> completed; a pending request is an active waiting state
+            # ("بانتظار موافقة المدقق") regardless of position; otherwise choose an auditor.
+            if f['auditor_selection_accepted']:
+                status = COMPLETED
+            elif f['auditor_selection_pending']:
+                status = CURRENT
+                label = 'بانتظار موافقة المدقق'
+            elif not current_assigned:
+                status = CURRENT
+                current_assigned = True
+            else:
+                status = NOT_STARTED
         elif completed:
             status = COMPLETED
         elif locked:
