@@ -15,11 +15,37 @@
         تم إنشاء حساب شركتك بنجاح. هذه نظرة سريعة على رحلة الامتثال. ابدأ بإكمال ملف التصنيف،
         ثم راجع الأطر المنطبقة, وستتولّى لوحة الرحلة إرشادك خطوة بخطوة.
       </p>
-      {# UAT-11: prominent top CTA (bottom CTA is kept for after the steps overview). #}
+      {% if user.email_verified %}
+      {# Verified: prominent top CTA (bottom CTA is kept for after the steps overview). #}
       <a href="{% url 'compliance:intake' %}"
          style="display:inline-block;background:#0F5D46;color:#fff;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">
         ابدأ ملف التصنيف
       </a>
+      {% else %}
+      {# Unverified: the primary action is verifying the email, not starting the journey. #}
+      <div style="background:#FBF3E6;border:1px solid #E6D2A8;border-radius:12px;padding:16px 18px;">
+        <p style="margin:0 0 6px;color:#8A5A0B;font-weight:700;">
+          <i class="fas fa-envelope-circle-check" style="margin-left:6px;"></i>
+          يرجى التحقق من بريدك الإلكتروني قبل المتابعة.
+        </p>
+        <p style="margin:0 0 14px;color:#7A5B16;font-size:.9rem;line-height:1.7;">
+          أرسلنا رابط التحقق إلى بريدك الإلكتروني. بعد التحقق ارجع للمنصة واضغط متابعة.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+          <form method="post" action="{% url 'core:resend_verification_link' %}" data-busy="جارٍ إرسال رابط التحقق..." style="display:inline;">
+            {% csrf_token %}
+            <button type="submit"
+                    style="background:#0F5D46;color:#fff;font-weight:600;padding:12px 22px;border:0;border-radius:10px;cursor:pointer;">
+              إعادة إرسال رابط التحقق
+            </button>
+          </form>
+          <a href="{% url 'dashboard:main' %}"
+             style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:12px 22px;border:1px solid #D8E1DD;border-radius:10px;text-decoration:none;">
+            العودة للوحة التحكم
+          </a>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:24px 28px;
@@ -46,6 +72,7 @@
       </ol>
     </div>
 
+    {% if user.email_verified %}
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
       <a href="{% url 'compliance:intake' %}"
          style="background:#0F5D46;color:#fff;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">
@@ -59,6 +86,9 @@
         </button>
       </form>
     </div>
+    {% else %}
+    <p style="color:#8A5A0B;font-size:.9rem;margin:0;">تظهر خطوات الرحلة بعد التحقق من بريدك الإلكتروني.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

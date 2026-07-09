@@ -675,6 +675,7 @@ def reject_framework_scope_view(request, scope_id):
 
 @login_required
 @company_portal_required
+@email_verified_required
 @require_http_methods(["POST"])
 def approve_company_scope(request):
     """Company-facing: the owner approves their OWN framework scope at journey step 4.

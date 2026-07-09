@@ -385,6 +385,24 @@ def onboarding_complete(request):
 
 
 @login_required
+@require_http_methods(["POST"])
+def resend_verification_link(request):
+    """Resend the email-verification LINK from the onboarding page. Reuses the existing
+    core.services.send_verification_email — no new verification system. POST + CSRF + login only.
+    Never reveals whether the email exists/verified; always shows the same success message.
+    """
+    user = request.user
+    if not user.email_verified and user.email:
+        try:
+            from core.services import send_verification_email
+            send_verification_email(user)
+        except Exception:
+            pass
+    messages.success(request, 'تم إرسال رابط التحقق مرة أخرى، يرجى مراجعة بريدك الإلكتروني.')
+    return redirect('core:onboarding')
+
+
+@login_required
 @require_http_methods(["GET", "POST"])
 def delete_company_data(request):
     """

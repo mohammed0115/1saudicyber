@@ -14,6 +14,7 @@ urlpatterns = [
     path('get-started/auditor/', views.auditor_interest, name='auditor_register'),
     path('onboarding/', views.onboarding, name='onboarding'),
     path('onboarding/complete/', views.onboarding_complete, name='onboarding_complete'),
+    path('onboarding/resend-verification/', views.resend_verification_link, name='resend_verification_link'),
 
     # Phase 8D-2-FIX-A — public legal pages
     path('privacy/', views.privacy_policy, name='privacy'),

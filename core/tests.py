@@ -577,6 +577,8 @@ class Phase4DLoadingStateTests(TestCase):
             'phone': '', 'password': 'longenough123', 'password_confirm': 'longenough123',
             'company_name_ar': 'شركة', 'company_name': 'Co', 'cr_number': '3131313131',
             'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
+        # The journey CTAs (with their loading state) appear once the email is verified.
+        User.objects.filter(email='load@co.example').update(email_verified=True)
         resp = self.client.get(reverse('core:onboarding'))
         self.assertContains(resp, 'جارٍ تجهيز لوحة الرحلة')
 
@@ -2143,3 +2145,56 @@ class ExplicitPortalGuardTests(TestCase):
         for w in ('معتمد من NCA', 'اعتماد رسمي', 'certified by NCA', 'official accreditation',
                   'government accredited', 'official certification', 'شهادة امتثال رسمية'):
             self.assertNotIn(w, body)
+
+
+class OnboardingVerificationCTATests(TestCase):
+    """UAT-COMPANY-EMAIL-VERIFICATION-CTA-FIX-A — onboarding resend-verification CTA + guards."""
+
+    def _company(self, cr='9191919191'):
+        return Company.objects.create(name='Verify Co', cr_number=cr, sector='technology',
+                                      size='small', contact_email='vco@x.com')
+
+    def _user(self, verified, email='vu@x.com', cr='9191919191'):
+        c = self._company(cr=cr)
+        return User.objects.create_user(email=email, password='longenough12', company=c,
+                                        role='company_admin', email_verified=verified)
+
+    def test_unverified_user_sees_alert_and_resend_button(self):
+        self.client.force_login(self._user(False))
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'يرجى التحقق من بريدك الإلكتروني قبل المتابعة')
+        self.assertContains(resp, 'إعادة إرسال رابط التحقق')
+        self.assertContains(resp, reverse('core:resend_verification_link'))
+
+    def test_verified_user_does_not_see_resend_button(self):
+        self.client.force_login(self._user(True, email='vok@x.com', cr='9292929292'))
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertNotContains(resp, 'إعادة إرسال رابط التحقق')
+        self.assertContains(resp, 'ابدأ ملف التصنيف')
+
+    def test_resend_get_is_not_allowed_and_sends_nothing(self):
+        self.client.force_login(self._user(False, email='vg@x.com', cr='9393939393'))
+        before = EmailVerificationToken.objects.count()
+        resp = self.client.get(reverse('core:resend_verification_link'))
+        self.assertEqual(resp.status_code, 405)                      # POST only
+        self.assertEqual(EmailVerificationToken.objects.count(), before)
+
+    def test_resend_post_sends_link_and_shows_success(self):
+        self.client.force_login(self._user(False, email='vp@x.com', cr='9494949494'))
+        before = EmailVerificationToken.objects.count()
+        resp = self.client.post(reverse('core:resend_verification_link'), follow=True)
+        self.assertEqual(EmailVerificationToken.objects.count(), before + 1)   # link re-issued
+        self.assertContains(resp, 'تم إرسال رابط التحقق مرة أخرى، يرجى مراجعة بريدك الإلكتروني')
+
+    def test_unverified_user_cannot_approve_scope(self):
+        u = self._user(False, email='vs@x.com', cr='9595959595')
+        self.client.force_login(u)
+        resp = self.client.post(reverse('compliance:approve_company_scope'))
+        self.assertEqual(resp.status_code, 302)                      # blocked -> onboarding
+        self.assertIn(reverse('core:onboarding'), resp.url)
+
+    def test_verified_user_reaches_onboarding_journey_cta(self):
+        self.client.force_login(self._user(True, email='vj@x.com', cr='9696969696'))
+        resp = self.client.get(reverse('core:onboarding'))
+        self.assertContains(resp, reverse('compliance:intake'))      # normal journey CTA present
