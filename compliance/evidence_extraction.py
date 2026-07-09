@@ -88,6 +88,14 @@ def _normalize(text):
 
 
 def _read_text_file(path):
+    # Try encodings in likelihood order (handles UTF-8, BOM, Arabic Windows-1256, Latin-1).
+    # Never executes content; bounded read length. Falls back to replacement so it never fails.
+    for enc in ('utf-8', 'utf-8-sig', 'windows-1256', 'latin-1'):
+        try:
+            with open(path, 'r', encoding=enc) as f:
+                return f.read(MAX_TEXT_CHARS + 1)
+        except (UnicodeDecodeError, UnicodeError):
+            continue
     with open(path, 'r', encoding='utf-8', errors='replace') as f:
         return f.read(MAX_TEXT_CHARS + 1)
 
@@ -158,8 +166,9 @@ def extract_text_from_file(file_path, filename, content_type=None) -> Extraction
                                 warnings=['حجم الملف يتجاوز حد الاستخراج.'])
 
     if ext in IMAGE_EXTS:
-        return ExtractionResult(status=NO_TEXT, extraction_method='none',
-                                warnings=['ملف صورة — استخراج النص بالـ OCR مُخطّط لمرحلة لاحقة.'])
+        return ExtractionResult(status=NO_TEXT, extraction_method='image_manual_review',
+                                warnings=['ملف صورة — لا يوجد OCR مفعّل حاليًا. سيتم التعامل معه '
+                                          'كدليل مرفوع يحتاج مراجعة يدوية.'])
     if ext not in EXTRACTABLE_EXTS:
         return ExtractionResult(status=UNSUPPORTED, extraction_method='none',
                                 warnings=['نوع الملف غير مدعوم للاستخراج النصّي.'])
@@ -170,7 +179,7 @@ def extract_text_from_file(file_path, filename, content_type=None) -> Extraction
     try:
         if ext in ('txt', 'csv', 'md'):
             raw = _read_text_file(file_path)
-            method = 'plain_text'
+            method = 'csv' if ext == 'csv' else 'plain_text'
         elif ext == 'pdf':
             raw, page_count, warnings = _read_pdf(file_path)
             method = 'pdf_text_layer'

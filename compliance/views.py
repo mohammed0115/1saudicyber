@@ -117,7 +117,8 @@ def upload_evidence(request, control_id):
     max_size = getattr(settings, 'MAX_EVIDENCE_FILE_SIZE', 50 * 1024 * 1024)
     ok, file_ext, err = validate_evidence_file(uploaded_file, allowed)
     if not ok:
-        messages.error(request, f'{err} Allowed types: {", ".join(allowed)}.')
+        messages.error(request, 'نوع الملف غير مدعوم. الأنواع المدعومة حاليًا: '
+                       + ', '.join(e.upper() for e in allowed) + '.')
         return redirect('compliance:control_detail', control_id=control_id)
     if uploaded_file.size > max_size:
         messages.error(
@@ -870,7 +871,8 @@ def evidence_upload_v2(request, item_id):
             _allowed = getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
             _ok, ext, _err = validate_evidence_file(f, _allowed)
             if not _ok:
-                messages.error(request, '%s · %s' % ('محتوى الملف لا يطابق امتداده.', _err))
+                messages.error(request, 'نوع الملف غير مدعوم أو لا يطابق محتواه امتداده. '
+                               'الأنواع المدعومة حاليًا: ' + ', '.join(e.upper() for e in _allowed) + '.')
                 return redirect('compliance:evidence_submission_list', item_id=item.id)
             try:
                 digest = hashlib.sha256()

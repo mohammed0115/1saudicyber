@@ -290,6 +290,6 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 # Whole request body cap; must exceed the largest allowed file.
 DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_EVIDENCE_FILE_SIZE + (5 * 1024 * 1024)
 # Allowed evidence extensions (FR-005.1 / FR-005.11).
-ALLOWED_EVIDENCE_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'tiff', 'bmp', 'docx', 'xlsx', 'txt']
+ALLOWED_EVIDENCE_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'tiff', 'bmp', 'docx', 'xlsx', 'txt', 'csv']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

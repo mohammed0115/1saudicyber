@@ -2783,6 +2783,61 @@ class TextExtractionTests(TestCase):
         text, trunc, note = extract_text_from_submission(sub)
         self.assertNotIn('not a real docx', note)  # note never contains raw content
 
+    # --- CSV / filetype / image / filename UAT ---
+    def _tmp(self, suffix, content_bytes):
+        import tempfile, os
+        fd, path = tempfile.mkstemp(suffix=suffix)
+        os.write(fd, content_bytes)
+        os.close(fd)
+        self.addCleanup(lambda: os.path.exists(path) and os.remove(path))
+        return path
+
+    def test_csv_extraction_method_is_csv_with_content(self):
+        from compliance.evidence_extraction import extract_text_from_file
+        path = self._tmp('.csv', 'الأصل,المالك\nجدار ناري,IT'.encode('utf-8'))
+        r = extract_text_from_file(path, 'سجل الأصول.csv')
+        self.assertEqual(r.extraction_method, 'csv')
+        self.assertIn('جدار ناري', r.extracted_text)
+
+    def test_csv_windows1256_is_decoded_not_garbled(self):
+        from compliance.evidence_extraction import extract_text_from_file
+        path = self._tmp('.csv', 'سجل,قيمة\nنسخ احتياطي,تم'.encode('windows-1256'))
+        r = extract_text_from_file(path, 'b.csv')
+        self.assertIn('نسخ', r.extracted_text)          # decoded, not replacement chars
+        self.assertNotIn('�', r.extracted_text)
+
+    def test_png_extraction_is_image_manual_review(self):
+        from compliance.evidence_extraction import extract_text_from_file
+        path = self._tmp('.png', b'\x89PNG\r\n\x1a\n')
+        r = extract_text_from_file(path, 'لقطة شاشة.png')
+        self.assertEqual(r.extraction_method, 'image_manual_review')
+        self.assertTrue(any('مراجعة يدوية' in w for w in r.warnings))
+        self.assertFalse(r.extracted_text)               # never fakes OCR
+
+    def test_validator_accepts_csv_and_rejects_exe(self):
+        from django.conf import settings
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from compliance.upload_validation import validate_evidence_file
+        allowed = settings.ALLOWED_EVIDENCE_EXTENSIONS
+        self.assertIn('csv', allowed)
+        ok, ext, err = validate_evidence_file(
+            SimpleUploadedFile('سجل الأصول.csv', b'asset,owner\nfw,IT'), allowed)
+        self.assertTrue(ok)                              # CSV no longer "Unsupported file type"
+        ok2, ext2, err2 = validate_evidence_file(
+            SimpleUploadedFile('m.exe', b'MZ\x90\x00'), allowed)
+        self.assertFalse(ok2)
+
+    def test_arabic_original_filename_preserved_on_extraction_page(self):
+        from core.models import User
+        c, item, sub = _company_with_submission(name='سجل_الأصول.csv',
+                                                content=b'asset,owner\nfw,IT', ftype='csv')
+        self.assertEqual(sub.original_filename, 'سجل_الأصول.csv')   # real name, not mangled
+        user = User.objects.create_user(email_verified=True, email='fn@x.com',
+                                        password='longenough12', company=c, role='company_admin')
+        self.client.force_login(user)
+        resp = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id]))
+        self.assertContains(resp, 'سجل_الأصول.csv')
+
 
 class AnalysisServiceTests(TestCase):
     # No OPENAI_API_KEY in tests -> AI fails gracefully to needs_human_review.
