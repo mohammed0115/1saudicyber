@@ -162,8 +162,7 @@ def crm_subscription_action(request, company_id):
                 bsvc.mark_payment_paid(pending, actor=request.user, reason=reason)
             else:
                 bsvc.activate_subscription(sub, actor=request.user, reason=reason)
-            messages.success(request, 'تم تفعيل الاشتراك وتأكيد الدفع اليدوي · '
-                                      'Subscription activated and manual payment confirmed.')
+            messages.success(request, 'تم تفعيل الاشتراك وتأكيد الدفع اليدوي.')
     elif action == 'cancel':
         bsvc.cancel_subscription(sub, actor=request.user, reason=reason)
         # Reject flow: clear any stale pending manual payment (does not activate).

@@ -1324,7 +1324,7 @@ class CRMCompanyFollowUpTests(TestCase):
         self.client.force_login(self._staff())
         self.client.post(self._status_url(c), {'crm_status': 'blocked'})
         detail = self.client.get(self._detail_url(c)).content.decode()
-        self.assertIn('Blocked', detail)
+        self.assertIn('محظورة', detail)   # detail page shows the Arabic CRM-status label
         listing = self.client.get(reverse('platform_admin:companies_list')).content.decode()
         self.assertIn('Blocked', listing)
 
@@ -1612,3 +1612,152 @@ class CompanyStepperAuditorSelectionTests(TestCase):
         respond_to_assignment(a, 'accept', responder=u)
         s = self._stage(c)
         self.assertEqual(s['status'], 'completed')
+
+
+class CompanyDetailUIRedesignTests(TestCase):
+    """CYBERTRUST-PLATFORM-ADMIN-COMPANY-DETAIL-UI-REDESIGN-A — the platform-admin
+    company-detail page is a CRM dashboard: header + badges + stat cards + in-page
+    navigation, with all existing POST forms and permissions unchanged. UI-only."""
+
+    def _staff(self, email='uiredesign_admin@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    def _company(self, cr='9191919191', name='UI Redesign Co'):
+        return Company.objects.create(name=name, cr_number=cr, sector='technology',
+                                      size='small', contact_email='ui@co.example')
+
+    def _url(self, c):
+        return reverse('platform_admin:company_detail', args=[c.id])
+
+    # 1) header + company name
+    def test_page_shows_header_and_company_name(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        resp = self.client.get(self._url(c))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, c.name)
+        self.assertContains(resp, 'نظرة عامة')
+
+    # 2) status / subscription / email badges
+    def test_page_shows_status_badges(self):
+        c = self._company(cr='9191910002')
+        self.client.force_login(self._staff())
+        body = self.client.get(self._url(c)).content.decode()
+        self.assertIn('بريد غير موثّق', body)      # email badge (unverified company)
+        self.assertIn('مخاطر:', body)               # risk badge
+        self.assertIn('لا مدقق مسند', body)         # auditor badge
+
+    # 3) in-page navigation anchors
+    def test_page_shows_internal_navigation(self):
+        c = self._company(cr='9191910003')
+        self.client.force_login(self._staff())
+        body = self.client.get(self._url(c)).content.decode()
+        for anchor in ('#overview', '#journey', '#auditors', '#evidence',
+                       '#billing', '#users', '#followup', '#log'):
+            self.assertIn('href="%s"' % anchor, body)
+
+    # 4) compliance journey stepper
+    def test_page_shows_journey_stepper(self):
+        c = self._company(cr='9191910004')
+        self.client.force_login(self._staff())
+        resp = self.client.get(self._url(c))
+        self.assertContains(resp, 'رحلة الامتثال')
+        self.assertContains(resp, 'الإجراء التالي:')
+        self.assertContains(resp, 'ملخص رحلة الامتثال')
+
+    # 5) evidence summary (counts only, no evidence content)
+    def test_page_shows_evidence_summary_counts_only(self):
+        c = self._company(cr='9191910005')
+        self.client.force_login(self._staff())
+        resp = self.client.get(self._url(c))
+        self.assertContains(resp, 'الأدلة والجاهزية')
+        # counts-only disclaimer present; never render actual evidence file content.
+        self.assertContains(resp, 'ولا يُعرض محتوى الأدلة')
+
+    # 6) subscription & payment section
+    def test_page_shows_subscription_and_payment(self):
+        c = self._company(cr='9191910006')
+        self.client.force_login(self._staff())
+        resp = self.client.get(self._url(c))
+        self.assertContains(resp, 'الاشتراك والدفع')
+        self.assertContains(resp, 'ميزات الخطة')
+
+    # 7) add-manual-payment button for staff
+    def test_page_shows_add_manual_payment_for_staff(self):
+        c = self._company(cr='9191910007')
+        self.client.force_login(self._staff())
+        self.assertContains(self.client.get(self._url(c)), 'إضافة دفعة يدوية')
+
+    # 8) manual-payments table when a payment exists
+    def test_page_shows_manual_payments_table(self):
+        from billing import subscription_services as bsvc
+        c = self._company(cr='9191910008')
+        bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', reference='WIRE-1', note='n')
+        self.client.force_login(self._staff())
+        body = self.client.get(self._url(c)).content.decode()
+        self.assertIn('الدفعات اليدوية', body)
+        self.assertIn('WIRE-1', body)
+        self.assertIn('بانتظار التأكيد', body)
+
+    # 9) Arabic confirmation message (no English leak) on activation
+    def test_activation_message_is_arabic_only(self):
+        from billing import subscription_services as bsvc
+        c = self._company(cr='9191910009')
+        bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='n')
+        self.client.force_login(self._staff())
+        resp = self.client.post(reverse('platform_admin:subscription_action', args=[c.id]),
+                                {'action': 'activate', 'reason': 'confirmed offline'}, follow=True)
+        self.assertContains(resp, 'تم تفعيل الاشتراك وتأكيد الدفع اليدوي')
+        self.assertNotContains(resp, 'Subscription activated and manual payment confirmed')
+
+    # 10) no unwanted English enum leaks on the Arabic page
+    def test_no_unwanted_english_enum_on_page(self):
+        from billing import subscription_services as bsvc
+        c = self._company(cr='9191910010')
+        bsvc.start_trial(c, bsvc.get_plan('basic'))
+        self.client.force_login(self._staff())
+        body = self.client.get(self._url(c)).content.decode()
+        self.assertNotIn('Subscription activated and manual payment confirmed', body)
+        # subscription / company / CRM status rendered in Arabic (not the raw enum label)
+        self.assertNotIn('>Trial<', body)
+        self.assertNotIn('>Active<', body)
+        self.assertNotIn('>Registered<', body)
+
+    # 11) tables are wrapped for responsive horizontal scroll
+    def test_tables_have_responsive_wrapper(self):
+        from billing import subscription_services as bsvc
+        c = self._company(cr='9191910011')
+        bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='n')
+        self.client.force_login(self._staff())
+        body = self.client.get(self._url(c)).content.decode()
+        self.assertIn('overflow-x-auto', body)
+
+    # 12) existing action forms still present and unchanged (activate/cancel/manual add/confirm)
+    def test_existing_post_forms_intact(self):
+        from billing import subscription_services as bsvc
+        c = self._company(cr='9191910012')
+        # An unlinked user so the link-account form renders too.
+        User.objects.create_user(username='uilink@x.com', email='uilink@x.com',
+                                 password='longenough12', role='company_admin')
+        bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='n')
+        self.client.force_login(self._staff())
+        body = self.client.get(self._url(c)).content.decode()
+        self.assertIn(reverse('platform_admin:subscription_action', args=[c.id]), body)
+        self.assertIn(reverse('platform_admin:add_manual_payment', args=[c.id]), body)
+        self.assertIn(reverse('platform_admin:link_user', args=[c.id]), body)
+        self.assertIn(reverse('platform_admin:add_note', args=[c.id]), body)
+        self.assertIn(reverse('platform_admin:update_status', args=[c.id]), body)
+        p = c.payments.filter(provider='manual').first()
+        self.assertIn(reverse('platform_admin:confirm_manual_payment', args=[c.id, p.id]), body)
+        self.assertIn(reverse('platform_admin:reject_manual_payment', args=[c.id, p.id]), body)
+        # Every POST form on the page is CSRF-protected (>= the action forms above).
+        self.assertGreaterEqual(body.count('csrfmiddlewaretoken'), 8)
+
+    # 13) permissions unchanged: company user is denied
+    def test_company_user_cannot_access(self):
+        c = self._company(cr='9191910013')
+        u = User.objects.create_user(username='uicu@x.com', email='uicu@x.com',
+                                     password='longenough12', role='company_admin', company=c)
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(self._url(c)).status_code, 403)
