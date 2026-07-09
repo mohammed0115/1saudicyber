@@ -204,9 +204,11 @@ class AssignmentTests(TestCase):
         c, fv, scope = _company_with_assessments()
         a = _assignment(c, p)
         self.client.force_login(u)
-        self.client.post(reverse('auditors:assignment_respond', args=[a.id]), {'action': 'reject'})
+        self.client.post(reverse('auditors:assignment_respond', args=[a.id]),
+                         {'action': 'reject', 'reason': 'خارج نطاق تخصّصي'})
         a.refresh_from_db()
         self.assertEqual(a.status, 'rejected')
+        self.assertEqual(a.response_note, 'خارج نطاق تخصّصي')
 
     def test_cancelled_assignment_no_longer_grants_access(self):
         u, p = _auditor(status='active')
@@ -321,7 +323,7 @@ class AuditorUxTests(TestCase):
         self.client.force_login(cu)
         resp = self.client.get(reverse('auditors:list'))
         self.assertContains(resp, 'data-busy')
-        self.assertContains(resp, 'جارٍ إسناد الملف إلى المدقق')
+        self.assertContains(resp, 'جارٍ إرسال طلب المراجعة')
 
     def test_auditor_pages_are_arabic_rtl(self):
         self.assertContains(self.client.get(reverse('auditors:register')), 'dir="rtl"')
@@ -351,8 +353,8 @@ class GuidedAuditorWorkflowTests(TestCase):
         self.client.force_login(u)
         resp = self.client.get(reverse('auditors:dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'لا توجد ملفات شركات مسندة إليك حاليًا')
-        self.assertContains(resp, 'تواصل مع إدارة منصة احصل الحل لإسناد ملف مراجعة')
+        self.assertContains(resp, 'لا توجد طلبات مراجعة بانتظار موافقتك حاليًا')
+        self.assertContains(resp, 'لا توجد شركات مقبولة بعد')
 
     def test_pending_journey_marks_dashboard_step_blocked(self):
         u, p = _auditor(status='pending_review')
@@ -1456,3 +1458,124 @@ class Phase4CBackwardCompatTests(TestCase):
         c, cu = _company_user(subscribe=True)
         self.client.force_login(cu)
         self.assertEqual(self.client.get(reverse('compliance:report_executive_summary')).status_code, 200)
+
+
+class AuditorSelectionFlowTests(TestCase):
+    """UAT-COMPANY-AUDITOR-SELECTION-ACCEPTANCE-FLOW-A — company selects auditor -> pending ->
+    auditor accepts/rejects -> accepted assignment. Reuses the existing AuditorAssignment."""
+
+    def test_company_sees_only_active_available_auditors(self):
+        from auditors.services import list_available_auditors
+        _, ap = _auditor(status='active')
+        _, pending = _auditor(status='pending_review')
+        _, unavail = _auditor(status='active', available=False)
+        ids = set(list_available_auditors().values_list('id', flat=True))
+        self.assertIn(ap.id, ids)
+        self.assertNotIn(pending.id, ids)
+        self.assertNotIn(unavail.id, ids)
+
+    def test_company_can_request_active_auditor(self):
+        from auditors.services import create_assignment
+        c, _fv, _s = _company_with_assessments()
+        _, ap = _auditor(status='active')
+        a, created = create_assignment(c, ap)
+        self.assertTrue(created)
+        self.assertEqual(a.status, 'requested')
+
+    def test_cannot_request_inactive_auditor(self):
+        from auditors.services import create_assignment
+        c, _fv, _s = _company_with_assessments()
+        _, pending = _auditor(status='pending_review')
+        a, created = create_assignment(c, pending)
+        self.assertFalse(created)
+        self.assertIsNone(a)
+
+    def test_no_duplicate_active_request_for_company(self):
+        from auditors.services import create_assignment
+        c, _fv, _s = _company_with_assessments()
+        _, ap = _auditor(status='active')
+        _, ap2 = _auditor(status='active')
+        create_assignment(c, ap)
+        _, created2 = create_assignment(c, ap2)     # company already has an active request
+        self.assertFalse(created2)
+
+    def test_auditor_sees_request_others_do_not(self):
+        from auditors.services import create_assignment
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        create_assignment(c, ap)
+        self.client.force_login(u)
+        body = self.client.get(reverse('auditors:dashboard')).content.decode()
+        self.assertIn('طلبات مراجعة بانتظار موافقتك', body)
+        self.assertIn(c.cr_number, body)                 # request visible to this auditor
+        u2, _ap2 = _auditor(status='active')
+        self.client.force_login(u2)
+        body2 = self.client.get(reverse('auditors:dashboard')).content.decode()
+        self.assertNotIn(c.cr_number, body2)             # not to another auditor
+
+    def test_auditor_accept_makes_company_assigned(self):
+        from auditors.services import create_assignment
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = create_assignment(c, ap)
+        self.client.force_login(u)
+        self.client.post(reverse('auditors:assignment_respond', args=[a.id]), {'action': 'accept'})
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'accepted')
+        self.assertEqual(a.responded_by, u)
+
+    def test_auditor_reject_requires_reason_then_rejects(self):
+        from auditors.services import create_assignment
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = create_assignment(c, ap)
+        self.client.force_login(u)
+        self.client.post(reverse('auditors:assignment_respond', args=[a.id]), {'action': 'reject'})
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'requested')          # blocked without a reason
+        self.client.post(reverse('auditors:assignment_respond', args=[a.id]),
+                         {'action': 'reject', 'reason': 'خارج نطاق تخصّصي'})
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'rejected')
+        self.assertEqual(a.response_note, 'خارج نطاق تخصّصي')
+
+    def test_company_can_reselect_after_reject(self):
+        from auditors.services import create_assignment, respond_to_assignment
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = create_assignment(c, ap)
+        respond_to_assignment(a, 'reject', note='خارج النطاق', responder=u)
+        _, ap2 = _auditor(status='active')
+        a2, created = create_assignment(c, ap2)          # no active -> allowed again
+        self.assertTrue(created)
+        self.assertEqual(a2.status, 'requested')
+
+    def test_company_can_cancel_pending(self):
+        from auditors.services import create_assignment
+        c, cu = _company_user(subscribe=True)
+        _, ap = _auditor(status='active')
+        a, _ = create_assignment(c, ap, requested_by=cu)
+        self.client.force_login(cu)
+        self.client.post(reverse('auditors:cancel_assignment', args=[a.id]))
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'cancelled')
+
+    def test_auditor_cannot_open_non_accepted_company(self):
+        # A requested (not accepted) assignment must not grant review-file access.
+        from auditors.services import create_assignment, auditor_can_view_company_context
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = create_assignment(c, ap)   # requested
+        self.assertFalse(auditor_can_view_company_context(a))
+
+    def test_admin_sees_auditor_requests_on_company_page(self):
+        from auditors.services import create_assignment
+        c, _fv, _s = _company_with_assessments()
+        _, ap = _auditor(status='active')
+        create_assignment(c, ap)
+        staff = User.objects.create_user(username='sel_admin@x.com', email='sel_admin@x.com',
+                                         password='longenough12', role='admin', is_staff=True)
+        self.client.force_login(staff)
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('طلبات المدققين', body)
+        self.assertIn(ap.full_name, body)

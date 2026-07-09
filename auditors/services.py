@@ -28,15 +28,36 @@ def has_active_assignment(company, auditor):
         status__in=AuditorAssignment.ACTIVE_STATUSES).exists()
 
 
-def create_assignment(company, auditor, requested_by=None, scope='reports_only'):
-    """Create an assignment, preventing a duplicate active one. Returns (assignment, created)."""
-    if has_active_assignment(company, auditor):
-        return AuditorAssignment.objects.filter(
-            company=company, auditor=auditor,
-            status__in=AuditorAssignment.ACTIVE_STATUSES).first(), False
+def company_active_assignment(company):
+    """The company's current active (pending/accepted) assignment, if any — across ALL auditors.
+    A company may only have ONE active assignment at a time."""
+    return (AuditorAssignment.objects.filter(
+        company=company, status__in=AuditorAssignment.ACTIVE_STATUSES)
+        .select_related('auditor', 'auditor__user').first())
+
+
+def create_assignment(company, auditor, requested_by=None, scope='reports_only', notes=''):
+    """Create a review request, preventing a duplicate active one for the COMPANY (any auditor).
+    Only an active + available auditor may be requested. Returns (assignment, created)."""
+    existing = company_active_assignment(company)
+    if existing is not None:
+        return existing, False
+    if auditor is None or auditor.status != 'active' or not auditor.is_available:
+        return None, False
     a = AuditorAssignment.objects.create(
-        company=company, auditor=auditor, requested_by=requested_by, scope=scope)
+        company=company, auditor=auditor, requested_by=requested_by, scope=scope,
+        notes=(notes or '').strip()[:2000])
     return a, True
+
+
+def cancel_assignment(assignment, by=None):
+    """The company cancels its own PENDING (requested) request. Returns True if changed."""
+    if assignment is None or assignment.status != 'requested':
+        return False
+    assignment.status = 'cancelled'
+    assignment.responded_at = timezone.now()
+    assignment.save(update_fields=['status', 'responded_at', 'updated_at'])
+    return True
 
 
 def assignments_for_user(user):
@@ -62,11 +83,17 @@ def auditor_can_view_company_context(assignment):
             and assignment.status == 'accepted')
 
 
-def respond_to_assignment(assignment, action):
-    """Auditor accepts/rejects a 'requested' assignment. Returns True if changed."""
-    if assignment.status != 'requested' or action not in ('accept', 'reject'):
-        return False
+def respond_to_assignment(assignment, action, note='', responder=None):
+    """Auditor accepts/rejects a 'requested' assignment. Reject requires a reason. Returns
+    (ok, error_ar). Idempotent-safe: only a 'requested' assignment can be responded to."""
+    if assignment is None or assignment.status != 'requested' or action not in ('accept', 'reject'):
+        return False, 'لا يمكن تنفيذ هذا الإجراء على الطلب في حالته الحالية.'
+    if action == 'reject' and not (note or '').strip():
+        return False, 'سبب الرفض مطلوب.'
     assignment.status = 'accepted' if action == 'accept' else 'rejected'
+    assignment.response_note = (note or '').strip()
+    assignment.responded_by = responder
     assignment.responded_at = timezone.now()
-    assignment.save(update_fields=['status', 'responded_at', 'updated_at'])
-    return True
+    assignment.save(update_fields=['status', 'response_note', 'responded_by',
+                                   'responded_at', 'updated_at'])
+    return True, ''

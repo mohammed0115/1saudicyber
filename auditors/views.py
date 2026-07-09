@@ -82,9 +82,14 @@ def dashboard(request):
     profile = services.get_auditor_profile(request.user)
     if profile is None:
         return redirect('auditors:register')
-    assignments = services.assignments_for_user(request.user) if profile.is_active_auditor else None
+    pending_requests = accepted_assignments = None
+    if profile.is_active_auditor:
+        assignments = services.assignments_for_user(request.user)
+        pending_requests = assignments.filter(status='requested')
+        accepted_assignments = assignments.filter(status='accepted')
     return render(request, 'auditors/dashboard.html', {
-        'profile': profile, 'assignments': assignments,
+        'profile': profile, 'pending_requests': pending_requests,
+        'accepted_assignments': accepted_assignments,
         'auditor_journey': build_auditor_journey(request.user)})
 
 
@@ -136,9 +141,31 @@ def assignment_respond(request, assignment_id):
         messages.error(request, 'حسابك كمدقّق قيد المراجعة ولا يمكنه اتخاذ إجراء بعد.')
         return redirect('auditors:dashboard')
     action = request.POST.get('action', '')
-    if services.respond_to_assignment(assignment, action):
-        messages.success(request, 'تم تحديث حالة الطلب.')
+    note = request.POST.get('reason', '')
+    ok, err = services.respond_to_assignment(assignment, action, note=note, responder=request.user)
+    if ok:
+        messages.success(request, 'تم قبول طلب المراجعة.' if action == 'accept' else 'تم رفض الطلب.')
+    else:
+        messages.error(request, err)
     return redirect('auditors:assignment_detail', assignment_id=assignment.id)
+
+
+@login_required
+@require_http_methods(["POST"])
+@company_portal_required
+def cancel_assignment(request, assignment_id):
+    """Company cancels its OWN pending (requested) review request. Tenant-scoped."""
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    a = AuditorAssignment.objects.filter(id=assignment_id, company=company).first()
+    if a is None:
+        messages.error(request, 'الطلب غير موجود أو لا يخصّ شركتك.')
+    elif services.cancel_assignment(a, by=request.user):
+        messages.success(request, 'تم إلغاء طلب المراجعة.')
+    else:
+        messages.error(request, 'لا يمكن إلغاء هذا الطلب في حالته الحالية.')
+    return redirect('auditors:list')
 
 
 # ---------- Company-facing: list + assign ----------
@@ -153,8 +180,15 @@ def auditors_list(request):
         return render(request, 'compliance/subscription_required.html',
                       {'company': company, 'mode': 'assign'})
     from compliance.workflow_stepper import build_company_workflow_stepper
+    # Current request state drives the UI: a company may only have one active assignment.
+    current = services.company_active_assignment(company)
+    last_rejected = None
+    if current is None:
+        last_rejected = (AuditorAssignment.objects.filter(company=company, status='rejected')
+                         .select_related('auditor').order_by('-responded_at').first())
     return render(request, 'auditors/list.html', {
         'company': company, 'auditors': services.list_available_auditors(),
+        'current_assignment': current, 'last_rejected': last_rejected,
         'stepper': build_company_workflow_stepper(company)})
 
 
@@ -183,7 +217,8 @@ def assign(request, auditor_id):
     scope = request.POST.get('scope', 'reports_only')
     if scope not in dict(AuditorAssignment.SCOPE_CHOICES):
         scope = 'reports_only'
-    _, created = services.create_assignment(company, auditor, requested_by=request.user, scope=scope)
-    messages.success(request, 'تم إرسال طلب الإسناد إلى المدقّق.' if created
-                     else 'يوجد طلب إسناد فعّال لهذا المدقّق بالفعل.')
+    _, created = services.create_assignment(company, auditor, requested_by=request.user,
+                                            scope=scope, notes=request.POST.get('note', ''))
+    messages.success(request, 'تم إرسال طلب المراجعة إلى المدقق، بانتظار الموافقة.' if created
+                     else 'لديك طلب مراجعة فعّال بالفعل. ألغِ الطلب الحالي قبل اختيار مدقق آخر.')
     return redirect('auditors:list')

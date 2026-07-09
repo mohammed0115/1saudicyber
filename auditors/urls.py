@@ -14,6 +14,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('assignments/<int:assignment_id>/', views.assignment_detail, name='assignment_detail'),
     path('assignments/<int:assignment_id>/respond/', views.assignment_respond, name='assignment_respond'),
+    path('assignments/<int:assignment_id>/cancel/', views.cancel_assignment, name='cancel_assignment'),
 
     # Company assigns to a specific auditor
     path('<int:auditor_id>/assign/', views.assign, name='assign'),

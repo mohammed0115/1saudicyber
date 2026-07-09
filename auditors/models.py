@@ -74,6 +74,10 @@ class AuditorAssignment(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='requested')
     scope = models.CharField(max_length=20, choices=SCOPE_CHOICES, default='reports_only')
     notes = models.TextField(blank=True)
+    # UAT-AUDITOR-SELECTION: the auditor's response reason (required on reject) + who responded.
+    response_note = models.TextField(blank=True)
+    responded_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='responded_assignments')
     requested_at = models.DateTimeField(auto_now_add=True)
     responded_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)

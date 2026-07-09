@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 
-from .models import AuditorProfile
+from .models import AuditorProfile, AuditorAssignment
 from . import admin_services as svc
 from . import crm_services as crm
 
@@ -60,6 +60,8 @@ def auditor_approval_detail(request, profile_id):
     return render(request, 'platform_admin/auditor_detail.html', {
         'profile': profile,
         'available_actions': available,
+        'company_requests': AuditorAssignment.objects.filter(auditor=profile)
+            .select_related('company').order_by('-requested_at'),
     })
 
 
@@ -106,6 +108,8 @@ def crm_company_detail(request, company_id):
         'report_summary': crm.company_report_summary(company),
         'subscription_summary': crm.company_subscription_summary(company),
         'feature_summary': _plan_feature_summary(company),
+        'auditor_requests': AuditorAssignment.objects.filter(company=company)
+            .select_related('auditor', 'auditor__user').order_by('-requested_at'),
     })
 
 

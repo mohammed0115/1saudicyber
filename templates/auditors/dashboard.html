@@ -17,25 +17,51 @@
         <span style="display:block;color:#8A6D2A;margin-top:4px;font-size:.85rem;">حسابك ({{ profile.get_status_display }}) لا يتيح الوصول إلى بيانات الشركات حتى يتم التفعيل.</span>
       </div>
     {% else %}
+      {# A) Pending review requests awaiting the auditor's approval #}
+      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;overflow:hidden;margin-bottom:18px;">
+        <div style="padding:12px 16px;background:#FBF3E6;color:#8A5A0B;font-weight:700;">طلبات مراجعة بانتظار موافقتك</div>
+        <div style="padding:6px 0;">
+          {% for a in pending_requests %}
+          <div style="border-top:1px solid #EEF2F0;padding:14px 16px;">
+            <p style="margin:0;color:#1F2933;font-weight:700;">{{ a.company.name_ar|default:a.company.name }}</p>
+            <p style="margin:2px 0 0;color:#667085;font-size:.85rem;">السجل التجاري: <span dir="ltr">{{ a.company.cr_number }}</span> · تاريخ الطلب: {{ a.requested_at|date:"Y-m-d H:i" }}</p>
+            {% if a.notes %}<p style="margin:4px 0 0;color:#667085;font-size:.85rem;">ملاحظة الشركة: {{ a.notes }}</p>{% endif %}
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:flex-start;">
+              <form method="post" action="{% url 'auditors:assignment_respond' a.id %}" data-busy="جارٍ قبول الطلب..." style="display:inline;">
+                {% csrf_token %}<input type="hidden" name="action" value="accept">
+                <button type="submit" style="background:#0F5D46;color:#fff;font-weight:600;padding:9px 18px;border:none;border-radius:10px;cursor:pointer;">قبول الطلب</button>
+              </form>
+              <form method="post" action="{% url 'auditors:assignment_respond' a.id %}" data-busy="جارٍ رفض الطلب..." style="display:flex;gap:6px;align-items:center;">
+                {% csrf_token %}<input type="hidden" name="action" value="reject">
+                <input type="text" name="reason" required placeholder="سبب الرفض (مطلوب)" style="border:1px solid #E6C7C7;border-radius:8px;padding:8px 10px;font-size:.85rem;">
+                <button type="submit" style="background:#FFFFFF;color:#9B2C2C;font-weight:600;padding:9px 16px;border:1px solid #E6C7C7;border-radius:10px;cursor:pointer;">رفض الطلب</button>
+              </form>
+            </div>
+          </div>
+          {% empty %}
+          <p style="padding:16px;margin:0;color:#667085;">لا توجد طلبات مراجعة بانتظار موافقتك حاليًا.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# B) Accepted / assigned companies #}
       <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;overflow:hidden;">
-        <div style="padding:12px 16px;background:#EAF3EF;color:#0F5D46;font-weight:700;">الطلبات المُسندة</div>
+        <div style="padding:12px 16px;background:#EAF3EF;color:#0F5D46;font-weight:700;">الشركات المقبولة/المسندة</div>
         <table style="width:100%;font-size:.9rem;border-collapse:collapse;">
           <thead style="color:#667085;"><tr>
             <th style="text-align:right;padding:10px 16px;">الشركة</th>
             <th style="text-align:right;padding:10px 16px;">النطاق</th>
-            <th style="text-align:right;padding:10px 16px;">الحالة</th>
             <th style="text-align:right;padding:10px 16px;"></th>
           </tr></thead>
           <tbody>
-          {% for a in assignments %}
+          {% for a in accepted_assignments %}
             <tr style="border-top:1px solid #EEF2F0;">
               <td style="padding:10px 16px;color:#1F2933;">{{ a.company.name_ar|default:a.company.name }}</td>
               <td style="padding:10px 16px;color:#667085;">{{ a.get_scope_display }}</td>
-              <td style="padding:10px 16px;"><span style="background:#F4F1EA;color:#1F2933;border-radius:6px;padding:2px 8px;font-size:.8rem;">{{ a.get_status_display }}</span></td>
-              <td style="padding:10px 16px;"><a href="{% url 'auditors:assignment_detail' a.id %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">عرض</a></td>
+              <td style="padding:10px 16px;"><a href="{% url 'auditors:assignment_detail' a.id %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">فتح ملف المراجعة</a></td>
             </tr>
           {% empty %}
-            <tr><td colspan="4" style="padding:18px 16px;text-align:right;color:#667085;line-height:1.8;">{{ auditor_journey.no_assignment_message }}</td></tr>
+            <tr><td colspan="3" style="padding:18px 16px;text-align:right;color:#667085;line-height:1.8;">لا توجد شركات مقبولة بعد. اقبل طلب مراجعة لتظهر الشركة هنا.</td></tr>
           {% endfor %}
           </tbody>
         </table>
