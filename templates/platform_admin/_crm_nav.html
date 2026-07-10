@@ -17,6 +17,7 @@ Reports, Monitoring). Active item is derived from the resolved url_name.
         <a href="{% url 'platform_admin:dashboard' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'dashboard' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">نظرة عامة · Overview</a>
         <a href="{% url 'platform_admin:companies_list' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'companies_list' or un == 'company_detail' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">الشركات · Companies</a>
         <a href="{% url 'platform_admin:auditor_list' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'auditor_list' or un == 'auditor_detail' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">المدققون · Auditors</a>
+        <a href="{% url 'platform_admin:auditor_requests' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'auditor_requests' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">طلبات المدققين</a>
         <a href="{% url 'platform_admin:unlinked_accounts' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'unlinked_accounts' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">حسابات غير مرتبطة · Unlinked Accounts</a>
       </div>
 

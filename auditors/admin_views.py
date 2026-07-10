@@ -74,6 +74,7 @@ def crm_dashboard(request):
     return render(request, 'platform_admin/dashboard.html', {
         'summary': crm.crm_summary(),
         'data_health': crm.platform_data_health(),
+        'queues': crm.crm_operational_queues(),
     })
 
 
@@ -112,7 +113,16 @@ def crm_company_detail(request, company_id):
             .select_related('auditor', 'auditor__user').order_by('-requested_at'),
         'manual_payments': _manual_payments(company),
         'billing_plans': _active_plans(),
+        # UAT-PLATFORM-ADMIN-JOURNEY: internal admin journey + auditor engagement.
+        'admin_journey': crm.admin_company_journey(company),
+        'auditor_engagement': crm.admin_auditor_engagement(company),
+        'assignable_auditors': _assignable_auditors(),
     })
+
+
+def _assignable_auditors():
+    from . import services as auditor_services
+    return auditor_services.list_available_auditors().select_related('user')
 
 
 def _manual_payments(company):
@@ -255,6 +265,84 @@ def crm_add_note(request, company_id):
     except crm.CRMLinkError as e:
         messages.error(request, str(e))
     return redirect('platform_admin:company_detail', company_id=company.id)
+
+
+# ------------------------------------------------------------
+# UAT-PLATFORM-ADMIN-JOURNEY — admin-initiated auditor engagement (staff-only).
+# Reuses the auditors.services layer (no new model). Assignment counts only once
+# an auditor ACCEPTS; admin assignment just creates the request as the admin.
+# ------------------------------------------------------------
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_assign_auditor(request, company_id):
+    """POST-only: admin assigns an ACTIVE auditor to a company (creates a request).
+    Prevents a duplicate active request. The auditor still must accept."""
+    from core.models import Company
+    from . import services as auditor_services
+    from .models import AuditorProfile
+    company = get_object_or_404(Company, id=company_id)
+    auditor = AuditorProfile.objects.filter(id=request.POST.get('auditor_id') or 0).first()
+    if auditor is None:
+        messages.error(request, 'المدقق غير موجود.')
+        return redirect('platform_admin:company_detail', company_id=company.id)
+    if auditor.status != 'active' or not auditor.is_available:
+        messages.error(request, 'لا يمكن إسناد مدقق غير مفعّل أو غير متاح.')
+        return redirect('platform_admin:company_detail', company_id=company.id)
+    assignment, created = auditor_services.create_assignment(
+        company, auditor, requested_by=request.user,
+        notes=(request.POST.get('reason', '') or '').strip())
+    if not created and assignment is not None:
+        messages.info(request, 'يوجد بالفعل طلب/إسناد مدقق نشط لهذه الشركة.')
+    elif assignment is None:
+        messages.error(request, 'تعذّر إسناد المدقق.')
+    else:
+        crm._crm_audit(request.user, 'admin_auditor_assigned', company,
+                       extra={'auditor_id': auditor.id, 'assignment_id': assignment.id})
+        messages.success(request, 'تم إسناد المدقق. بانتظار موافقة المدقق على الطلب.')
+    return redirect('platform_admin:company_detail', company_id=company.id)
+
+
+@platform_admin_required
+@require_http_methods(["POST"])
+def crm_cancel_auditor_request(request, company_id):
+    """POST-only: admin cancels the company's PENDING auditor request. Reason required."""
+    from core.models import Company
+    from . import services as auditor_services
+    company = get_object_or_404(Company, id=company_id)
+    reason = (request.POST.get('reason', '') or '').strip()
+    if not reason:
+        messages.error(request, 'السبب مطلوب لإلغاء طلب المدقق.')
+        return redirect('platform_admin:company_detail', company_id=company.id)
+    assignment = auditor_services.company_active_assignment(company)
+    if assignment is None or assignment.status != 'requested':
+        messages.error(request, 'لا يوجد طلب مدقق قيد الانتظار لإلغائه.')
+        return redirect('platform_admin:company_detail', company_id=company.id)
+    if auditor_services.cancel_assignment(assignment, by=request.user):
+        assignment.response_note = reason[:2000]
+        assignment.responded_by = request.user
+        assignment.save(update_fields=['response_note', 'responded_by', 'updated_at'])
+        crm._crm_audit(request.user, 'admin_auditor_request_cancelled', company,
+                       extra={'assignment_id': assignment.id, 'reason': reason[:500]})
+        messages.success(request, 'تم إلغاء طلب المدقق.')
+    return redirect('platform_admin:company_detail', company_id=company.id)
+
+
+@platform_admin_required
+def crm_auditor_requests(request):
+    """Read-only global list of all company↔auditor requests (staff-only)."""
+    status = request.GET.get('status', 'all')
+    qs = (AuditorAssignment.objects
+          .select_related('company', 'auditor', 'auditor__user', 'requested_by')
+          .order_by('-requested_at'))
+    valid = {k for k, _ in AuditorAssignment.STATUS_CHOICES}
+    if status in valid:
+        qs = qs.filter(status=status)
+    else:
+        status = 'all'
+    return render(request, 'platform_admin/auditor_requests.html', {
+        'requests': qs, 'selected_status': status,
+        'status_choices': AuditorAssignment.STATUS_CHOICES,
+    })
 
 
 @platform_admin_required

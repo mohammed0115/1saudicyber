@@ -672,3 +672,169 @@ def platform_data_health():
     except Exception:
         health['status'] = 'unknown'
     return health
+
+
+# ============================================================
+# UAT-PLATFORM-ADMIN-JOURNEY-COMPLETE-UX-LOGIC-A
+# Internal admin operational journey + auditor-engagement view. Read-only,
+# staff-only (rendered on the platform-admin company page). Reuses the SAME
+# signals as company_journey_summary/company_operational_snapshot — no new
+# scoring, no compliance-logic changes, no model changes.
+# ============================================================
+_ENGAGEMENT_STATUS_AR = {
+    'none': 'لا يوجد', 'requested': 'بانتظار موافقة المدقق',
+    'accepted': 'مقبول / مُسند', 'rejected': 'مرفوض', 'cancelled': 'ملغى',
+    'completed': 'مكتمل',
+}
+
+
+def admin_auditor_engagement(company):
+    """The company's auditor engagement as the admin sees it (read-only + action flags)."""
+    from .models import AuditorAssignment
+    active = (AuditorAssignment.objects
+              .filter(company=company, status__in=AuditorAssignment.ACTIVE_STATUSES)
+              .select_related('auditor', 'auditor__user', 'requested_by').first())
+    latest = (AuditorAssignment.objects.filter(company=company)
+              .select_related('auditor', 'auditor__user', 'requested_by')
+              .order_by('-requested_at').first())
+    last_rejected = (AuditorAssignment.objects.filter(company=company, status='rejected')
+                     .select_related('auditor').order_by('-responded_at').first())
+
+    def _source(a):
+        if a is None or a.requested_by is None:
+            return 'company'
+        by = a.requested_by
+        return 'admin' if (getattr(by, 'is_staff', False) or getattr(by, 'is_superuser', False)) else 'company'
+
+    ref = active or latest
+    status = active.status if active else (latest.status if latest else 'none')
+    src = _source(ref)
+    return {
+        'active': active,
+        'latest': latest,
+        'last_rejected': last_rejected,
+        'assignment': ref,
+        'auditor': ref.auditor if ref else None,
+        'status': status,
+        'status_ar': _ENGAGEMENT_STATUS_AR.get(status, status),
+        'source': src,
+        'source_ar': {'admin': 'أسندته الإدارة', 'company': 'اختارته الشركة'}.get(src, '—'),
+        'selected': status in ('requested', 'accepted'),
+        'accepted': status == 'accepted',
+        'can_assign': active is None,               # no pending/accepted request live
+        'can_cancel_request': active is not None and active.status == 'requested',
+    }
+
+
+# Admin journey step metadata: label + who must act + optional in-page action anchor/button.
+_ADMIN_STEP_ACTION = {
+    'subscription': ('#billing', 'الاشتراك والدفع'),
+    'auditor_selection': ('#auditor', 'إسناد مدقق'),
+}
+
+
+def admin_company_journey(company):
+    """12-step INTERNAL admin operational journey with per-step status + next action.
+
+    Status per step: completed / needs_action (admin can act now) / waiting (company or
+    auditor must act) / locked (blocked by an earlier step). Also returns `next_action`
+    (the single recommended thing for the admin to do now). Read-only.
+    """
+    j = company_journey_summary(company)
+    snap = company_operational_snapshot(company)
+    eng = admin_auditor_engagement(company)
+    try:
+        from billing.subscription_access import company_has_active_subscription
+        sub_active = bool(company_has_active_subscription(company))
+    except Exception:
+        sub_active = False
+
+    if eng['status'] == 'requested':
+        acceptance_reason = 'بانتظار موافقة المدقق على الطلب.'
+    elif eng['last_rejected'] is not None and not eng['selected']:
+        acceptance_reason = 'رفض المدقق الطلب — اختر مدققاً آخر أو أعد إرسال الطلب.'
+    else:
+        acceptance_reason = 'بانتظار اختيار/إسناد مدقق أولاً.'
+
+    # (key, label, done, actor, incomplete_reason)
+    step_defs = [
+        ('registration', 'إنشاء حساب الشركة', True, 'system', ''),
+        ('email_verification', 'التحقق من البريد', j['email_verified'], 'admin',
+         'البريد غير موثّق — اطلب من الشركة توثيق البريد أو أعد إرسال رابط التحقق.'),
+        ('classification', 'التصنيف', j['classification_done'], 'company',
+         'بانتظار إكمال الشركة ملف التصنيف.'),
+        ('scope_approval', 'اعتماد النطاق', j['scope_approved'], 'company',
+         'بانتظار اعتماد الشركة نطاق الأطر.'),
+        ('control_plan', 'خطة الضوابط', j['control_plan_generated'], 'company',
+         'بانتظار إنشاء خطة الضوابط بعد اعتماد النطاق.'),
+        ('evidence', 'رفع الأدلة', snap['has_evidence'], 'company',
+         'بانتظار رفع الشركة للأدلة.'),
+        ('subscription', 'تفعيل الاشتراك', sub_active, 'admin',
+         'الاشتراك غير مفعّل — فعّل الاشتراك أو أضف دفعة يدوية.'),
+        ('auditor_selection', 'اختيار/إسناد المدقق', eng['selected'], 'admin',
+         'لا يوجد مدقق — اختر مدققاً أو انتظر اختيار الشركة لمدقق.'),
+        ('auditor_acceptance', 'موافقة المدقق', eng['accepted'], 'auditor', acceptance_reason),
+        ('evidence_review', 'مراجعة الأدلة', snap['has_auditor_verdict'], 'auditor',
+         'بانتظار مراجعة المدقق للأدلة.'),
+        ('internal_verdict', 'الحكم الداخلي', snap['has_auditor_verdict'], 'auditor',
+         'بانتظار الحكم الداخلي من المدقق.'),
+        ('readiness_report', 'تقرير الجاهزية', snap['has_reviewed_report'], 'system',
+         'بانتظار توفّر تقرير الجاهزية بعد المراجعة.'),
+    ]
+
+    steps = []
+    current_assigned = False
+    next_action = None
+    for key, label, done, actor, reason in step_defs:
+        if done:
+            status = 'completed'
+            reason_txt = ''
+        elif not current_assigned:
+            current_assigned = True
+            status = 'needs_action' if actor == 'admin' else 'waiting'
+            reason_txt = reason
+            anchor, btn = _ADMIN_STEP_ACTION.get(key, (None, None))
+            next_action = {
+                'key': key, 'label': label, 'reason': reason,
+                'actor': actor,
+                'anchor': anchor if actor == 'admin' else None,
+                'button_label': btn if actor == 'admin' else None,
+            }
+        else:
+            status = 'locked'
+            reason_txt = reason
+        anchor, btn = _ADMIN_STEP_ACTION.get(key, (None, None))
+        steps.append({
+            'key': key, 'label': label, 'status': status, 'actor': actor,
+            'reason': reason_txt,
+            'action_anchor': anchor if (status == 'needs_action') else None,
+            'action_label': btn if (status == 'needs_action') else None,
+        })
+
+    if next_action is None:
+        next_action = {'key': 'done', 'label': 'اكتمل المسار',
+                       'reason': 'اكتملت مراحل رحلة إدارة ملف الشركة الحالية.',
+                       'actor': 'system', 'anchor': None, 'button_label': None}
+    return {'steps': steps, 'next_action': next_action}
+
+
+def crm_operational_queues():
+    """Overview counts of companies/requests that need an admin action. Read-only."""
+    from core.models import Company
+    from billing.models import Payment
+    from .models import AuditorAssignment
+    q = {'companies_no_email_verified': 0, 'companies_no_auditor': 0,
+         'auditor_requests_pending': 0, 'manual_payments_pending': 0}
+    try:
+        q['companies_no_email_verified'] = (
+            Company.objects.exclude(users__email_verified=True).distinct().count())
+        with_auditor = (AuditorAssignment.objects
+                        .filter(status__in=AuditorAssignment.ACTIVE_STATUSES)
+                        .values_list('company_id', flat=True))
+        q['companies_no_auditor'] = Company.objects.exclude(id__in=list(with_auditor)).count()
+        q['auditor_requests_pending'] = AuditorAssignment.objects.filter(status='requested').count()
+        q['manual_payments_pending'] = Payment.objects.filter(
+            provider='manual', status='pending').count()
+    except Exception:
+        pass
+    return q

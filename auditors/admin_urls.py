@@ -22,6 +22,10 @@ urlpatterns = [
     path('companies/<int:company_id>/payments/manual/add/', admin_views.crm_add_manual_payment, name='add_manual_payment'),
     path('companies/<int:company_id>/payments/<int:payment_id>/confirm/', admin_views.crm_confirm_manual_payment, name='confirm_manual_payment'),
     path('companies/<int:company_id>/payments/<int:payment_id>/reject/', admin_views.crm_reject_manual_payment, name='reject_manual_payment'),
+    # UAT-PLATFORM-ADMIN-JOURNEY — admin-initiated auditor engagement + global requests list.
+    path('companies/<int:company_id>/auditor/assign/', admin_views.crm_assign_auditor, name='assign_auditor'),
+    path('companies/<int:company_id>/auditor/cancel-request/', admin_views.crm_cancel_auditor_request, name='cancel_auditor_request'),
+    path('auditor-requests/', admin_views.crm_auditor_requests, name='auditor_requests'),
     path('unlinked-accounts/', admin_views.crm_unlinked_accounts, name='unlinked_accounts'),
 
     # Auditor approval (Phase 8D-3A)

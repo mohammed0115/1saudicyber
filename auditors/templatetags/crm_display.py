@@ -98,3 +98,21 @@ def company_status_ar(value):
     """Company lifecycle status (code or English display) -> Arabic label."""
     key = str(value or '').strip().lower().replace(' ', '_')
     return _COMPANY_STATUS_AR.get(key, value)
+
+
+# AuditorAssignment.STATUS_CHOICES -> Arabic (company↔auditor engagement). Display only.
+_ENGAGEMENT_STATUS_AR = {
+    'none': 'لا يوجد',
+    'requested': 'بانتظار الموافقة',
+    'accepted': 'مقبول / مُسند',
+    'rejected': 'مرفوض',
+    'cancelled': 'ملغى',
+    'completed': 'مكتمل',
+}
+
+
+@register.filter
+def engagement_status_ar(value):
+    """Auditor-assignment status (code or English display) -> Arabic label."""
+    key = str(value or '').strip().lower()
+    return _ENGAGEMENT_STATUS_AR.get(key, value)

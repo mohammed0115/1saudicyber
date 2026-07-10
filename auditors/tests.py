@@ -1761,3 +1761,179 @@ class CompanyDetailUIRedesignTests(TestCase):
                                      password='longenough12', role='company_admin', company=c)
         self.client.force_login(u)
         self.assertEqual(self.client.get(self._url(c)).status_code, 403)
+
+
+class PlatformAdminJourneyTests(TestCase):
+    """UAT-PLATFORM-ADMIN-JOURNEY-COMPLETE-UX-LOGIC-A — admin operational journey,
+    admin-initiated auditor engagement, and the global auditor-requests page."""
+
+    def _staff(self, email='pajourney_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        if existing is not None:
+            return existing
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    def _detail(self, c):
+        return reverse('platform_admin:company_detail', args=[c.id])
+
+    # ---------- admin journey stepper + next best action ----------
+    def test_company_detail_shows_admin_journey_and_next_action(self):
+        c, _fv, _s = _company_with_assessments()
+        self.client.force_login(self._staff())
+        resp = self.client.get(self._detail(c))
+        self.assertContains(resp, 'مسار إدارة ملف الشركة')
+        self.assertContains(resp, 'الإجراء التالي المقترح')
+        self.assertContains(resp, 'المدقق')
+        j = resp.context['admin_journey']
+        keys = [s['key'] for s in j['steps']]
+        self.assertEqual(len(keys), 12)
+        self.assertIn('auditor_selection', keys)
+        self.assertIn('readiness_report', keys)
+
+    def test_auditor_selection_actionable_when_no_auditor(self):
+        # The journey is linear (auditor_selection may be gated behind subscription),
+        # but the admin can ALWAYS act on the engagement when there is no active auditor.
+        from auditors.crm_services import admin_company_journey, admin_auditor_engagement
+        c, _fv, _s = _company_with_assessments()
+        j = admin_company_journey(c)
+        step = next(s for s in j['steps'] if s['key'] == 'auditor_selection')
+        self.assertIn(step['status'], ('needs_action', 'locked'))   # never 'completed' with no auditor
+        self.assertNotEqual(step['status'], 'completed')
+        self.assertTrue(admin_auditor_engagement(c)['can_assign'])
+
+    def test_assign_auditor_button_shown_when_no_auditor(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, _ap = _auditor(status='active')
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn(reverse('platform_admin:assign_auditor', args=[c.id]), body)
+
+    # ---------- admin assigns an auditor ----------
+    def test_admin_can_assign_active_auditor(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:assign_auditor', args=[c.id]),
+                         {'auditor_id': ap.id, 'reason': 'assigned by ops'})
+        a = AuditorAssignment.objects.filter(company=c, auditor=ap).first()
+        self.assertIsNotNone(a)
+        self.assertEqual(a.status, 'requested')          # pending until auditor accepts
+
+    def test_admin_cannot_assign_inactive_auditor(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='pending_review')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:assign_auditor', args=[c.id]),
+                         {'auditor_id': ap.id})
+        self.assertFalse(AuditorAssignment.objects.filter(company=c).exists())
+
+    def test_admin_assign_source_is_admin(self):
+        from auditors.crm_services import admin_auditor_engagement
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        staff = self._staff()
+        self.client.force_login(staff)
+        self.client.post(reverse('platform_admin:assign_auditor', args=[c.id]), {'auditor_id': ap.id})
+        eng = admin_auditor_engagement(c)
+        self.assertEqual(eng['source'], 'admin')
+        self.assertEqual(eng['status'], 'requested')
+
+    def test_cannot_create_two_active_assignments(self):
+        c, _fv, _s = _company_with_assessments()
+        _u1, ap1 = _auditor(status='active')
+        _u2, ap2 = _auditor(status='active')
+        staff = self._staff()
+        self.client.force_login(staff)
+        self.client.post(reverse('platform_admin:assign_auditor', args=[c.id]), {'auditor_id': ap1.id})
+        self.client.post(reverse('platform_admin:assign_auditor', args=[c.id]), {'auditor_id': ap2.id})
+        self.assertEqual(AuditorAssignment.objects.filter(
+            company=c, status__in=AuditorAssignment.ACTIVE_STATUSES).count(), 1)
+
+    def test_admin_assign_requires_post(self):
+        c, _fv, _s = _company_with_assessments()
+        self.client.force_login(self._staff())
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:assign_auditor', args=[c.id])).status_code, 405)
+
+    # ---------- auditor accepts / rejects an admin request ----------
+    def test_accepted_shows_in_engagement(self):
+        from auditors.crm_services import admin_auditor_engagement
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = services.create_assignment(c, ap, requested_by=self._staff())
+        services.respond_to_assignment(a, 'accept', responder=u)
+        eng = admin_auditor_engagement(c)
+        self.assertTrue(eng['accepted'])
+        self.assertEqual(eng['status'], 'accepted')
+
+    def test_rejected_allows_reassignment(self):
+        from auditors.crm_services import admin_auditor_engagement
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = services.create_assignment(c, ap, requested_by=self._staff())
+        services.respond_to_assignment(a, 'reject', note='not available', responder=u)
+        eng = admin_auditor_engagement(c)
+        self.assertTrue(eng['can_assign'])               # can pick another
+        self.assertIsNotNone(eng['last_rejected'])
+
+    # ---------- admin cancels a pending request ----------
+    def test_admin_cancel_request_requires_reason(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=self._staff())
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:cancel_auditor_request', args=[c.id]), {'reason': ''})
+        self.assertTrue(AuditorAssignment.objects.filter(company=c, status='requested').exists())
+
+    def test_admin_cancel_request_cancels_pending(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=self._staff())
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:cancel_auditor_request', args=[c.id]),
+                         {'reason': 'wrong auditor'})
+        self.assertFalse(AuditorAssignment.objects.filter(company=c, status='requested').exists())
+        self.assertTrue(AuditorAssignment.objects.filter(company=c, status='cancelled').exists())
+
+    # ---------- global auditor requests page ----------
+    def test_auditor_requests_page_lists_requests(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=self._staff())
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:auditor_requests'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'طلبات المدققين')
+        self.assertContains(resp, ap.full_name)
+
+    def test_dashboard_shows_operational_queues(self):
+        c, _fv, _s = _company_with_assessments()
+        self.client.force_login(self._staff())
+        resp = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertContains(resp, 'قوائم تحتاج إجراء إداري')
+        self.assertIn('companies_no_auditor', resp.context['queues'])
+
+    # ---------- permissions ----------
+    def test_company_user_cannot_assign_auditor(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        cu = _journey_user(c)
+        self.client.force_login(cu)
+        self.assertEqual(self.client.post(
+            reverse('platform_admin:assign_auditor', args=[c.id]), {'auditor_id': ap.id}).status_code, 403)
+        self.assertFalse(AuditorAssignment.objects.filter(company=c).exists())
+
+    def test_auditor_cannot_access_requests_page(self):
+        u, _ap = _auditor(status='active')
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(
+            reverse('platform_admin:auditor_requests')).status_code, 403)
+
+    def test_manual_payment_still_works_after_changes(self):
+        from billing import subscription_services as bsvc
+        from billing.subscription_access import company_has_active_subscription
+        c, _fv, _s = _company_with_assessments()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='n')
+        bsvc.confirm_manual_payment(p, reason='wire confirmed')
+        self.assertTrue(company_has_active_subscription(c))

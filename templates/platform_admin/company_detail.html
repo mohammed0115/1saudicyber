@@ -42,6 +42,51 @@
       </div>
     </header>
 
+    {# ======================= Next best action (admin) ======================= #}
+    <section class="bg-gov-green-50 border border-gov-green-200 rounded-xl p-5">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <p class="text-xs font-bold text-gov-green-700 mb-1"><i class="fas fa-wand-magic-sparkles ml-1"></i> الإجراء التالي المقترح</p>
+          <p class="text-sm text-gov-green-900 font-semibold m-0">{{ admin_journey.next_action.reason|default:admin_journey.next_action.label }}</p>
+        </div>
+        {% if admin_journey.next_action.anchor %}
+        <a href="{{ admin_journey.next_action.anchor }}" class="shrink-0 bg-gov-green-700 hover:bg-gov-green-800 text-white text-sm px-4 py-2 rounded-lg font-medium whitespace-nowrap">{{ admin_journey.next_action.button_label }}</a>
+        {% endif %}
+      </div>
+    </section>
+
+    {# ======================= Admin journey stepper ======================= #}
+    <section id="admin-journey" class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6 scroll-mt-16">
+      <h2 class="font-bold text-gov-green-800 mb-1">مسار إدارة ملف الشركة</h2>
+      <p class="text-xs text-gov-gray-500 mb-4">مسار داخلي لمتابعة الإدارة لملف الشركة من البداية للنهاية. لكل خطوة حالتها والإجراء التالي إن وجد.</p>
+      <ol class="space-y-2">
+        {% for s in admin_journey.steps %}
+        <li class="flex items-start gap-3 text-sm p-2 rounded-lg
+          {% if s.status == 'needs_action' %}bg-amber-50 border border-amber-200{% elif s.status == 'current' or s.status == 'waiting' %}bg-blue-50 border border-blue-100{% else %}bg-transparent{% endif %}">
+          <span class="mt-0.5 shrink-0">
+            {% if s.status == 'completed' %}<i class="fas fa-check-circle text-green-600"></i>
+            {% elif s.status == 'needs_action' %}<i class="fas fa-circle-exclamation text-amber-600"></i>
+            {% elif s.status == 'waiting' %}<i class="fas fa-hourglass-half text-blue-500"></i>
+            {% else %}<i class="fas fa-lock text-gov-gray-300"></i>{% endif %}
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-medium {% if s.status == 'locked' %}text-gov-gray-400{% else %}text-gov-gray-800{% endif %}">{{ forloop.counter }}. {{ s.label }}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full shrink-0
+                {% if s.status == 'completed' %}bg-green-50 text-green-700
+                {% elif s.status == 'needs_action' %}bg-amber-100 text-amber-800
+                {% elif s.status == 'waiting' %}bg-blue-100 text-blue-800
+                {% else %}bg-gov-gray-100 text-gov-gray-400{% endif %}">
+                {% if s.status == 'completed' %}مكتمل{% elif s.status == 'needs_action' %}يحتاج إجراء{% elif s.status == 'waiting' %}قيد الانتظار{% else %}محجوب{% endif %}</span>
+            </div>
+            {% if s.reason %}<p class="text-xs text-gov-gray-500 mt-0.5 mb-0">{{ s.reason }}</p>{% endif %}
+            {% if s.action_anchor %}<a href="{{ s.action_anchor }}" class="inline-block mt-1 text-xs text-gov-green-700 hover:underline font-medium">{{ s.action_label }} ←</a>{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+
     {# ======================= Stat cards ======================= #}
     <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="bg-white rounded-xl border border-gov-gray-100 p-4 text-center"><div class="text-lg font-bold text-gov-green-700">مكتمل</div><div class="text-xs text-gov-gray-500 mt-1">حالة التسجيل</div></div>
@@ -56,9 +101,10 @@
 
     {# ======================= In-page navigation ======================= #}
     <nav class="bg-white rounded-xl border border-gov-gray-100 p-2 flex flex-wrap gap-1 text-sm sticky top-0 z-10 overflow-x-auto">
+      <a href="#admin-journey" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">مسار الإدارة</a>
       <a href="#overview" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">نظرة عامة</a>
       <a href="#journey" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">رحلة الامتثال</a>
-      <a href="#auditors" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">المدققون</a>
+      <a href="#auditor" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">المدقق</a>
       <a href="#evidence" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">الأدلة والجاهزية</a>
       <a href="#billing" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">الاشتراك والدفع</a>
       <a href="#users" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">المستخدمون</a>
@@ -140,7 +186,70 @@
           </div>
         </div>
 
-        {# Section 4: Auditors #}
+        {# Section 4a: Auditor engagement + admin controls #}
+        <div id="auditor" class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6 scroll-mt-16">
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="font-bold text-gov-green-800">المدقق</h2>
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium
+              {% if auditor_engagement.accepted %}bg-green-50 text-green-800
+              {% elif auditor_engagement.status == 'requested' %}bg-amber-50 text-amber-800
+              {% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">{{ auditor_engagement.status_ar }}</span>
+          </div>
+          {% if auditor_engagement.auditor %}
+          <div class="grid md:grid-cols-2 gap-3 text-sm mt-3">
+            <div><span class="text-gov-gray-500">المدقق:</span> {{ auditor_engagement.auditor.full_name }}</div>
+            <div><span class="text-gov-gray-500">مصدر الطلب:</span> {{ auditor_engagement.source_ar }}</div>
+            <div><span class="text-gov-gray-500">تاريخ الطلب:</span> {{ auditor_engagement.assignment.requested_at|date:"Y-m-d H:i" }}</div>
+            <div><span class="text-gov-gray-500">تاريخ الرد:</span> {{ auditor_engagement.assignment.responded_at|date:"Y-m-d H:i"|default:"—" }}</div>
+            {% if auditor_engagement.assignment.status == 'rejected' and auditor_engagement.assignment.response_note %}
+            <div class="md:col-span-2"><span class="text-gov-gray-500">سبب الرفض:</span> {{ auditor_engagement.assignment.response_note }}</div>
+            {% endif %}
+          </div>
+          {% else %}
+          <p class="text-sm text-gov-gray-500 mt-2">لا يوجد مدقق مرتبط بهذه الشركة بعد.</p>
+          {% endif %}
+
+          {% if auditor_engagement.last_rejected and not auditor_engagement.selected %}
+          <div class="mt-3 bg-red-50 border border-red-100 text-red-800 rounded-lg p-3 text-xs">
+            <i class="fas fa-circle-info ml-1"></i> رفض المدقق «{{ auditor_engagement.last_rejected.auditor.full_name }}» الطلب{% if auditor_engagement.last_rejected.response_note %} — السبب: {{ auditor_engagement.last_rejected.response_note }}{% endif %}. اختر مدققاً آخر.
+          </div>
+          {% endif %}
+
+          {# Admin actions — state-driven, POST + CSRF + reason where required. #}
+          <div class="border-t border-gov-gray-100 mt-4 pt-4">
+            {% if auditor_engagement.can_assign %}
+            <details {% if not auditor_engagement.auditor %}open{% endif %}>
+              <summary class="cursor-pointer text-gov-green-700 text-sm font-medium">إسناد مدقق</summary>
+              {% if assignable_auditors %}
+              <form method="post" action="{% url 'platform_admin:assign_auditor' company.id %}" class="flex flex-col md:flex-row md:items-end gap-3 mt-3">
+                {% csrf_token %}
+                <label class="text-sm flex-1"><span class="block text-gov-gray-500 mb-1">المدقق (المفعّلون فقط)</span>
+                  <select name="auditor_id" required class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+                    {% for a in assignable_auditors %}<option value="{{ a.id }}">{{ a.full_name }}</option>{% endfor %}
+                  </select></label>
+                <label class="text-sm flex-1"><span class="block text-gov-gray-500 mb-1">ملاحظة (اختياري)</span>
+                  <input type="text" name="reason" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
+                <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2 rounded-lg text-sm font-medium">إسناد</button>
+              </form>
+              <p class="text-xs text-gov-gray-400 mt-2">يُنشئ طلباً بانتظار موافقة المدقق — لا يُعتبر مُسنداً حتى يقبل المدقق.</p>
+              {% else %}
+              <p class="text-sm text-gov-gray-500 mt-2">لا يوجد مدققون مفعّلون ومتاحون للإسناد حالياً.</p>
+              {% endif %}
+            </details>
+            {% elif auditor_engagement.can_cancel_request %}
+            <p class="text-sm text-amber-700 mb-2"><i class="fas fa-hourglass-half ml-1"></i> بانتظار موافقة المدقق على الطلب.</p>
+            <form method="post" action="{% url 'platform_admin:cancel_auditor_request' company.id %}" class="flex items-center gap-2">
+              {% csrf_token %}
+              <input type="text" name="reason" required placeholder="سبب الإلغاء (مطلوب)" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-48">
+              <button type="submit" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded text-xs font-medium">إلغاء طلب المدقق</button>
+            </form>
+            {% elif auditor_engagement.accepted %}
+            <p class="text-sm text-green-700"><i class="fas fa-check-circle ml-1"></i> المدقق مقبول ومُسند. بانتظار مراجعة المدقق للأدلة.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Section 4b: Auditor requests (this company) #}
         <div id="auditors" class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6 scroll-mt-16">
           <h2 class="font-bold text-gov-green-800 mb-1">المدققون — طلبات المدققين</h2>
           <p class="text-xs text-gov-gray-500 mb-3">عرض داخلي لطلبات مراجعة الشركة. لا يبدأ الإسناد إلا من مسار طلب/قبول المدقق.</p>
@@ -233,7 +342,7 @@
 
           {# Detailed payment / Moyasar counters — collapsed by default (compact summary above). #}
           <details class="mb-4 border-t border-gov-gray-100 pt-3">
-            <summary class="cursor-pointer text-xs text-gov-green-700 font-medium mb-3">تفاصيل الدفع والمزوّد (Moyasar) — اضغط للعرض</summary>
+            <summary class="cursor-pointer text-xs text-gov-green-700 font-medium mb-3">تفاصيل الدفع والاشتراك — اضغط للعرض</summary>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center mb-4">
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_payment_provider|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر مزوّد</div></div>
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_payment_status|default:"—"|pay_status_ar }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر حالة دفع</div></div>
@@ -357,7 +466,7 @@
             <div><span class="text-gov-gray-500">التصنيف:</span> {{ snapshot.has_classification|yesno:"مكتمل,لم يبدأ" }}</div>
             <div><span class="text-gov-gray-500">تحليل الأطر:</span> {{ snapshot.has_applicability|yesno:"متوفر,لا يوجد" }}</div>
             <div><span class="text-gov-gray-500">الأدلة المرفوعة:</span> {{ snapshot.has_evidence|yesno:"نعم,لا" }}</div>
-            <div><span class="text-gov-gray-500">إسناد مدقق:</span> {{ snapshot.has_auditor_assignment|yesno:"نعم,لا" }}</div>
+            <div><span class="text-gov-gray-500">إسناد مدقق:</span> {% if snapshot.has_auditor_assignment %}نعم{% else %}لا — <a href="#auditor" class="text-gov-green-700 hover:underline">إسناد مدقق ←</a>{% endif %}</div>
             <div><span class="text-gov-gray-500">حكم المدقق الداخلي:</span> {{ snapshot.has_auditor_verdict|yesno:"نعم,لا" }}</div>
             <div><span class="text-gov-gray-500">تقرير المراجعة الداخلي:</span> {{ snapshot.has_reviewed_report|yesno:"متوفر,لا يوجد" }}</div>
           </div>

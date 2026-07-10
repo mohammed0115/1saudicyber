@@ -31,6 +31,25 @@
         <div class="text-xs text-gov-gray-500 mt-1">إجمالي المدققين · Auditors</div></div>
     </div>
 
+    {# Operational queues — companies/requests that need an admin action. #}
+    <div>
+      <h2 class="font-bold text-gov-green-800 mb-3">قوائم تحتاج إجراء إداري</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+          <div class="text-2xl font-bold text-amber-600">{{ queues.companies_no_email_verified }}</div>
+          <div class="text-xs text-gov-gray-500 mt-1">شركات بلا بريد موثّق</div></div>
+        <a href="{% url 'platform_admin:auditor_requests' %}?status=requested" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
+          <div class="text-2xl font-bold text-blue-700">{{ queues.auditor_requests_pending }}</div>
+          <div class="text-xs text-gov-gray-500 mt-1">طلبات مدققين بانتظار الموافقة</div></a>
+        <a href="{% url 'platform_admin:companies_list' %}" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
+          <div class="text-2xl font-bold text-orange-700">{{ queues.companies_no_auditor }}</div>
+          <div class="text-xs text-gov-gray-500 mt-1">شركات بلا مدقق مُسند</div></a>
+        <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+          <div class="text-2xl font-bold text-red-700">{{ queues.manual_payments_pending }}</div>
+          <div class="text-xs text-gov-gray-500 mt-1">دفعات يدوية بانتظار التأكيد</div></div>
+      </div>
+    </div>
+
     <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-5">
       <h2 class="font-bold text-gov-green-800 mb-3">صحة بيانات الأطر الرسمية · Official data health</h2>
       <div class="grid grid-cols-3 gap-4 text-center mb-3">
