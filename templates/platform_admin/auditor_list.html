@@ -1,4 +1,5 @@
 {% extends "platform_admin/base.html" %}
+{% load crm_display %}
 {% block title %}إدارة اعتماد المدققين - 1SaudiCyber{% endblock %}
 {% block content %}
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
@@ -34,7 +35,7 @@
     <div class="flex flex-wrap gap-2 text-sm">
       <a href="?status=all" class="px-3 py-1.5 rounded-full border {% if selected_status == 'all' %}bg-gov-green-800 text-white border-gov-green-800{% else %}bg-white text-gov-gray-700 border-gov-gray-200{% endif %}">الكل</a>
       {% for value, label in status_choices %}
-      <a href="?status={{ value }}" class="px-3 py-1.5 rounded-full border {% if selected_status == value %}bg-gov-green-800 text-white border-gov-green-800{% else %}bg-white text-gov-gray-700 border-gov-gray-200{% endif %}">{{ label }}</a>
+      <a href="?status={{ value }}" class="px-3 py-1.5 rounded-full border {% if selected_status == value %}bg-gov-green-800 text-white border-gov-green-800{% else %}bg-white text-gov-gray-700 border-gov-gray-200{% endif %}">{{ value|auditor_status_ar }}</a>
       {% endfor %}
     </div>
 
@@ -65,7 +66,7 @@
                   {% if a.status == 'active' %}bg-green-100 text-green-800
                   {% elif a.status == 'pending_review' %}bg-amber-100 text-amber-800
                   {% elif a.status == 'suspended' %}bg-orange-100 text-orange-800
-                  {% else %}bg-gray-100 text-gray-600{% endif %}">{{ a.get_status_display }}</span>
+                  {% else %}bg-gray-100 text-gray-600{% endif %}">{{ a.status|auditor_status_ar }}</span>
               </td>
               <td class="px-4 py-3 text-gov-gray-500">{{ a.created_at|date:"Y-m-d" }}</td>
               <td class="px-4 py-3">

@@ -151,7 +151,7 @@ class PlatformAdminDataHealthTests(TestCase):
         self.client.force_login(staff)
         resp = self.client.get(reverse('platform_admin:dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Official data health')
+        self.assertContains(resp, 'صحة بيانات الأطر الرسمية')
 
     def test_company_user_denied_platform_admin(self):
         self.client.force_login(_user('pah_co@x.com', company=_company('9911220002', 'p@x.com')))

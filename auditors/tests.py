@@ -605,7 +605,7 @@ class GetSolutionCRMConsoleTests(TestCase):
         self.client.force_login(self._staff())
         resp = self.client.get(reverse('platform_admin:companies_list'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Companies')
+        self.assertContains(resp, 'الشركات')
         self.assertContains(resp, c.name)
 
     def test_staff_can_access_company_detail(self):
@@ -622,7 +622,7 @@ class GetSolutionCRMConsoleTests(TestCase):
         self.client.force_login(self._staff())
         resp = self.client.get(reverse('platform_admin:companies_list'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'No companies registered yet')
+        self.assertContains(resp, 'لا توجد شركات مسجّلة بعد')
 
     def test_dashboard_no_500_with_no_data(self):
         self.client.force_login(self._staff())
@@ -636,7 +636,7 @@ class GetSolutionCRMConsoleTests(TestCase):
         self.client.force_login(self._staff())
         resp = self.client.get(reverse('platform_admin:unlinked_accounts'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Unlinked Accounts')
+        self.assertContains(resp, 'حسابات غير مرتبطة')
         self.assertContains(resp, 'orphan@x.com')
 
     def test_unlinked_excludes_company_linked_and_auditors_and_staff(self):
@@ -894,7 +894,7 @@ class CRMCompanyUserLinkingTests(TestCase):
         self.client.get(reverse('platform_admin:unlinked_accounts'))
         unlinked = self.client.get(reverse('platform_admin:unlinked_accounts')).content.decode()
         self.assertNotIn(u.email, unlinked)
-        self.assertIn('No unlinked accounts currently', unlinked)
+        self.assertIn('لا توجد حسابات غير مرتبطة حاليًا', unlinked)
         detail = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
         self.assertIn(u.email, detail)
 
@@ -1326,7 +1326,7 @@ class CRMCompanyFollowUpTests(TestCase):
         detail = self.client.get(self._detail_url(c)).content.decode()
         self.assertIn('محظورة', detail)   # detail page shows the Arabic CRM-status label
         listing = self.client.get(reverse('platform_admin:companies_list')).content.decode()
-        self.assertIn('Blocked', listing)
+        self.assertIn('محظورة', listing)   # list page now shows the Arabic CRM-status label
 
     def test_status_change_writes_audit_log(self):
         from core.models import AuditLog
@@ -2131,3 +2131,94 @@ class PlatformAdminPolishCTests(TestCase):
                                      password='longenough12', role='company_admin', company=c)
         self.client.force_login(u)
         self.assertEqual(self.client.get(self._detail(c)).status_code, 403)
+
+
+class PlatformAdminPolishDTests(TestCase):
+    """UAT-PLATFORM-ADMIN-FINAL-ARABIC-RTL-POLISH-D — the general platform-admin list
+    pages (dashboard/companies/auditors/requests/unlinked) render Arabic/RTL only."""
+
+    def _staff(self, email='polishd_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _company(self, cr='9494940001', sector='technology'):
+        return Company.objects.create(name='PolishD Co', cr_number=cr, sector=sector,
+                                      size='small', contact_email='pd@co.example')
+
+    # ---- dashboard ----
+    def test_dashboard_is_arabic(self):
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:dashboard')).content.decode()
+        for ar in ('لوحة إدارة المنصة', 'روابط سريعة', 'صحة بيانات الأطر الرسمية',
+                   'قوائم تحتاج إجراء إداري'):
+            self.assertIn(ar, body)
+        for en in ('Official data health', 'Quick links', '· Companies', '· Users',
+                   '· Frameworks', '· Controls'):
+            self.assertNotIn(en, body)
+
+    # ---- companies list ----
+    def test_companies_list_is_arabic(self):
+        c = self._company(sector='technology')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:companies_list')).content.decode()
+        self.assertIn('الشركات', body)
+        self.assertIn('تفاصيل', body)
+        self.assertIn('تقنية المعلومات', body)          # sector Arabic
+        for en in ('· Company', '· Status', '· Sector', '· Created', 'تفاصيل · View',
+                   'No companies registered yet'):
+            self.assertNotIn(en, body)
+
+    # ---- auditors list ----
+    def test_auditors_list_is_arabic(self):
+        _u, _ap = _auditor(status='pending_review')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:auditor_list')).content.decode()
+        self.assertIn('قيد المراجعة', body)              # filter + status Arabic
+        self.assertIn('مراجعة', body)                    # action link
+        self.assertNotIn('Pending Review', body)
+        self.assertNotIn('>Suspended<', body)
+
+    # ---- auditor requests ----
+    def test_auditor_requests_is_arabic(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        staff = self._staff()
+        services.create_assignment(c, ap, requested_by=staff)
+        self.client.force_login(staff)
+        body = self.client.get(reverse('platform_admin:auditor_requests')).content.decode()
+        self.assertIn('أسندته الإدارة', body)            # source Arabic
+        self.assertIn('بانتظار موافقة المدقق', body)     # next action Arabic
+        self.assertIn('الإجراء التالي', body)
+        self.assertIn('مصدر الطلب', body)
+
+    # ---- unlinked accounts ----
+    def test_unlinked_accounts_is_arabic(self):
+        User.objects.create_user(username='pdorphan@x.com', email='pdorphan@x.com',
+                                 password='longenough12', role='company_admin')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:unlinked_accounts')).content.decode()
+        self.assertIn('حسابات غير مرتبطة', body)
+        self.assertNotIn('· Email', body)
+        self.assertNotIn('· Role', body)
+
+    def test_unlinked_empty_state_arabic(self):
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:unlinked_accounts')).content.decode()
+        self.assertIn('لا توجد حسابات غير مرتبطة حاليًا', body)
+        self.assertNotIn('No unlinked accounts currently', body)
+
+    # ---- permissions unchanged ----
+    def test_company_user_denied_on_admin_pages(self):
+        c = self._company(cr='9494940099')
+        u = User.objects.create_user(username='pdcu@x.com', email='pdcu@x.com',
+                                     password='longenough12', role='company_admin', company=c)
+        self.client.force_login(u)
+        for name in ('dashboard', 'companies_list', 'auditor_list', 'auditor_requests',
+                     'unlinked_accounts'):
+            self.assertEqual(self.client.get(reverse('platform_admin:%s' % name)).status_code, 403)
+
+    def test_auditor_user_denied_on_admin_pages(self):
+        u, _ap = _auditor(status='active')
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(reverse('platform_admin:auditor_requests')).status_code, 403)

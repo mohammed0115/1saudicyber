@@ -663,15 +663,14 @@ def platform_data_health():
         health['control_count'] = controls
         if controls == 0:
             health['status'] = 'empty'
-            health['message'] = ('لا توجد ضوابط رسمية محمّلة · No official controls loaded — '
-                                 'the compliance dataset is not installed.')
+            health['message'] = 'لا توجد ضوابط رسمية محمّلة — مجموعة بيانات الامتثال غير مثبّتة.'
         elif controls < EXPECTED_CONTROLS:
             health['status'] = 'pilot'
-            health['message'] = ('ضوابط تجريبية محمّلة · Pilot controls loaded — the full '
-                                 'official dataset (%d) is not loaded yet.' % EXPECTED_CONTROLS)
+            health['message'] = ('ضوابط تجريبية محمّلة — لم تُحمّل بعد المجموعة الرسمية '
+                                 'الكاملة (%d).' % EXPECTED_CONTROLS)
         else:
             health['status'] = 'ok'
-            health['message'] = 'مجموعة الضوابط الرسمية محمّلة · Official control dataset loaded.'
+            health['message'] = 'مجموعة الضوابط الرسمية محمّلة.'
     except Exception:
         health['status'] = 'unknown'
     return health

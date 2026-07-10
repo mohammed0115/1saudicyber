@@ -5,7 +5,7 @@
   <div class="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
     <div>
-      <h1 class="text-2xl font-bold text-gov-green-800">Get Solution CRM</h1>
+      <h1 class="text-2xl font-bold text-gov-green-800">لوحة إدارة المنصة</h1>
       <p class="text-gov-gray-600 text-sm mt-1">وحدة التشغيل الداخلية لإدارة الشركات والمستخدمين والمدققين. منصة 1SaudiCyber مملوكة ومُدارة بواسطة شركة احصل الحل.</p>
     </div>
 
@@ -13,22 +13,22 @@
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <a href="{% url 'platform_admin:companies_list' %}" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
         <div class="text-2xl font-bold text-gov-green-800">{{ summary.companies }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">الشركات · Companies</div></a>
+        <div class="text-xs text-gov-gray-500 mt-1">الشركات</div></a>
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
         <div class="text-2xl font-bold text-gov-green-800">{{ summary.users }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">المستخدمون · Users</div></div>
+        <div class="text-xs text-gov-gray-500 mt-1">المستخدمون</div></div>
       <a href="{% url 'platform_admin:auditor_list' %}" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
         <div class="text-2xl font-bold text-gov-green-700">{{ summary.auditors_active }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">مدققون مفعّلون · Active auditors</div></a>
+        <div class="text-xs text-gov-gray-500 mt-1">مدققون مفعّلون</div></a>
       <a href="{% url 'platform_admin:auditor_list' %}?status=pending_review" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
         <div class="text-2xl font-bold text-amber-600">{{ summary.auditors_pending }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">مدققون قيد المراجعة · Pending</div></a>
+        <div class="text-xs text-gov-gray-500 mt-1">مدققون قيد المراجعة</div></a>
       <a href="{% url 'platform_admin:unlinked_accounts' %}" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
         <div class="text-2xl font-bold text-orange-700">{{ summary.unlinked_users }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">حسابات غير مرتبطة · Unlinked</div></a>
+        <div class="text-xs text-gov-gray-500 mt-1">حسابات غير مرتبطة</div></a>
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
         <div class="text-2xl font-bold text-gov-gray-700">{{ summary.auditors_total }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">إجمالي المدققين · Auditors</div></div>
+        <div class="text-xs text-gov-gray-500 mt-1">إجمالي المدققين</div></div>
     </div>
 
     {# Operational queues — companies/requests that need an admin action. #}
@@ -51,11 +51,11 @@
     </div>
 
     <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-5">
-      <h2 class="font-bold text-gov-green-800 mb-3">صحة بيانات الأطر الرسمية · Official data health</h2>
+      <h2 class="font-bold text-gov-green-800 mb-3">صحة بيانات الأطر الرسمية</h2>
       <div class="grid grid-cols-3 gap-4 text-center mb-3">
-        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ data_health.framework_count }}</div><div class="text-xs text-gov-gray-500 mt-1">أطر · Frameworks</div></div>
-        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ data_health.framework_version_count }}</div><div class="text-xs text-gov-gray-500 mt-1">إصدارات · Versions</div></div>
-        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold {% if data_health.status == 'empty' %}text-red-700{% elif data_health.status == 'pilot' %}text-amber-600{% else %}text-gov-green-800{% endif %}">{{ data_health.control_count }}</div><div class="text-xs text-gov-gray-500 mt-1">ضوابط رسمية · Controls</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ data_health.framework_count }}</div><div class="text-xs text-gov-gray-500 mt-1">أطر</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ data_health.framework_version_count }}</div><div class="text-xs text-gov-gray-500 mt-1">إصدارات</div></div>
+        <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold {% if data_health.status == 'empty' %}text-red-700{% elif data_health.status == 'pilot' %}text-amber-600{% else %}text-gov-green-800{% endif %}">{{ data_health.control_count }}</div><div class="text-xs text-gov-gray-500 mt-1">ضوابط رسمية</div></div>
       </div>
       {% if data_health.status == 'empty' %}
       <div class="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm"><i class="fas fa-triangle-exclamation mr-1"></i>{{ data_health.message }}</div>
@@ -68,11 +68,11 @@
 
     {# Quick links #}
     <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-5">
-      <h2 class="font-bold text-gov-green-800 mb-3">روابط سريعة · Quick links</h2>
+      <h2 class="font-bold text-gov-green-800 mb-3">روابط سريعة</h2>
       <ul class="space-y-2 text-sm">
-        <li><a href="{% url 'platform_admin:companies_list' %}" class="text-gov-green-700 hover:underline">→ الشركات والمستخدمون · Companies &amp; users</a></li>
-        <li><a href="{% url 'platform_admin:auditor_list' %}" class="text-gov-green-700 hover:underline">→ اعتماد المدققين · Auditors approval</a></li>
-        <li><a href="{% url 'platform_admin:unlinked_accounts' %}" class="text-gov-green-700 hover:underline">→ حسابات غير مرتبطة بأي شركة · Unlinked accounts</a></li>
+        <li><a href="{% url 'platform_admin:companies_list' %}" class="text-gov-green-700 hover:underline">→ الشركات والمستخدمون</a></li>
+        <li><a href="{% url 'platform_admin:auditor_list' %}" class="text-gov-green-700 hover:underline">→ اعتماد المدققين</a></li>
+        <li><a href="{% url 'platform_admin:unlinked_accounts' %}" class="text-gov-green-700 hover:underline">→ حسابات غير مرتبطة بأي شركة</a></li>
       </ul>
     </div>
 

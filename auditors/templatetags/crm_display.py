@@ -177,3 +177,37 @@ def sector_ar(value):
 def size_ar(value):
     """Company size code -> Arabic label, keeping unknown values as-is."""
     return _SIZE_AR.get(str(value or '').strip().lower(), value)
+
+
+# AuditorProfile.STATUS_CHOICES -> Arabic (keyed by code or English display). Display only.
+_AUDITOR_STATUS_AR = {
+    'pending_review': 'قيد المراجعة',
+    'active': 'مفعّل',
+    'suspended': 'موقوف مؤقتًا',
+    'inactive': 'غير مفعّل',
+}
+
+# core.User.ROLE_CHOICES -> Arabic (keyed by code or English display). Display only.
+_ROLE_AR = {
+    'admin': 'مشرف المنصة',
+    'company_admin': 'مدير الشركة',
+    'compliance_officer': 'مسؤول الامتثال',
+    'it_security': 'فريق تقنية/أمن المعلومات',
+    'bu_manager': 'مدير وحدة أعمال',
+    'executive': 'تنفيذي',
+    'auditor': 'مدقق معتمد',
+}
+
+
+@register.filter
+def auditor_status_ar(value):
+    """Auditor account status (code or English display) -> Arabic label."""
+    key = str(value or '').strip().lower().replace(' ', '_')
+    return _AUDITOR_STATUS_AR.get(key, value)
+
+
+@register.filter
+def role_ar(value):
+    """User role (code or English display) -> Arabic label, keeping unknown as-is."""
+    key = str(value or '').strip().lower().replace(' ', '_').replace('/', '_')
+    return _ROLE_AR.get(key, value)
