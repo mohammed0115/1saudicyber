@@ -116,3 +116,32 @@ def engagement_status_ar(value):
     """Auditor-assignment status (code or English display) -> Arabic label."""
     key = str(value or '').strip().lower()
     return _ENGAGEMENT_STATUS_AR.get(key, value)
+
+
+# billing.access.FEATURE_FLAG short codes -> Arabic (plan feature labels). Display only.
+_FEATURE_CODE_AR = {
+    'evidence_upload': 'رفع الأدلة',
+    'gap_analysis': 'تحليل الفجوات',
+    'risk_engine': 'محرك المخاطر',
+    'commercial_reports': 'التقارير التجارية',
+    'pdf_export': 'تصدير PDF',
+    'auditor_review': 'مراجعة المدقق',
+}
+
+
+@register.filter
+def feature_code_ar(value):
+    """Plan feature code (e.g. 'evidence_upload') -> Arabic label, keeping unknown as-is."""
+    key = str(value or '').strip().lower()
+    return _FEATURE_CODE_AR.get(key, value)
+
+
+# billing.Payment.PROVIDER_CHOICES -> Arabic ('Moyasar' is a brand, kept as-is).
+_PROVIDER_AR = {'manual': 'يدوي', 'moyasar': 'Moyasar'}
+
+
+@register.filter
+def provider_ar(value):
+    """Payment provider (code or English display) -> Arabic, keeping the Moyasar brand."""
+    key = str(value or '').strip().lower()
+    return _PROVIDER_AR.get(key, value)

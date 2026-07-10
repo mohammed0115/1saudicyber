@@ -27,7 +27,7 @@
           <th class="text-right py-2">الشركة</th><th class="text-right py-2">المدقق</th>
           <th class="text-right py-2">الحالة</th><th class="text-right py-2">مصدر الطلب</th>
           <th class="text-right py-2">تاريخ الطلب</th><th class="text-right py-2">تاريخ الرد</th>
-          <th class="text-right py-2">ملاحظة</th><th class="text-right py-2"></th>
+          <th class="text-right py-2">الإجراء التالي</th><th class="text-right py-2">ملاحظة</th><th class="text-right py-2"></th>
         </tr></thead>
         <tbody class="divide-y divide-gov-gray-100">
           {% for r in requests %}
@@ -42,6 +42,7 @@
             <td class="py-2 text-gov-gray-500">{% if r.requested_by.is_staff or r.requested_by.is_superuser %}أسندته الإدارة{% else %}اختارته الشركة{% endif %}</td>
             <td class="py-2">{{ r.requested_at|date:"Y-m-d H:i" }}</td>
             <td class="py-2">{{ r.responded_at|date:"Y-m-d H:i"|default:"—" }}</td>
+            <td class="py-2 text-gov-gray-600">{% if r.status == 'requested' %}بانتظار موافقة المدقق{% elif r.status == 'accepted' %}مقبول — بانتظار مراجعة المدقق{% elif r.status == 'rejected' %}اختر مدققاً آخر{% else %}—{% endif %}</td>
             <td class="py-2 text-gov-gray-500">{% if r.status == 'rejected' %}{{ r.response_note|default:"—" }}{% else %}—{% endif %}</td>
             <td class="py-2"><a href="{% url 'platform_admin:company_detail' r.company.id %}" class="text-gov-green-700 hover:underline text-xs">فتح الشركة</a></td>
           </tr>

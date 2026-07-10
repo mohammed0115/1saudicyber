@@ -34,9 +34,9 @@
         {# Quick actions (navigation only — no new business logic) #}
         <div class="flex flex-wrap gap-2 shrink-0">
           <a href="{% url 'platform_admin:companies_list' %}" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">العودة للشركات</a>
-          <a href="#journey" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">عرض كرحلة امتثال</a>
+          <a href="#journey" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">عرض رحلة الامتثال</a>
           <a href="#followup" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">إضافة ملاحظة</a>
-          <a href="#auditors" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">إدارة المدقق</a>
+          <a href="#auditor" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">إدارة المدقق</a>
           <a href="#billing" class="text-xs px-3 py-2 rounded-lg bg-gov-green-700 text-white hover:bg-gov-green-800 font-medium">إضافة دفعة يدوية</a>
         </div>
       </div>
@@ -237,14 +237,16 @@
               {% endif %}
             </details>
             {% elif auditor_engagement.can_cancel_request %}
-            <p class="text-sm text-amber-700 mb-2"><i class="fas fa-hourglass-half ml-1"></i> بانتظار موافقة المدقق على الطلب.</p>
+            <p class="text-sm text-amber-700 mb-2"><i class="fas fa-hourglass-half ml-1"></i>
+              {% if auditor_engagement.source == 'admin' %}إسناد إداري بانتظار موافقة المدقق.{% else %}طلب من الشركة بانتظار موافقة المدقق.{% endif %}</p>
             <form method="post" action="{% url 'platform_admin:cancel_auditor_request' company.id %}" class="flex items-center gap-2">
               {% csrf_token %}
               <input type="text" name="reason" required placeholder="سبب الإلغاء (مطلوب)" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-48">
               <button type="submit" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded text-xs font-medium">إلغاء طلب المدقق</button>
             </form>
             {% elif auditor_engagement.accepted %}
-            <p class="text-sm text-green-700"><i class="fas fa-check-circle ml-1"></i> المدقق مقبول ومُسند. بانتظار مراجعة المدقق للأدلة.</p>
+            <p class="text-sm text-green-700 mb-1"><i class="fas fa-check-circle ml-1"></i> المدقق مقبول ومُسند ({{ auditor_engagement.source_ar }}). بانتظار مراجعة المدقق للأدلة.</p>
+            <p class="text-xs text-gov-gray-400">تغيير المدقق بعد القبول غير مدعوم حالياً بشكل آمن.</p>
             {% endif %}
           </div>
         </div>
@@ -344,7 +346,7 @@
           <details class="mb-4 border-t border-gov-gray-100 pt-3">
             <summary class="cursor-pointer text-xs text-gov-green-700 font-medium mb-3">تفاصيل الدفع والاشتراك — اضغط للعرض</summary>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center mb-4">
-              <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_payment_provider|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر مزوّد</div></div>
+              <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_payment_provider|default:"—"|provider_ar }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر مزوّد</div></div>
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_payment_status|default:"—"|pay_status_ar }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر حالة دفع</div></div>
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700 truncate" title="{{ subscription_summary.last_payment_reference }}">{{ subscription_summary.last_payment_reference|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">المرجع</div></div>
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-blue-700">{{ subscription_summary.pending_moyasar_payments }}</div><div class="text-xs text-gov-gray-500 mt-1">Moyasar معلّقة</div></div>
@@ -364,8 +366,8 @@
             <p class="text-xs font-bold text-gov-gray-600 mb-2">ميزات الخطة والاستخدام</p>
             <div class="flex flex-wrap gap-2 mb-3">
               {% for f in feature_summary.features %}
-              <span class="text-xs px-2 py-1 rounded {% if f.enabled %}bg-gov-green-50 text-gov-green-800{% else %}bg-gov-gray-100 text-gov-gray-400{% endif %}" dir="ltr">
-                {% if f.enabled %}✓{% else %}✕{% endif %} {{ f.code }}
+              <span class="text-xs px-2 py-1 rounded {% if f.enabled %}bg-gov-green-50 text-gov-green-800{% else %}bg-gov-gray-100 text-gov-gray-400{% endif %}">
+                {% if f.enabled %}✓{% else %}✕{% endif %} {{ f.code|feature_code_ar }}
               </span>
               {% endfor %}
             </div>
@@ -461,14 +463,17 @@
 
         {# Operational snapshot #}
         <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6">
-          <h2 class="font-bold text-gov-green-800 mb-3">الحالة التشغيلية</h2>
+          <h2 class="font-bold text-gov-green-800 mb-1">الحالة التشغيلية</h2>
+          <p class="text-xs text-gov-gray-500 mb-3">عرض تشغيلي داخلي، لا يمثل قرار امتثال أو اعتماداً رسمياً.</p>
           <div class="grid md:grid-cols-2 gap-3 text-sm">
             <div><span class="text-gov-gray-500">التصنيف:</span> {{ snapshot.has_classification|yesno:"مكتمل,لم يبدأ" }}</div>
-            <div><span class="text-gov-gray-500">تحليل الأطر:</span> {{ snapshot.has_applicability|yesno:"متوفر,لا يوجد" }}</div>
+            <div><span class="text-gov-gray-500">الأطر المعتمدة:</span> {{ journey.approved_frameworks }}</div>
+            <div><span class="text-gov-gray-500">خطة الضوابط:</span> {{ journey.control_plan_generated|yesno:"أُنشئت,لم تُنشأ" }}</div>
             <div><span class="text-gov-gray-500">الأدلة المرفوعة:</span> {{ snapshot.has_evidence|yesno:"نعم,لا" }}</div>
-            <div><span class="text-gov-gray-500">إسناد مدقق:</span> {% if snapshot.has_auditor_assignment %}نعم{% else %}لا — <a href="#auditor" class="text-gov-green-700 hover:underline">إسناد مدقق ←</a>{% endif %}</div>
+            <div><span class="text-gov-gray-500">المدقق:</span> {% if snapshot.has_auditor_assignment %}{{ auditor_engagement.status_ar }}{% else %}لا يوجد — <a href="#auditor" class="text-gov-green-700 hover:underline">إسناد مدقق ←</a>{% endif %}</div>
+            <div><span class="text-gov-gray-500">التقرير الداخلي:</span> {{ snapshot.has_reviewed_report|yesno:"متوفر,لا يوجد" }}</div>
+            <div><span class="text-gov-gray-500">الاشتراك:</span> {{ subscription_summary.status_display|default:subscription_summary.status|sub_status_ar }}</div>
             <div><span class="text-gov-gray-500">حكم المدقق الداخلي:</span> {{ snapshot.has_auditor_verdict|yesno:"نعم,لا" }}</div>
-            <div><span class="text-gov-gray-500">تقرير المراجعة الداخلي:</span> {{ snapshot.has_reviewed_report|yesno:"متوفر,لا يوجد" }}</div>
           </div>
           <div class="mt-4">
             <span class="text-gov-gray-500 text-sm">الأطر المعتمدة:</span>

@@ -1653,7 +1653,7 @@ class CompanyDetailUIRedesignTests(TestCase):
         c = self._company(cr='9191910003')
         self.client.force_login(self._staff())
         body = self.client.get(self._url(c)).content.decode()
-        for anchor in ('#overview', '#journey', '#auditors', '#evidence',
+        for anchor in ('#admin-journey', '#overview', '#journey', '#auditor', '#evidence',
                        '#billing', '#users', '#followup', '#log'):
             self.assertIn('href="%s"' % anchor, body)
 
@@ -1937,3 +1937,111 @@ class PlatformAdminJourneyTests(TestCase):
         p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='n')
         bsvc.confirm_manual_payment(p, reason='wire confirmed')
         self.assertTrue(company_has_active_subscription(c))
+
+
+class PlatformAdminJourneyFixBTests(TestCase):
+    """UAT-PLATFORM-ADMIN-JOURNEY-UX-LOGIC-FIX-B — quick actions surfaced, Arabic-only
+    labels, and clear source-aware auditor engagement on the admin company page."""
+
+    def _staff(self, email='fixb_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _detail(self, c):
+        return reverse('platform_admin:company_detail', args=[c.id])
+
+    def _feat_plan(self):
+        from billing.tests import _feat_plan, _activate
+        return _feat_plan, _activate
+
+    # ---------- quick actions surfaced at the top ----------
+    def test_quick_actions_present(self):
+        c, _fv, _s = _company_with_assessments()
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        for label in ('العودة للشركات', 'عرض رحلة الامتثال', 'إضافة ملاحظة',
+                      'إدارة المدقق', 'إضافة دفعة يدوية'):
+            self.assertIn(label, body)
+
+    def test_next_best_action_card_present(self):
+        c, _fv, _s = _company_with_assessments()
+        self.client.force_login(self._staff())
+        self.assertContains(self.client.get(self._detail(c)), 'الإجراء التالي المقترح')
+
+    # ---------- Arabic feature labels (no raw English codes) ----------
+    def test_feature_codes_are_arabic(self):
+        from billing.tests import _feat_plan, _activate
+        c, _fv, _s = _company_with_assessments()
+        _activate(c, _feat_plan())
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('رفع الأدلة', body)               # evidence_upload -> Arabic
+        self.assertNotIn('evidence_upload', body)
+        self.assertNotIn('auditor_review', body)
+        self.assertNotIn('gap_analysis', body)
+
+    # ---------- Arabic activity labels (no bilingual English suffix) ----------
+    def test_activity_labels_are_arabic_only(self):
+        c, _fv, _s = _company_with_assessments()
+        staff = self._staff()
+        self.client.force_login(staff)
+        self.client.post(reverse('platform_admin:update_status', args=[c.id]),
+                         {'crm_status': 'active'})
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('تغيير حالة المتابعة', body)
+        self.assertNotIn('Follow-up status changed', body)
+        self.assertNotIn('User linked', body)
+
+    # ---------- source-aware pending phrasing ----------
+    def test_admin_assignment_shows_admin_source_phrasing(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        staff = self._staff()
+        services.create_assignment(c, ap, requested_by=staff)
+        self.client.force_login(staff)
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('إسناد إداري بانتظار موافقة المدقق', body)
+
+    def test_company_request_shows_company_source_phrasing(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        cu = _journey_user(c)
+        services.create_assignment(c, ap, requested_by=cu)     # company-initiated
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('طلب من الشركة بانتظار موافقة المدقق', body)
+
+    def test_accepted_shows_change_not_supported_note(self):
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = services.create_assignment(c, ap, requested_by=self._staff())
+        services.respond_to_assignment(a, 'accept', responder=u)
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('تغيير المدقق بعد القبول غير مدعوم', body)
+
+    # ---------- operational status: disclaimer + subscription ----------
+    def test_operational_status_has_disclaimer_and_subscription(self):
+        c, _fv, _s = _company_with_assessments()
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('عرض تشغيلي داخلي، لا يمثل قرار امتثال أو اعتماداً رسمياً', body)
+        self.assertIn('الحالة التشغيلية', body)
+
+    # ---------- next action routes to a section ----------
+    def test_next_action_routes_to_a_section(self):
+        from auditors.crm_services import admin_company_journey
+        c, _fv, _s = _company_with_assessments()
+        na = admin_company_journey(c)['next_action']
+        self.assertTrue(na['anchor'].startswith('#'))    # always routes somewhere
+
+    # ---------- auditor-requests page still renders with next-action column ----------
+    def test_requests_page_has_next_action_column(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=self._staff())
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:auditor_requests')).content.decode()
+        self.assertIn('الإجراء التالي', body)
+        self.assertIn('بانتظار موافقة المدقق', body)

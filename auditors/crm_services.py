@@ -584,14 +584,17 @@ def update_company_crm_status(actor, company, *, crm_status=None, assigned_staff
 
 # Human-friendly labels for the activity timeline.
 CRM_ACTIVITY_LABELS = {
-    'crm_link_user': 'ربط مستخدم بالشركة · User linked',
-    'crm_unlink_user': 'إلغاء ربط مستخدم · User unlinked',
-    'crm_note_added': 'إضافة ملاحظة داخلية · Internal note added',
-    'crm_status_changed': 'تغيير حالة المتابعة · Follow-up status changed',
-    'auditor_approve': 'اعتماد مدقق · Auditor approved',
-    'auditor_reject': 'رفض مدقق · Auditor rejected',
-    'auditor_suspend': 'إيقاف مدقق · Auditor suspended',
-    'auditor_reactivate': 'إعادة تفعيل مدقق · Auditor reactivated',
+    'crm_link_user': 'ربط مستخدم بالشركة',
+    'crm_unlink_user': 'إلغاء ربط مستخدم',
+    'crm_note_added': 'إضافة ملاحظة داخلية',
+    'crm_status_changed': 'تغيير حالة المتابعة',
+    'auditor_approve': 'اعتماد مدقق',
+    'auditor_reject': 'رفض مدقق',
+    'auditor_suspend': 'إيقاف مدقق',
+    'auditor_reactivate': 'إعادة تفعيل مدقق',
+    # UAT-PLATFORM-ADMIN-JOURNEY — admin-initiated auditor engagement (Arabic-only).
+    'crm_admin_auditor_assigned': 'إسناد مدقق من الإدارة',
+    'crm_admin_auditor_request_cancelled': 'إلغاء طلب مدقق من الإدارة',
 }
 
 
@@ -726,10 +729,25 @@ def admin_auditor_engagement(company):
     }
 
 
-# Admin journey step metadata: label + who must act + optional in-page action anchor/button.
+# In-page action/navigation anchors per journey step. Steps where the ADMIN can act
+# (subscription/auditor_selection) render a real action button; the rest give the admin
+# a "go to section" navigation button so the Next-Best-Action card always routes somewhere.
 _ADMIN_STEP_ACTION = {
     'subscription': ('#billing', 'الاشتراك والدفع'),
     'auditor_selection': ('#auditor', 'إسناد مدقق'),
+}
+_ADMIN_STEP_NAV = {
+    'email_verification': ('#followup', 'المتابعة والملاحظات'),
+    'classification': ('#journey', 'رحلة الامتثال'),
+    'scope_approval': ('#journey', 'رحلة الامتثال'),
+    'control_plan': ('#journey', 'رحلة الامتثال'),
+    'evidence': ('#evidence', 'الأدلة والجاهزية'),
+    'subscription': ('#billing', 'الاشتراك والدفع'),
+    'auditor_selection': ('#auditor', 'المدقق'),
+    'auditor_acceptance': ('#auditor', 'المدقق'),
+    'evidence_review': ('#evidence', 'الأدلة والجاهزية'),
+    'internal_verdict': ('#evidence', 'الأدلة والجاهزية'),
+    'readiness_report': ('#evidence', 'الأدلة والجاهزية'),
 }
 
 
@@ -793,12 +811,14 @@ def admin_company_journey(company):
             current_assigned = True
             status = 'needs_action' if actor == 'admin' else 'waiting'
             reason_txt = reason
-            anchor, btn = _ADMIN_STEP_ACTION.get(key, (None, None))
+            # Next-Best-Action always routes to the relevant section (real action for
+            # admin steps, navigation for company/auditor steps).
+            nav_anchor, nav_btn = _ADMIN_STEP_NAV.get(key, (None, None))
             next_action = {
                 'key': key, 'label': label, 'reason': reason,
                 'actor': actor,
-                'anchor': anchor if actor == 'admin' else None,
-                'button_label': btn if actor == 'admin' else None,
+                'anchor': nav_anchor,
+                'button_label': nav_btn,
             }
         else:
             status = 'locked'
