@@ -14,11 +14,11 @@ Reports, Monitoring). Active item is derived from the resolved url_name.
       </a>
 
       <div class="hidden md:flex items-center gap-1 flex-1 min-w-0">
-        <a href="{% url 'platform_admin:dashboard' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'dashboard' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">نظرة عامة · Overview</a>
-        <a href="{% url 'platform_admin:companies_list' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'companies_list' or un == 'company_detail' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">الشركات · Companies</a>
-        <a href="{% url 'platform_admin:auditor_list' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'auditor_list' or un == 'auditor_detail' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">المدققون · Auditors</a>
+        <a href="{% url 'platform_admin:dashboard' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'dashboard' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">نظرة عامة</a>
+        <a href="{% url 'platform_admin:companies_list' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'companies_list' or un == 'company_detail' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">الشركات</a>
+        <a href="{% url 'platform_admin:auditor_list' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'auditor_list' or un == 'auditor_detail' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">المدققون</a>
         <a href="{% url 'platform_admin:auditor_requests' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'auditor_requests' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">طلبات المدققين</a>
-        <a href="{% url 'platform_admin:unlinked_accounts' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'unlinked_accounts' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">حسابات غير مرتبطة · Unlinked Accounts</a>
+        <a href="{% url 'platform_admin:unlinked_accounts' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'unlinked_accounts' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">حسابات غير مرتبطة</a>
       </div>
 
       <div class="flex items-center gap-3 shrink-0">
@@ -26,17 +26,18 @@ Reports, Monitoring). Active item is derived from the resolved url_name.
         <a href="/admin/" class="hidden sm:inline text-gov-green-200 hover:text-white text-sm">Django Admin</a>
         {% endif %}
         <span class="hidden sm:inline text-gov-green-200 text-sm truncate max-w-[160px]">{{ user.get_full_name|default:user.email }}</span>
-        <a href="{% url 'core:logout' %}" class="text-gov-green-200 hover:text-white text-sm whitespace-nowrap"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج · Logout</a>
+        <a href="{% url 'core:logout' %}" class="text-gov-green-200 hover:text-white text-sm whitespace-nowrap"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
       </div>
 
       {# Mobile menu #}
       <details class="md:hidden relative w-full">
         <summary class="text-white cursor-pointer list-none px-1 py-1"><i class="fas fa-bars"></i> القائمة</summary>
         <div class="mt-2 bg-gov-green-800 rounded-lg shadow-xl p-2">
-          <a href="{% url 'platform_admin:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">نظرة عامة · Overview</a>
-          <a href="{% url 'platform_admin:companies_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">الشركات · Companies</a>
-          <a href="{% url 'platform_admin:auditor_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">المدققون · Auditors</a>
-          <a href="{% url 'platform_admin:unlinked_accounts' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">حسابات غير مرتبطة · Unlinked Accounts</a>
+          <a href="{% url 'platform_admin:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">نظرة عامة</a>
+          <a href="{% url 'platform_admin:companies_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">الشركات</a>
+          <a href="{% url 'platform_admin:auditor_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">المدققون</a>
+          <a href="{% url 'platform_admin:auditor_requests' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">طلبات المدققين</a>
+          <a href="{% url 'platform_admin:unlinked_accounts' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">حسابات غير مرتبطة</a>
           {% if user.is_superuser or user.is_staff %}<a href="/admin/" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">Django Admin</a>{% endif %}
         </div>
       </details>

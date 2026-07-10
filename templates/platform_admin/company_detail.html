@@ -11,7 +11,7 @@
       <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mt-2">
         <div class="min-w-0">
           <h1 class="text-2xl font-bold text-gov-green-800 truncate">{{ company.name_ar|default:company.name }}</h1>
-          <p class="text-gov-gray-600 text-sm mt-1" dir="ltr">{{ company.name }} · {{ company.get_sector_display }}</p>
+          <p class="text-gov-gray-600 text-sm mt-1" dir="auto"><span dir="ltr">{{ company.name }}</span> · {{ company.sector|sector_ar }}</p>
 
           {# Status badges #}
           <div class="flex flex-wrap gap-2 mt-3">
@@ -123,8 +123,8 @@
           <h2 class="font-bold text-gov-green-800 mb-3">نظرة عامة</h2>
           <div class="grid md:grid-cols-2 gap-3 text-sm">
             <div><span class="text-gov-gray-500">الحالة:</span> {{ company.status|company_status_ar }}</div>
-            <div><span class="text-gov-gray-500">القطاع:</span> {{ company.get_sector_display }}</div>
-            <div><span class="text-gov-gray-500">الحجم:</span> {{ company.get_size_display }}</div>
+            <div><span class="text-gov-gray-500">القطاع:</span> {{ company.sector|sector_ar }}</div>
+            <div><span class="text-gov-gray-500">الحجم:</span> {{ company.size|size_ar }}</div>
             <div><span class="text-gov-gray-500">المدينة:</span> {{ company.city|default:"—" }}</div>
             <div><span class="text-gov-gray-500">بريد التواصل:</span> <span dir="ltr">{{ company.contact_email }}</span></div>
             <div><span class="text-gov-gray-500">تاريخ الإنشاء:</span> {{ company.created_at|date:"Y-m-d H:i" }}</div>
@@ -229,9 +229,9 @@
                   </select></label>
                 <label class="text-sm flex-1"><span class="block text-gov-gray-500 mb-1">ملاحظة (اختياري)</span>
                   <input type="text" name="reason" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
-                <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2 rounded-lg text-sm font-medium">إسناد</button>
+                <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2 rounded-lg text-sm font-medium whitespace-nowrap">إرسال طلب إسناد مدقق</button>
               </form>
-              <p class="text-xs text-gov-gray-400 mt-2">يُنشئ طلباً بانتظار موافقة المدقق — لا يُعتبر مُسنداً حتى يقبل المدقق.</p>
+              <p class="text-xs text-gov-gray-400 mt-2">ينشئ هذا الإجراء طلبًا بانتظار موافقة المدقق، ولا يصبح المدقق مسندًا إلا بعد القبول.</p>
               {% else %}
               <p class="text-sm text-gov-gray-500 mt-2">لا يوجد مدققون مفعّلون ومتاحون للإسناد حالياً.</p>
               {% endif %}
@@ -357,7 +357,7 @@
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_moyasar_status|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر حالة مزوّد</div></div>
             </div>
             {% if subscription_summary.last_payment_provider_id %}
-            <p class="text-xs text-gov-gray-500" dir="ltr">Provider payment id: <span class="font-mono">{{ subscription_summary.last_payment_provider_id }}</span></p>
+            <p class="text-xs text-gov-gray-500">معرّف الدفع لدى المزوّد: <span class="font-mono" dir="ltr">{{ subscription_summary.last_payment_provider_id }}</span></p>
             {% endif %}
           </details>
 
@@ -495,31 +495,29 @@
         <div id="users" class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6 scroll-mt-16">
           <h2 class="font-bold text-gov-green-800 mb-3">المستخدمون المرتبطون ({{ snapshot.linked_users|length }})</h2>
           {% if snapshot.linked_users %}
-          <div class="overflow-x-auto"><table class="w-full text-sm">
-            <thead class="text-gov-gray-500"><tr><th class="text-right py-2">البريد</th><th class="text-right py-2">الدور</th><th class="text-right py-2">نشط</th><th class="text-right py-2"></th></tr></thead>
-            <tbody class="divide-y divide-gov-gray-100">
-              {% for u in snapshot.linked_users %}
-              <tr>
-                <td class="py-2" dir="ltr">{{ u.email }}</td>
-                <td class="py-2">{{ u.get_role_display }}</td>
-                <td class="py-2">{{ u.is_active|yesno:"نعم,لا" }}</td>
-                <td class="py-2">
-                  {% if not u.is_staff and not u.is_superuser %}
-                  <form method="post" action="{% url 'platform_admin:unlink_user' company.id %}"
-                        onsubmit="return confirm('إلغاء ربط {{ u.email|escapejs }} من هذه الشركة؟');"
-                        class="flex items-center gap-1">
-                    {% csrf_token %}
-                    <input type="hidden" name="user_id" value="{{ u.id }}">
-                    <input type="text" name="reason" required placeholder="السبب (مطلوب)"
-                           class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-24">
-                    <button type="submit" class="text-red-700 hover:text-red-900 text-xs font-medium">إلغاء الربط</button>
-                  </form>
-                  {% else %}<span class="text-xs text-gov-gray-400">—</span>{% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table></div>
+          {# Overflow-safe stacked list (no horizontal scroll); emails wrap with a tooltip. #}
+          <ul class="divide-y divide-gov-gray-100">
+            {% for u in snapshot.linked_users %}
+            <li class="py-3">
+              <div class="flex items-start justify-between gap-2">
+                <span class="text-sm text-gov-gray-800 break-all min-w-0" dir="ltr" title="{{ u.email }}">{{ u.email }}</span>
+                <span class="text-xs px-2 py-0.5 rounded-full shrink-0 {% if u.is_active %}bg-green-50 text-green-700{% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">{{ u.is_active|yesno:"نشط,غير نشط" }}</span>
+              </div>
+              <div class="text-xs text-gov-gray-500 mt-0.5">{{ u.get_role_display }}</div>
+              {% if not u.is_staff and not u.is_superuser %}
+              <form method="post" action="{% url 'platform_admin:unlink_user' company.id %}"
+                    onsubmit="return confirm('إلغاء ربط {{ u.email|escapejs }} من هذه الشركة؟');"
+                    class="flex flex-wrap items-center gap-2 mt-2">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ u.id }}">
+                <input type="text" name="reason" required placeholder="السبب (مطلوب)"
+                       class="flex-1 min-w-[8rem] border border-gov-gray-300 rounded px-2 py-1 text-xs">
+                <button type="submit" class="text-red-700 hover:text-red-900 text-xs font-medium whitespace-nowrap">إلغاء الربط</button>
+              </form>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
           {% else %}
           <p class="text-sm text-gov-gray-500">لا يوجد مستخدمون مرتبطون بهذه الشركة بعد</p>
           {% endif %}
@@ -573,10 +571,11 @@
                 <option value="0">— بدون</option>
                 {% for s in assignable_staff %}<option value="{{ s.id }}" {% if crm_profile.assigned_staff_id == s.id %}selected{% endif %}>{{ s.email }}</option>{% endfor %}
               </select></label>
-            <label class="text-sm"><span class="block text-gov-gray-500 mb-1">المتابعة التالية <span class="text-gov-gray-400">(سنة-شهر-يوم)</span></span>
+            <label class="text-sm"><span class="block text-gov-gray-500 mb-1">المتابعة التالية</span>
               <input type="date" name="next_follow_up_date" lang="en-CA" pattern="\d{4}-\d{2}-\d{2}"
                      value="{{ crm_profile.next_follow_up_date|date:'Y-m-d' }}"
-                     class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
+                     class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+              <span class="block text-xs text-gov-gray-400 mt-1">صيغة التاريخ: YYYY-MM-DD</span></label>
             <label class="text-sm"><span class="block text-gov-gray-500 mb-1">السبب</span>
               <input type="text" name="reason" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
             <label class="text-sm"><span class="block text-gov-gray-500 mb-1">ملخص داخلي</span>

@@ -593,7 +593,7 @@ class GetSolutionCRMConsoleTests(TestCase):
         resp = self.client.get(reverse('platform_admin:dashboard'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Get Solution CRM')
-        self.assertContains(resp, 'Internal operations console')
+        self.assertContains(resp, 'وحدة التشغيل الداخلية')
 
     def test_superuser_can_access_dashboard(self):
         self.client.force_login(self._staff(email='su2@x.com', superuser=True))
@@ -705,26 +705,26 @@ class PlatformAdminCRMNavigationTests(TestCase):
         resp = self.client.get(reverse('platform_admin:dashboard'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Get Solution CRM')
-        self.assertContains(resp, 'Overview')
-        self.assertContains(resp, 'Internal operations console')
+        self.assertContains(resp, 'نظرة عامة')
+        self.assertContains(resp, 'وحدة التشغيل الداخلية')
 
     def test_auditors_page_renders_crm_navigation(self):
         self.client.force_login(self._staff())
         resp = self.client.get(reverse('platform_admin:auditor_list'))
         self.assertContains(resp, 'Get Solution CRM')
-        self.assertContains(resp, 'Companies')
+        self.assertContains(resp, 'الشركات')
 
     def test_companies_page_renders_crm_navigation(self):
         self.client.force_login(self._staff())
         resp = self.client.get(reverse('platform_admin:companies_list'))
         self.assertContains(resp, 'Get Solution CRM')
-        self.assertContains(resp, 'Unlinked Accounts')
+        self.assertContains(resp, 'حسابات غير مرتبطة')
 
     def test_unlinked_page_renders_crm_navigation(self):
         self.client.force_login(self._staff())
         resp = self.client.get(reverse('platform_admin:unlinked_accounts'))
         self.assertContains(resp, 'Get Solution CRM')
-        self.assertContains(resp, 'Auditors')
+        self.assertContains(resp, 'المدققون')
 
     def test_platform_admin_pages_have_no_customer_compliance_nav(self):
         c, cu = _company_user(subscribe=True)
@@ -2045,3 +2045,89 @@ class PlatformAdminJourneyFixBTests(TestCase):
         body = self.client.get(reverse('platform_admin:auditor_requests')).content.decode()
         self.assertIn('الإجراء التالي', body)
         self.assertIn('بانتظار موافقة المدقق', body)
+
+
+class PlatformAdminPolishCTests(TestCase):
+    """UAT-PLATFORM-ADMIN-JOURNEY-UX-POLISH-C — final Arabic/RTL + responsive polish
+    on the platform-admin company journey pages."""
+
+    def _staff(self, email='polishc_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _company(self, cr='9393930001', sector='technology', size='micro'):
+        return Company.objects.create(name='Polish Co', cr_number=cr, sector=sector,
+                                      size=size, contact_email='polish@co.example')
+
+    def _detail(self, c):
+        return reverse('platform_admin:company_detail', args=[c.id])
+
+    # A1 — navigation labels are Arabic-only (English nav labels removed)
+    def test_nav_labels_are_arabic_only(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        for ar in ('نظرة عامة', 'الشركات', 'المدققون', 'حسابات غير مرتبطة', 'تسجيل الخروج'):
+            self.assertIn(ar, body)
+        for en in ('· Overview', '· Auditors', '· Logout', 'Internal operations console'):
+            self.assertNotIn(en, body)
+
+    # A3 — company sector/size render Arabic labels for known choices
+    def test_sector_and_size_are_arabic(self):
+        c = self._company(sector='technology', size='micro')
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('تقنية المعلومات', body)
+        self.assertIn('صغيرة جدًا (1-9 موظفين)', body)
+        self.assertNotIn('>Technology<', body)
+        self.assertNotIn('Micro (1-9 employees)', body)
+
+    # C1 — auditor assignment button text is unambiguous
+    def test_assign_button_says_send_request(self):
+        c = self._company()
+        _u, _ap = _auditor(status='active')
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('إرسال طلب إسناد مدقق', body)
+        self.assertIn('ولا يصبح المدقق مسندًا إلا بعد القبول', body)
+
+    # C3 — empty state when no auditor request
+    def test_empty_state_when_no_auditor_request(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.assertContains(self.client.get(self._detail(c)),
+                            'لا توجد طلبات مدققين لهذه الشركة بعد')
+
+    # C4 — admin-created pending request shows source wording
+    def test_admin_pending_request_shows_source(self):
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        staff = self._staff()
+        services.create_assignment(c, ap, requested_by=staff)
+        self.client.force_login(staff)
+        self.assertContains(self.client.get(self._detail(c)),
+                            'إسناد إداري بانتظار موافقة المدقق')
+
+    # B1 — linked users use overflow-safe wrapping (no inner horizontal scroll table)
+    def test_linked_users_use_wrapping_markup(self):
+        c = self._company()
+        User.objects.create_user(username='lu_polish@x.com', email='lu_polish@x.com',
+                                 password='longenough12', role='company_admin', company=c)
+        self.client.force_login(self._staff())
+        body = self.client.get(self._detail(c)).content.decode()
+        self.assertIn('break-all', body)          # emails wrap instead of overflowing
+
+    # D1 — date field carries an Arabic format hint
+    def test_date_hint_present(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        self.assertContains(self.client.get(self._detail(c)), 'صيغة التاريخ: YYYY-MM-DD')
+
+    # permissions unchanged
+    def test_company_user_denied(self):
+        c = self._company()
+        u = User.objects.create_user(username='cu_polish@x.com', email='cu_polish@x.com',
+                                     password='longenough12', role='company_admin', company=c)
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(self._detail(c)).status_code, 403)

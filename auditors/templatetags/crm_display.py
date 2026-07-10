@@ -145,3 +145,35 @@ def provider_ar(value):
     """Payment provider (code or English display) -> Arabic, keeping the Moyasar brand."""
     key = str(value or '').strip().lower()
     return _PROVIDER_AR.get(key, value)
+
+
+# core.Company.SECTOR_CHOICES -> Arabic (keyed by the raw code). Display only.
+_SECTOR_AR = {
+    'oil_gas': 'النفط والغاز', 'petrochemical': 'البتروكيماويات',
+    'banking': 'البنوك والتمويل', 'telecom': 'الاتصالات', 'healthcare': 'الرعاية الصحية',
+    'government': 'حكومي', 'defense': 'الدفاع', 'energy': 'الطاقة والمرافق',
+    'manufacturing': 'التصنيع', 'technology': 'تقنية المعلومات',
+    'logistics': 'اللوجستيات والنقل', 'construction': 'الإنشاءات', 'retail': 'التجزئة',
+    'education': 'التعليم', 'other': 'أخرى',
+}
+
+# core.Company.SIZE_CHOICES -> Arabic (keyed by the raw code). Display only.
+_SIZE_AR = {
+    'micro': 'صغيرة جدًا (1-9 موظفين)',
+    'small': 'صغيرة (10-49 موظفًا)',
+    'medium': 'متوسطة (50-249 موظفًا)',
+    'large': 'كبيرة (250-999 موظفًا)',
+    'enterprise': 'مؤسسية (1000+ موظف)',
+}
+
+
+@register.filter
+def sector_ar(value):
+    """Company sector code -> Arabic label, keeping unknown values as-is."""
+    return _SECTOR_AR.get(str(value or '').strip().lower(), value)
+
+
+@register.filter
+def size_ar(value):
+    """Company size code -> Arabic label, keeping unknown values as-is."""
+    return _SIZE_AR.get(str(value or '').strip().lower(), value)
