@@ -106,3 +106,106 @@ class AuditorPortalNoCertificateTests(TestCase):
         # Internal review must NEVER issue a certificate or mark the company certified.
         self.assertEqual(CertificateTracker.objects.filter(company=c).count(), 0)
         self.assertNotEqual(c.status, 'certified')
+
+
+class AuditorPortalWorkspaceArabicTests(TestCase):
+    """UAT-AUDITOR-PORTAL-REVIEW-WORKSPACE-ARABIC-RTL-B — Arabic/RTL review workspace,
+    safe advisory-only wording, reason-required document requests, access control."""
+
+    def _assessment_for(self, auditor):
+        self.client.force_login(auditor)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        return Assessment.objects.get(assigned_auditor=auditor)
+
+    _FORBIDDEN = ('شهادة NCA', 'اعتماد NCA', 'شهادة Aramco', 'شهادة SABIC',
+                  'Official certificate', 'Certified by')
+
+    # ---- review_assessment: Arabic, stepper, disclaimer, no cert wording ----
+    def test_review_assessment_is_arabic(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='wsb_ra@x.com')
+        a = self._assessment_for(aud)
+        body = self.client.get(reverse('auditor_portal:review_assessment', args=[a.id])).content.decode()
+        self.assertIn('مراجعة الضوابط', body)
+        self.assertIn('مسار مراجعة المدقق', body)          # workspace stepper
+        self.assertIn('لا تمثل شهادة امتثال رسمية', body)  # safe disclaimer
+        self.assertIn('إصدار تقرير مراجعة داخلي', body)
+        for en in ('Controls Review', 'Company Information', 'Submit Final Report', 'Not Started'):
+            self.assertNotIn(en, body)
+        for bad in self._FORBIDDEN:
+            self.assertNotIn(bad, body)
+
+    # ---- review_control: Arabic, advisory disclaimer, read-only evidence ----
+    def test_review_control_is_arabic(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='wsb_rc@x.com')
+        a = self._assessment_for(aud)
+        cc = _company_control(c, ctl)
+        body = self.client.get(
+            reverse('auditor_portal:review_control', args=[a.id, cc.id])).content.decode()
+        self.assertIn('التحليل الاستشاري', body)
+        self.assertIn('التحليل الاستشاري يساعد المدقق ولا يمثل قراراً نهائياً', body)
+        self.assertIn('إضافة ملاحظة مدقق', body)
+        self.assertIn('طلب استكمال من الشركة', body)
+        self.assertIn('لا يمكن للمدقق حذف أو استبدال أدلة الشركة', body)
+        for en in ('Control Information', 'Uploaded Evidence', 'Add Note', 'Request Document', 'AI Verdict'):
+            self.assertNotIn(en, body)
+        for bad in self._FORBIDDEN:
+            self.assertNotIn(bad, body)
+
+    # ---- access control ----
+    def test_pending_auditor_cannot_open_review_assessment(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='wsb_act@x.com')
+        a = self._assessment_for(aud)
+        from auditors.models import AuditorProfile
+        pending = User.objects.create_user(email='wsb_pend@x.com', password='longenough12', role='auditor')
+        AuditorProfile.objects.create(user=pending, full_name='P', status='pending_review')
+        self.client.force_login(pending)
+        self.assertIn(self.client.get(
+            reverse('auditor_portal:review_assessment', args=[a.id])).status_code, (302, 403, 404))
+
+    def test_company_user_cannot_open_review_assessment(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='wsb_ca_a@x.com')
+        a = self._assessment_for(aud)
+        self.client.force_login(_journey_user(c, email='wsb_ca@x.com'))
+        self.assertIn(self.client.get(
+            reverse('auditor_portal:review_assessment', args=[a.id])).status_code, (302, 403, 404))
+
+    # ---- document request: reason required ----
+    def test_request_document_requires_reason(self):
+        from auditor_portal.models import DocumentRequest
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='wsb_dr@x.com')
+        a = self._assessment_for(aud)
+        cc = _company_control(c, ctl)
+        self.client.force_login(aud)
+        self.client.post(reverse('auditor_portal:request_document', args=[a.id, cc.id]),
+                         {'description': '', 'description_ar': ''})
+        self.assertEqual(DocumentRequest.objects.count(), 0)
+        self.client.post(reverse('auditor_portal:request_document', args=[a.id, cc.id]),
+                         {'description_ar': 'يرجى رفع سياسة كلمات المرور'})
+        self.assertEqual(DocumentRequest.objects.filter(assessment=a, company_control=cc).count(), 1)
+
+    # ---- arabic flash messages, no certificate wording ----
+    def test_submit_report_arabic_message(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='wsb_sr@x.com')
+        a = self._assessment_for(aud)
+        self.client.force_login(aud)
+        resp = self.client.post(reverse('auditor_portal:submit_report', args=[a.id]),
+                                {'verdict': 'pass'}, follow=True)
+        body = resp.content.decode()
+        self.assertIn('تقرير المراجعة الداخلي', body)
+        self.assertNotIn('official certification', body)
+
+    def test_add_note_arabic_message(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='wsb_an@x.com')
+        a = self._assessment_for(aud)
+        cc = _company_control(c, ctl)
+        self.client.force_login(aud)
+        resp = self.client.post(reverse('auditor_portal:add_note', args=[a.id, cc.id]),
+                                {'note': 'ملاحظة'}, follow=True)
+        self.assertIn('تمت إضافة ملاحظة المدقق', resp.content.decode())

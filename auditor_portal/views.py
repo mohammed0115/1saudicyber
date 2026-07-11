@@ -80,11 +80,13 @@ def review_assessment(request, assessment_id):
     company_controls = (CompanyControl.objects.filter(company=assessment.company)
                         .select_related('control', 'control__framework', 'control__domain')
                         .order_by('control__domain__order', 'control__control_id'))
+    from .workspace import review_workspace_summary
     context = {
         'assessment': assessment,
         'company_controls': company_controls,
         'notes': AuditorNote.objects.filter(assessment=assessment),
         'document_requests': DocumentRequest.objects.filter(assessment=assessment),
+        'workspace': review_workspace_summary(assessment),
     }
     return render(request, 'auditor_portal/review_assessment.html', context)
 
@@ -101,6 +103,8 @@ def review_control(request, assessment_id, control_id):
         'company_control': company_control,
         'evidences': evidences,
         'notes': AuditorNote.objects.filter(assessment=assessment, company_control=company_control),
+        'document_requests': DocumentRequest.objects.filter(
+            assessment=assessment, company_control=company_control),
     }
     return render(request, 'auditor_portal/review_control.html', context)
 
@@ -119,7 +123,7 @@ def add_note(request, assessment_id, control_id):
             is_finding=request.POST.get('is_finding') == 'on',
             requires_action=request.POST.get('requires_action') == 'on',
         )
-        messages.success(request, 'Note added successfully.')
+        messages.success(request, 'تمت إضافة ملاحظة المدقق.')
     return redirect('auditor_portal:review_control', assessment_id=assessment_id, control_id=control_id)
 
 
@@ -130,12 +134,16 @@ def request_document(request, assessment_id, control_id):
     if request.method == 'POST':
         assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
         company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
-        DocumentRequest.objects.create(
-            assessment=assessment, company_control=company_control, auditor=request.user,
-            description=request.POST.get('description', ''),
-            description_ar=request.POST.get('description_ar', ''),
-        )
-        messages.success(request, 'Document request sent to company.')
+        # Reason/description is required so the company knows what to provide.
+        desc = (request.POST.get('description', '') or '').strip()
+        desc_ar = (request.POST.get('description_ar', '') or '').strip()
+        if not desc and not desc_ar:
+            messages.error(request, 'سبب/وصف الطلب مطلوب لإرسال طلب استكمال.')
+        else:
+            DocumentRequest.objects.create(
+                assessment=assessment, company_control=company_control, auditor=request.user,
+                description=desc, description_ar=desc_ar)
+            messages.success(request, 'تم إرسال طلب الاستكمال إلى الشركة.')
     return redirect('auditor_portal:review_control', assessment_id=assessment_id, control_id=control_id)
 
 
@@ -159,7 +167,7 @@ def submit_report(request, assessment_id):
         assessment.status = 'completed'
         assessment.completed_at = timezone.now()
         assessment.save(update_fields=['status', 'completed_at'])
-        messages.success(request, 'Internal audit report submitted. This is an internal '
-                                  'review and is not an official certification.')
+        messages.success(request, 'تم حفظ تقرير المراجعة الداخلي. هذه مراجعة داخلية ولا '
+                                  'تمثل شهادة امتثال رسمية أو اعتماداً من أي جهة.')
         return redirect('auditor_portal:dashboard')
     return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
