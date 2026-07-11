@@ -70,8 +70,10 @@ def onboarding(request):
     profile = services.get_auditor_profile(request.user)
     if profile is None:
         return redirect('auditors:register')
+    from .badges import auditor_framework_badges
     return render(request, 'auditors/onboarding.html', {
-        'profile': profile, 'auditor_journey': build_auditor_journey(request.user)})
+        'profile': profile, 'framework_badges': auditor_framework_badges(profile),
+        'auditor_journey': build_auditor_journey(request.user)})
 
 
 @login_required
@@ -87,9 +89,11 @@ def dashboard(request):
         assignments = services.assignments_for_user(request.user)
         pending_requests = assignments.filter(status='requested')
         accepted_assignments = assignments.filter(status='accepted')
+    from .badges import auditor_framework_badges
     return render(request, 'auditors/dashboard.html', {
         'profile': profile, 'pending_requests': pending_requests,
         'accepted_assignments': accepted_assignments,
+        'framework_badges': auditor_framework_badges(profile),
         'auditor_journey': build_auditor_journey(request.user)})
 
 

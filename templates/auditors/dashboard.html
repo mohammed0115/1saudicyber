@@ -3,8 +3,17 @@
 {% block content %}
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div style="max-width:880px;margin:0 auto;padding:8px 4px 24px;">
-    <h1 style="color:#1F2933;font-size:1.5rem;font-weight:700;margin:0 0 4px;">لوحة المدقّق</h1>
-    <p style="color:#667085;font-size:.95rem;margin:0 0 18px;">الطلبات المُسندة إليك فقط. القرار النهائي هو مراجعة داخلية من المدقق ولا يُعد شهادة امتثال رسمية.</p>
+    <h1 style="color:#1F2933;font-size:1.5rem;font-weight:700;margin:0 0 4px;">لوحة المدقق</h1>
+    <p style="color:#667085;font-size:.95rem;margin:0 0 10px;">هذه مراجعة داخلية/استشارية داخل المنصة ولا تمثل شهادة امتثال رسمية من NCA أو Aramco أو SABIC.</p>
+
+    {% if framework_badges %}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px;">
+      {% for b in framework_badges %}
+      <span title="{{ b.label }}" style="font-size:.78rem;background:#EAF3EF;color:#0F5D46;border:1px solid #CFE3DA;border-radius:999px;padding:4px 12px;" dir="auto">{{ b.label }}</span>
+      {% endfor %}
+    </div>
+    <p style="color:#98A2B3;font-size:.78rem;margin:0 0 16px;">قدرات مراجعة مستنتجة داخليًا من ملف المدقق — لا تمثل تخويلًا أو اعتمادًا رسميًا من أي جهة.</p>
+    {% endif %}
 
     {% include "components/next_action_card.html" with next_action=auditor_journey.next_action %}
 
@@ -24,7 +33,8 @@
           {% for a in pending_requests %}
           <div style="border-top:1px solid #EEF2F0;padding:14px 16px;">
             <p style="margin:0;color:#1F2933;font-weight:700;">{{ a.company.name_ar|default:a.company.name }}</p>
-            <p style="margin:2px 0 0;color:#667085;font-size:.85rem;">السجل التجاري: <span dir="ltr">{{ a.company.cr_number }}</span> · تاريخ الطلب: {{ a.requested_at|date:"Y-m-d H:i" }}</p>
+            <p style="margin:2px 0 0;color:#667085;font-size:.85rem;">السجل التجاري: <span dir="ltr">{{ a.company.cr_number }}</span> · النطاق: {{ a.get_scope_display }} · تاريخ الطلب: {{ a.requested_at|date:"Y-m-d H:i" }}</p>
+            <p style="margin:2px 0 0;color:#667085;font-size:.85rem;">مصدر الطلب: {% if a.requested_by.is_staff or a.requested_by.is_superuser %}إسناد من إدارة المنصة{% else %}طلب من الشركة{% endif %}</p>
             {% if a.notes %}<p style="margin:4px 0 0;color:#667085;font-size:.85rem;">ملاحظة الشركة: {{ a.notes }}</p>{% endif %}
             <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:flex-start;">
               <form method="post" action="{% url 'auditors:assignment_respond' a.id %}" data-busy="جارٍ قبول الطلب..." style="display:inline;">
@@ -58,7 +68,11 @@
             <tr style="border-top:1px solid #EEF2F0;">
               <td style="padding:10px 16px;color:#1F2933;">{{ a.company.name_ar|default:a.company.name }}</td>
               <td style="padding:10px 16px;color:#667085;">{{ a.get_scope_display }}</td>
-              <td style="padding:10px 16px;"><a href="{% url 'auditors:assignment_detail' a.id %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">فتح ملف المراجعة</a></td>
+              <td style="padding:10px 16px;white-space:nowrap;">
+                <a href="{% url 'auditors:assignment_detail' a.id %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">ملف المراجعة</a>
+                <span style="color:#D0D5DD;margin:0 6px;">·</span>
+                <a href="{% url 'auditor_portal:dashboard' %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">مساحة مراجعة الأدلة</a>
+              </td>
             </tr>
           {% empty %}
             <tr><td colspan="3" style="padding:18px 16px;text-align:right;color:#667085;line-height:1.8;">لا توجد شركات مقبولة بعد. اقبل طلب مراجعة لتظهر الشركة هنا.</td></tr>

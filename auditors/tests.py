@@ -2222,3 +2222,97 @@ class PlatformAdminPolishDTests(TestCase):
         u, _ap = _auditor(status='active')
         self.client.force_login(u)
         self.assertEqual(self.client.get(reverse('platform_admin:auditor_requests')).status_code, 403)
+
+
+class AuditorPortalJourneyPhaseATests(TestCase):
+    """UAT-AUDITOR-PORTAL-FULL-REVIEW-JOURNEY-A — registration wording, framework
+    capability badges, dashboard→workspace linkage, and safe/advisory-only wording."""
+
+    # ---- framework capability badges (inferred, conservative) ----
+    def test_badges_infer_nca(self):
+        from auditors.badges import auditor_framework_badges
+        _u, ap = _auditor(status='active')
+        ap.specialization = 'NCA ECC readiness'; ap.save()
+        codes = [b['code'] for b in auditor_framework_badges(ap)]
+        self.assertIn('NCA ECC', codes)
+
+    def test_badges_infer_multi_framework(self):
+        from auditors.badges import auditor_framework_badges
+        _u, ap = _auditor(status='active')
+        ap.specialization = 'NCA ECC and Aramco CCC SACS reviewer'; ap.save()
+        codes = [b['code'] for b in auditor_framework_badges(ap)]
+        self.assertIn('متعدد الأطر', codes)
+
+    def test_badges_fallback_general(self):
+        from auditors.badges import auditor_framework_badges
+        _u, ap = _auditor(status='active')
+        ap.specialization = ''; ap.bio = ''; ap.organization_name = ''; ap.save()
+        codes = [b['code'] for b in auditor_framework_badges(ap)]
+        self.assertEqual(codes, ['مراجعة عامة'])
+
+    # ---- registration page wording (safe Arabic, no official-cert claim) ----
+    def test_registration_page_safe_arabic_wording(self):
+        resp = self.client.get(reverse('auditors:register'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'تسجيل جهة تدقيق / مراجع امتثال')
+        self.assertContains(resp, 'الحساب لا يصبح فعالاً إلا بعد مراجعة إدارة المنصة')
+        body = resp.content.decode()
+        for bad in ('شهادة رسمية', 'معتمد رسمياً من NCA', 'اعتماد رسمي من أرامكو'):
+            self.assertNotIn(bad, body)
+
+    # ---- dashboard: active auditor sees badges + disclaimer + workspace CTA ----
+    def test_active_dashboard_shows_badges_and_disclaimer(self):
+        u, ap = _auditor(status='active')
+        ap.specialization = 'NCA ECC'; ap.save()
+        self.client.force_login(u)
+        resp = self.client.get(reverse('auditors:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'هذه مراجعة داخلية/استشارية داخل المنصة ولا تمثل شهادة امتثال رسمية')
+        self.assertContains(resp, 'مراجع جاهزية NCA ECC')
+
+    def test_accepted_company_shows_review_workspace_link(self):
+        from compliance.tests import _company_with_assessments
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        a, _ = services.create_assignment(c, ap, requested_by=None)
+        services.respond_to_assignment(a, 'accept', responder=u)
+        self.client.force_login(u)
+        body = self.client.get(reverse('auditors:dashboard')).content.decode()
+        self.assertIn('مساحة مراجعة الأدلة', body)
+        self.assertIn(reverse('auditor_portal:dashboard'), body)
+
+    def test_pending_request_shows_source(self):
+        from compliance.tests import _company_with_assessments
+        c, _fv, _s = _company_with_assessments()
+        u, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=None)   # company-initiated
+        self.client.force_login(u)
+        self.assertContains(self.client.get(reverse('auditors:dashboard')), 'طلب من الشركة')
+
+    # ---- pending auditor gets NO company review workspace ----
+    def test_pending_auditor_blocked_from_portal(self):
+        u, _ap = _auditor(status='pending_review')
+        self.client.force_login(u)
+        self.assertIn(self.client.get(reverse('auditor_portal:dashboard')).status_code, (302, 403))
+
+    # ---- role isolation ----
+    def test_company_user_cannot_access_auditor_dashboard(self):
+        from compliance.tests import _company_with_assessments, _journey_user
+        c, _fv, _s = _company_with_assessments()
+        self.client.force_login(_journey_user(c))
+        self.assertNotEqual(self.client.get(reverse('auditors:dashboard')).status_code, 200)
+
+    def test_auditor_cannot_access_platform_admin(self):
+        u, _ap = _auditor(status='active')
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(reverse('platform_admin:dashboard')).status_code, 403)
+
+    # ---- portal dashboard is Arabic (no raw English headers) ----
+    def test_portal_dashboard_is_arabic(self):
+        u, _ap = _auditor(status='active')
+        self.client.force_login(u)
+        body = self.client.get(reverse('auditor_portal:dashboard')).content.decode()
+        self.assertIn('مساحة مراجعة المدقق', body)
+        self.assertIn('لا تمثل شهادة امتثال رسمية', body)
+        for en in ('Auditor Portal', 'Assigned Assessments', 'Pending Review', 'No assessments assigned'):
+            self.assertNotIn(en, body)

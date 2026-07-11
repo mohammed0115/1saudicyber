@@ -22,7 +22,15 @@
           تعذر تفعيل حسابك كمدقق في الوقت الحالي. يمكنك التواصل مع إدارة منصة احصل الحل لمزيد من التفاصيل.
         </div>
       {% endif %}
-      <p style="color:#667085;font-size:.9rem;margin:0 0 18px;">الحالة: {{ profile.get_status_display }}</p>
+      <p style="color:#667085;font-size:.9rem;margin:0 0 10px;">الحالة: {% if profile.status == 'pending_review' %}قيد المراجعة{% elif profile.status == 'active' %}مفعّل{% elif profile.status == 'suspended' %}موقوف مؤقتاً{% else %}غير مفعّل{% endif %}</p>
+      {% if framework_badges %}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px;">
+        {% for b in framework_badges %}
+        <span title="{{ b.label }}" style="font-size:.78rem;background:#EAF3EF;color:#0F5D46;border:1px solid #CFE3DA;border-radius:999px;padding:4px 12px;" dir="auto">{{ b.label }}</span>
+        {% endfor %}
+      </div>
+      <p style="color:#98A2B3;font-size:.78rem;margin:0 0 16px;">قدرات مراجعة مستنتجة داخليًا من ملفك — لا تمثل تخويلًا أو اعتمادًا رسميًا.</p>
+      {% endif %}
       <a href="{% url 'auditors:dashboard' %}" style="display:inline-block;background:#0F5D46;color:#fff;font-weight:600;padding:11px 20px;border-radius:10px;text-decoration:none;">لوحة المدقّق</a>
     </div>
 
