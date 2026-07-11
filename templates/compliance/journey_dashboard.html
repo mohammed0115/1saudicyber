@@ -8,6 +8,12 @@
         <p class="text-gov-gray-600">نظرة عامة على مراحل عمل {{ company.name }} من البداية إلى التقارير. هذه الصفحة للعرض فقط.</p>
     </div>
 
+    {% if open_rfi_count %}
+    <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 text-sm hover:bg-amber-100 transition">
+        <i class="fas fa-file-circle-question ml-1"></i> لديك {{ open_rfi_count }} طلب استكمال من المدقق بانتظار ردّك — اضغط للعرض والرد.
+    </a>
+    {% endif %}
+
     {# Phase UX-WIZARD-A — target compliance journey wizard (5 stages / 16 substeps) #}
     {% include "components/journey_wizard.html" with journey=journey %}
 

@@ -181,11 +181,13 @@ class AuditorPortalWorkspaceArabicTests(TestCase):
         a = self._assessment_for(aud)
         cc = _company_control(c, ctl)
         self.client.force_login(aud)
+        # missing title/reason -> no RFI created
         self.client.post(reverse('auditor_portal:request_document', args=[a.id, cc.id]),
-                         {'description': '', 'description_ar': ''})
+                         {'title': '', 'description': '', 'description_ar': ''})
         self.assertEqual(DocumentRequest.objects.count(), 0)
+        # title + reason -> RFI created
         self.client.post(reverse('auditor_portal:request_document', args=[a.id, cc.id]),
-                         {'description_ar': 'يرجى رفع سياسة كلمات المرور'})
+                         {'title': 'سياسة كلمات المرور', 'description_ar': 'يرجى رفع سياسة كلمات المرور'})
         self.assertEqual(DocumentRequest.objects.filter(assessment=a, company_control=cc).count(), 1)
 
     # ---- arabic flash messages, no certificate wording ----
@@ -209,3 +211,192 @@ class AuditorPortalWorkspaceArabicTests(TestCase):
         resp = self.client.post(reverse('auditor_portal:add_note', args=[a.id, cc.id]),
                                 {'note': 'ملاحظة'}, follow=True)
         self.assertIn('تمت إضافة ملاحظة المدقق', resp.content.decode())
+
+
+class AuditorPortalVerdictRfiTests(TestCase):
+    """UAT-...-CONTROL-VERDICT-AND-RFI-LOOP-C — per-control internal verdicts + the
+    RFI (request-for-information) loop between auditor and company."""
+
+    def _assessment_for(self, auditor):
+        self.client.force_login(auditor)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        return Assessment.objects.get(assigned_auditor=auditor)
+
+    def _setup(self, email='vr_aud@x.com'):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email=email)
+        a = self._assessment_for(aud)
+        cc = _company_control(c, ctl)
+        return c, ctl, aud, a, cc
+
+    def _verdict_url(self, a, cc):
+        return reverse('auditor_portal:save_verdict', args=[a.id, cc.id])
+
+    def _rfi_url(self, a, cc):
+        return reverse('auditor_portal:request_document', args=[a.id, cc.id])
+
+    # ---------- verdict ----------
+    def test_auditor_can_create_compliant_verdict(self):
+        from auditor_portal.models import AuditorControlVerdict
+        c, ctl, aud, a, cc = self._setup()
+        self.client.force_login(aud)
+        self.client.post(self._verdict_url(a, cc), {'status': 'compliant'})
+        v = AuditorControlVerdict.objects.filter(assessment=a, company_control=cc).first()
+        self.assertIsNotNone(v)
+        self.assertEqual(v.status, 'compliant')
+
+    def test_non_compliant_requires_rationale_and_recommendation(self):
+        from auditor_portal.models import AuditorControlVerdict
+        c, ctl, aud, a, cc = self._setup(email='vr_neg@x.com')
+        self.client.force_login(aud)
+        # missing rationale/recommendation -> not created
+        self.client.post(self._verdict_url(a, cc), {'status': 'non_compliant'})
+        self.assertEqual(AuditorControlVerdict.objects.count(), 0)
+        # with both -> created
+        self.client.post(self._verdict_url(a, cc),
+                         {'status': 'non_compliant', 'rationale': 'لا توجد سياسة', 'recommendation': 'اعتماد سياسة'})
+        self.assertEqual(AuditorControlVerdict.objects.filter(status='non_compliant').count(), 1)
+
+    def test_needs_more_evidence_requires_rationale(self):
+        from auditor_portal.models import AuditorControlVerdict
+        c, ctl, aud, a, cc = self._setup(email='vr_nme@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._verdict_url(a, cc), {'status': 'needs_more_evidence', 'recommendation': 'ارفع الدليل'})
+        self.assertEqual(AuditorControlVerdict.objects.count(), 0)  # rationale missing
+
+    def test_verdict_update_overwrites(self):
+        from auditor_portal.models import AuditorControlVerdict
+        c, ctl, aud, a, cc = self._setup(email='vr_upd@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._verdict_url(a, cc), {'status': 'compliant'})
+        self.client.post(self._verdict_url(a, cc),
+                         {'status': 'partially_compliant', 'rationale': 'جزئي'})
+        self.assertEqual(AuditorControlVerdict.objects.filter(assessment=a, company_control=cc).count(), 1)
+        self.assertEqual(AuditorControlVerdict.objects.get(assessment=a, company_control=cc).status,
+                         'partially_compliant')
+
+    def test_other_auditor_cannot_create_verdict(self):
+        from auditor_portal.models import AuditorControlVerdict
+        c, ctl, audA, aA, ccA = self._setup(email='vr_a@x.com')
+        cB = Company.objects.create(name='VB', cr_number='8181818181', sector='technology',
+                                    size='small', contact_email='vb@x.com')
+        audB = _assigned_auditor_user(cB, email='vr_b@x.com')
+        self._assessment_for(audB)
+        self.client.force_login(audB)
+        self.assertEqual(self.client.post(self._verdict_url(aA, ccA), {'status': 'compliant'}).status_code, 404)
+        self.assertEqual(AuditorControlVerdict.objects.count(), 0)
+
+    def test_company_user_cannot_create_verdict(self):
+        from auditor_portal.models import AuditorControlVerdict
+        c, ctl, aud, a, cc = self._setup(email='vr_cu_a@x.com')
+        self.client.force_login(_journey_user(c, email='vr_cu@x.com'))
+        self.client.post(self._verdict_url(a, cc), {'status': 'compliant'})
+        self.assertEqual(AuditorControlVerdict.objects.count(), 0)
+
+    def test_verdict_get_does_not_mutate(self):
+        c, ctl, aud, a, cc = self._setup(email='vr_get@x.com')
+        self.client.force_login(aud)
+        self.assertEqual(self.client.get(self._verdict_url(a, cc)).status_code, 405)
+
+    def test_verdict_shows_on_review_control_and_counts_on_assessment(self):
+        c, ctl, aud, a, cc = self._setup(email='vr_show@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._verdict_url(a, cc), {'status': 'compliant'})
+        rc = self.client.get(reverse('auditor_portal:review_control', args=[a.id, cc.id])).content.decode()
+        self.assertIn('الحكم الداخلي على الضابط', rc)
+        self.assertIn('متوافق', rc)
+        ra = self.client.get(reverse('auditor_portal:review_assessment', args=[a.id])).content.decode()
+        self.assertIn('تغطية الأحكام الداخلية', ra)
+        self.assertIn('جاهزية التقرير الداخلي', ra)
+
+    # ---------- RFI ----------
+    def test_auditor_creates_rfi_open(self):
+        from auditor_portal.models import DocumentRequest
+        c, ctl, aud, a, cc = self._setup(email='rfi_c@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._rfi_url(a, cc), {'title': 'سياسة', 'description_ar': 'ارفع السياسة', 'priority': 'high'})
+        r = DocumentRequest.objects.filter(assessment=a, company_control=cc).first()
+        self.assertIsNotNone(r)
+        self.assertEqual(r.status, 'open')
+        self.assertEqual(r.priority, 'high')
+
+    def test_company_sees_and_responds_to_rfi(self):
+        from auditor_portal.models import DocumentRequest, CompanyRFIResponse
+        c, ctl, aud, a, cc = self._setup(email='rfi_resp_a@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._rfi_url(a, cc), {'title': 'سياسة كلمات المرور', 'description_ar': 'ارفعوا السياسة'})
+        rfi = DocumentRequest.objects.get(assessment=a, company_control=cc)
+        cu = _journey_user(c, email='rfi_cu@x.com')
+        self.client.force_login(cu)
+        body = self.client.get(reverse('auditor_portal:company_rfi_list')).content.decode()
+        self.assertIn('طلبات استكمال من المدقق', body)
+        self.assertIn('سياسة كلمات المرور', body)
+        self.client.post(reverse('auditor_portal:company_rfi_respond', args=[rfi.id]),
+                         {'response_text': 'تم رفع السياسة'})
+        rfi.refresh_from_db()
+        self.assertEqual(rfi.status, 'responded')
+        self.assertEqual(CompanyRFIResponse.objects.filter(request=rfi).count(), 1)
+
+    def test_other_company_cannot_respond(self):
+        from auditor_portal.models import DocumentRequest, CompanyRFIResponse
+        c, ctl, aud, a, cc = self._setup(email='rfi_oc_a@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._rfi_url(a, cc), {'title': 't', 'description_ar': 'x'})
+        rfi = DocumentRequest.objects.get(assessment=a, company_control=cc)
+        other = Company.objects.create(name='Other', cr_number='7777777777', sector='technology',
+                                       size='small', contact_email='o@x.com')
+        self.client.force_login(_journey_user(other, email='rfi_oc@x.com'))
+        self.assertEqual(self.client.post(reverse('auditor_portal:company_rfi_respond', args=[rfi.id]),
+                                          {'response_text': 'x'}).status_code, 404)
+        self.assertEqual(CompanyRFIResponse.objects.count(), 0)
+
+    def test_auditor_closes_rfi_requires_note(self):
+        from auditor_portal.models import DocumentRequest
+        c, ctl, aud, a, cc = self._setup(email='rfi_close@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._rfi_url(a, cc), {'title': 't', 'description_ar': 'x'})
+        rfi = DocumentRequest.objects.get(assessment=a, company_control=cc)
+        self.client.post(reverse('auditor_portal:close_rfi', args=[rfi.id]), {'closing_note': ''})
+        rfi.refresh_from_db(); self.assertNotEqual(rfi.status, 'closed')
+        self.client.post(reverse('auditor_portal:close_rfi', args=[rfi.id]), {'closing_note': 'مكتمل'})
+        rfi.refresh_from_db(); self.assertEqual(rfi.status, 'closed')
+
+    def test_other_auditor_cannot_close_rfi(self):
+        from auditor_portal.models import DocumentRequest
+        c, ctl, audA, aA, ccA = self._setup(email='rfi_oa_a@x.com')
+        self.client.force_login(audA)
+        self.client.post(self._rfi_url(aA, ccA), {'title': 't', 'description_ar': 'x'})
+        rfi = DocumentRequest.objects.get(assessment=aA, company_control=ccA)
+        cB = Company.objects.create(name='RB', cr_number='8282828282', sector='technology',
+                                    size='small', contact_email='rb@x.com')
+        audB = _assigned_auditor_user(cB, email='rfi_oa_b@x.com')
+        self._assessment_for(audB)
+        self.client.force_login(audB)
+        self.assertEqual(self.client.post(reverse('auditor_portal:close_rfi', args=[rfi.id]),
+                                          {'closing_note': 'x'}).status_code, 404)
+
+    def test_anonymous_redirected_from_company_rfi(self):
+        resp = self.client.get(reverse('auditor_portal:company_rfi_list'))
+        self.assertIn(resp.status_code, (302, 403))
+
+    # ---------- report readiness ----------
+    def test_open_rfi_blocks_report(self):
+        from auditor_portal.models import DocumentRequest
+        c, ctl, aud, a, cc = self._setup(email='rr_block@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._rfi_url(a, cc), {'title': 't', 'description_ar': 'x'})  # open RFI
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')          # blocked while RFI open
+
+    def test_closed_rfi_and_verdict_allow_report(self):
+        from auditor_portal.models import DocumentRequest
+        c, ctl, aud, a, cc = self._setup(email='rr_ok@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._verdict_url(a, cc), {'status': 'compliant'})
+        self.client.post(self._rfi_url(a, cc), {'title': 't', 'description_ar': 'x'})
+        rfi = DocumentRequest.objects.get(assessment=a, company_control=cc)
+        self.client.post(reverse('auditor_portal:close_rfi', args=[rfi.id]), {'closing_note': 'ok'})
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'completed')

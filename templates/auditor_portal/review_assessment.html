@@ -62,6 +62,38 @@
     <p class="text-xs text-gov-gray-400 mt-2">الحالات: مكتمل · الخطوة الحالية · بانتظار. لا تُحتسب خطوة كمكتملة دون توفّر بياناتها.</p>
   </div>
 
+  {# Verdict coverage + report readiness #}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3 text-sm">تغطية الأحكام الداخلية</h2>
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">إجمالي الضوابط</span><span class="font-bold">{{ workspace.controls_count }}</span></div>
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">تمت مراجعتها</span><span class="font-bold text-gov-green-700">{{ workspace.reviewed_controls }}</span></div>
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">لم تراجع</span><span class="font-bold text-amber-600">{{ workspace.unreviewed_controls }}</span></div>
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">متوافقة</span><span class="font-bold">{{ workspace.verdict_counts.compliant }}</span></div>
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">متوافقة جزئياً</span><span class="font-bold">{{ workspace.verdict_counts.partially_compliant }}</span></div>
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">غير متوافقة</span><span class="font-bold text-red-700">{{ workspace.verdict_counts.non_compliant }}</span></div>
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">تحتاج أدلة إضافية</span><span class="font-bold text-amber-700">{{ workspace.verdict_counts.needs_more_evidence }}</span></div>
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">غير قابلة للتطبيق</span><span class="font-bold">{{ workspace.verdict_counts.not_applicable }}</span></div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3 text-sm">جاهزية التقرير الداخلي</h2>
+      <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">طلبات استكمال مفتوحة</span><span class="font-bold {% if workspace.open_rfi %}text-red-700{% else %}text-gov-green-700{% endif %}">{{ workspace.open_rfi }}</span></div>
+        <div class="flex justify-between rounded bg-gov-gray-50 px-3 py-2"><span class="text-gov-gray-500">ردود بانتظار المراجعة</span><span class="font-bold text-blue-700">{{ workspace.responded_rfi }}</span></div>
+      </div>
+      {% if workspace.report_blocked %}
+      <div class="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm"><i class="fas fa-lock ml-1"></i> لا يمكن إصدار التقرير الداخلي النهائي قبل إغلاق طلبات الاستكمال المفتوحة.</div>
+      {% elif workspace.report_ready %}
+      <div class="rounded-lg bg-gov-green-50 border border-gov-green-200 text-gov-green-800 px-3 py-2 text-sm"><i class="fas fa-circle-check ml-1"></i> لا توجد طلبات مفتوحة، ويمكن إصدار تقرير مراجعة داخلي.</div>
+      {% else %}
+      <div class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-sm"><i class="fas fa-hourglass-half ml-1"></i> سجّل أحكاماً داخلية على الضوابط قبل إصدار التقرير الداخلي.</div>
+      {% endif %}
+      <p class="text-xs text-gov-gray-400 mt-2">هذا تقرير مراجعة داخلي ولا يمثل شهادة امتثال رسمية.</p>
+    </div>
+  </div>
+
   {# Controls review #}
   <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 overflow-hidden mb-6">
     <div class="px-6 py-4 border-b border-gov-gray-200 flex justify-between items-center">
@@ -76,7 +108,7 @@
             <th class="px-4 py-3 text-right font-medium">العنوان</th>
             <th class="px-4 py-3 text-right font-medium">المجال</th>
             <th class="px-4 py-3 text-right font-medium">مؤشر التحليل الاستشاري</th>
-            <th class="px-4 py-3 text-right font-medium">الحالة</th>
+            <th class="px-4 py-3 text-right font-medium">الحكم الداخلي</th>
             <th class="px-4 py-3 text-right font-medium">الإجراء</th>
           </tr>
         </thead>
@@ -93,7 +125,13 @@
                 {% elif cc.ai_verdict == 'partially_compliant' %}bg-yellow-100 text-yellow-800
                 {% else %}bg-gray-100 text-gray-600{% endif %}">{{ cc.ai_verdict|ai_verdict_ar }}</span>
             </td>
-            <td class="px-4 py-3 text-gov-gray-600">{{ cc.status|cc_status_ar }}</td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded text-xs font-medium
+                {% if cc.verdict.status == 'compliant' %}bg-green-100 text-green-800
+                {% elif cc.verdict.status == 'non_compliant' %}bg-red-100 text-red-800
+                {% elif cc.verdict.status == 'partially_compliant' or cc.verdict.status == 'needs_more_evidence' %}bg-yellow-100 text-yellow-800
+                {% else %}bg-gray-100 text-gray-600{% endif %}">{% if cc.verdict %}{{ cc.verdict.status|verdict_status_ar }}{% else %}لم يراجع{% endif %}</span>
+            </td>
             <td class="px-4 py-3">
               <a href="{% url 'auditor_portal:review_control' assessment.id cc.id %}" class="text-gov-green-700 hover:text-gov-green-900 font-medium whitespace-nowrap">
                 <i class="fas fa-search ml-1"></i> مراجعة

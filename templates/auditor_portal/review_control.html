@@ -79,10 +79,87 @@
         <p class="text-xs text-gov-gray-400 mt-1">عرض للقراءة فقط — لا يمكن للمدقق حذف أو استبدال أدلة الشركة.</p>
       </div>
 
-      {# Detailed per-control verdict — not wired in this phase #}
-      <div class="bg-gov-gray-50 rounded-xl border border-gov-gray-200 p-5">
-        <h3 class="font-bold text-gov-gray-600 mb-1 text-sm"><i class="fas fa-lock ml-1"></i> الحكم التفصيلي على الضابط</h3>
-        <p class="text-sm text-gov-gray-500">مسار الحكم التفصيلي على الضابط غير متاح حالياً وسيتم تنفيذه في مرحلة لاحقة. سجّل ملاحظاتك أدناه، ويُصدر الحكم الداخلي العام عبر «تقرير المراجعة الداخلي».</p>
+      {# Internal per-control verdict #}
+      <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gov-green-800 mb-1">الحكم الداخلي على الضابط</h2>
+        <p class="text-xs text-gov-gray-500 mb-4">حكم مراجعة داخلي على هذا الضابط — لا يمثل اعتماداً رسمياً من NCA أو Aramco أو SABIC.</p>
+        {% if verdict %}
+        <div class="rounded-lg bg-gov-gray-50 border border-gov-gray-200 p-4 mb-4 text-sm">
+          <p><span class="text-gov-gray-500">الحالة:</span> <span class="font-medium">{{ verdict.status|verdict_status_ar }}</span>{% if verdict.impact %} · <span class="text-gov-gray-500">مستوى الأثر:</span> {{ verdict.impact|impact_ar }}{% endif %}</p>
+          {% if verdict.rationale %}<p class="mt-1"><span class="text-gov-gray-500">المبرر:</span> {{ verdict.rationale }}</p>{% endif %}
+          {% if verdict.recommendation %}<p class="mt-1"><span class="text-gov-gray-500">التوصية:</span> {{ verdict.recommendation }}</p>{% endif %}
+          <p class="text-xs text-gov-gray-400 mt-2">آخر تحديث: {{ verdict.updated_at|date:"Y-m-d H:i" }}{% if verdict.auditor %} · المدقق: {{ verdict.auditor.get_full_name|default:verdict.auditor.email }}{% endif %}</p>
+        </div>
+        {% endif %}
+        <form method="post" action="{% url 'auditor_portal:save_verdict' assessment.id company_control.id %}" class="grid gap-3">
+          {% csrf_token %}
+          <label class="text-sm"><span class="block text-gov-gray-500 mb-1">الحالة</span>
+            <select name="status" required class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+              <option value="compliant" {% if verdict.status == 'compliant' %}selected{% endif %}>متوافق</option>
+              <option value="partially_compliant" {% if verdict.status == 'partially_compliant' %}selected{% endif %}>متوافق جزئياً</option>
+              <option value="non_compliant" {% if verdict.status == 'non_compliant' %}selected{% endif %}>غير متوافق</option>
+              <option value="needs_more_evidence" {% if verdict.status == 'needs_more_evidence' %}selected{% endif %}>يحتاج أدلة إضافية</option>
+              <option value="not_applicable" {% if verdict.status == 'not_applicable' %}selected{% endif %}>غير قابل للتطبيق</option>
+            </select></label>
+          <label class="text-sm"><span class="block text-gov-gray-500 mb-1">المبرر <span class="text-gov-gray-400">(مطلوب لغير المتوافق/الجزئي/يحتاج أدلة/لا ينطبق)</span></span>
+            <textarea name="rationale" rows="3" dir="rtl" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">{{ verdict.rationale }}</textarea></label>
+          <label class="text-sm"><span class="block text-gov-gray-500 mb-1">التوصية <span class="text-gov-gray-400">(مطلوبة لغير المتوافق/يحتاج أدلة)</span></span>
+            <textarea name="recommendation" rows="2" dir="rtl" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">{{ verdict.recommendation }}</textarea></label>
+          <label class="text-sm"><span class="block text-gov-gray-500 mb-1">مستوى الأثر (اختياري)</span>
+            <select name="impact" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+              <option value="">—</option>
+              <option value="low" {% if verdict.impact == 'low' %}selected{% endif %}>منخفض</option>
+              <option value="medium" {% if verdict.impact == 'medium' %}selected{% endif %}>متوسط</option>
+              <option value="high" {% if verdict.impact == 'high' %}selected{% endif %}>عالٍ</option>
+              <option value="critical" {% if verdict.impact == 'critical' %}selected{% endif %}>حرج</option>
+            </select></label>
+          <div><button type="submit" class="bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-gov-green-900 transition text-sm">حفظ الحكم الداخلي</button></div>
+        </form>
+      </div>
+
+      {# RFI list (this control) with company responses + lifecycle #}
+      <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gov-green-800 mb-4"><i class="fas fa-file-circle-question ml-1"></i> طلبات الاستكمال ({{ document_requests.count }})</h2>
+        {% for req in document_requests %}
+        <div class="border border-gov-gray-200 rounded-lg p-4 mb-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <p class="font-medium text-gov-gray-800">{{ req.title|default:"طلب استكمال" }}</p>
+              <p class="text-sm text-gov-gray-600">{{ req.description_ar|default:req.description }}</p>
+              <p class="text-xs text-gov-gray-400 mt-1">الأولوية: {{ req.priority|priority_ar }} · {{ req.created_at|date:"Y-m-d" }}</p>
+            </div>
+            <span class="shrink-0 text-xs px-2 py-0.5 rounded-full
+              {% if req.status == 'closed' %}bg-gov-gray-100 text-gov-gray-600
+              {% elif req.status == 'responded' %}bg-blue-50 text-blue-700
+              {% elif req.status == 'cancelled' %}bg-gov-gray-100 text-gov-gray-400
+              {% else %}bg-amber-50 text-amber-700{% endif %}">{{ req.status|doc_request_status_ar }}</span>
+          </div>
+          {% for resp in req.responses.all %}
+          <div class="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-2 text-sm">
+            <p class="text-blue-800">رد الشركة: {{ resp.response_text }}</p>
+            <p class="text-xs text-blue-400 mt-0.5">{{ resp.created_at|date:"Y-m-d H:i" }}</p>
+          </div>
+          {% endfor %}
+          {% if req.closing_note %}<p class="text-xs text-gov-gray-500 mt-2">ملاحظة الإغلاق: {{ req.closing_note }}</p>{% endif %}
+          <div class="flex flex-wrap gap-2 mt-3">
+            {% if req.is_open %}
+            <form method="post" action="{% url 'auditor_portal:close_rfi' req.id %}" class="flex items-center gap-1">
+              {% csrf_token %}<input type="text" name="closing_note" required placeholder="ملاحظة الإغلاق" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-40">
+              <button class="bg-gov-green-50 text-gov-green-700 hover:bg-gov-green-100 px-2.5 py-1 rounded text-xs font-medium">إغلاق الطلب</button>
+            </form>
+            <form method="post" action="{% url 'auditor_portal:cancel_rfi' req.id %}">
+              {% csrf_token %}<button class="bg-gov-gray-50 text-gov-gray-600 hover:bg-gov-gray-100 px-2.5 py-1 rounded text-xs font-medium">إلغاء</button>
+            </form>
+            {% else %}
+            <form method="post" action="{% url 'auditor_portal:reopen_rfi' req.id %}">
+              {% csrf_token %}<button class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded text-xs font-medium">إعادة الفتح / طلب توضيح</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-gov-gray-400 text-sm">لا توجد طلبات استكمال لهذا الضابط.</p>
+        {% endfor %}
       </div>
     </div>
 
@@ -107,8 +184,15 @@
         <h3 class="text-lg font-semibold text-gov-green-800 mb-4"><i class="fas fa-file-circle-question ml-1"></i> طلب استكمال من الشركة</h3>
         <form method="post" action="{% url 'auditor_portal:request_document' assessment.id company_control.id %}">
           {% csrf_token %}
-          <textarea name="description_ar" rows="3" dir="rtl" required class="w-full border border-gov-gray-300 rounded-lg px-4 py-3 text-sm mb-3" placeholder="سبب/وصف المستند المطلوب (مطلوب)..."></textarea>
-          <button type="submit" class="w-full bg-yellow-600 text-white py-2.5 rounded-lg font-medium hover:bg-yellow-700 transition text-sm">إرسال الطلب</button>
+          <input type="text" name="title" required class="w-full border border-gov-gray-300 rounded-lg px-4 py-2.5 text-sm mb-3" placeholder="عنوان الطلب (مطلوب)">
+          <textarea name="description_ar" rows="3" dir="rtl" required class="w-full border border-gov-gray-300 rounded-lg px-4 py-3 text-sm mb-3" placeholder="سبب/وصف المطلوب من الشركة (مطلوب)..."></textarea>
+          <label class="block text-sm text-gov-gray-500 mb-1">الأولوية</label>
+          <select name="priority" class="w-full border border-gov-gray-300 rounded-lg px-4 py-2.5 text-sm mb-3">
+            <option value="low">منخفضة</option>
+            <option value="medium" selected>متوسطة</option>
+            <option value="high">عالية</option>
+          </select>
+          <button type="submit" class="w-full bg-yellow-600 text-white py-2.5 rounded-lg font-medium hover:bg-yellow-700 transition text-sm">إرسال طلب الاستكمال</button>
         </form>
         <p class="text-xs text-gov-gray-400 mt-2">يظهر الطلب للشركة ضمن استكمالاتها المطلوبة إن كان مسار الاستكمال مفعّلاً لديها.</p>
       </div>

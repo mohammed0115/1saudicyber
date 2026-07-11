@@ -199,8 +199,17 @@ def journey_dashboard(request):
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
+    # Open auditor RFIs (requests for information) awaiting the company's response.
+    try:
+        from auditor_portal.models import DocumentRequest
+        open_rfi_count = DocumentRequest.objects.filter(
+            company_control__company=company,
+            status__in=('open', 'pending', 'under_review')).count()
+    except Exception:
+        open_rfi_count = 0
     return render(request, 'compliance/journey_dashboard.html', {
         'company': company,
+        'open_rfi_count': open_rfi_count,
         'journey': build_company_compliance_journey(company, request.user),
         'stages': build_company_journey_status(company),
         'next_action': get_next_recommended_action(company),

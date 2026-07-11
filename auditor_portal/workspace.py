@@ -23,7 +23,7 @@ _STEP_DEFS = [
 def review_workspace_summary(assessment):
     """Return {steps, counts...} for the auditor review workspace. Read-only."""
     from compliance.models import CompanyControl, Evidence
-    from .models import AuditorNote, DocumentRequest, AuditReport
+    from .models import AuditorNote, DocumentRequest, AuditReport, AuditorControlVerdict
 
     company = assessment.company
     ccs = CompanyControl.objects.filter(company=company)
@@ -45,9 +45,31 @@ def review_workspace_summary(assessment):
 
     has_ai = ccs.exclude(ai_verdict='').exists() or evidence_qs.exclude(ai_verdict='').exists()
     notes_count = AuditorNote.objects.filter(assessment=assessment).count()
-    docreq_count = DocumentRequest.objects.filter(assessment=assessment).count()
+
+    # Internal verdict coverage (per control).
+    verdicts = AuditorControlVerdict.objects.filter(assessment=assessment)
+    vcounts = {'compliant': 0, 'partially_compliant': 0, 'non_compliant': 0,
+               'needs_more_evidence': 0, 'not_applicable': 0}
+    reviewed_controls = 0
+    for v in verdicts:
+        if v.status in vcounts:
+            vcounts[v.status] += 1
+        if v.status in AuditorControlVerdict.REVIEWED_STATES:
+            reviewed_controls += 1
+    unreviewed_controls = max(0, controls_count - reviewed_controls)
+
+    # RFI lifecycle.
+    reqs = DocumentRequest.objects.filter(assessment=assessment)
+    docreq_count = reqs.count()
+    open_rfi = reqs.filter(status__in=DocumentRequest.OPEN_STATES).count()
+    responded_rfi = reqs.filter(status='responded').count()
+
     has_report = (AuditReport.objects.filter(assessment=assessment).exists()
                   or assessment.status == 'completed')
+    # Report readiness: hard-blocked while any RFI is open; ready once at least one
+    # verdict exists and no RFI is open. Internal review only — never a certificate.
+    report_blocked = open_rfi > 0
+    report_ready = (reviewed_controls > 0) and (open_rfi == 0)
 
     done_map = {
         'open_company': True,
@@ -57,7 +79,7 @@ def review_workspace_summary(assessment):
         'advisory_review': has_ai,
         'auditor_notes': notes_count > 0,
         'doc_requests': docreq_count > 0,
-        'internal_verdict': has_report,
+        'internal_verdict': reviewed_controls > 0,
         'internal_report': assessment.status == 'completed',
     }
     # Steps that legitimately wait on company/data rather than the auditor — shown as
@@ -88,4 +110,13 @@ def review_workspace_summary(assessment):
         'notes_count': notes_count,
         'docreq_count': docreq_count,
         'has_report': has_report,
+        # verdict coverage
+        'reviewed_controls': reviewed_controls,
+        'unreviewed_controls': unreviewed_controls,
+        'verdict_counts': vcounts,
+        # RFI + readiness
+        'open_rfi': open_rfi,
+        'responded_rfi': responded_rfi,
+        'report_blocked': report_blocked,
+        'report_ready': report_ready,
     }

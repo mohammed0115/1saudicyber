@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load auditor_review %}
+{% block title %}طلبات استكمال من المدقق - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div style="max-width:900px;margin:0 auto;padding:16px;">
+    <h1 class="text-2xl font-bold text-gov-green-800 mb-1">طلبات استكمال من المدقق</h1>
+    <p class="text-gov-gray-600 text-sm mb-5">طلبات إضافية من المدقق تخص مراجعة جاهزية شركتك. أرسل ردك أو ارفع الدليل المطلوب من صفحة الضابط ثم أرفق التوضيح هنا. مراجعة داخلية ولا تمثل شهادة رسمية.</p>
+
+    {% if messages %}{% for m in messages %}
+    <div class="rounded-lg p-3 text-sm mb-3 {% if m.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% else %}bg-green-50 border border-green-200 text-green-800{% endif %}">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    {% for req in rfis %}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-5 mb-4">
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <p class="font-bold text-gov-green-800">{{ req.title|default:"طلب استكمال" }}</p>
+          <p class="text-xs text-gov-gray-500">الضابط: <span dir="ltr">{{ req.company_control.control.control_id }}</span> — {{ req.company_control.control.title|truncatechars:60 }}</p>
+        </div>
+        <span class="shrink-0 text-xs px-2 py-0.5 rounded-full
+          {% if req.status == 'closed' %}bg-gov-gray-100 text-gov-gray-600
+          {% elif req.status == 'responded' %}bg-blue-50 text-blue-700
+          {% elif req.status == 'cancelled' %}bg-gov-gray-100 text-gov-gray-400
+          {% else %}bg-amber-50 text-amber-700{% endif %}">{{ req.status|doc_request_status_ar }}</span>
+      </div>
+      <p class="text-sm text-gov-gray-700 mt-2">{{ req.description_ar|default:req.description }}</p>
+      <p class="text-xs text-gov-gray-400 mt-1">الأولوية: {{ req.priority|priority_ar }} · تاريخ الطلب: {{ req.created_at|date:"Y-m-d" }}</p>
+
+      {% for resp in req.responses.all %}
+      <div class="mt-2 bg-gov-gray-50 border border-gov-gray-200 rounded-lg p-2 text-sm">
+        <p class="text-gov-gray-700">ردك: {{ resp.response_text }}</p>
+        <p class="text-xs text-gov-gray-400 mt-0.5">{{ resp.created_at|date:"Y-m-d H:i" }}</p>
+      </div>
+      {% endfor %}
+
+      {% if req.status == 'open' or req.status == 'pending' or req.status == 'responded' or req.status == 'under_review' %}
+      <form method="post" action="{% url 'auditor_portal:company_rfi_respond' req.id %}" class="mt-3 flex flex-col sm:flex-row gap-2">
+        {% csrf_token %}
+        <input type="text" name="response_text" required placeholder="اكتب ردك للمدقق (مطلوب)" class="flex-1 border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+        <button type="submit" class="bg-gov-green-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-gov-green-900 transition text-sm whitespace-nowrap">إرسال الرد</button>
+      </form>
+      {% elif req.closing_note %}
+      <p class="text-xs text-gov-gray-500 mt-2">ملاحظة إغلاق المدقق: {{ req.closing_note }}</p>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-10 text-center">
+      <i class="fas fa-inbox text-gov-gray-300 text-4xl mb-3"></i>
+      <p class="text-gov-gray-500">لا توجد طلبات استكمال من المدقق حاليًا.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

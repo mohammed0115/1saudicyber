@@ -47,11 +47,28 @@ _ASSESSMENT_STATUS_AR = {
 }
 
 _DOC_REQUEST_STATUS_AR = {
-    'pending': 'بانتظار',
+    'open': 'مفتوح',
+    'pending': 'مفتوح',
+    'responded': 'تم الرد',
+    'under_review': 'قيد مراجعة المدقق',
+    'closed': 'مغلق',
+    'cancelled': 'ملغي',
     'submitted': 'تم الرفع',
     'accepted': 'مقبول',
     'rejected': 'مرفوض',
 }
+
+_VERDICT_STATUS_AR = {
+    'not_reviewed': 'لم يراجع',
+    'compliant': 'متوافق',
+    'partially_compliant': 'متوافق جزئياً',
+    'non_compliant': 'غير متوافق',
+    'needs_more_evidence': 'يحتاج أدلة إضافية',
+    'not_applicable': 'غير قابل للتطبيق',
+}
+
+_PRIORITY_AR = {'low': 'منخفضة', 'medium': 'متوسطة', 'high': 'عالية'}
+_IMPACT_AR = {'low': 'منخفض', 'medium': 'متوسط', 'high': 'عالٍ', 'critical': 'حرج'}
 
 _REPORT_VERDICT_AR = {
     'pass': 'جاهز مبدئيًا (مراجعة داخلية)',
@@ -92,3 +109,18 @@ def doc_request_status_ar(value):
 @register.filter
 def report_verdict_ar(value):
     return _ar(_REPORT_VERDICT_AR, value)
+
+
+@register.filter
+def verdict_status_ar(value):
+    return _ar(_VERDICT_STATUS_AR, value)
+
+
+@register.filter
+def priority_ar(value):
+    return _ar(_PRIORITY_AR, value)
+
+
+@register.filter
+def impact_ar(value):
+    return _ar(_IMPACT_AR, value)
