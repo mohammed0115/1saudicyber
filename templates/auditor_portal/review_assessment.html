@@ -85,8 +85,10 @@
       </div>
       {% if workspace.report_blocked %}
       <div class="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm"><i class="fas fa-lock ml-1"></i> لا يمكن إصدار التقرير الداخلي النهائي قبل إغلاق طلبات الاستكمال المفتوحة.</div>
+      {% elif workspace.report_ready and workspace.full_coverage %}
+      <div class="rounded-lg bg-gov-green-50 border border-gov-green-200 text-gov-green-800 px-3 py-2 text-sm"><i class="fas fa-circle-check ml-1"></i> تمت مراجعة كل الضوابط ولا توجد طلبات مفتوحة، ويمكن إصدار تقرير مراجعة داخلي.</div>
       {% elif workspace.report_ready %}
-      <div class="rounded-lg bg-gov-green-50 border border-gov-green-200 text-gov-green-800 px-3 py-2 text-sm"><i class="fas fa-circle-check ml-1"></i> لا توجد طلبات مفتوحة، ويمكن إصدار تقرير مراجعة داخلي.</div>
+      <div class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-sm"><i class="fas fa-circle-info ml-1"></i> يمكن إصدار مسودة تقرير داخلي فقط — لم تُراجع كل الضوابط بعد ({{ workspace.unreviewed_controls }} بلا حكم).</div>
       {% else %}
       <div class="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 text-sm"><i class="fas fa-hourglass-half ml-1"></i> سجّل أحكاماً داخلية على الضوابط قبل إصدار التقرير الداخلي.</div>
       {% endif %}

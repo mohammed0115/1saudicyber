@@ -400,3 +400,92 @@ class AuditorPortalVerdictRfiTests(TestCase):
         self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
         a.refresh_from_db()
         self.assertEqual(a.status, 'completed')
+
+
+class AuditorPortalE2ELoopTests(TestCase):
+    """UAT-AUDITOR-PORTAL-E2E-QA-POLISH-D — full auditor↔company review loop end to end."""
+
+    _FORBIDDEN = ('شهادة NCA', 'اعتماد NCA', 'شهادة Aramco', 'شهادة SABIC',
+                  'Official certificate', 'Certified by')
+
+    def test_full_rfi_and_verdict_loop(self):
+        from auditor_portal.models import DocumentRequest, CompanyRFIResponse, AuditorControlVerdict
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='e2e_aud@x.com')
+        cu = _journey_user(c, email='e2e_cu@x.com')
+
+        # 1) auditor opens dashboard -> assessment materialised; workspace pages load
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        cc = _company_control(c, ctl)
+        self.assertEqual(self.client.get(reverse('auditor_portal:review_assessment', args=[a.id])).status_code, 200)
+        ra_body = self.client.get(reverse('auditor_portal:review_control', args=[a.id, cc.id])).content.decode()
+        for bad in self._FORBIDDEN:
+            self.assertNotIn(bad, ra_body)
+
+        # 2) auditor creates an RFI
+        self.client.post(reverse('auditor_portal:request_document', args=[a.id, cc.id]),
+                         {'title': 'سياسة كلمات المرور', 'description_ar': 'يرجى رفع السياسة', 'priority': 'high'})
+        rfi = DocumentRequest.objects.get(assessment=a, company_control=cc)
+        self.assertEqual(rfi.status, 'open')
+
+        # 3) report is BLOCKED while the RFI is open
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db(); self.assertNotEqual(a.status, 'completed')
+
+        # 4) company sees the RFI (dedicated page + dashboard banner) and responds
+        self.client.force_login(cu)
+        dash = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertIn(reverse('auditor_portal:company_rfi_list'), dash)     # banner link
+        self.assertIn('طلب استكمال من المدقق', dash)
+        rfi_page = self.client.get(reverse('auditor_portal:company_rfi_list')).content.decode()
+        self.assertIn('سياسة كلمات المرور', rfi_page)
+        self.client.post(reverse('auditor_portal:company_rfi_respond', args=[rfi.id]),
+                         {'response_text': 'تم رفع السياسة المطلوبة'})
+        rfi.refresh_from_db()
+        self.assertEqual(rfi.status, 'responded')
+        self.assertEqual(CompanyRFIResponse.objects.filter(request=rfi).count(), 1)
+
+        # 5) a responded-but-not-closed RFI still counts as open -> report still blocked
+        self.client.force_login(aud)
+        rc = self.client.get(reverse('auditor_portal:review_control', args=[a.id, cc.id])).content.decode()
+        self.assertIn('تم رفع السياسة المطلوبة', rc)                        # auditor sees the response
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db(); self.assertNotEqual(a.status, 'completed')
+
+        # 6) auditor closes the RFI and records a verdict
+        self.client.post(reverse('auditor_portal:close_rfi', args=[rfi.id]), {'closing_note': 'تمت المعالجة'})
+        rfi.refresh_from_db(); self.assertEqual(rfi.status, 'closed')
+        self.client.post(reverse('auditor_portal:save_verdict', args=[a.id, cc.id]), {'status': 'compliant'})
+        self.assertTrue(AuditorControlVerdict.objects.filter(assessment=a, company_control=cc).exists())
+
+        # 7) with no open RFI and a verdict recorded, the internal report can be issued
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db(); self.assertEqual(a.status, 'completed')
+
+    def test_compliance_dashboard_has_no_rfi_banner_when_none(self):
+        c, ctl = _company_with_control()
+        self.client.force_login(_journey_user(c, email='e2e_norfi@x.com'))
+        body = self.client.get(reverse('compliance:dashboard')).content.decode()
+        self.assertNotIn('طلب استكمال من المدقق', body)   # banner only when open RFI exists
+
+    def test_auditor_dashboard_links_to_review_workspace(self):
+        from compliance.tests import _company_with_assessments
+        c, _fv, _s = _company_with_assessments()
+        from auditors import services
+        u, ap = _auditor_active(c, 'e2e_link@x.com')
+        a, _ = services.create_assignment(c, ap, requested_by=None)
+        services.respond_to_assignment(a, 'accept', responder=u)
+        self.client.force_login(u)
+        body = self.client.get(reverse('auditors:dashboard')).content.decode()
+        self.assertIn(reverse('auditor_portal:dashboard'), body)
+        self.assertIn('مساحة مراجعة الأدلة', body)
+
+
+def _auditor_active(company, email):
+    """An active auditor profile (helper for the dashboard-link E2E test)."""
+    from auditors.models import AuditorProfile
+    u = User.objects.create_user(email=email, username=email, password='longenough12', role='auditor')
+    p = AuditorProfile.objects.create(user=u, full_name='E2E Auditor', status='active', is_available=True)
+    return u, p

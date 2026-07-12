@@ -306,10 +306,15 @@ def submit_report(request, assessment_id):
             messages.error(request, 'لا يمكن إصدار التقرير الداخلي النهائي قبل إغلاق طلبات '
                                     'الاستكمال المفتوحة (%d طلب مفتوح).' % open_rfi)
             return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
-        if not AuditorControlVerdict.objects.filter(
-                assessment=assessment, status__in=AuditorControlVerdict.REVIEWED_STATES).exists():
+        reviewed = AuditorControlVerdict.objects.filter(
+            assessment=assessment, status__in=AuditorControlVerdict.REVIEWED_STATES).count()
+        total_controls = CompanyControl.objects.filter(company=assessment.company).count()
+        if reviewed == 0:
             messages.warning(request, 'تنبيه: لا توجد أحكام داخلية مسجّلة على الضوابط بعد. '
                                       'هذا تقرير داخلي مبدئي.')
+        elif total_controls and reviewed < total_controls:
+            messages.warning(request, 'تنبيه: لم تُراجع كل الضوابط بعد — هذا تقرير مراجعة '
+                                      'داخلي مبدئي وليس نهائياً.')
         AuditReport.objects.update_or_create(
             assessment=assessment,
             defaults=dict(auditor=request.user, verdict=request.POST.get('verdict', 'fail'),

@@ -70,6 +70,7 @@ def review_workspace_summary(assessment):
     # verdict exists and no RFI is open. Internal review only — never a certificate.
     report_blocked = open_rfi > 0
     report_ready = (reviewed_controls > 0) and (open_rfi == 0)
+    full_coverage = (controls_count > 0) and (unreviewed_controls == 0)
 
     done_map = {
         'open_company': True,
@@ -119,4 +120,5 @@ def review_workspace_summary(assessment):
         'responded_rfi': responded_rfi,
         'report_blocked': report_blocked,
         'report_ready': report_ready,
+        'full_coverage': full_coverage,
     }
