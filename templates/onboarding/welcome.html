@@ -1,94 +1,119 @@
 {% extends "base.html" %}
 {% block title %}التهيئة - 1SaudiCyber{% endblock %}
-
 {% block content %}
-<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
-  <div style="max-width:820px;margin:0 auto;padding:8px 4px 24px;">
+<div class="bg-gov-gray-50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
 
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:28px;
-                box-shadow:0 2px 10px rgba(31,41,51,0.05);margin-bottom:20px;">
-      <p style="color:#1F6B63;font-weight:600;margin:0 0 6px;">مرحبًا بك في 1SaudiCyber</p>
-      <h1 style="color:#1F2933;font-size:1.6rem;font-weight:700;margin:0 0 8px;">
-        أهلًا، {{ company.name_ar|default:company.name }}
-      </h1>
-      <p style="color:#667085;font-size:.96rem;margin:0 0 18px;">
-        تم إنشاء حساب شركتك بنجاح. هذه نظرة سريعة على رحلة الامتثال. ابدأ بإكمال ملف التصنيف،
-        ثم راجع الأطر المنطبقة, وستتولّى لوحة الرحلة إرشادك خطوة بخطوة.
-      </p>
-      {% if user.email_verified %}
-      {# Verified: prominent top CTA (bottom CTA is kept for after the steps overview). #}
-      <a href="{% url 'compliance:intake' %}"
-         style="display:inline-block;background:#0F5D46;color:#fff;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">
-        ابدأ ملف التصنيف
-      </a>
-      {% else %}
-      {# Unverified: the primary action is verifying the email, not starting the journey. #}
-      <div style="background:#FBF3E6;border:1px solid #E6D2A8;border-radius:12px;padding:16px 18px;">
-        <p style="margin:0 0 6px;color:#8A5A0B;font-weight:700;">
-          <i class="fas fa-envelope-circle-check" style="margin-left:6px;"></i>
-          يرجى التحقق من بريدك الإلكتروني قبل المتابعة.
-        </p>
-        <p style="margin:0 0 14px;color:#7A5B16;font-size:.9rem;line-height:1.7;">
-          أرسلنا رابط التحقق إلى بريدك الإلكتروني. بعد التحقق ارجع للمنصة واضغط متابعة.
-        </p>
-        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
-          <form method="post" action="{% url 'core:resend_verification_link' %}" data-busy="جارٍ إرسال رابط التحقق..." style="display:inline;">
-            {% csrf_token %}
-            <button type="submit"
-                    style="background:#0F5D46;color:#fff;font-weight:600;padding:12px 22px;border:0;border-radius:10px;cursor:pointer;">
-              إعادة إرسال رابط التحقق
-            </button>
-          </form>
-          <a href="{% url 'dashboard:main' %}"
-             style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:12px 22px;border:1px solid #D8E1DD;border-radius:10px;text-decoration:none;">
-            العودة للوحة التحكم
-          </a>
+    {# ── Hero header ── #}
+    <div class="flex items-start gap-4 mb-8">
+      <div class="hidden sm:grid place-items-center w-14 h-14 rounded-2xl bg-gov-green-800 text-white shrink-0 shadow-sm">
+        <i class="fas fa-rocket text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gov-green-700 font-semibold text-sm">مرحبًا بك في 1SaudiCyber</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gov-gray-800 mt-0.5">أهلًا، {{ company.name_ar|default:company.name }}</h1>
+        <p class="text-gov-gray-500 text-sm mt-1.5 max-w-2xl">تم إنشاء حساب شركتك بنجاح. ابدأ بإكمال ملف التصنيف لتحديد الأطر المنطبقة، وستتولّى لوحة الرحلة إرشادك خطوة بخطوة حتى تقرير الامتثال.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+      {# ── Main column ── #}
+      <div class="lg:col-span-2 space-y-6">
+
+        {% if not user.email_verified %}
+        {# Unverified: verifying the email is the primary action. #}
+        <div class="bg-white rounded-2xl border border-gov-sand/50 shadow-sm overflow-hidden">
+          <div class="bg-gov-sand/10 border-b border-gov-sand/40 px-6 sm:px-8 py-5">
+            <h2 class="font-bold text-gov-gray-800 flex items-center gap-2">
+              <span class="grid place-items-center w-9 h-9 rounded-xl bg-gov-sand/25" style="color:#8a6a1f"><i class="fas fa-envelope-circle-check"></i></span>
+              أكّد بريدك الإلكتروني للمتابعة
+            </h2>
+          </div>
+          <div class="px-6 sm:px-8 py-6">
+            <p class="text-sm text-gov-gray-600 leading-relaxed mb-5">
+              أرسلنا <b>رمز تحقّق من 6 أرقام</b> إلى <span dir="ltr" class="font-medium text-gov-gray-800">{{ user.email }}</span>. اكتب الرمز في الخانة أدناه.
+            </p>
+            <form method="post" action="{% url 'core:verify_email_otp' %}" data-busy="جارٍ التحقق..."
+                  class="flex flex-wrap items-center gap-3">
+              {% csrf_token %}
+              <input type="text" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" required autofocus
+                     placeholder="••••••" dir="ltr"
+                     class="w-44 text-center text-2xl font-bold tracking-[0.4em] text-gov-gray-800 bg-white border border-gov-gray-300 rounded-xl py-3 px-4 focus:outline-none focus:border-gov-green-600 focus:ring-4 focus:ring-gov-green-600/15">
+              <button type="submit"
+                      class="bg-gov-green-800 hover:bg-gov-green-900 text-white font-semibold px-7 py-3.5 rounded-xl shadow-sm transition inline-flex items-center gap-2">
+                <i class="fas fa-check"></i> تأكيد الرمز
+              </button>
+            </form>
+            <form method="post" action="{% url 'core:resend_email_otp' %}" data-busy="جارٍ إرسال الرمز..." class="mt-4">
+              {% csrf_token %}
+              <button type="submit" class="text-sm font-medium hover:underline" style="color:#8a6a1f">لم يصلك الرمز؟ إعادة الإرسال</button>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        {# Verified: start the classification profile. #}
+        <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm px-6 sm:px-8 py-6">
+          <h2 class="font-bold text-gov-gray-800 mb-1">جاهز للبدء</h2>
+          <p class="text-sm text-gov-gray-500 mb-5">تم تأكيد بريدك. ابدأ ملف التصنيف لتحديد الأطر المنطبقة على شركتك.</p>
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'compliance:intake' %}"
+               class="bg-gov-green-800 hover:bg-gov-green-900 text-white font-semibold px-7 py-3 rounded-xl shadow-sm transition inline-flex items-center gap-2">
+              <i class="fas fa-play"></i> ابدأ ملف التصنيف
+            </a>
+            <form method="post" action="{% url 'core:onboarding_complete' %}" data-busy="جارٍ تجهيز لوحة الرحلة...">
+              {% csrf_token %}
+              <button type="submit" class="text-gov-gray-600 hover:text-gov-gray-800 font-medium text-sm border border-gov-gray-200 hover:border-gov-gray-300 px-5 py-3 rounded-xl transition">
+                الانتقال إلى لوحة الرحلة
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+
+        {# ── Journey steps ── #}
+        <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm px-6 sm:px-8 py-6">
+          <h2 class="font-bold text-gov-green-800 mb-1">مراحل رحلتك</h2>
+          <p class="text-xs text-gov-gray-400 mb-5">من التصنيف حتى تقرير الامتثال — ثمانِ مراحل موجّهة.</p>
+          <ol class="relative space-y-5 pr-1">
+            {% for step in "12345678" %}
+            <li class="flex items-start gap-4">
+              <span class="grid place-items-center w-8 h-8 rounded-full shrink-0 text-xs font-bold bg-gov-green-50 text-gov-green-800">{{ forloop.counter }}</span>
+              <div class="pt-0.5">
+                {% if forloop.counter == 1 %}<p class="text-sm font-semibold text-gov-gray-800 leading-tight">ملف التصنيف</p><p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">أجب عن أسئلة التصنيف لحساب الأطر المنطبقة.</p>
+                {% elif forloop.counter == 2 %}<p class="text-sm font-semibold text-gov-gray-800 leading-tight">مراجعة الأطر</p><p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">اطّلع على الأطر المقترحة لشركتك.</p>
+                {% elif forloop.counter == 3 %}<p class="text-sm font-semibold text-gov-gray-800 leading-tight">اعتماد النطاق</p><p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">يعتمد المدقّق/الموظّف الأطر المنطبقة.</p>
+                {% elif forloop.counter == 4 %}<p class="text-sm font-semibold text-gov-gray-800 leading-tight">خطة الضوابط</p><p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">الضوابط الرسمية المنطبقة تحت الأطر المعتمدة.</p>
+                {% elif forloop.counter == 5 %}<p class="text-sm font-semibold text-gov-gray-800 leading-tight">قائمة الأدلة ورفعها</p><p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">خطّط الأدلة وارفعها لكل ضابط.</p>
+                {% elif forloop.counter == 6 %}<p class="text-sm font-semibold text-gov-gray-800 leading-tight">التحليل الاستشاري</p><p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">تحليل مساعد للأدلة — لا يتّخذ قرار الامتثال.</p>
+                {% elif forloop.counter == 7 %}<p class="text-sm font-semibold text-gov-gray-800 leading-tight">مراجعة المدقّق</p><p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">القرار النهائي للامتثال يتّخذه المدقّق.</p>
+                {% else %}<p class="text-sm font-semibold text-gov-gray-800 leading-tight">التقارير</p><p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">تقارير الامتثال وتحليل الفجوات.</p>
+                {% endif %}
+              </div>
+            </li>
+            {% endfor %}
+          </ol>
         </div>
       </div>
-      {% endif %}
-    </div>
 
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:24px 28px;
-                box-shadow:0 2px 10px rgba(31,41,51,0.05);margin-bottom:20px;">
-      <h2 style="color:#0F5D46;font-weight:700;font-size:1.05rem;margin:0 0 16px;">مراحل رحلتك</h2>
-      <ol style="list-style:none;margin:0;padding:0;display:grid;gap:10px;">
-        {% for step in "12345678" %}
-        <li style="display:flex;align-items:flex-start;gap:12px;">
-          <span style="flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#F4F1EA;color:#0F5D46;
-                       display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.82rem;">{{ forloop.counter }}</span>
-          <div>
-            {% if forloop.counter == 1 %}<p style="margin:0;color:#1F2933;font-weight:600;">ملف التصنيف</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">أجب عن أسئلة التصنيف لحساب الأطر المنطبقة.</p>
-            {% elif forloop.counter == 2 %}<p style="margin:0;color:#1F2933;font-weight:600;">مراجعة الأطر</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">اطّلع على الأطر المقترحة لشركتك.</p>
-            {% elif forloop.counter == 3 %}<p style="margin:0;color:#1F2933;font-weight:600;">اعتماد النطاق</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">يعتمد المدقّق/الموظّف الأطر المنطبقة.</p>
-            {% elif forloop.counter == 4 %}<p style="margin:0;color:#1F2933;font-weight:600;">خطة الضوابط</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">الضوابط الرسمية المنطبقة تحت الأطر المعتمدة.</p>
-            {% elif forloop.counter == 5 %}<p style="margin:0;color:#1F2933;font-weight:600;">قائمة الأدلة ورفعها</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">خطّط الأدلة وارفعها لكل ضابط.</p>
-            {% elif forloop.counter == 6 %}<p style="margin:0;color:#1F2933;font-weight:600;">التحليل الاستشاري</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">تحليل مساعد للأدلة — لا يتّخذ قرار الامتثال.</p>
-            {% elif forloop.counter == 7 %}<p style="margin:0;color:#1F2933;font-weight:600;">مراجعة المدقّق</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">القرار النهائي للامتثال يتّخذه المدقّق.</p>
-            {% else %}<p style="margin:0;color:#1F2933;font-weight:600;">التقارير</p><p style="margin:2px 0 0;color:#667085;font-size:.86rem;">تقارير الامتثال وتحليل الفجوات.</p>
-            {% endif %}
-          </div>
-        </li>
-        {% endfor %}
-      </ol>
-    </div>
+      {# ── Sidebar (context) ── #}
+      <aside class="lg:col-span-1 lg:sticky lg:top-6 space-y-5">
+        <div class="bg-gov-sand/10 border border-gov-sand/40 rounded-2xl p-5">
+          <h3 class="font-bold text-sm mb-3" style="color:#8a6a1f"><i class="fas fa-lightbulb me-1"></i> نصائح للبداية</h3>
+          <ul class="space-y-2.5 text-xs leading-relaxed text-gov-gray-700">
+            <li class="flex gap-2"><i class="fas fa-check text-gov-green-600 mt-0.5"></i> جهّز أدلة ضوابطك (سياسات، إعدادات، لقطات) لرفعها لاحقًا.</li>
+            <li class="flex gap-2"><i class="fas fa-check text-gov-green-600 mt-0.5"></i> التحليل الآلي استشاري فقط — القرار النهائي يتّخذه المدقّق.</li>
+            <li class="flex gap-2"><i class="fas fa-check text-gov-green-600 mt-0.5"></i> يمكنك دعوة زملائك للعمل على الملف من إعدادات الفريق.</li>
+          </ul>
+        </div>
 
-    {% if user.email_verified %}
-    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
-      <a href="{% url 'compliance:intake' %}"
-         style="background:#0F5D46;color:#fff;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">
-        ابدأ ملف التصنيف
-      </a>
-      <form method="post" action="{% url 'core:onboarding_complete' %}" data-busy="جارٍ تجهيز لوحة الرحلة..." style="display:inline;">
-        {% csrf_token %}
-        <button type="submit"
-                style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:12px 22px;border:1px solid #D8E1DD;border-radius:10px;cursor:pointer;">
-          الانتقال إلى لوحة الرحلة
-        </button>
-      </form>
+        <div class="bg-white border border-gov-gray-200 rounded-2xl p-5 shadow-sm">
+          <h3 class="font-bold text-sm text-gov-green-800 mb-1">تحتاج مساعدة؟</h3>
+          <p class="text-xs text-gov-gray-500 leading-relaxed mb-3">فريق الدعم جاهز لمساعدتك في إعداد ملف الامتثال.</p>
+          <a href="{% url 'core:landing' %}" class="text-xs text-gov-green-700 font-medium hover:underline"><i class="fas fa-arrow-left-long me-1"></i> العودة إلى الرئيسية</a>
+        </div>
+      </aside>
     </div>
-    {% else %}
-    <p style="color:#8A5A0B;font-size:.9rem;margin:0;">تظهر خطوات الرحلة بعد التحقق من بريدك الإلكتروني.</p>
-    {% endif %}
   </div>
 </div>
 {% endblock %}

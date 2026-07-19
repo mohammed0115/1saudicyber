@@ -14,8 +14,19 @@
     <span dir="ltr">{{ company_control.control.control_id }}</span>
   </div>
 
+  {# Prev / next control navigation across this company's controls #}
+  <div class="flex items-center justify-between gap-2 mb-4 bg-white border border-gov-gray-200 rounded-xl px-3 py-2">
+    {% if prev_control_id %}
+    <a href="{% url 'auditor_portal:review_control' assessment.id prev_control_id %}" aria-label="الضابط السابق" data-busy="جارٍ الفتح..." class="inline-flex items-center gap-1 text-sm text-gov-green-700 font-medium hover:text-gov-green-900 px-2 py-1 rounded-lg"><i class="fas fa-chevron-right"></i> السابق</a>
+    {% else %}<span class="text-sm text-gov-gray-300 px-2 py-1"><i class="fas fa-chevron-right"></i> السابق</span>{% endif %}
+    {% if control_position %}<span class="text-xs text-gov-gray-500 font-medium">الضابط {{ control_position }} من {{ control_total }}</span>{% endif %}
+    {% if next_control_id %}
+    <a href="{% url 'auditor_portal:review_control' assessment.id next_control_id %}" aria-label="الضابط التالي" data-busy="جارٍ الفتح..." class="inline-flex items-center gap-1 text-sm text-gov-green-700 font-medium hover:text-gov-green-900 px-2 py-1 rounded-lg">التالي <i class="fas fa-chevron-left"></i></a>
+    {% else %}<span class="text-sm text-gov-gray-300 px-2 py-1">التالي <i class="fas fa-chevron-left"></i></span>{% endif %}
+  </div>
+
   <div class="mb-5">
-    <h1 class="text-2xl font-bold text-gov-green-800 mb-1">{{ company_control.control.title }}</h1>
+    <h1 class="text-2xl font-bold text-gov-green-800 mb-1">{% if company_control.control.title_ar %}{{ company_control.control.title_ar }}{% else %}<span dir="ltr">{{ company_control.control.title }}</span>{% endif %}</h1>
     <p class="text-gov-gray-600 text-sm">{{ company_control.control.description }}</p>
   </div>
 
@@ -28,8 +39,8 @@
         <div class="grid grid-cols-2 gap-4">
           <div><p class="text-sm text-gov-gray-500">الإطار</p><p class="font-medium text-gov-green-800" dir="ltr">{{ company_control.control.framework.name }}</p></div>
           <div><p class="text-sm text-gov-gray-500">المجال</p><p class="font-medium text-gov-green-800">{{ company_control.control.domain.name }}</p></div>
-          <div><p class="text-sm text-gov-gray-500">الأولوية</p><p class="font-medium text-gov-green-800">{{ company_control.control.get_priority_display }}</p></div>
-          <div><p class="text-sm text-gov-gray-500">نوع الدليل المطلوب</p><p class="font-medium text-gov-green-800">{{ company_control.control.get_evidence_type_display }}</p></div>
+          <div><p class="text-sm text-gov-gray-500">الأولوية</p><p class="font-medium text-gov-green-800">{{ company_control.control.priority|priority_ar }}</p></div>
+          <div><p class="text-sm text-gov-gray-500">نوع الدليل المطلوب</p><p class="font-medium text-gov-green-800">{{ company_control.control.evidence_type|evidence_type_ar }}</p></div>
           <div><p class="text-sm text-gov-gray-500">حالة الضابط</p><p class="font-medium text-gov-green-800">{{ company_control.status|cc_status_ar }}</p></div>
         </div>
 
@@ -67,9 +78,9 @@
           <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">لا يوجد نص مستخرج لهذا الملف. إن كان صورة فلا يوجد OCR مفعّل حاليًا ويُراجع يدويًا.</p>
           {% endif %}
           {% if evidence.ai_reasoning_ar or evidence.ai_reasoning %}
-          <div class="mt-3 p-3 bg-blue-50 rounded-lg">
-            <p class="text-sm font-medium text-blue-800 mb-1">التحليل الاستشاري للدليل:</p>
-            <p class="text-sm text-blue-700" dir="auto">{{ evidence.ai_reasoning_ar|default:evidence.ai_reasoning }}</p>
+          <div class="mt-3 p-3 bg-gov-gray-50 rounded-lg">
+            <p class="text-sm font-medium text-gov-gray-800 mb-1">التحليل الاستشاري للدليل:</p>
+            <p class="text-sm text-gov-gray-700" dir="auto">{{ evidence.ai_reasoning_ar|default:evidence.ai_reasoning }}</p>
           </div>
           {% endif %}
         </div>
@@ -101,6 +112,13 @@
               <option value="needs_more_evidence" {% if verdict.status == 'needs_more_evidence' %}selected{% endif %}>يحتاج أدلة إضافية</option>
               <option value="not_applicable" {% if verdict.status == 'not_applicable' %}selected{% endif %}>غير قابل للتطبيق</option>
             </select></label>
+          <label class="text-sm"><span class="block text-gov-gray-500 mb-1">مستوى التطبيق (النضج) <span class="text-gov-gray-400">(يغذّي نسبة الامتثال لكل مجال)</span></span>
+            <select name="implementation_level" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+              <option value="">—</option>
+              {% for code, label in implementation_choices %}
+              <option value="{{ code }}" {% if verdict.implementation_level == code %}selected{% endif %}>{% if code == 'not_implemented' %}غير مطبّق{% elif code == 'partially_implemented' %}مطبّق جزئيًا{% elif code == 'implemented' %}مطبّق{% else %}لا ينطبق{% endif %}</option>
+              {% endfor %}
+            </select></label>
           <label class="text-sm"><span class="block text-gov-gray-500 mb-1">المبرر <span class="text-gov-gray-400">(مطلوب لغير المتوافق/الجزئي/يحتاج أدلة/لا ينطبق)</span></span>
             <textarea name="rationale" rows="3" dir="rtl" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">{{ verdict.rationale }}</textarea></label>
           <label class="text-sm"><span class="block text-gov-gray-500 mb-1">التوصية <span class="text-gov-gray-400">(مطلوبة لغير المتوافق/يحتاج أدلة)</span></span>
@@ -117,6 +135,100 @@
         </form>
       </div>
 
+      {# G2 — audit findings (non-conformities/observations) for this control #}
+      <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gov-green-800 mb-1"><i class="fas fa-clipboard-list ms-1"></i> الملاحظات (عدم المطابقة) — {{ findings.count }}</h2>
+        <p class="text-xs text-gov-gray-500 mb-4">ملاحظة مُوثّقة بدرجة تُشغّل خطة تصحيح (CAPA). مراجعة داخلية، ليست شهادة رسمية.</p>
+        {% for f in findings %}
+        <div class="border border-gov-gray-200 rounded-lg p-4 mb-3">
+          <div class="flex items-start justify-between gap-2 flex-wrap">
+            <p class="font-medium text-gov-gray-800">{{ f.title }}</p>
+            <div class="flex gap-2">
+              <span class="text-xs px-2.5 py-0.5 rounded-full font-medium
+                {% if f.severity == 'major_nc' %}bg-red-100 text-red-800
+                {% elif f.severity == 'minor_nc' %}bg-amber-100 text-amber-800
+                {% else %}bg-gov-gray-100 text-gov-gray-700{% endif %}">{{ f.severity_ar }}</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-gov-green-100 text-gov-green-800">{{ f.status_ar }}</span>
+            </div>
+          </div>
+          <p class="text-sm text-gov-gray-600 mt-1">{{ f.description }}</p>
+          {% if f.root_cause %}<p class="text-xs text-gov-gray-500 mt-1">السبب الجذري: {{ f.root_cause }}</p>{% endif %}
+
+          {# CAPA list #}
+          {% for ca in f.corrective_actions.all %}
+          <div class="bg-gov-gray-50 rounded-lg p-3 mt-2 text-sm">
+            <div class="flex items-start justify-between gap-2 flex-wrap">
+              <span class="text-gov-gray-700">{{ ca.description }}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full font-medium {% if ca.status == 'verified' %}bg-gov-green-100 text-gov-green-800{% else %}bg-gov-gray-200 text-gov-gray-700{% endif %}">{{ ca.status_ar }}</span>
+            </div>
+            <p class="text-xs text-gov-gray-500 mt-1">
+              {% if ca.owner %}المسؤول: {{ ca.owner }} · {% endif %}
+              {% if ca.due_date %}الاستحقاق: {{ ca.due_date|date:"Y-m-d" }}{% endif %}
+            </p>
+            {% if ca.verification_note %}<p class="text-xs text-gov-green-700 mt-1">تحقّق المدقّق: {{ ca.verification_note }}</p>{% endif %}
+            {% if ca.status != 'verified' %}
+            <form method="post" action="{% url 'auditor_portal:verify_corrective_action' ca.id %}" class="flex items-center gap-2 mt-2">
+              {% csrf_token %}
+              <input type="text" name="note" placeholder="ملاحظة إعادة الاختبار" class="flex-1 border border-gov-gray-300 rounded px-2 py-1 text-xs">
+              <button class="bg-gov-green-800 text-white px-3 py-1 rounded text-xs hover:bg-gov-green-900">تحقّق</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endfor %}
+
+          <div class="flex items-center gap-2 mt-3 flex-wrap">
+            {# add CAPA #}
+            <details class="text-xs">
+              <summary class="cursor-pointer text-gov-green-700 font-medium">＋ إجراء تصحيحي</summary>
+              <form method="post" action="{% url 'auditor_portal:add_corrective_action' f.id %}" class="grid gap-2 mt-2 bg-gov-gray-50 p-2 rounded">
+                {% csrf_token %}
+                <input type="text" name="description" required placeholder="وصف الإجراء" class="border border-gov-gray-300 rounded px-2 py-1">
+                <div class="flex gap-2">
+                  <input type="text" name="owner" placeholder="المسؤول" class="flex-1 border border-gov-gray-300 rounded px-2 py-1">
+                  <input type="date" name="due_date" class="border border-gov-gray-300 rounded px-2 py-1">
+                </div>
+                <button class="bg-gov-green-800 text-white px-3 py-1 rounded hover:bg-gov-green-900">إضافة</button>
+              </form>
+            </details>
+            {# status transition (L1: closed findings can be reopened) #}
+            <form method="post" action="{% url 'auditor_portal:update_finding_status' f.id %}" class="flex items-center gap-1">
+              {% csrf_token %}
+              <select name="status" class="border border-gov-gray-300 rounded px-2 py-1 text-xs focus:ring-2 focus:ring-gov-green-500">
+                {% if f.status == 'open' or f.status == 'reopened' %}<option value="in_remediation">قيد التصحيح</option>{% endif %}
+                {% if f.status == 'in_remediation' %}<option value="reverify">بانتظار إعادة التحقّق</option>{% endif %}
+                {% if f.status == 'reverify' or f.status == 'closed' %}<option value="reopened">إعادة فتح</option>{% endif %}
+                {% if f.status != 'closed' %}<option value="closed">إغلاق</option>{% endif %}
+              </select>
+              <button class="text-gov-gray-600 hover:text-gov-green-800 text-xs px-2 py-1 border border-gov-gray-300 rounded">تحديث</button>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-sm text-gov-gray-500 mb-3">لا ملاحظات مسجّلة على هذا الضابط.</p>
+        {% endfor %}
+
+        <details class="mt-2">
+          <summary class="cursor-pointer text-gov-green-700 text-sm font-medium">＋ تسجيل ملاحظة جديدة</summary>
+          <form method="post" action="{% url 'auditor_portal:add_finding' assessment.id company_control.id %}" class="grid gap-3 mt-3">
+            {% csrf_token %}
+            <label class="text-sm"><span class="block text-gov-gray-500 mb-1">الدرجة</span>
+              <select name="severity" required class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="major_nc">عدم مطابقة رئيسي</option>
+                <option value="minor_nc">عدم مطابقة ثانوي</option>
+                <option value="observation">ملاحظة</option>
+                <option value="ofi">فرصة تحسين</option>
+              </select></label>
+            <label class="text-sm"><span class="block text-gov-gray-500 mb-1">العنوان</span>
+              <input type="text" name="title" required maxlength="255" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
+            <label class="text-sm"><span class="block text-gov-gray-500 mb-1">الوصف</span>
+              <textarea name="description" required rows="2" dir="rtl" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></textarea></label>
+            <label class="text-sm"><span class="block text-gov-gray-500 mb-1">السبب الجذري (اختياري)</span>
+              <input type="text" name="root_cause" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
+            <div><button type="submit" class="bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-gov-green-900 transition text-sm">تسجيل الملاحظة</button></div>
+          </form>
+        </details>
+      </div>
+
       {# RFI list (this control) with company responses + lifecycle #}
       <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <h2 class="text-lg font-semibold text-gov-green-800 mb-4"><i class="fas fa-file-circle-question ml-1"></i> طلبات الاستكمال ({{ document_requests.count }})</h2>
@@ -130,14 +242,15 @@
             </div>
             <span class="shrink-0 text-xs px-2 py-0.5 rounded-full
               {% if req.status == 'closed' %}bg-gov-gray-100 text-gov-gray-600
-              {% elif req.status == 'responded' %}bg-blue-50 text-blue-700
+              {% elif req.status == 'responded' %}bg-gov-gray-50 text-gov-gray-700
               {% elif req.status == 'cancelled' %}bg-gov-gray-100 text-gov-gray-400
               {% else %}bg-amber-50 text-amber-700{% endif %}">{{ req.status|doc_request_status_ar }}</span>
           </div>
           {% for resp in req.responses.all %}
-          <div class="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-2 text-sm">
-            <p class="text-blue-800">رد الشركة: {{ resp.response_text }}</p>
-            <p class="text-xs text-blue-400 mt-0.5">{{ resp.created_at|date:"Y-m-d H:i" }}</p>
+          <div class="mt-2 bg-gov-gray-50 border border-gov-gray-100 rounded-lg p-2 text-sm">
+            <p class="text-gov-gray-800">رد الشركة: {{ resp.response_text }}</p>
+            <p class="text-xs text-gov-gray-400 mt-0.5">{{ resp.created_at|date:"Y-m-d H:i" }}</p>
+            {% if resp.attachment %}<a href="{{ resp.attachment.url }}" target="_blank" class="inline-flex items-center gap-1 mt-1 text-xs text-gov-green-700 font-medium hover:underline"><i class="fas fa-paperclip"></i> مستند مرفق</a>{% endif %}
           </div>
           {% endfor %}
           {% if req.closing_note %}<p class="text-xs text-gov-gray-500 mt-2">ملاحظة الإغلاق: {{ req.closing_note }}</p>{% endif %}
@@ -192,7 +305,7 @@
             <option value="medium" selected>متوسطة</option>
             <option value="high">عالية</option>
           </select>
-          <button type="submit" class="w-full bg-yellow-600 text-white py-2.5 rounded-lg font-medium hover:bg-yellow-700 transition text-sm">إرسال طلب الاستكمال</button>
+          <button type="submit" class="w-full bg-gov-green-800 text-white py-2.5 rounded-lg font-medium hover:bg-gov-green-900 transition text-sm">إرسال طلب الاستكمال</button>
         </form>
         <p class="text-xs text-gov-gray-400 mt-2">يظهر الطلب للشركة ضمن استكمالاتها المطلوبة إن كان مسار الاستكمال مفعّلاً لديها.</p>
       </div>

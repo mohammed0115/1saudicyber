@@ -18,13 +18,25 @@ Reports, Monitoring). Active item is derived from the resolved url_name.
         <a href="{% url 'platform_admin:companies_list' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'companies_list' or un == 'company_detail' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">الشركات</a>
         <a href="{% url 'platform_admin:auditor_list' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'auditor_list' or un == 'auditor_detail' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">المدققون</a>
         <a href="{% url 'platform_admin:auditor_requests' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'auditor_requests' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">طلبات المدققين</a>
+        <a href="{% url 'platform_admin:rfi_dashboard' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'rfi_dashboard' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">طلبات المعلومات</a>
+        <a href="{% url 'platform_admin:messages' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'messages' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">الرسائل</a>
         <a href="{% url 'platform_admin:unlinked_accounts' %}" class="px-3 py-2 rounded-md text-sm font-medium transition {% if un == 'unlinked_accounts' %}bg-gov-green-700 text-white{% else %}text-gov-green-100 hover:text-white{% endif %}">حسابات غير مرتبطة</a>
       </div>
 
       <div class="flex items-center gap-3 shrink-0">
+        <form action="{% url 'set_language' %}" method="post" class="hidden sm:flex items-center gap-1 text-xs">
+          {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">العربية</button>
+          <span class="text-gov-green-400">|</span>
+          <button type="submit" name="language" value="en" class="px-1 {% if LANGUAGE_CODE != 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">English</button>
+        </form>
         {% if user.is_superuser or user.is_staff %}
         <a href="/admin/" class="hidden sm:inline text-gov-green-200 hover:text-white text-sm">Django Admin</a>
         {% endif %}
+        <a href="{% url 'core:notifications_inbox' %}" class="relative text-gov-green-100 hover:text-white px-1" title="الإشعارات" aria-label="الإشعارات{% if nav_unread %} ({{ nav_unread }} غير مقروء){% endif %}">
+          <i class="fas fa-bell text-lg" aria-hidden="true"></i>
+          {% if nav_unread %}<span class="absolute -top-1 -end-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[0.6rem] font-bold flex items-center justify-center">{{ nav_unread }}</span>{% endif %}
+        </a>
         <span class="hidden sm:inline text-gov-green-200 text-sm truncate max-w-[160px]">{{ user.get_full_name|default:user.email }}</span>
         <a href="{% url 'core:logout' %}" class="text-gov-green-200 hover:text-white text-sm whitespace-nowrap"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
       </div>

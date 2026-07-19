@@ -1,0 +1,75 @@
+{% extends "platform_admin/base.html" %}
+{% load crm_display %}
+{% block title %}لوحة طلبات المعلومات (RFI) - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gov-green-800">طلبات المعلومات (RFI) — مراقبة مركزية</h1>
+    <p class="text-gov-gray-500 text-sm mt-1">متابعة تشغيلية لطلبات المدققين عبر كل الشركات. الإدارة تراقب ولا تتدخّل في حكم المدقّق المهني.</p>
+  </div>
+
+  {# ── Summary ── #}
+  <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
+    {% with c=counts %}
+    <div class="bg-white rounded-xl border border-gov-gray-200 shadow-sm p-4"><div class="text-2xl font-bold text-gov-green-800">{{ c.total }}</div><div class="text-xs text-gov-gray-500 mt-1">الإجمالي</div></div>
+    <div class="bg-white rounded-xl border border-amber-200 shadow-sm p-4"><div class="text-2xl font-bold" style="color:#8a6a1f">{{ c.open }}</div><div class="text-xs text-gov-gray-500 mt-1">مفتوح</div></div>
+    <div class="bg-white rounded-xl border border-sky-200 shadow-sm p-4"><div class="text-2xl font-bold text-sky-700">{{ c.responded }}</div><div class="text-xs text-gov-gray-500 mt-1">تم الرد</div></div>
+    <div class="bg-white rounded-xl border border-gov-gray-200 shadow-sm p-4"><div class="text-2xl font-bold text-gov-gray-700">{{ c.under_review }}</div><div class="text-xs text-gov-gray-500 mt-1">قيد المراجعة</div></div>
+    <div class="bg-white rounded-xl border border-gov-green-200 shadow-sm p-4"><div class="text-2xl font-bold text-gov-green-800">{{ c.closed }}</div><div class="text-xs text-gov-gray-500 mt-1">مغلق</div></div>
+    <div class="bg-white rounded-xl border border-red-200 shadow-sm p-4"><div class="text-2xl font-bold text-red-700">{{ c.overdue }}</div><div class="text-xs text-gov-gray-500 mt-1">متأخّر</div></div>
+    {% endwith %}
+  </div>
+
+  {# ── Filter ── #}
+  <form method="get" class="flex flex-wrap gap-2 items-end mb-4">
+    <div>
+      <label class="block text-xs text-gov-gray-500 mb-1">الحالة</label>
+      <select name="status" onchange="this.form.submit()" class="border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+        <option value="">الكل</option>
+        <option value="open" {% if selected_status == 'open' %}selected{% endif %}>مفتوح</option>
+        <option value="responded" {% if selected_status == 'responded' %}selected{% endif %}>تم الرد</option>
+        <option value="under_review" {% if selected_status == 'under_review' %}selected{% endif %}>قيد المراجعة</option>
+        <option value="closed" {% if selected_status == 'closed' %}selected{% endif %}>مغلق</option>
+        <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>ملغى</option>
+      </select>
+    </div>
+  </form>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gov-green-50 text-gov-green-800">
+        <tr>
+          <th class="text-right px-4 py-3">الشركة</th>
+          <th class="text-right px-4 py-3">الضابط</th>
+          <th class="text-right px-4 py-3">المدقّق</th>
+          <th class="text-right px-4 py-3">تاريخ الطلب</th>
+          <th class="text-right px-4 py-3">العمر</th>
+          <th class="text-right px-4 py-3">الحالة</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gov-gray-100">
+        {% for r in rows %}
+        <tr class="{% if r.is_overdue %}bg-red-50/40{% endif %}">
+          <td class="px-4 py-2.5 text-gov-gray-800">{{ r.assessment.company.name_ar|default:r.assessment.company.name }}</td>
+          <td class="px-4 py-2.5 text-xs text-gov-gray-600"><span dir="ltr" class="font-mono">{{ r.company_control.control.control_id }}</span> — {{ r.title|default:"طلب استكمال"|truncatechars:40 }}</td>
+          <td class="px-4 py-2.5 text-xs text-gov-gray-600">{{ r.auditor.get_full_name|default:r.auditor.username }}</td>
+          <td class="px-4 py-2.5 text-xs text-gov-gray-500">{{ r.created_at|date:"Y-m-d" }}</td>
+          <td class="px-4 py-2.5 text-xs {% if r.is_overdue %}text-red-700 font-semibold{% else %}text-gov-gray-500{% endif %}">{{ r.age_days }} يوم{% if r.is_overdue %} · متأخّر{% endif %}</td>
+          <td class="px-4 py-2.5">
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium
+              {% if r.status == 'closed' %}bg-gov-green-50 text-gov-green-800
+              {% elif r.status == 'responded' %}bg-sky-50 text-sky-700
+              {% elif r.status == 'under_review' %}bg-gov-gray-100 text-gov-gray-700
+              {% elif r.status == 'cancelled' %}bg-gov-gray-100 text-gov-gray-400
+              {% else %}bg-amber-50 text-amber-700{% endif %}">{% if r.status == 'closed' %}مغلق{% elif r.status == 'responded' %}تم الرد{% elif r.status == 'under_review' %}قيد المراجعة{% elif r.status == 'cancelled' %}ملغى{% elif r.status == 'pending' %}معلّق{% else %}مفتوح{% endif %}</span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-4 py-10 text-center text-gov-gray-500"><i class="fas fa-inbox text-2xl mb-2 block text-gov-gray-300"></i>لا توجد طلبات مطابقة.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

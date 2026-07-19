@@ -2,7 +2,7 @@
   <label for="{{ field.id_for_label }}">{{ field.label }}</label>
   {{ field }}
   {% if field.help_text %}
-  <p id="{{ field.id_for_label }}-help" style="font-size:.78rem;color:#667085;margin:.35rem 0 0;">{{ field.help_text|safe }}</p>
+  <p id="{{ field.id_for_label }}-help" style="font-size:.78rem;color:#5b5c53;margin:.35rem 0 0;">{{ field.help_text|safe }}</p>
   {% endif %}
   {% for e in field.errors %}
   <p id="{{ field.id_for_label }}-err" role="alert" style="font-size:.8rem;color:#9B2C2C;margin:.35rem 0 0;">{{ e }}</p>

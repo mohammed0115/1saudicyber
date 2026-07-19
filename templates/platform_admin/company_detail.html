@@ -23,7 +23,7 @@
             <span class="text-xs px-2.5 py-1 rounded-full font-medium
               {% if journey.email_verified %}bg-green-50 text-green-800{% else %}bg-red-50 text-red-800{% endif %}">
               <i class="fas fa-envelope text-[0.65rem] ml-1"></i>{% if journey.email_verified %}بريد موثّق{% else %}بريد غير موثّق{% endif %}</span>
-            <span class="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 font-medium">
+            <span class="text-xs px-2.5 py-1 rounded-full bg-gov-gray-100 text-gov-gray-700 font-medium">
               <i class="fas fa-shield-halved text-[0.65rem] ml-1"></i>مخاطر: {{ journey.risk_level_ar }}</span>
             <span class="text-xs px-2.5 py-1 rounded-full font-medium
               {% if snapshot.has_auditor_assignment %}bg-gov-green-50 text-gov-green-800{% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">
@@ -34,6 +34,7 @@
         {# Quick actions (navigation only — no new business logic) #}
         <div class="flex flex-wrap gap-2 shrink-0">
           <a href="{% url 'platform_admin:companies_list' %}" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">العودة للشركات</a>
+          <a href="{% url 'auditor_portal:message_thread' company.id %}" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50"><i class="fas fa-comments me-1"></i>المراسلة</a>
           <a href="#journey" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">عرض رحلة الامتثال</a>
           <a href="#followup" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">إضافة ملاحظة</a>
           <a href="#auditor" class="text-xs px-3 py-2 rounded-lg border border-gov-gray-200 text-gov-gray-600 hover:bg-gov-gray-50">إدارة المدقق</a>
@@ -48,6 +49,9 @@
         <div>
           <p class="text-xs font-bold text-gov-green-700 mb-1"><i class="fas fa-wand-magic-sparkles ml-1"></i> الإجراء التالي المقترح</p>
           <p class="text-sm text-gov-green-900 font-semibold m-0">{{ admin_journey.next_action.reason|default:admin_journey.next_action.label }}</p>
+          {% if admin_journey.next_action.actor and admin_journey.next_action.actor != 'system' %}
+          <p class="text-xs text-gov-green-700 mt-1 mb-0">{% if admin_journey.next_action.is_actionable_by_admin %}المسؤول: إدارة المنصة{% else %}بانتظار إجراء من {{ admin_journey.next_action.actor_label }} — لدى الإدارة متابعة فقط{% endif %}</p>
+          {% endif %}
         </div>
         {% if admin_journey.next_action.anchor %}
         <a href="{{ admin_journey.next_action.anchor }}" class="shrink-0 bg-gov-green-700 hover:bg-gov-green-800 text-white text-sm px-4 py-2 rounded-lg font-medium whitespace-nowrap">{{ admin_journey.next_action.button_label }}</a>
@@ -62,11 +66,11 @@
       <ol class="space-y-2">
         {% for s in admin_journey.steps %}
         <li class="flex items-start gap-3 text-sm p-2 rounded-lg
-          {% if s.status == 'needs_action' %}bg-amber-50 border border-amber-200{% elif s.status == 'current' or s.status == 'waiting' %}bg-blue-50 border border-blue-100{% else %}bg-transparent{% endif %}">
+          {% if s.status == 'needs_action' %}bg-amber-50 border border-amber-200{% elif s.status == 'current' or s.status == 'waiting' %}bg-gov-gray-100 border border-gov-gray-100{% else %}bg-transparent{% endif %}">
           <span class="mt-0.5 shrink-0">
             {% if s.status == 'completed' %}<i class="fas fa-check-circle text-green-600"></i>
             {% elif s.status == 'needs_action' %}<i class="fas fa-circle-exclamation text-amber-600"></i>
-            {% elif s.status == 'waiting' %}<i class="fas fa-hourglass-half text-blue-500"></i>
+            {% elif s.status == 'waiting' %}<i class="fas fa-hourglass-half text-gov-gray-600"></i>
             {% else %}<i class="fas fa-lock text-gov-gray-300"></i>{% endif %}
           </span>
           <div class="flex-1 min-w-0">
@@ -75,7 +79,7 @@
               <span class="text-xs px-2 py-0.5 rounded-full shrink-0
                 {% if s.status == 'completed' %}bg-green-50 text-green-700
                 {% elif s.status == 'needs_action' %}bg-amber-100 text-amber-800
-                {% elif s.status == 'waiting' %}bg-blue-100 text-blue-800
+                {% elif s.status == 'waiting' %}bg-gov-gray-200 text-gov-gray-700
                 {% else %}bg-gov-gray-100 text-gov-gray-400{% endif %}">
                 {% if s.status == 'completed' %}مكتمل{% elif s.status == 'needs_action' %}يحتاج إجراء{% elif s.status == 'waiting' %}قيد الانتظار{% else %}محجوب{% endif %}</span>
             </div>
@@ -94,13 +98,14 @@
       <div class="bg-white rounded-xl border border-gov-gray-100 p-4 text-center"><div class="text-xl font-bold text-gov-green-800">{% if journey.control_plan_generated %}{{ journey.generated_controls }}{% else %}—{% endif %}</div><div class="text-xs text-gov-gray-500 mt-1">الضوابط المنشأة</div></div>
       <div class="bg-white rounded-xl border border-gov-gray-100 p-4 text-center"><div class="text-xl font-bold text-gov-green-800">{{ evidence_summary.uploaded }}</div><div class="text-xs text-gov-gray-500 mt-1">الأدلة المرفوعة</div></div>
       <div class="bg-white rounded-xl border border-gov-gray-100 p-4 text-center"><div class="text-xl font-bold text-gov-green-700">{{ evidence_summary.extracted }}</div><div class="text-xs text-gov-gray-500 mt-1">الأدلة المستخرجة</div></div>
-      <div class="bg-white rounded-xl border border-gov-gray-100 p-4 text-center"><div class="text-xl font-bold text-amber-600">{{ evidence_summary.manual_review }}</div><div class="text-xs text-gov-gray-500 mt-1">الأدلة قيد المراجعة</div></div>
+      <div class="bg-white rounded-xl border border-gov-gray-100 p-4 text-center"><div class="text-xl font-bold text-amber-600">{{ evidence_summary.manual_review }}</div><div class="text-xs text-gov-gray-500 mt-1">تحتاج قراءة يدوية (استخراج)</div></div>
       <div class="bg-white rounded-xl border border-gov-gray-100 p-4 text-center"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.ends_at|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">الاشتراك حتى</div></div>
       <div class="bg-white rounded-xl border border-gov-gray-100 p-4 text-center"><div class="text-xl font-bold text-amber-600">{{ subscription_summary.pending_payments }}</div><div class="text-xs text-gov-gray-500 mt-1">الدفعات المعلّقة</div></div>
     </section>
 
-    {# ======================= In-page navigation ======================= #}
-    <nav class="bg-white rounded-xl border border-gov-gray-100 p-2 flex flex-wrap gap-1 text-sm sticky top-0 z-10 overflow-x-auto">
+    {# ======================= In-page navigation (page sections, not tabs) ======================= #}
+    <nav id="company-sections-nav" aria-label="أقسام الصفحة" class="bg-white rounded-xl border border-gov-gray-100 p-2 flex flex-wrap items-center gap-1 text-sm sticky top-0 z-10 overflow-x-auto">
+      <span class="px-2 py-1.5 text-xs text-gov-gray-400 whitespace-nowrap" aria-hidden="true">الأقسام:</span>
       <a href="#admin-journey" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">مسار الإدارة</a>
       <a href="#overview" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">نظرة عامة</a>
       <a href="#journey" class="px-3 py-1.5 rounded-lg text-gov-gray-600 hover:bg-gov-gray-50 whitespace-nowrap">رحلة الامتثال</a>
@@ -251,6 +256,61 @@
           </div>
         </div>
 
+        {% if verdict_disagreements %}
+        <div id="verdict-conflicts" class="bg-white rounded-xl shadow-sm border border-amber-200 p-6 scroll-mt-16">
+          <h2 class="font-bold text-amber-800 mb-1"><i class="fas fa-triangle-exclamation ml-1"></i> تعارض أحكام المدقق ({{ verdict_disagreements|length }})</h2>
+          <p class="text-xs text-gov-gray-500 mb-3">سجّلت أنظمة المراجعة المتوازية أحكامًا متعارضة لهذه الضوابط ولا تتزامن تلقائيًا — يلزم توحيدها يدويًا. المرجع الرسمي لتقارير الشركة هو «تقييم الضابط».</p>
+          <div class="overflow-x-auto"><table class="w-full text-sm">
+            <thead class="text-gov-gray-500"><tr>
+              <th class="text-right py-2">الضابط</th>
+              <th class="text-right py-2">تقييم الضابط (المرجع الرسمي)</th>
+              <th class="text-right py-2">حكم بوابة المدقق</th>
+              <th class="text-right py-2">حكم مراجعة الأدلة</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gov-gray-100">
+              {% for d in verdict_disagreements %}
+              <tr>
+                <td class="py-2">{{ d.control_id }}{% if d.control_title %} — <span class="text-gov-gray-500">{{ d.control_title|truncatechars:40 }}</span>{% endif %}</td>
+                <td class="py-2 font-medium text-gov-green-800">{{ d.control_assessment|verdict_norm_ar|default:"—" }}</td>
+                <td class="py-2">{{ d.auditor_control_verdict|verdict_norm_ar|default:"—" }}</td>
+                <td class="py-2">{{ d.auditor_final_verdict|verdict_norm_ar|default:"—" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table></div>
+        </div>
+        {% endif %}
+
+        {# H4: audit findings + maturity oversight #}
+        <div id="findings" class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6 scroll-mt-16">
+          <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+            <h2 class="font-bold text-gov-green-800">ملاحظات التدقيق والنضج</h2>
+            {% if audit_maturity and audit_maturity.assessed_count %}<span class="text-sm text-gov-gray-600">نضج عام: <b class="text-gov-green-800">{{ audit_maturity.overall_pct }}%</b></span>{% endif %}
+          </div>
+          <p class="text-xs text-gov-gray-500 mb-3">عرض رقابي للقراءة فقط لملاحظات المدقّق ومستوى النضج. الإدارة لا تحل محل الحكم المهني للمدقّق.</p>
+          {% if audit_findings %}
+          <p class="text-sm text-gov-gray-600 mb-2">إجمالي الملاحظات: {{ audit_findings|length }} · المفتوحة: <b class="{% if audit_open_findings %}text-red-700{% else %}text-gov-green-800{% endif %}">{{ audit_open_findings }}</b></p>
+          <div class="overflow-x-auto"><table class="w-full text-sm">
+            <thead class="text-gov-gray-500"><tr>
+              <th class="text-right py-2">الضابط</th><th class="text-right py-2">الملاحظة</th>
+              <th class="text-right py-2">الدرجة</th><th class="text-right py-2">الحالة</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gov-gray-100">
+              {% for f in audit_findings %}
+              <tr>
+                <td class="py-2" dir="ltr">{{ f.company_control.control.control_id }}</td>
+                <td class="py-2">{{ f.title|truncatechars:50 }}</td>
+                <td class="py-2">{{ f.severity_ar }}</td>
+                <td class="py-2">{{ f.status_ar }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table></div>
+          {% else %}
+          <p class="text-sm text-gov-gray-500">لا ملاحظات تدقيق على ضوابط هذه الشركة بعد.</p>
+          {% endif %}
+        </div>
+
         {# Section 4b: Auditor requests (this company) #}
         <div id="auditors" class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6 scroll-mt-16">
           <h2 class="font-bold text-gov-green-800 mb-1">المدققون — طلبات المدققين</h2>
@@ -266,7 +326,7 @@
               {% for a in auditor_requests %}
               <tr>
                 <td class="py-2">{{ a.auditor.full_name }}</td>
-                <td class="py-2">{{ a.get_status_display }}</td>
+                <td class="py-2">{{ a.status|engagement_status_ar }}</td>
                 <td class="py-2">{{ a.requested_at|date:"Y-m-d H:i" }}</td>
                 <td class="py-2">{{ a.responded_at|date:"Y-m-d H:i"|default:"—" }}</td>
                 <td class="py-2 text-gov-gray-500">{% if a.status == 'rejected' %}{{ a.response_note|default:"—" }}{% else %}—{% endif %}</td>
@@ -291,28 +351,28 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ evidence_summary.uploaded }}</div><div class="text-xs text-gov-gray-500 mt-1">مرفوعة</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-700">{{ evidence_summary.extracted }}</div><div class="text-xs text-gov-gray-500 mt-1">مُستخرجة</div></div>
-            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ evidence_summary.manual_review }}</div><div class="text-xs text-gov-gray-500 mt-1">مراجعة يدوية</div></div>
+            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ evidence_summary.manual_review }}</div><div class="text-xs text-gov-gray-500 mt-1">تحتاج قراءة يدوية (استخراج)</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ evidence_summary.failed }}</div><div class="text-xs text-gov-gray-500 mt-1">فشل</div></div>
           </div>
           <h3 class="text-sm font-bold text-gov-gray-700 mt-4 mb-2">الجاهزية الأولية</h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ gap_summary.readiness_percent }}%</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية</div></div>
+            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="{% if gap_summary.readiness_available %}text-xl{% else %}text-sm{% endif %} font-bold text-gov-green-800">{% if gap_summary.readiness_available %}{{ gap_summary.readiness_percent }}%{% else %}لم تُحسب بعد{% endif %}</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ gap_summary.missing }}</div><div class="text-xs text-gov-gray-500 mt-1">مفقود</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ gap_summary.needs_review }}</div><div class="text-xs text-gov-gray-500 mt-1">تحتاج مراجعة</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-600">{{ gap_summary.calculated_at|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر حساب</div></div>
           </div>
           <h3 class="text-sm font-bold text-gov-gray-700 mt-4 mb-2">المخاطر الداخلية</h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-orange-700">{{ risk_summary.open }}</div><div class="text-xs text-gov-gray-500 mt-1">مفتوحة</div></div>
+            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-800">{{ risk_summary.open }}</div><div class="text-xs text-gov-gray-500 mt-1">مفتوحة</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ risk_summary.high_critical }}</div><div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ risk_summary.overdue_tasks }}</div><div class="text-xs text-gov-gray-500 mt-1">مهام متأخرة</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-600">{{ risk_summary.last_generated|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر توليد</div></div>
           </div>
           <h3 class="text-sm font-bold text-gov-gray-700 mt-4 mb-2">تقرير الجاهزية</h3>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
-            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-gov-green-800">{{ report_summary.readiness_percent }}%</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية</div></div>
+            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="{% if report_summary.readiness_available %}text-xl{% else %}text-sm{% endif %} font-bold text-gov-green-800">{% if report_summary.readiness_available %}{{ report_summary.readiness_percent }}%{% else %}لم تُحسب بعد{% endif %}</div><div class="text-xs text-gov-gray-500 mt-1">الجاهزية</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-red-700">{{ report_summary.missing }}</div><div class="text-xs text-gov-gray-500 mt-1">مفقود</div></div>
-            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-orange-700">{{ report_summary.open_risks }}</div><div class="text-xs text-gov-gray-500 mt-1">مخاطر مفتوحة</div></div>
+            <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-800">{{ report_summary.open_risks }}</div><div class="text-xs text-gov-gray-500 mt-1">مخاطر مفتوحة</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-xl font-bold text-amber-600">{{ report_summary.overdue_tasks }}</div><div class="text-xs text-gov-gray-500 mt-1">متأخرة</div></div>
             <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-600">{{ report_summary.report_date|date:"Y-m-d"|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر تقرير</div></div>
           </div>
@@ -349,7 +409,7 @@
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_payment_provider|default:"—"|provider_ar }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر مزوّد</div></div>
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.last_payment_status|default:"—"|pay_status_ar }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر حالة دفع</div></div>
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700 truncate" title="{{ subscription_summary.last_payment_reference }}">{{ subscription_summary.last_payment_reference|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">المرجع</div></div>
-              <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-blue-700">{{ subscription_summary.pending_moyasar_payments }}</div><div class="text-xs text-gov-gray-500 mt-1">Moyasar معلّقة</div></div>
+              <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-gov-gray-700">{{ subscription_summary.pending_moyasar_payments }}</div><div class="text-xs text-gov-gray-500 mt-1">Moyasar معلّقة</div></div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-center mb-2">
               <div class="rounded-lg bg-gov-gray-50 p-3"><div class="text-sm font-bold text-red-700">{{ subscription_summary.failed_moyasar_payments }}</div><div class="text-xs text-gov-gray-500 mt-1">Moyasar فاشلة</div></div>
@@ -371,10 +431,23 @@
               </span>
               {% endfor %}
             </div>
+            {# F6: auditor-review badge = PLAN self-service capability, not the actual assignment (shown in «المدقق»). #}
+            <p class="text-[0.62rem] text-gov-gray-400 mb-3">«طلب مراجعة مدقق ذاتيًا» يصف إتاحة الطلب من الشركة ضمن الخطة فقط. حالة إسناد/مراجعة المدقق الفعلية تظهر في قسم <a href="#auditor" class="text-gov-green-700 hover:underline">«المدقق»</a>.</p>
             <div class="grid grid-cols-3 gap-3 text-center">
               <div class="rounded-lg bg-gov-gray-50 p-2"><div class="text-sm font-bold text-gov-gray-700">{{ feature_summary.evidence_used|default:"0" }}{% if feature_summary.evidence_limit %}/{{ feature_summary.evidence_limit }}{% endif %}</div><div class="text-xs text-gov-gray-500">أدلة</div></div>
               <div class="rounded-lg bg-gov-gray-50 p-2"><div class="text-sm font-bold text-gov-gray-700">{{ feature_summary.pdf_used|default:"0" }}{% if feature_summary.pdf_limit %}/{{ feature_summary.pdf_limit }}{% endif %}</div><div class="text-xs text-gov-gray-500">PDF</div></div>
-              <div class="rounded-lg bg-gov-gray-50 p-2"><div class="text-sm font-bold text-gov-gray-700">{{ feature_summary.frameworks_used|default:"0" }}{% if feature_summary.frameworks_limit %}/{{ feature_summary.frameworks_limit }}{% endif %}</div><div class="text-xs text-gov-gray-500">أطر</div></div>
+              <div class="rounded-lg bg-gov-gray-50 p-2">
+                {% if framework_entitlement.enforced %}
+                <div class="text-sm font-bold text-gov-gray-700">{{ framework_entitlement.approved_count }} من {{ framework_entitlement.plan_limit }}</div>
+                <div class="text-xs text-gov-gray-500">أطر معتمدة</div>
+                {% if framework_entitlement.over_limit %}<div class="text-[0.62rem] text-amber-700 mt-0.5">تجاوز قائم محفوظ — لا يمكن إضافة إطار جديد</div>
+                {% elif framework_entitlement.at_limit %}<div class="text-[0.62rem] text-amber-700 mt-0.5">تم الوصول إلى حد الخطة</div>{% endif %}
+                {% else %}
+                <div class="text-sm font-bold text-gov-gray-700">{{ framework_entitlement.approved_count }}</div>
+                <div class="text-xs text-gov-gray-500">أطر معتمدة</div>
+                {% if framework_entitlement.plan_limit %}<div class="text-[0.62rem] text-gov-gray-400 mt-0.5">حد الخطة المعروض {{ framework_entitlement.plan_limit }} · غير مطبق آليًا</div>{% endif %}
+                {% endif %}
+              </div>
             </div>
           </div>
 
@@ -385,7 +458,7 @@
               <input type="text" name="reason" required placeholder="السبب (مطلوب)" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-40">
               <button type="submit" class="bg-gov-green-50 text-gov-green-700 hover:bg-gov-green-100 px-3 py-1.5 rounded text-xs font-medium">تفعيل</button>
             </form>
-            <form method="post" action="{% url 'platform_admin:subscription_action' company.id %}" class="flex items-center gap-2">
+            <form method="post" action="{% url 'platform_admin:subscription_action' company.id %}" class="flex items-center gap-2" onsubmit="return confirm('تأكيد إلغاء اشتراك هذه الشركة؟');">
               {% csrf_token %}<input type="hidden" name="action" value="cancel">
               <input type="text" name="reason" required placeholder="السبب (مطلوب)" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-40">
               <button type="submit" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded text-xs font-medium">إلغاء</button>
@@ -444,7 +517,7 @@
                         {% csrf_token %}<input type="text" name="reason" required placeholder="السبب" class="border border-gov-gray-300 rounded px-1.5 py-0.5 text-xs w-20">
                         <button class="text-gov-green-700 hover:underline font-medium">تأكيد</button>
                       </form>
-                      <form method="post" action="{% url 'platform_admin:reject_manual_payment' company.id p.id %}" class="inline-flex items-center gap-1 mr-2">
+                      <form method="post" action="{% url 'platform_admin:reject_manual_payment' company.id p.id %}" class="inline-flex items-center gap-1 me-2" onsubmit="return confirm('تأكيد رفض هذه الدفعة اليدوية؟');">
                         {% csrf_token %}<input type="text" name="reason" required placeholder="السبب" class="border border-gov-gray-300 rounded px-1.5 py-0.5 text-xs w-20">
                         <button class="text-red-700 hover:underline font-medium">رفض</button>
                       </form>
@@ -503,7 +576,7 @@
                 <span class="text-sm text-gov-gray-800 break-all min-w-0" dir="ltr" title="{{ u.email }}">{{ u.email }}</span>
                 <span class="text-xs px-2 py-0.5 rounded-full shrink-0 {% if u.is_active %}bg-green-50 text-green-700{% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">{{ u.is_active|yesno:"نشط,غير نشط" }}</span>
               </div>
-              <div class="text-xs text-gov-gray-500 mt-0.5">{{ u.get_role_display }}</div>
+              <div class="text-xs text-gov-gray-500 mt-0.5">{{ u.role|role_ar }}</div>
               {% if not u.is_staff and not u.is_superuser %}
               <form method="post" action="{% url 'platform_admin:unlink_user' company.id %}"
                     onsubmit="return confirm('إلغاء ربط {{ u.email|escapejs }} من هذه الشركة؟');"
@@ -575,7 +648,7 @@
               <input type="date" name="next_follow_up_date" lang="en-CA" pattern="\d{4}-\d{2}-\d{2}"
                      value="{{ crm_profile.next_follow_up_date|date:'Y-m-d' }}"
                      class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
-              <span class="block text-xs text-gov-gray-400 mt-1">صيغة التاريخ: YYYY-MM-DD</span></label>
+              <span class="block text-xs text-gov-gray-400 mt-1">القيمة المخزّنة بصيغة YYYY-MM-DD · طريقة عرض الحقل تعتمد على إعدادات المتصفح والجهاز.</span></label>
             <label class="text-sm"><span class="block text-gov-gray-500 mb-1">السبب</span>
               <input type="text" name="reason" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm"></label>
             <label class="text-sm"><span class="block text-gov-gray-500 mb-1">ملخص داخلي</span>
@@ -632,5 +705,41 @@
 
     <p class="text-xs text-gov-gray-400">عرض تشغيلي داخلي للقراءة فقط — لا يمثّل قرار امتثال أو اعتمادًا رسميًا. الحكم النهائي مراجعة داخلية من المدقق.</p>
   </div>
+
+  {# F8: progressive enhancement — highlight the current page section in the anchor nav. #}
+  {# Pure anchor links still work with JS disabled; this only adds a visual/aria hint. #}
+  <style>
+    #company-sections-nav a.nav-active { background:#e1ece7; color:#2a5646; font-weight:600; }
+    #company-sections-nav a:focus-visible { outline:2px solid #356a54; outline-offset:2px; }
+  </style>
+  <script>
+  (function () {
+    var nav = document.getElementById('company-sections-nav');
+    if (!nav || !('IntersectionObserver' in window)) return;   // no-JS / old browser: plain anchors
+    var links = {};
+    nav.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      links[a.getAttribute('href').slice(1)] = a;
+    });
+    function clear() {
+      Object.keys(links).forEach(function (id) {
+        links[id].classList.remove('nav-active');
+        links[id].removeAttribute('aria-current');
+      });
+    }
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && links[e.target.id]) {
+          clear();
+          links[e.target.id].classList.add('nav-active');
+          links[e.target.id].setAttribute('aria-current', 'true');
+        }
+      });
+    }, { rootMargin: '-15% 0px -75% 0px', threshold: 0 });
+    Object.keys(links).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) obs.observe(el);
+    });
+  })();
+  </script>
 </div>
 {% endblock %}

@@ -140,6 +140,10 @@ class Payment(models.Model):
     class Meta:
         db_table = 'billing_payments'
         ordering = ['-created_at']
+        constraints = [
+            # DD-fix (DB integrity): money can never be negative.
+            models.CheckConstraint(condition=models.Q(amount__gte=0), name='payment_amount_non_negative'),
+        ]
 
     def __str__(self):
         return f"{self.company_id}:{self.amount} {self.currency} ({self.status})"

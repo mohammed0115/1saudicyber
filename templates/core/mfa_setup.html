@@ -1,16 +1,16 @@
-{% extends "base.html" %}{% block title %}Enable MFA - 1SaudiCyber{% endblock %}
+{% extends "base.html" %}{% block title %}تفعيل التحقق بخطوتين - 1SaudiCyber{% endblock %}
 {% block content %}
-<div class="max-w-md mx-auto bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-4">
-  <h1 class="text-xl font-bold text-gov-green-800"><i class="fas fa-shield-halved mr-2"></i>Enable Two-Factor Authentication</h1>
-  <p class="text-sm text-gov-gray-600">Add this account to an authenticator app (Google Authenticator, Microsoft Authenticator, Authy) using the secret below, then enter the 6-digit code to confirm.</p>
+<div dir="rtl" class="max-w-md mx-auto bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-4">
+  <h1 class="text-xl font-bold text-gov-green-800"><i class="fas fa-shield-halved mr-2"></i>تفعيل المصادقة الثنائية</h1>
+  <p class="text-sm text-gov-gray-600">أضف هذا الحساب إلى تطبيق مصادقة (Google Authenticator أو Microsoft Authenticator أو Authy) باستخدام المفتاح السري أدناه، ثم أدخل الرمز المكوّن من 6 أرقام للتأكيد.</p>
   <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
-    <div class="text-xs text-gov-gray-500">Secret key</div>
+    <div class="text-xs text-gov-gray-500">المفتاح السري</div>
     <div class="font-mono text-lg tracking-widest text-gov-green-800 break-all">{{ secret }}</div>
   </div>
   <p class="text-xs text-gov-gray-400 break-all">{{ provisioning_uri }}</p>
   <form method="post" class="space-y-3">{% csrf_token %}
     <input name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456"
            class="w-full text-center text-2xl tracking-widest border border-gov-gray-300 rounded-lg py-2">
-    <button class="w-full bg-gov-green-800 text-white rounded-lg py-2 font-semibold">Verify &amp; Enable</button>
+    <button class="w-full bg-gov-green-800 text-white rounded-lg py-2 font-semibold">تحقّق وتفعيل</button>
   </form>
 </div>{% endblock %}

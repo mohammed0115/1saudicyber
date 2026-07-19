@@ -19,15 +19,35 @@ def companies_overview():
 def crm_summary():
     """Top-level counts for the CRM dashboard cards. Read-only."""
     from core.models import Company, User
-    from .models import AuditorProfile
-    return {
+    from .models import AuditorProfile, AuditorAssignment
+    data = {
         'companies': Company.objects.count(),
         'users': User.objects.count(),
         'auditors_total': AuditorProfile.objects.count(),
         'auditors_pending': AuditorProfile.objects.filter(status='pending_review').count(),
         'auditors_active': AuditorProfile.objects.filter(status='active').count(),
         'unlinked_users': unlinked_users().count(),
+        'active_assignments': AuditorAssignment.objects.filter(status='accepted').count(),
     }
+    # Operational KPIs — each guarded so a missing/renamed model never breaks the dashboard.
+    try:
+        from compliance.models import Assessment, CompanyFrameworkScope
+        data['assessments_under_review'] = Assessment.objects.filter(status='auditor_review').count()
+        data['pending_scope_approvals'] = CompanyFrameworkScope.objects.filter(status='pending').count()
+    except Exception:
+        data.setdefault('assessments_under_review', 0)
+        data.setdefault('pending_scope_approvals', 0)
+    try:
+        from billing.models import CompanySubscription
+        data['active_subscriptions'] = CompanySubscription.objects.filter(status='active').count()
+    except Exception:
+        data['active_subscriptions'] = 0
+    try:
+        from auditor_portal.models import DocumentRequest
+        data['open_rfis'] = DocumentRequest.objects.filter(status__in=DocumentRequest.OPEN_STATES).count()
+    except Exception:
+        data['open_rfis'] = 0
+    return data
 
 
 def unlinked_users():
@@ -41,6 +61,100 @@ def unlinked_users():
     return (User.objects.filter(company__isnull=True, is_staff=False, is_superuser=False)
             .filter(auditor_profile__isnull=True)
             .order_by('-date_joined'))
+
+
+def company_framework_entitlement(company):
+    """UAT-...-F1: read-only truth about approved-framework usage vs the plan's
+    `max_frameworks`.
+
+    IMPORTANT (source-verified): `max_frameworks` is a DISPLAY-ONLY plan characteristic.
+    It is NOT in `billing.access.FEATURE_LIMIT`, and no approval path (approve_company_scope
+    / approve_framework_scope) checks it — framework approval is applicability-driven and
+    happens BEFORE a subscription exists. So the plan limit is not currently enforced.
+
+    `enforced` is derived from the real FEATURE_LIMIT map (not hard-coded), so this helper
+    self-corrects the moment framework enforcement is ever added. Never mutates data.
+    """
+    info = {'approved_count': 0, 'plan_limit': 0, 'enforced': False,
+            'at_limit': False, 'over_limit': False, 'remaining': None, 'can_add_framework': True}
+    if company is None:
+        return info
+    try:
+        from compliance.models import CompanyFrameworkScope
+        info['approved_count'] = CompanyFrameworkScope.objects.filter(
+            company=company, status='approved').count()
+    except Exception:
+        pass
+    try:
+        from billing.subscription_services import subscription_limit_value
+        from billing.access import FEATURE_LIMIT
+        info['plan_limit'] = subscription_limit_value(company, 'max_frameworks')
+        info['enforced'] = 'max_frameworks' in FEATURE_LIMIT.values()
+    except Exception:
+        pass
+    limit = info['plan_limit']
+    if info['enforced'] and limit and limit > 0:
+        info['remaining'] = max(0, limit - info['approved_count'])
+        info['at_limit'] = info['approved_count'] == limit
+        info['over_limit'] = info['approved_count'] > limit
+        info['can_add_framework'] = info['approved_count'] < limit
+    else:
+        # Not enforced (or no positive limit): this limit never blocks additions.
+        info['can_add_framework'] = True
+    return info
+
+
+def auditor_review_state(company):
+    """UAT-...-F4: centralized, persisted auditor-review milestones for CRM/admin
+    journey consumption. Three DISTINCT milestones derived only from real workflow
+    data (never from a mere auditor assignment/request):
+
+      - review_started      : the auditor did meaningful review work.
+      - has_final_verdict    : a final auditor verdict exists.
+      - has_final_report     : a qualifying final (submitted) review report exists.
+
+    Monotonic by construction: has_final_report -> has_final_verdict -> review_started.
+    Backward compatible with the legacy compliance signals (AuditorFinalVerdict /
+    ControlAssessment) — they still count as review activity / a final verdict.
+    """
+    state = {'review_started': False, 'has_final_verdict': False, 'has_final_report': False}
+    if company is None:
+        return state
+
+    # auditor_portal — the workflow the auditor actually uses (Phase A/B/C).
+    has_report = has_control_verdict = has_note = False
+    try:
+        from auditor_portal.models import AuditReport, AuditorControlVerdict, AuditorNote
+        has_report = AuditReport.objects.filter(assessment__company=company).exists()
+        has_control_verdict = AuditorControlVerdict.objects.filter(
+            assessment__company=company,
+            status__in=AuditorControlVerdict.REVIEWED_STATES).exists()
+        has_note = AuditorNote.objects.filter(assessment__company=company).exists()
+    except Exception:
+        pass
+
+    # Legacy compliance signals (per-submission final verdict / per-control assessment).
+    has_final_verdict_row = has_control_assessment = False
+    try:
+        from compliance.models import AuditorFinalVerdict, ControlAssessment
+        has_final_verdict_row = AuditorFinalVerdict.objects.filter(
+            submission__company=company).exists()
+        has_control_assessment = (ControlAssessment.objects.filter(company=company)
+                                  .exclude(status='not_reviewed').exists())
+    except Exception:
+        pass
+
+    # Step 12 — a qualifying FINAL report. AuditReport is created only by submit_report
+    # (a deliberate final action; there is no draft AuditReport), so its existence == final.
+    state['has_final_report'] = has_report
+    # Step 11 — a FINAL VERDICT exists: the named final-verdict model, OR a submitted
+    # report (which carries an overall pass/conditional/fail final verdict).
+    state['has_final_verdict'] = has_final_verdict_row or has_report
+    # Step 10 — MEANINGFUL review work: any real review artifact (control verdict, note,
+    # final verdict, control assessment, or report). NOT satisfied by assignment/request.
+    state['review_started'] = (has_control_verdict or has_note or has_final_verdict_row
+                               or has_control_assessment or has_report)
+    return state
 
 
 def company_operational_snapshot(company):
@@ -78,9 +192,12 @@ def company_operational_snapshot(company):
             .select_related('framework_version', 'framework_version__framework')
             .values_list('framework_version__code', flat=True))
         snap['has_evidence'] = EvidenceSubmission.objects.filter(company=company).exists()
-        snap['has_auditor_verdict'] = AuditorFinalVerdict.objects.filter(
-            submission__company=company).exists()
-        snap['has_reviewed_report'] = snap['has_auditor_verdict']
+        # F4: consume the centralized auditor-review state so the operational-status
+        # display and the admin journey agree. has_auditor_verdict == a final verdict;
+        # has_reviewed_report == a qualifying final report (no longer the same signal).
+        _review = auditor_review_state(company)
+        snap['has_auditor_verdict'] = _review['has_final_verdict']
+        snap['has_reviewed_report'] = _review['has_final_report']
     except Exception:
         pass
 
@@ -162,9 +279,11 @@ def company_journey_summary(company):
             .values_list('framework_version__code', flat=True))
         has_intake = summary['classification_done']
         evidence_done = EvidenceSubmission.objects.filter(company=company).exists()
-        auditor_done = (ControlAssessment.objects.filter(company=company)
-                        .exclude(status='not_reviewed').exists())
-        reports_done = auditor_done  # reports become meaningful after auditor assessments exist
+        # F4: the "auditor reviewed" milestone consumes the centralized review state
+        # (a superset of the legacy ControlAssessment signal — no company loses it),
+        # so the 8-step and 12-step journeys agree on when auditor review has happened.
+        auditor_done = auditor_review_state(company)['review_started']
+        reports_done = auditor_done  # reports become meaningful after auditor review exists
         step_defs = [
             ('registration', 'إنشاء حساب الشركة', True),
             ('classification', 'ملف التصنيف', has_intake),
@@ -423,7 +542,7 @@ def company_subscription_summary(company):
 def company_report_summary(company):
     """Phase 8H — staff-only internal readiness-report summary (read-only, counts only)."""
     summary = {'readiness_percent': 0, 'missing': 0, 'open_risks': 0,
-               'overdue_tasks': 0, 'report_date': None}
+               'overdue_tasks': 0, 'report_date': None, 'readiness_available': False}
     try:
         from compliance.gap_engine import get_company_gap_summary
         from risk import services as risk_services
@@ -435,6 +554,8 @@ def company_report_summary(company):
             'missing': g.get('missing_count', 0),
             'open_risks': counts['open'],
             'overdue_tasks': counts['overdue_tasks'],
+            # F2: readiness exists iff there are stored gap rows (not from percent == 0).
+            'readiness_available': g.get('total', 0) > 0,
         })
         log = (AuditLog.objects.filter(action__in=['report_viewed', 'report_refreshed'])
                .filter(metadata__company_id=company.id).order_by('-created_at').first())
@@ -470,16 +591,20 @@ def company_gap_summary(company):
     exposes control-level evidence content. Guarded so it never 500s.
     """
     summary = {'readiness_percent': 0, 'missing': 0, 'needs_review': 0,
-               'total': 0, 'calculated_at': None}
+               'total': 0, 'calculated_at': None, 'readiness_available': False}
     try:
         from compliance.gap_engine import get_company_gap_summary
         s = get_company_gap_summary(company)
+        total = s.get('total', 0)
         summary.update({
             'readiness_percent': s.get('overall_readiness_percent', 0),
             'missing': s.get('missing_count', 0),
             'needs_review': s.get('needs_review_count', 0),
-            'total': s.get('total', 0),
+            'total': total,
             'calculated_at': s.get('calculated_at'),
+            # F2: a readiness calculation exists iff there are stored gap rows —
+            # NOT inferred from readiness_percent == 0.
+            'readiness_available': total > 0,
         })
     except Exception:
         pass
@@ -499,6 +624,10 @@ def company_evidence_summary(company):
         ext = EvidenceTextExtraction.objects.filter(submission__company=company)
         summary['extracted'] = ext.filter(status='extracted', char_count__gt=0).count()
         summary['failed'] = ext.filter(status='failed').count()
+        # F3: 'manual_review' here means the auto text-EXTRACTION produced no usable text
+        # (image/unsupported/too large) so the file must be read by a human. It is NOT an
+        # auditor/compliance review. Key kept for compatibility; UI labels say
+        # "تحتاج قراءة يدوية (استخراج)".
         summary['manual_review'] = ext.filter(
             status__in=['no_text_extracted', 'unsupported_type', 'too_large']).count()
     except Exception:
@@ -735,19 +864,32 @@ _ADMIN_STEP_ACTION = {
     'subscription': ('#billing', 'الاشتراك والدفع'),
     'auditor_selection': ('#auditor', 'إسناد مدقق'),
 }
+# F5: actor-aware next-action routing. Every destination is a section on THIS
+# platform-admin page (all @platform_admin_required) — never an auditor-only or
+# company-only route. Auditor-owned steps route to the on-page "المدقق" monitoring
+# section (#auditor), NOT to the evidence counters (#evidence); the report step routes
+# to the readiness/report-status section. Labels distinguish "act" from "monitor".
 _ADMIN_STEP_NAV = {
+    # admin-owned — a genuinely actionable admin section.
     'email_verification': ('#followup', 'المتابعة والملاحظات'),
-    'classification': ('#journey', 'رحلة الامتثال'),
-    'scope_approval': ('#journey', 'رحلة الامتثال'),
-    'control_plan': ('#journey', 'رحلة الامتثال'),
-    'evidence': ('#evidence', 'الأدلة والجاهزية'),
-    'subscription': ('#billing', 'الاشتراك والدفع'),
-    'auditor_selection': ('#auditor', 'المدقق'),
-    'auditor_acceptance': ('#auditor', 'المدقق'),
-    'evidence_review': ('#evidence', 'الأدلة والجاهزية'),
-    'internal_verdict': ('#evidence', 'الأدلة والجاهزية'),
-    'readiness_report': ('#evidence', 'الأدلة والجاهزية'),
+    'subscription': ('#billing', 'إدارة الاشتراك'),
+    'auditor_selection': ('#auditor', 'إسناد مدقق'),
+    # company-owned — a safe monitoring location for the company's own progress.
+    'classification': ('#journey', 'متابعة حالة الشركة'),
+    'scope_approval': ('#journey', 'متابعة حالة الشركة'),
+    'control_plan': ('#journey', 'متابعة حالة الشركة'),
+    'evidence': ('#evidence', 'متابعة أدلة الشركة'),
+    # auditor-owned — monitor the auditor engagement/progress (admin cannot act).
+    'auditor_acceptance': ('#auditor', 'متابعة طلب الإسناد'),
+    'evidence_review': ('#auditor', 'متابعة تقدم المدقق'),
+    'internal_verdict': ('#auditor', 'متابعة تقدم المدقق'),
+    # system/report — monitor readiness/report status (report-status section).
+    'readiness_report': ('#evidence', 'متابعة جاهزية التقرير'),
 }
+
+# Arabic label for the actor who owns the next step (drives the CTA wording).
+_ACTOR_LABEL_AR = {'admin': 'إدارة المنصة', 'company': 'الشركة',
+                   'auditor': 'المدقق', 'system': 'النظام'}
 
 
 def admin_company_journey(company):
@@ -760,6 +902,8 @@ def admin_company_journey(company):
     j = company_journey_summary(company)
     snap = company_operational_snapshot(company)
     eng = admin_auditor_engagement(company)
+    # F4: three DISTINCT auditor-review milestones from the centralized state.
+    review = auditor_review_state(company)
     try:
         from billing.subscription_access import company_has_active_subscription
         sub_active = bool(company_has_active_subscription(company))
@@ -791,11 +935,11 @@ def admin_company_journey(company):
         ('auditor_selection', 'اختيار/إسناد المدقق', eng['selected'], 'admin',
          'لا يوجد مدقق — اختر مدققاً أو انتظر اختيار الشركة لمدقق.'),
         ('auditor_acceptance', 'موافقة المدقق', eng['accepted'], 'auditor', acceptance_reason),
-        ('evidence_review', 'مراجعة الأدلة', snap['has_auditor_verdict'], 'auditor',
+        ('evidence_review', 'مراجعة الأدلة', review['review_started'], 'auditor',
          'بانتظار مراجعة المدقق للأدلة.'),
-        ('internal_verdict', 'الحكم الداخلي', snap['has_auditor_verdict'], 'auditor',
+        ('internal_verdict', 'الحكم الداخلي', review['has_final_verdict'], 'auditor',
          'بانتظار الحكم الداخلي من المدقق.'),
-        ('readiness_report', 'تقرير الجاهزية', snap['has_reviewed_report'], 'system',
+        ('readiness_report', 'تقرير الجاهزية', review['has_final_report'], 'system',
          'بانتظار توفّر تقرير الجاهزية بعد المراجعة.'),
     ]
 
@@ -816,6 +960,8 @@ def admin_company_journey(company):
             next_action = {
                 'key': key, 'label': label, 'reason': reason,
                 'actor': actor,
+                'actor_label': _ACTOR_LABEL_AR.get(actor, actor),
+                'is_actionable_by_admin': actor == 'admin',
                 'anchor': nav_anchor,
                 'button_label': nav_btn,
             }
@@ -833,7 +979,8 @@ def admin_company_journey(company):
     if next_action is None:
         next_action = {'key': 'done', 'label': 'اكتمل المسار',
                        'reason': 'اكتملت مراحل رحلة إدارة ملف الشركة الحالية.',
-                       'actor': 'system', 'anchor': None, 'button_label': None}
+                       'actor': 'system', 'actor_label': _ACTOR_LABEL_AR['system'],
+                       'is_actionable_by_admin': False, 'anchor': None, 'button_label': None}
     return {'steps': steps, 'next_action': next_action}
 
 

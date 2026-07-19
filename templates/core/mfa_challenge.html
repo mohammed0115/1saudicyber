@@ -1,11 +1,11 @@
-{% extends "base.html" %}{% block title %}Verify - 1SaudiCyber{% endblock %}
+{% extends "base.html" %}{% block title %}التحقق بخطوتين - 1SaudiCyber{% endblock %}
 {% block content %}
-<div class="max-w-sm mx-auto bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-4">
-  <h1 class="text-xl font-bold text-gov-green-800"><i class="fas fa-key mr-2"></i>Two-Factor Verification</h1>
-  <p class="text-sm text-gov-gray-600">Enter the 6-digit code from your authenticator app.</p>
+<div dir="rtl" class="max-w-sm mx-auto bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-4">
+  <h1 class="text-xl font-bold text-gov-green-800 flex items-center gap-2"><i class="fas fa-key"></i> التحقق بخطوتين</h1>
+  <p class="text-sm text-gov-gray-600">أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة.</p>
   <form method="post" class="space-y-3">{% csrf_token %}
-    <input name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" autofocus
+    <input name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" autofocus dir="ltr"
            class="w-full text-center text-2xl tracking-widest border border-gov-gray-300 rounded-lg py-2">
-    <button class="w-full bg-gov-green-800 text-white rounded-lg py-2 font-semibold">Verify</button>
+    <button class="w-full bg-gov-green-800 text-white rounded-lg py-2 font-semibold">تأكيد</button>
   </form>
 </div>{% endblock %}

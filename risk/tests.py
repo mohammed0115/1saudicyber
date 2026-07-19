@@ -569,15 +569,15 @@ class RiskDashboardViewTests(TestCase):
         generate_risks_from_gap(c)
         self._login(c, 'rddist@x.com')
         body = self.client.get(reverse('risk:list')).content.decode()
-        self.assertIn('Severity distribution', body)
-        self.assertIn('Risk status', body)
+        self.assertIn('توزيع الخطورة', body)
+        self.assertIn('حالة المخاطر', body)
 
     def test_smart_processing_animation_present(self):
         c, item, sub = _company_with_gaps()
         self._login(c, 'rdanim@x.com')
         body = self.client.get(reverse('risk:list')).content.decode()
         self.assertIn('data-smart-processing', body)
-        self.assertIn('Processing evidence', body)
+        self.assertIn('جاري تحليل الدليل', body)
 
     def test_risk_detail_shows_source_and_reason(self):
         c, item, sub = _company_with_gaps()
@@ -615,7 +615,7 @@ class RiskDashboardViewTests(TestCase):
         u, p = _auditor(status='active')
         self.client.force_login(u)
         resp = self.client.get(reverse('risk:list'))
-        self.assertContains(resp, 'Auditor account', status_code=200)
+        self.assertContains(resp, 'حساب مدقّق', status_code=200)
 
     def test_staff_without_company_routed_to_crm(self):
         st = User.objects.create_user(username='rgstaff@x.com', email='rgstaff@x.com',
@@ -645,7 +645,7 @@ class RiskCRMSummaryTests(TestCase):
         self.client.force_login(staff)
         resp = self.client.get(reverse('platform_admin:company_detail', args=[c.id]))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Internal risk summary')
+        self.assertContains(resp, 'المخاطر الداخلية')   # risk summary heading (Arabized)
 
     def test_crm_risk_summary_staff_only(self):
         c, item, sub = _company_with_gaps()

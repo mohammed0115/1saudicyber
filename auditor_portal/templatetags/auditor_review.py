@@ -91,6 +91,24 @@ def evidence_status_ar(value):
     return _ar(_EVIDENCE_STATUS_AR, value)
 
 
+_PRIORITY_AR = {'critical': 'حرجة', 'high': 'عالية', 'medium': 'متوسطة', 'low': 'منخفضة'}
+_EVIDENCE_TYPE_AR = {
+    'policy': 'وثيقة سياسة', 'procedure': 'وثيقة إجراء', 'screenshot': 'لقطة شاشة',
+    'config': 'تصدير إعدادات', 'report': 'تقرير تدقيق/فحص', 'log': 'سجل نظام',
+    'interview': 'محضر مقابلة', 'certificate': 'شهادة/رخصة', 'other': 'أخرى',
+}
+
+
+@register.filter
+def priority_ar(value):
+    return _ar(_PRIORITY_AR, value)
+
+
+@register.filter
+def evidence_type_ar(value):
+    return _ar(_EVIDENCE_TYPE_AR, value)
+
+
 @register.filter
 def ai_verdict_ar(value):
     return _AI_VERDICT_AR.get(str(value or '').strip().lower(), value)

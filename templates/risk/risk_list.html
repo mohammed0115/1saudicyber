@@ -13,7 +13,7 @@
         <form method="post" action="{% url 'risk:generate' %}" data-smart-processing class="inline">
           {% csrf_token %}
           <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
-            <i class="fas fa-wand-magic-sparkles mr-1"></i> توليد من تحليل الفجوات · Generate from gap analysis
+            <i class="fas fa-wand-magic-sparkles mr-1"></i> توليد من تحليل الفجوات
           </button>
         </form>
         <a href="{% url 'risk:create' %}" data-busy="جارٍ تحميل النموذج..."
@@ -25,8 +25,8 @@
     <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-4 text-sm text-gov-gray-600">
       <i class="fas fa-circle-info text-gov-green-700"></i>
       خطة مخاطر ومعالجة داخلية مبنية على الأدلة وتحليل الفجوات — تتطلب مراجعة بشرية ولا يُعد شهادة امتثال رسمية.
-      <span class="block text-xs text-gov-gray-400 mt-1">Evidence-based internal risk &amp; remediation plan — requires human review. Not an official certification.
-        <a href="{% url 'compliance:gap_dashboard' %}" class="text-gov-green-700 hover:underline">· تحليل الفجوات · Gap analysis</a></span>
+      <span class="block text-xs text-gov-gray-400 mt-1">
+        <a href="{% url 'compliance:gap_dashboard' %}" class="text-gov-green-700 hover:underline">تحليل الفجوات</a></span>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -47,20 +47,20 @@
     {# Severity + status distribution #}
     <div class="grid md:grid-cols-2 gap-4">
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
-        <h3 class="font-semibold text-gov-green-800 text-sm mb-2">توزيع الخطورة · Severity distribution</h3>
+        <h3 class="font-semibold text-gov-green-800 text-sm mb-2">توزيع الخطورة</h3>
         <div class="grid grid-cols-4 gap-2 text-center text-sm">
-          <div><div class="text-lg font-bold text-red-700">{{ severity_counts.critical }}</div><div class="text-xs text-gov-gray-500">حرجة · Critical</div></div>
-          <div><div class="text-lg font-bold text-orange-700">{{ severity_counts.high }}</div><div class="text-xs text-gov-gray-500">عالية · High</div></div>
-          <div><div class="text-lg font-bold text-amber-600">{{ severity_counts.medium }}</div><div class="text-xs text-gov-gray-500">متوسطة · Medium</div></div>
-          <div><div class="text-lg font-bold text-gov-green-700">{{ severity_counts.low }}</div><div class="text-xs text-gov-gray-500">منخفضة · Low</div></div>
+          <div><div class="text-lg font-bold text-red-700">{{ severity_counts.critical }}</div><div class="text-xs text-gov-gray-500">حرجة</div></div>
+          <div><div class="text-lg font-bold text-amber-800">{{ severity_counts.high }}</div><div class="text-xs text-gov-gray-500">عالية</div></div>
+          <div><div class="text-lg font-bold text-amber-600">{{ severity_counts.medium }}</div><div class="text-xs text-gov-gray-500">متوسطة</div></div>
+          <div><div class="text-lg font-bold text-gov-green-700">{{ severity_counts.low }}</div><div class="text-xs text-gov-gray-500">منخفضة</div></div>
         </div>
       </div>
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
-        <h3 class="font-semibold text-gov-green-800 text-sm mb-2">حالة المخاطر · Risk status</h3>
+        <h3 class="font-semibold text-gov-green-800 text-sm mb-2">حالة المخاطر</h3>
         <div class="grid grid-cols-3 gap-2 text-center text-sm">
-          <div><div class="text-lg font-bold text-gov-gray-800">{{ status_counts.open|default:0 }}</div><div class="text-xs text-gov-gray-500">مفتوحة · Open</div></div>
-          <div><div class="text-lg font-bold text-blue-700">{{ status_counts.in_progress|default:0 }}</div><div class="text-xs text-gov-gray-500">قيد التنفيذ · In progress</div></div>
-          <div><div class="text-lg font-bold text-gov-green-700">{{ status_counts.mitigated|default:0 }}</div><div class="text-xs text-gov-gray-500">مُعالَجة · Mitigated</div></div>
+          <div><div class="text-lg font-bold text-gov-gray-800">{{ status_counts.open|default:0 }}</div><div class="text-xs text-gov-gray-500">مفتوحة</div></div>
+          <div><div class="text-lg font-bold text-gov-gray-700">{{ status_counts.in_progress|default:0 }}</div><div class="text-xs text-gov-gray-500">قيد التنفيذ</div></div>
+          <div><div class="text-lg font-bold text-gov-green-700">{{ status_counts.mitigated|default:0 }}</div><div class="text-xs text-gov-gray-500">مُعالَجة</div></div>
         </div>
       </div>
     </div>
@@ -81,7 +81,7 @@
             <td class="px-4 py-2">{{ r.inherent_score }}</td>
             <td class="px-4 py-2"><span class="px-2 py-0.5 rounded text-xs
               {% if r.severity == 'critical' %}bg-red-100 text-red-800
-              {% elif r.severity == 'high' %}bg-orange-100 text-orange-800
+              {% elif r.severity == 'high' %}bg-amber-100 text-amber-800
               {% elif r.severity == 'medium' %}bg-amber-100 text-amber-800
               {% else %}bg-gov-green-100 text-gov-green-800{% endif %}">{{ r.severity_label_ar }}</span></td>
             <td class="px-4 py-2 text-xs">{{ r.get_status_display }}</td>

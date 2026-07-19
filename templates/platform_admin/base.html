@@ -22,7 +22,7 @@ pages provide their content via {% block content %}.
   {% if messages %}
   <div class="max-w-7xl mx-auto px-4 mt-4" dir="rtl">
     {% for message in messages %}
-    <div class="rounded-lg p-3 mb-2 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">{{ message }}</div>
+    <div class="rounded-lg p-3 mb-2 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-gov-gray-100 text-gov-gray-700 border border-gov-gray-200{% endif %}">{{ message }}</div>
     {% endfor %}
   </div>
   {% endif %}
@@ -33,7 +33,7 @@ pages provide their content via {% block content %}.
 
   <footer class="bg-gov-green-950 text-gov-green-200 py-6 mt-12" dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
     <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-      <p>&copy; {% now "Y" %} 1SaudiCyber · Get Solution CRM — وحدة التشغيل الداخلية.</p>
+      <p>&copy; {% now "Y" %} 1SaudiCyber · CRM شركة احصل الحل — وحدة التشغيل الداخلية.</p>
       <p class="mt-1 text-gov-green-400">إجراء داخلي تشغيلي فقط — لا يمثّل اعتمادًا رسميًا أو شهادة امتثال رسمية من أي جهة.</p>
     </div>
   </footer>

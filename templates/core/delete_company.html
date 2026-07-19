@@ -1,11 +1,11 @@
-{% extends "base.html" %}{% block title %}Delete Account Data{% endblock %}
+{% extends "base.html" %}{% block title %}حذف بيانات الحساب{% endblock %}
 {% block content %}
-<div class="max-w-md mx-auto bg-white rounded-xl p-6 shadow-sm border border-red-200 space-y-4">
-  <h1 class="text-xl font-bold text-red-700"><i class="fas fa-triangle-exclamation mr-2"></i>Delete all company data</h1>
-  <p class="text-sm text-gov-gray-700">This permanently deletes <b>{{ company.name }}</b> and all associated controls, evidence, scores, alerts, and user accounts. This cannot be undone (PDPL right to deletion).</p>
+<div dir="rtl" class="max-w-md mx-auto bg-white rounded-xl p-6 shadow-sm border border-red-200 space-y-4">
+  <h1 class="text-xl font-bold text-red-700"><i class="fas fa-triangle-exclamation mr-2"></i>حذف جميع بيانات الشركة</h1>
+  <p class="text-sm text-gov-gray-700">سيؤدي هذا إلى حذف <b>{{ company.name }}</b> نهائيًا مع جميع الضوابط والأدلة والدرجات والتنبيهات وحسابات المستخدمين المرتبطة بها. لا يمكن التراجع عن هذا الإجراء (حق الحذف وفق PDPL).</p>
   <form method="post" class="space-y-3">{% csrf_token %}
-    <label class="block text-sm text-gov-gray-600">Type <b>DELETE</b> to confirm</label>
+    <label class="block text-sm text-gov-gray-600">اكتب <b>DELETE</b> للتأكيد</label>
     <input name="confirm" class="w-full border border-gov-gray-300 rounded-lg py-2 px-3" placeholder="DELETE">
-    <button class="w-full bg-red-600 text-white rounded-lg py-2 font-semibold">Permanently delete</button>
+    <button class="w-full bg-red-600 text-white rounded-lg py-2 font-semibold">حذف نهائي</button>
   </form>
 </div>{% endblock %}

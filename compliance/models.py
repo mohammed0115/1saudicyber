@@ -750,6 +750,10 @@ class EvidenceSubmission(models.Model):
     class Meta:
         db_table = 'evidence_submissions'
         ordering = ['-uploaded_at']
+        indexes = [
+            models.Index(fields=['company', '-uploaded_at']),   # DD: tenant list + default order
+            models.Index(fields=['company', 'status']),         # DD: status filters at scale
+        ]
 
     def __str__(self):
         return f"{self.company.name} :: {self.original_filename} (v{self.version}, {self.status})"
@@ -1069,6 +1073,20 @@ class AuditorFinalVerdict(models.Model):
     @property
     def status_ar(self):
         return self.STATUS_AR.get(self.status, self.status)
+
+    @property
+    def is_stale(self):
+        """F-AUDIT R2: True when a NEWER evidence version exists for the same checklist
+        item than the one this verdict reviewed — i.e. the verdict is on outdated evidence
+        and needs re-review. Derived read-only (no persisted flag / no migration): the
+        verdict is bound OneToOne to a specific submission, so "stale" == "a sibling
+        submission with a higher version exists for this submission's checklist_item".
+        A submission with no checklist_item (legacy/orphan) is never considered stale."""
+        item_id = self.submission.checklist_item_id
+        if not item_id:
+            return False
+        return EvidenceSubmission.objects.filter(
+            checklist_item_id=item_id, version__gt=self.submission.version).exists()
 
 
 class ControlGapAssessment(models.Model):

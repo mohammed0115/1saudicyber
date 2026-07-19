@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Business Unit Manager Dashboard - 1SaudiCyber{% endblock %}
+{% load i18n %}
+{% block title %}لوحة مدير وحدة الأعمال - 1SaudiCyber{% endblock %}
 
 {% block content %}
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gov-green-800 mb-2">Business Unit Dashboard</h1>
-    <p class="text-gov-gray-600">Department compliance status and training overview.</p>
+    <h1 class="text-3xl font-bold text-gov-green-800 mb-2">لوحة وحدة الأعمال</h1>
+    <p class="text-gov-gray-600">حالة امتثال الوحدة حسب المجالات.</p>
 </div>
 
 <!-- Quick Stats -->
@@ -14,31 +15,31 @@
             <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-chart-pie text-green-600 text-xl"></i>
             </div>
-            <div class="ml-4">
-                <p class="text-sm text-gov-gray-500">Department Score</p>
-                <p class="text-2xl font-bold text-gov-green-800">{{ department_score|default:"--" }}%</p>
+            <div class="ms-4">
+                <p class="text-sm text-gov-gray-500">نسبة امتثال الوحدة</p>
+                <p class="text-2xl font-bold text-gov-green-800">{{ department_score|default:0 }}%</p>
             </div>
         </div>
     </div>
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <div class="flex items-center">
-            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-users text-blue-600 text-xl"></i>
+            <div class="w-12 h-12 bg-gov-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-users text-gov-green-600 text-xl"></i>
             </div>
-            <div class="ml-4">
-                <p class="text-sm text-gov-gray-500">Team Members</p>
-                <p class="text-2xl font-bold text-gov-green-800">{{ team_count|default:"0" }}</p>
+            <div class="ms-4">
+                <p class="text-sm text-gov-gray-500">أعضاء الفريق</p>
+                <p class="text-2xl font-bold text-gov-green-800">{{ team_count|default:0 }}</p>
             </div>
         </div>
     </div>
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <div class="flex items-center">
-            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-graduation-cap text-yellow-600 text-xl"></i>
+            <div class="w-12 h-12 bg-gov-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-list-check text-gov-green-600 text-xl"></i>
             </div>
-            <div class="ml-4">
-                <p class="text-sm text-gov-gray-500">Training Complete</p>
-                <p class="text-2xl font-bold text-gov-green-800">{{ training_complete|default:"0" }}%</p>
+            <div class="ms-4">
+                <p class="text-sm text-gov-gray-500">مجالات مُتابَعة</p>
+                <p class="text-2xl font-bold text-gov-green-800">{{ domains|length }}</p>
             </div>
         </div>
     </div>
@@ -47,9 +48,9 @@
             <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
             </div>
-            <div class="ml-4">
-                <p class="text-sm text-gov-gray-500">Open Issues</p>
-                <p class="text-2xl font-bold text-gov-green-800">{{ open_issues|default:"0" }}</p>
+            <div class="ms-4">
+                <p class="text-sm text-gov-gray-500">ضوابط غير مكتملة</p>
+                <p class="text-2xl font-bold text-gov-green-800">{{ open_issues|default:0 }}</p>
             </div>
         </div>
     </div>
@@ -59,14 +60,14 @@
     <!-- Department Compliance -->
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <h2 class="text-lg font-semibold text-gov-green-800 mb-4">
-            <i class="fas fa-building mr-2"></i> Department Compliance by Domain
+            <i class="fas fa-building me-2"></i> امتثال الوحدة حسب المجال
         </h2>
         <div class="space-y-4">
             {% for domain in domains %}
             <div>
                 <div class="flex justify-between text-sm mb-1">
                     <span class="text-gov-gray-700">{{ domain.name }}</span>
-                    <span class="font-medium text-gov-green-800">{{ domain.score }}%</span>
+                    <span class="font-medium text-gov-green-800">{{ domain.compliant }}/{{ domain.total }} · {{ domain.score }}%</span>
                 </div>
                 <div class="w-full bg-gov-gray-200 rounded-full h-2.5">
                     <div class="bg-gov-green-700 h-2.5 rounded-full transition-all" style="width: {{ domain.score }}%"></div>
@@ -75,91 +76,34 @@
             {% empty %}
             <div class="text-center py-8">
                 <i class="fas fa-chart-bar text-gov-gray-300 text-4xl mb-3"></i>
-                <p class="text-gov-gray-400">No compliance data available yet.</p>
-                <p class="text-sm text-gov-gray-400 mt-1">Data will appear once controls are assessed.</p>
+                <p class="text-gov-gray-400">لا توجد بيانات امتثال بعد.</p>
+                <p class="text-sm text-gov-gray-400 mt-1">ستظهر البيانات فور تقييم الضوابط.</p>
             </div>
             {% endfor %}
-        </div>
-    </div>
-
-    <!-- Training Status -->
-    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gov-green-800 mb-4">
-            <i class="fas fa-graduation-cap mr-2"></i> Training Status
-        </h2>
-        <div class="space-y-3">
-            <div class="flex items-center justify-between p-3 bg-gov-gray-50 rounded-lg">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-check text-green-600 text-xs"></i>
-                    </div>
-                    <span class="text-sm text-gov-gray-700">Security Awareness Training</span>
-                </div>
-                <span class="text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded">Complete</span>
-            </div>
-            <div class="flex items-center justify-between p-3 bg-gov-gray-50 rounded-lg">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-clock text-yellow-600 text-xs"></i>
-                    </div>
-                    <span class="text-sm text-gov-gray-700">Data Protection Basics</span>
-                </div>
-                <span class="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-1 rounded">In Progress</span>
-            </div>
-            <div class="flex items-center justify-between p-3 bg-gov-gray-50 rounded-lg">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-minus text-gray-400 text-xs"></i>
-                    </div>
-                    <span class="text-sm text-gov-gray-700">Incident Response Procedures</span>
-                </div>
-                <span class="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">Not Started</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Actions -->
-    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gov-green-800 mb-4">
-            <i class="fas fa-history mr-2"></i> Recent Actions Required
-        </h2>
-        <div class="space-y-3">
-            <div class="border-l-4 border-red-400 pl-4 py-2">
-                <p class="text-sm font-medium text-gov-gray-800">Update Access Control Policy</p>
-                <p class="text-xs text-gov-gray-500">Due: 7 days | Priority: High</p>
-            </div>
-            <div class="border-l-4 border-yellow-400 pl-4 py-2">
-                <p class="text-sm font-medium text-gov-gray-800">Complete Security Training for New Hires</p>
-                <p class="text-xs text-gov-gray-500">Due: 14 days | Priority: Medium</p>
-            </div>
-            <div class="border-l-4 border-blue-400 pl-4 py-2">
-                <p class="text-sm font-medium text-gov-gray-800">Review Department Risk Assessment</p>
-                <p class="text-xs text-gov-gray-500">Due: 30 days | Priority: Normal</p>
-            </div>
         </div>
     </div>
 
     <!-- Quick Links -->
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <h2 class="text-lg font-semibold text-gov-green-800 mb-4">
-            <i class="fas fa-link mr-2"></i> Quick Actions
+            <i class="fas fa-link me-2"></i> إجراءات سريعة
         </h2>
         <div class="grid grid-cols-2 gap-3">
             <a href="{% url 'compliance:controls_list' %}" class="flex items-center p-3 bg-gov-gray-50 rounded-lg hover:bg-gov-green-50 transition">
-                <i class="fas fa-list-check text-gov-green-700 mr-3"></i>
-                <span class="text-sm text-gov-gray-700">View Controls</span>
+                <i class="fas fa-list-check text-gov-green-700 me-3"></i>
+                <span class="text-sm text-gov-gray-700">عرض الضوابط</span>
             </a>
             <a href="{% url 'ai_engine:gap_analysis' %}" class="flex items-center p-3 bg-gov-gray-50 rounded-lg hover:bg-gov-green-50 transition">
-                <i class="fas fa-chart-line text-gov-green-700 mr-3"></i>
-                <span class="text-sm text-gov-gray-700">Gap Analysis</span>
+                <i class="fas fa-chart-line text-gov-green-700 me-3"></i>
+                <span class="text-sm text-gov-gray-700">تحليل الفجوات</span>
             </a>
-            <a href="{% url 'compliance:controls_list' %}" class="flex items-center p-3 bg-gov-gray-50 rounded-lg hover:bg-gov-green-50 transition">
-                <i class="fas fa-upload text-gov-green-700 mr-3"></i>
-                <span class="text-sm text-gov-gray-700">Upload Evidence</span>
+            <a href="{% url 'compliance:evidence_checklist' %}" class="flex items-center p-3 bg-gov-gray-50 rounded-lg hover:bg-gov-green-50 transition">
+                <i class="fas fa-upload text-gov-green-700 me-3"></i>
+                <span class="text-sm text-gov-gray-700">رفع الأدلة</span>
             </a>
             <a href="{% url 'monitoring:hub' %}" class="flex items-center p-3 bg-gov-gray-50 rounded-lg hover:bg-gov-green-50 transition">
-                <i class="fas fa-shield-alt text-gov-green-700 mr-3"></i>
-                <span class="text-sm text-gov-gray-700">Monitoring Hub</span>
+                <i class="fas fa-shield-alt text-gov-green-700 me-3"></i>
+                <span class="text-sm text-gov-gray-700">مركز المراقبة</span>
             </a>
         </div>
     </div>

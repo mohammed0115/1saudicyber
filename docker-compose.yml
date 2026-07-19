@@ -21,6 +21,18 @@ services:
       timeout: 5s
       retries: 10
 
+  # DD-fix: Redis — Celery broker + Django cache (login throttle, caching).
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   web:
     build: .
     restart: unless-stopped
@@ -28,6 +40,8 @@ services:
       - .env
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - static_volume:/app/staticfiles
@@ -41,7 +55,36 @@ services:
       retries: 5
       start_period: 40s
 
+  # DD-fix: async worker — evidence OCR/AI/PDF no longer block the web request.
+  worker:
+    build: .
+    restart: unless-stopped
+    command: celery -A cybertrust_ksa worker --loglevel=info --concurrency=2
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media_volume:/app/media
+
+  # DD-fix: scheduled jobs (score recalc, monthly reports, reminders) actually run.
+  beat:
+    build: .
+    restart: unless-stopped
+    command: celery -A cybertrust_ksa beat --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   static_volume:
   media_volume:
+  redis_data:

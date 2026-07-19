@@ -120,6 +120,14 @@ def build_framework_gap_analysis(company, framework_version=None):
 
 def build_evidence_matrix(company, framework_version=None):
     """Row per applicable official control with evidence/AI/assessment state. Read-only."""
+    # F-UIUX: Arabic labels so the matrix never shows raw English enum values.
+    _SUB_AR = {'uploaded': 'مرفوع', 'pending_review': 'بانتظار المراجعة', 'accepted': 'مقبول',
+               'rejected': 'مرفوض', 'needs_reupload': 'يلزم إعادة رفع', 'archived': 'مؤرشف'}
+    _AI_AR = {'pending': 'بالانتظار', 'processing': 'قيد المعالجة', 'completed': 'مكتمل',
+              'failed': 'فشل', 'skipped': 'متخطّى', 'needs_human_review': 'يلزم مراجعة بشرية'}
+    _ASSESS_AR = {'not_reviewed': 'لم يُراجَع', 'compliant': 'ممتثل', 'partially_compliant': 'ممتثل جزئيًا',
+                  'non_compliant': 'غير ممتثل', 'not_applicable': 'لا ينطبق',
+                  'needs_more_evidence': 'يلزم أدلة إضافية'}
     cars = list(_applicable_official_controls(company, framework_version=framework_version))
     amap = _assessment_map(company)
     # Pre-aggregate submissions/analyses per control.
@@ -128,10 +136,10 @@ def build_evidence_matrix(company, framework_version=None):
               .select_related('checklist_item__evidence_requirement')):
         cid = s.checklist_item.evidence_requirement.control_id
         sub_counts[cid] = sub_counts.get(cid, 0) + 1
-        latest_sub.setdefault(cid, s.get_status_display())  # qs ordered -uploaded_at
+        latest_sub.setdefault(cid, _SUB_AR.get(s.status, s.get_status_display()))  # qs ordered -uploaded_at
     latest_ai = {}
     for an in EvidenceAnalysisResult.objects.filter(company=company):
-        latest_ai.setdefault(an.control_id, an.get_status_display())
+        latest_ai.setdefault(an.control_id, _AI_AR.get(an.status, an.get_status_display()))
 
     rows = []
     for car in cars:
@@ -145,7 +153,7 @@ def build_evidence_matrix(company, framework_version=None):
             'submission_count': sub_counts.get(c.id, 0),
             'latest_submission_status': latest_sub.get(c.id, '—'),
             'latest_ai_status': latest_ai.get(c.id, '—'),
-            'assessment_status': a.get_status_display() if a else 'Not Reviewed',
+            'assessment_status': _ASSESS_AR.get(a.status, a.get_status_display()) if a else _ASSESS_AR['not_reviewed'],
             'assessment_status_key': a.status if a else 'not_reviewed',
             'reviewed_by': str(a.reviewed_by) if a and a.reviewed_by else '',
             'reviewed_at': a.reviewed_at if a else None,

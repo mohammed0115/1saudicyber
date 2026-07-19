@@ -66,11 +66,8 @@ def send_otp_email(user, raw_code):
     body = (
         f"مرحبًا،\n\n"
         f"رمز التحقق الخاص بك في منصة 1SaudiCyber هو: {raw_code}\n"
-        f"ينتهي هذا الرمز خلال {OTP_TTL_MINUTES} دقائق ولا تشاركه مع أي أحد.\n\n"
-        f"Your 1SaudiCyber email verification code is: {raw_code}\n"
-        f"It expires in {OTP_TTL_MINUTES} minutes. Do not share it with anyone.\n\n"
+        f"ينتهي هذا الرمز خلال {OTP_TTL_MINUTES} دقائق، ولا تشاركه مع أي أحد.\n\n"
         f"منصة 1SaudiCyber مملوكة ومُدارة بواسطة شركة احصل الحل.\n"
-        f"1SaudiCyber is owned and operated by Get Solution Company.\n"
     )
     send_mail(subject, body, getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@1saudicyber.com'),
               [user.email], fail_silently=True)

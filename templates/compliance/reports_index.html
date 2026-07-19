@@ -8,7 +8,7 @@
     {% include "compliance/_workflow_stepper.html" %}
 
     {% if subscription_active %}
-    <div class="rounded-lg p-4 text-sm" style="background:#EAF3EF;border:1px solid #CFE3DA;color:#0F5D46;">
+    <div class="rounded-lg p-4 text-sm" style="background:#EAF3EF;border:1px solid #CFE3DA;color:#2a5646;">
         <i class="fas fa-unlock mr-1"></i> التقارير مفعّلة — يمكنك عرض وتنزيل التقارير الكاملة.
     </div>
     <!-- Phase 4C — two auditor options for a subscribed company -->
@@ -33,11 +33,11 @@
         </a>
     </div>
     {% else %}
-    <div class="rounded-lg p-4 text-sm" style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;">
-        <i class="fas fa-lock mr-1"></i>
-        يتطلب تنزيل التقارير أو إسناد الملف إلى مدقق تفعيل الاشتراك. —
+    <div class="rounded-lg p-4 text-sm" style="background:#f1eadb;border:1px solid #dcc79a;color:#8a6a1f;">
+        <i class="fas fa-lock me-1"></i>
+        يتطلب تنزيل التقارير أو إسناد الملف إلى مدقق تفعيل الاشتراك.
         يمكنك إكمال الرحلة ورفع الأدلة، لكن تنزيل التقارير الكاملة وإسناد المدقّق يتطلب تفعيل الاشتراك.
-        <a href="{% url 'compliance:report_executive_summary' %}" class="underline font-medium mr-1">طلب تفعيل الاشتراك</a>
+        <a href="{% url 'billing:home' %}" class="underline font-medium ms-1">تفعيل الاشتراك</a>
     </div>
     {% endif %}
 

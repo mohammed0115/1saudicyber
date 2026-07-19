@@ -27,6 +27,7 @@ class VerdictRow:
     reviewed_at: object
     reviewer_label: str
     submission_id: int
+    is_stale: bool = False   # F-AUDIT R2: a newer evidence version exists -> needs re-review
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,8 @@ class AuditorReviewedReport:
     total_submissions: int
     reviewed_count: int
     pending_count: int
+    stale_count: int = 0            # F-AUDIT R2: verdicts on outdated evidence versions
+    current_reviewed_count: int = 0  # reviewed_count minus stale (verdicts on the latest evidence)
     status_counts: dict = field(default_factory=dict)
     status_counts_ar: dict = field(default_factory=dict)
     framework_counts: dict = field(default_factory=dict)
@@ -74,6 +77,7 @@ def build_auditor_reviewed_report(company) -> AuditorReviewedReport:
     status_counts, status_counts_ar, framework_counts = {}, {}, {}
     rows = []
     latest = None
+    stale_count = 0
     for v in verdicts:
         status_counts[v.status] = status_counts.get(v.status, 0) + 1
         status_counts_ar[v.status_ar] = status_counts_ar.get(v.status_ar, 0) + 1
@@ -81,6 +85,9 @@ def build_auditor_reviewed_report(company) -> AuditorReviewedReport:
         framework_counts[ft] = framework_counts.get(ft, 0) + 1
         if latest is None or (v.reviewed_at and v.reviewed_at > latest):
             latest = v.reviewed_at
+        stale = v.is_stale   # F-AUDIT R2: verdict on an outdated evidence version
+        if stale:
+            stale_count += 1
         control = _control_of(v.submission)
         cid = getattr(control, 'control_id', '') if control else ''
         ctitle = (getattr(control, 'title_ar', '') or getattr(control, 'title', '')) if control else ''
@@ -93,13 +100,16 @@ def build_auditor_reviewed_report(company) -> AuditorReviewedReport:
             rule_suggestion_ar=rule_ar, verdict_status=v.status, verdict_status_ar=v.status_ar,
             confidence=v.confidence, rationale_excerpt=(v.rationale or '')[:MAX_RATIONALE_EXCERPT],
             required_actions_count=len(v.required_actions or []), reviewed_at=v.reviewed_at,
-            reviewer_label=_reviewer_label(v.reviewer), submission_id=v.submission_id))
+            reviewer_label=_reviewer_label(v.reviewer), submission_id=v.submission_id,
+            is_stale=stale))
 
     reviewed_count = len(rows)
     return AuditorReviewedReport(
         total_submissions=total_submissions,
         reviewed_count=reviewed_count,
         pending_count=max(0, total_submissions - reviewed_count),
+        stale_count=stale_count,
+        current_reviewed_count=reviewed_count - stale_count,
         status_counts=status_counts,
         status_counts_ar=status_counts_ar,
         framework_counts=framework_counts,

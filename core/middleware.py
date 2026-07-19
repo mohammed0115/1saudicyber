@@ -25,6 +25,31 @@ class ContentSecurityPolicyMiddleware:
         return response
 
 
+class EnforceAdminMFAMiddleware:
+    """DD-fix: when settings.ENFORCE_ADMIN_MFA is on, a staff/admin user who has not
+    enabled MFA is redirected to the MFA setup page before reaching any other view.
+
+    Opt-in (default off) so existing deployments are unaffected until they choose to
+    require it. Exempts the auth/MFA/logout/static paths so the user can actually set it up.
+    """
+    _EXEMPT = ('/login', '/logout', '/mfa/', '/static/', '/media/', '/healthz', '/i18n/',
+               '/password-reset', '/reset/', '/invite/')
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if getattr(settings, 'ENFORCE_ADMIN_MFA', False):
+            user = getattr(request, 'user', None)
+            if (user is not None and user.is_authenticated
+                    and (user.is_staff or user.is_superuser)
+                    and not getattr(user, 'mfa_enabled', False)
+                    and not request.path.startswith(self._EXEMPT)):
+                from django.shortcuts import redirect
+                return redirect('core:mfa_setup')
+        return self.get_response(request)
+
+
 class AuditLogMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response

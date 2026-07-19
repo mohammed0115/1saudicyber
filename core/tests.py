@@ -174,6 +174,155 @@ class AuditLogTests(TestCase):
         self.assertTrue(AuditLog.objects.filter(path=reverse('core:login')).exists())
 
 
+class LoginThrottleTests(TestCase):
+    """DD-fix: the HTML login form locks out after repeated failures."""
+
+    def test_lockout_after_repeated_failures(self):
+        from django.core.cache import cache
+        from django.test import override_settings
+        cache.clear()
+        User.objects.create_user(email='thr@x.com', password='longenough12')
+        url = reverse('core:login')
+        with override_settings(LOGIN_FAILURE_LIMIT=3):
+            for _ in range(3):
+                self.client.post(url, {'username': 'thr@x.com', 'password': 'wrong'})
+            # even the CORRECT password is now refused (locked)
+            resp = self.client.post(url, {'username': 'thr@x.com', 'password': 'longenough12'})
+        self.assertContains(resp, 'تم إيقاف المحاولات')
+        self.assertNotIn('_auth_user_id', self.client.session)   # not logged in
+
+    def test_success_clears_counter(self):
+        from django.core.cache import cache
+        cache.clear()
+        User.objects.create_user(email='thr2@x.com', password='longenough12')
+        url = reverse('core:login')
+        self.client.post(url, {'username': 'thr2@x.com', 'password': 'wrong'})
+        resp = self.client.post(url, {'username': 'thr2@x.com', 'password': 'longenough12'})
+        self.assertEqual(resp.status_code, 302)   # logged in despite an earlier failure
+
+
+class TeamInviteTests(TestCase):
+    """DD-fix (commercial): company team invite + accept flow, tenant-bound."""
+
+    def _company_admin(self):
+        c = Company.objects.create(name='Inv Co', cr_number='9090909090', sector='technology',
+                                   size='small', contact_email='inv@x.com')
+        u = User.objects.create_user(email='cadmin@x.com', password='longenough12',
+                                     role='company_admin', company=c)
+        return c, u
+
+    def test_create_and_accept_invite(self):
+        from core.invite_services import create_invite, accept_invite
+        from core.models import UserInvite
+        from django.core import mail
+        c, admin = self._company_admin()
+        mail.outbox = []
+        inv = create_invite(c, 'newuser@x.com', 'compliance_officer', admin)
+        self.assertEqual(inv.status, 'pending')
+        self.assertEqual(len(mail.outbox), 1)
+        user = accept_invite(inv, first_name='A', last_name='B', password='longenough12')
+        self.assertEqual(user.company_id, c.id)          # tenant-bound
+        self.assertEqual(user.role, 'compliance_officer')
+        self.assertTrue(user.email_verified)
+        inv.refresh_from_db()
+        self.assertEqual(inv.status, 'accepted')
+
+    def test_role_clamped_never_admin(self):
+        from core.invite_services import create_invite
+        c, admin = self._company_admin()
+        inv = create_invite(c, 'x2@x.com', 'admin', admin)   # privileged role requested
+        self.assertNotIn(inv.role, ('admin', 'auditor'))     # clamped to a safe company role
+
+    def test_duplicate_email_rejected(self):
+        from core.invite_services import create_invite
+        c, admin = self._company_admin()
+        User.objects.create_user(email='dupe@x.com', password='longenough12')
+        with self.assertRaises(ValueError):
+            create_invite(c, 'dupe@x.com', 'compliance_officer', admin)
+
+    def test_team_view_admin_can_invite(self):
+        c, admin = self._company_admin()
+        self.client.force_login(admin)
+        resp = self.client.get(reverse('core:team'))
+        self.assertEqual(resp.status_code, 200)
+        self.client.post(reverse('core:team'), {'email': 'teammate@x.com', 'role': 'it_security'})
+        from core.models import UserInvite
+        self.assertEqual(UserInvite.objects.filter(company=c, email='teammate@x.com').count(), 1)
+
+    def test_non_admin_cannot_invite(self):
+        c, admin = self._company_admin()
+        member = User.objects.create_user(email='member@x.com', password='longenough12',
+                                          role='compliance_officer', company=c)
+        self.client.force_login(member)
+        self.client.post(reverse('core:team'), {'email': 'x3@x.com', 'role': 'it_security'})
+        from core.models import UserInvite
+        self.assertEqual(UserInvite.objects.filter(email='x3@x.com').count(), 0)
+
+    def test_accept_view_creates_and_logs_in(self):
+        from core.invite_services import create_invite
+        c, admin = self._company_admin()
+        inv = create_invite(c, 'joiner@x.com', 'executive', admin)
+        resp = self.client.post(reverse('core:accept_invite', args=[inv.token]),
+                                {'first_name': 'J', 'last_name': 'K', 'password': 'longenough12'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(User.objects.filter(email='joiner@x.com', company=c).exists())
+
+    def test_invalid_token_shows_404(self):
+        resp = self.client.get(reverse('core:accept_invite', args=['nope']))
+        self.assertEqual(resp.status_code, 404)
+
+
+class EnforceAdminMFATests(TestCase):
+    """DD-fix: opt-in MFA enforcement for staff/admin."""
+
+    def _staff(self, mfa=False):
+        return User.objects.create_user(email='mfaenf@x.com', password='longenough12',
+                                        role='admin', is_staff=True, mfa_enabled=mfa)
+
+    def test_default_off_staff_without_mfa_not_forced(self):
+        self.client.force_login(self._staff(mfa=False))
+        resp = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertEqual(resp.status_code, 200)   # default: no enforcement
+
+    def test_enforced_staff_without_mfa_redirected_to_setup(self):
+        from django.test import override_settings
+        self.client.force_login(self._staff(mfa=False))
+        with override_settings(ENFORCE_ADMIN_MFA=True):
+            resp = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/mfa/setup', resp.url)
+
+    def test_enforced_staff_with_mfa_allowed(self):
+        from django.test import override_settings
+        self.client.force_login(self._staff(mfa=True))
+        with override_settings(ENFORCE_ADMIN_MFA=True):
+            resp = self.client.get(reverse('platform_admin:dashboard'))
+        self.assertEqual(resp.status_code, 200)   # MFA enabled -> allowed
+
+
+class BackupCommandTests(TestCase):
+    """DD-fix (ops): backup command runs for the configured DB and rotates."""
+
+    def test_backup_command_runs(self):
+        import tempfile, os
+        from django.conf import settings
+        from django.core.management import call_command
+        from django.test import override_settings
+        with tempfile.TemporaryDirectory() as d:
+            # Point at a REAL sqlite file (the test DB is in-memory) so the copy path runs.
+            src = os.path.join(d, 'src.sqlite3')
+            open(src, 'wb').write(b'SQLite format 3\x00')
+            dbs = {'default': {**settings.DATABASES['default'],
+                               'ENGINE': 'django.db.backends.sqlite3', 'NAME': src}}
+            os.environ['BACKUP_DIR'] = d
+            out = io.StringIO()
+            with override_settings(DATABASES=dbs):
+                call_command('backup_db', '--keep-days', '30', stdout=out)
+            os.environ.pop('BACKUP_DIR', None)
+            self.assertIn('Backup complete', out.getvalue())
+            self.assertTrue(any(f.startswith('db-') for f in os.listdir(d)))
+
+
 class PdplTests(TestCase):
     def test_purge_command_runs(self):
         from django.core.management import call_command
@@ -621,7 +770,7 @@ class Phase4DLoadingStateTests(TestCase):
         # Phase 8E: the upload form now uses the richer smart-processing animation
         # (reading file -> extracting text -> preparing result) as its loading state.
         self.assertContains(resp, 'data-smart-processing')
-        self.assertContains(resp, 'Processing evidence')
+        self.assertContains(resp, 'جاري تحليل الدليل')
 
     def test_advisory_analysis_trigger_has_loading_state(self):
         from compliance.tests import _company_with_submission
@@ -1898,15 +2047,15 @@ class RolePortalIsolationTests(TestCase):
         resp = self.client.get(reverse('compliance:classification'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Get Solution CRM')
-        self.assertContains(resp, 'signed in as Get Solution staff')
-        self.assertNotContains(resp, 'not linked to a company')  # not the customer text
+        self.assertContains(resp, 'مسجّل الدخول كموظّف لدى شركة احصل الحل')
+        self.assertNotContains(resp, 'غير مرتبط بأي شركة')  # not the customer text
 
     def test_auditor_on_company_page_gets_auditor_safe_message(self):
         au, _ = self._auditor()
         self.client.force_login(au)
         resp = self.client.get(reverse('compliance:classification'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Auditor account')
+        self.assertContains(resp, 'حساب مدقّق')
         self.assertContains(resp, reverse('auditors:dashboard'))
 
     def test_unlinked_user_gets_safe_no_company_page(self):
@@ -1914,8 +2063,8 @@ class RolePortalIsolationTests(TestCase):
         self.client.force_login(orphan)
         resp = self.client.get(reverse('compliance:classification'))
         self.assertEqual(resp.status_code, 200)  # no 500
-        self.assertContains(resp, 'not linked to a company')
-        self.assertContains(resp, 'Get Solution support')
+        self.assertContains(resp, 'غير مرتبط بأي شركة')
+        self.assertContains(resp, 'دعم شركة احصل الحل')
 
     # ---- session isolation (9-13) ----
     def test_company_user_cannot_switch_into_auditor_registration(self):
@@ -1939,7 +2088,7 @@ class RolePortalIsolationTests(TestCase):
             'company_name_ar': 'ش', 'company_name': 'C', 'cr_number': '7777777777',
             'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'already signed in')
+        self.assertContains(resp, 'مسجّل الدخول بالفعل')
         self.assertEqual(Company.objects.count(), before)  # no new company
         self.assertEqual(int(self.client.session['_auth_user_id']), au.id)
 
@@ -1953,7 +2102,7 @@ class RolePortalIsolationTests(TestCase):
             'company_name_ar': 'ش', 'company_name': 'C', 'cr_number': '8888888888',
             'sector': 'technology', 'size': 'small'})
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'already signed in')
+        self.assertContains(resp, 'مسجّل الدخول بالفعل')
         self.assertEqual(Company.objects.count(), before)
 
     def test_registration_pages_anonymous_accessible(self):
@@ -1985,7 +2134,7 @@ class RolePortalIsolationTests(TestCase):
         self.client.force_login(self._unlinked())
         resp = self.client.get(reverse('dashboard:main'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'not linked to a company')
+        self.assertContains(resp, 'غير مرتبط بأي شركة')
 
     # ---- data isolation (18,19) ----
     def test_company_user_cannot_open_other_company_crm_detail(self):
@@ -2079,14 +2228,14 @@ class ExplicitPortalGuardTests(TestCase):
         resp = self.client.get(reverse('compliance:classification'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Get Solution CRM')
-        self.assertNotContains(resp, 'not linked to a company')
+        self.assertNotContains(resp, 'غير مرتبط بأي شركة')
 
     def test_auditor_on_company_page_safe(self):
         au, _ = self._auditor()
         self.client.force_login(au)
         resp = self.client.get(reverse('compliance:classification'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Auditor account')
+        self.assertContains(resp, 'حساب مدقّق')
 
     def test_unlinked_user_company_page_safe_no_500(self):
         u = User.objects.create_user(username='ug@x.com', email='ug@x.com',
@@ -2094,7 +2243,7 @@ class ExplicitPortalGuardTests(TestCase):
         self.client.force_login(u)
         resp = self.client.get(reverse('risk:list'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'not linked to a company')
+        self.assertContains(resp, 'غير مرتبط بأي شركة')
 
     # ---- auditor guard ----
     def test_anonymous_auditor_page_redirects_login(self):
@@ -2134,7 +2283,7 @@ class ExplicitPortalGuardTests(TestCase):
         self.client.force_login(st)
         resp = self.client.get(reverse('auditors:dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'requires a different portal')
+        self.assertContains(resp, 'بوابة مختلفة')
         self.assertContains(resp, 'Get Solution CRM')
 
     # ---- safety ----
@@ -2163,9 +2312,9 @@ class OnboardingVerificationCTATests(TestCase):
         self.client.force_login(self._user(False))
         resp = self.client.get(reverse('core:onboarding'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'يرجى التحقق من بريدك الإلكتروني قبل المتابعة')
-        self.assertContains(resp, 'إعادة إرسال رابط التحقق')
-        self.assertContains(resp, reverse('core:resend_verification_link'))
+        self.assertContains(resp, 'أكّد بريدك الإلكتروني')
+        self.assertContains(resp, 'إعادة الإرسال')
+        self.assertContains(resp, reverse('core:resend_email_otp'))
 
     def test_verified_user_does_not_see_resend_button(self):
         self.client.force_login(self._user(True, email='vok@x.com', cr='9292929292'))

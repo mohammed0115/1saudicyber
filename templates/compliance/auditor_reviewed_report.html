@@ -6,13 +6,13 @@
   <div style="max-width:1000px;margin:0 auto;padding:8px 4px 28px;">
 
     <div style="margin-bottom:14px;">
-      <p style="color:#1F6B63;font-weight:600;margin:0 0 4px;">{% trans "تقرير مراجعة امتثال داخلي" %}</p>
-      <h1 style="color:#1F2933;font-size:1.4rem;font-weight:700;margin:0 0 4px;">{{ company.name_ar|default:company.name }}</h1>
-      <p style="color:#667085;font-size:.9rem;margin:0;">{% trans "ملخص قرارات المدقق" %}</p>
+      <p style="color:#356a54;font-weight:600;margin:0 0 4px;">{% trans "تقرير مراجعة امتثال داخلي" %}</p>
+      <h1 style="color:#2b2c27;font-size:1.4rem;font-weight:700;margin:0 0 4px;">{{ company.name_ar|default:company.name }}</h1>
+      <p style="color:#5b5c53;font-size:.9rem;margin:0;">{% trans "ملخص قرارات المدقق" %}</p>
     </div>
 
     {# Required disclaimer #}
-    <div style="background:#FBF6EC;border:1px solid #E6D7B8;border-radius:12px;padding:12px 16px;margin-bottom:18px;color:#7A5B16;font-size:.9rem;">
+    <div style="background:#f1eadb;border:1px solid #dcc79a;border-radius:12px;padding:12px 16px;margin-bottom:18px;color:#8a6a1f;font-size:.9rem;">
       <i class="fas fa-circle-info ms-1"></i>
       {% trans "هذا التقرير يعرض نتائج مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية أو اعتمادًا من أي جهة." %}
     </div>
@@ -20,7 +20,7 @@
     {% include "components/current_step_card.html" with guide=guide %}
 
     {% if not report.has_verdicts %}
-    <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:18px;color:#667085;line-height:1.8;">
+    <div style="background:#F1F3F2;border:1px solid #e3e1d9;border-radius:12px;padding:18px;color:#5b5c53;line-height:1.8;">
       <p style="margin:0 0 4px;font-weight:600;color:#374151;">{% trans "لا يوجد تقرير مدقق بعد." %}</p>
       {% trans "سيظهر التقرير الداخلي بعد مراجعة المدقق للأدلة وإصدار الحكم الداخلي. تأكد من رفع الأدلة المطلوبة وإسناد الملف إلى مدقق داخل المنصة." %}
     </div>
@@ -28,42 +28,48 @@
 
     {# Summary counts #}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px;">
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;">
-        <p style="color:#667085;font-size:.82rem;margin:0 0 4px;">{% trans "إجمالي الأدلة" %}</p>
-        <p style="margin:0;font-weight:700;font-size:1.2rem;color:#1F2933;">{{ report.total_submissions }}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "إجمالي الأدلة" %}</p>
+        <p style="margin:0;font-weight:700;font-size:1.2rem;color:#2b2c27;">{{ report.total_submissions }}</p>
       </div>
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;">
-        <p style="color:#667085;font-size:.82rem;margin:0 0 4px;">{% trans "الأدلة التي تمت مراجعتها" %}</p>
-        <p style="margin:0;font-weight:700;font-size:1.2rem;color:#0F5D46;">{{ report.reviewed_count }}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "الأدلة التي تمت مراجعتها" %}</p>
+        <p style="margin:0;font-weight:700;font-size:1.2rem;color:#2a5646;">{{ report.reviewed_count }}</p>
       </div>
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;">
-        <p style="color:#667085;font-size:.82rem;margin:0 0 4px;">{% trans "بانتظار مراجعة المدقق" %}</p>
-        <p style="margin:0;font-weight:700;font-size:1.2rem;color:#7A5B16;">{{ report.pending_count }}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "بانتظار مراجعة المدقق" %}</p>
+        <p style="margin:0;font-weight:700;font-size:1.2rem;color:#8a6a1f;">{{ report.pending_count }}</p>
       </div>
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;">
-        <p style="color:#667085;font-size:.82rem;margin:0 0 4px;">{% trans "آخر مراجعة" %}</p>
-        <p style="margin:0;font-weight:600;color:#1F2933;">{{ report.latest_reviewed_at|date:"Y-m-d"|default:"—" }}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "آخر مراجعة" %}</p>
+        <p style="margin:0;font-weight:600;color:#2b2c27;">{{ report.latest_reviewed_at|date:"Y-m-d"|default:"—" }}</p>
       </div>
+      {% if report.stale_count %}
+      <div style="background:#FFF8EC;border:1px solid #F0D9A8;border-radius:12px;padding:16px;">
+        <p style="color:#8a6a1f;font-size:.82rem;margin:0 0 4px;">{% trans "أحكام متقادمة (رُفعت نسخة أحدث)" %}</p>
+        <p style="margin:0;font-weight:700;font-size:1.2rem;color:#8a6a1f;">{{ report.stale_count }}</p>
+      </div>
+      {% endif %}
     </div>
 
     {# Status distribution #}
     {% if report.status_counts_ar %}
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:18px;">
-      <h2 style="color:#0F5D46;font-weight:700;font-size:1rem;margin:0 0 10px;">{% trans "توزيع الحالات بعد مراجعة المدقق" %}</h2>
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;margin-bottom:18px;">
+      <h2 style="color:#2a5646;font-weight:700;font-size:1rem;margin:0 0 10px;">{% trans "توزيع الحالات بعد مراجعة المدقق" %}</h2>
       <div style="display:flex;flex-wrap:wrap;gap:10px;">
         {% for label, count in report.status_counts_ar.items %}
-        <span style="background:#EAF3EF;color:#0F5D46;border-radius:999px;padding:5px 12px;font-size:.84rem;font-weight:600;">{{ label }}: {{ count }}</span>
+        <span style="background:#EAF3EF;color:#2a5646;border-radius:999px;padding:5px 12px;font-size:.84rem;font-weight:600;">{{ label }}: {{ count }}</span>
         {% endfor %}
       </div>
     </div>
     {% endif %}
 
     {# Verdict detail rows #}
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;overflow-x:auto;">
-      <h2 style="color:#0F5D46;font-weight:700;font-size:1rem;margin:14px 16px;">{% trans "تفاصيل القرارات" %}</h2>
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;overflow-x:auto;">
+      <h2 style="color:#2a5646;font-weight:700;font-size:1rem;margin:14px 16px;">{% trans "تفاصيل القرارات" %}</h2>
       <table style="width:100%;border-collapse:collapse;font-size:.88rem;min-width:760px;">
         <thead>
-          <tr style="background:#F4F7F5;color:#667085;">
+          <tr style="background:#F4F7F5;color:#5b5c53;">
             <th style="padding:10px 12px;text-align:start;">{% trans "الضابط" %}</th>
             <th style="padding:10px 12px;text-align:start;">{% trans "الحالة المقترحة من محرك القواعد" %}</th>
             <th style="padding:10px 12px;text-align:start;">{% trans "الحالة بعد مراجعة المدقق" %}</th>
@@ -75,15 +81,16 @@
         <tbody>
           {% for r in report.rows %}
           <tr style="border-top:1px solid #EEF2F0;">
-            <td style="padding:10px 12px;color:#1F2933;">
+            <td style="padding:10px 12px;color:#2b2c27;">
               <a href="{% url 'compliance:auditor_verdict' r.submission_id %}" style="color:#1F4F8B;text-decoration:none;">{{ r.control_id|default:"—" }}</a>
               <span style="display:block;color:#9AA5A0;font-size:.78rem;">{{ r.control_title|truncatechars:48 }}</span>
             </td>
-            <td style="padding:10px 12px;color:#667085;">{{ r.rule_suggestion_ar }}</td>
-            <td style="padding:10px 12px;color:#0F5D46;font-weight:600;">{{ r.verdict_status_ar }}</td>
-            <td style="padding:10px 12px;text-align:center;color:#1F2933;">{{ r.confidence }}%</td>
-            <td style="padding:10px 12px;text-align:center;color:#1F2933;">{{ r.required_actions_count }}</td>
-            <td style="padding:10px 12px;color:#667085;">{{ r.reviewed_at|date:"Y-m-d" }} — {{ r.reviewer_label }}</td>
+            <td style="padding:10px 12px;color:#5b5c53;">{{ r.rule_suggestion_ar }}</td>
+            <td style="padding:10px 12px;color:#2a5646;font-weight:600;">{{ r.verdict_status_ar }}
+              {% if r.is_stale %}<span style="display:inline-block;background:#FBEED0;color:#8a6a1f;border-radius:999px;padding:2px 8px;font-size:.72rem;font-weight:600;">{% trans "متقادم — يلزم إعادة مراجعة" %}</span>{% endif %}</td>
+            <td style="padding:10px 12px;text-align:center;color:#2b2c27;">{{ r.confidence }}%</td>
+            <td style="padding:10px 12px;text-align:center;color:#2b2c27;">{{ r.required_actions_count }}</td>
+            <td style="padding:10px 12px;color:#5b5c53;">{{ r.reviewed_at|date:"Y-m-d" }} — {{ r.reviewer_label }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -93,7 +100,7 @@
 
     <div style="margin-top:16px;">
       <a href="{% url 'compliance:reports_index' %}"
-         style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:11px 22px;border:1px solid #D8E1DD;border-radius:10px;text-decoration:none;">
+         style="background:#FFFFFF;color:#2b2c27;font-weight:600;padding:11px 22px;border:1px solid #e3e1d9;border-radius:10px;text-decoration:none;">
         {% trans "العودة إلى التقارير" %}</a>
     </div>
   </div>

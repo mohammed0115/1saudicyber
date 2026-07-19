@@ -8,14 +8,14 @@ if `journey` is missing. Reuses components/status_badge.html for status pills.
 <div dir="rtl" class="ct-journey-stepper rounded-xl border p-4 mb-5"
      style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#FFFFFF;border-color:#D9E2DE;">
   <div class="flex items-center justify-between mb-3">
-    <h3 style="margin:0;color:#0F5D46;font-weight:700;font-size:1rem;">مسار المراجعة الموجّه</h3>
+    <h3 style="margin:0;color:#2a5646;font-weight:700;font-size:1rem;">مسار المراجعة الموجّه</h3>
     <span style="color:#6B7280;font-size:.82rem;">{{ journey.completed_count }} / {{ journey.total }} مكتملة</span>
   </div>
   <ol style="list-style:none;margin:0;padding:0;">
     {% for s in journey.steps %}
     <li class="flex items-start gap-3" style="padding:8px 0;border-top:{% if not forloop.first %}1px solid #EEF2F0{% else %}none{% endif %};">
       <span style="flex:none;width:26px;height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;
-        {% if s.status == 'completed' %}background:#E7F2EC;color:#0F5D46;{% elif s.status == 'current' %}background:#0F5D46;color:#fff;{% else %}background:#F0F2F1;color:#6B7280;{% endif %}">
+        {% if s.status == 'completed' %}background:#E7F2EC;color:#2a5646;{% elif s.status == 'current' %}background:#2a5646;color:#fff;{% else %}background:#F0F2F1;color:#6B7280;{% endif %}">
         {{ s.order }}
       </span>
       <div style="flex:1;">

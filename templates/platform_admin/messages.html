@@ -1,0 +1,38 @@
+{% extends "platform_admin/base.html" %}
+{% block title %}الرسائل - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gov-green-800">الرسائل — كل القنوات</h1>
+    <p class="text-gov-gray-500 text-sm mt-1">قنوات التواصل الداخلية عبر كل الشركات. افتح أي قناة لعرض المحادثة والرد. مراسلة داخلية، ليست سجلًّا رسميًّا.</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+    <div class="divide-y divide-gov-gray-100">
+      {% for r in rows %}
+      <a href="{% url 'auditor_portal:message_thread' r.company.id %}" class="flex items-start justify-between gap-4 px-5 py-4 hover:bg-gov-gray-50 transition">
+        <div class="min-w-0">
+          <p class="font-semibold text-gov-gray-800">{{ r.company.name_ar|default:r.company.name }}
+            <span class="text-xs font-normal text-gov-gray-400">· {{ r.count }} رسالة</span></p>
+          {% if r.last %}
+          <p class="text-sm text-gov-gray-500 mt-0.5 truncate">
+            <span class="text-gov-gray-400">{{ r.last.sender.get_full_name|default:r.last.sender.email|default:"—" }}:</span>
+            {{ r.last.body|truncatechars:80 }}
+          </p>
+          {% endif %}
+        </div>
+        <div class="shrink-0 text-left">
+          <span class="text-xs text-gov-gray-400 whitespace-nowrap">{{ r.last_at|date:"Y-m-d H:i" }}</span>
+          <div class="mt-1 text-gov-green-700"><i class="fas fa-arrow-left"></i></div>
+        </div>
+      </a>
+      {% empty %}
+      <div class="px-6 py-14 text-center">
+        <i class="fas fa-comments text-gov-gray-300 text-4xl mb-3"></i>
+        <p class="text-gov-gray-500">لا توجد قنوات مراسلة نشطة بعد.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

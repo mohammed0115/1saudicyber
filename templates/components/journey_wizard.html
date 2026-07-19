@@ -2,7 +2,7 @@
 <div class="ct-journey-wizard" dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
 
   <!-- Hero -->
-  <div class="rounded-2xl p-6 mb-4" style="background:#0F5D46;color:#fff;">
+  <div class="rounded-2xl p-6 mb-4" style="background:#2a5646;color:#fff;">
     <h2 class="text-xl font-bold mb-1">{% trans "مسار جاهزية الامتثال" %}</h2>
     <p class="text-sm mb-4" style="color:#CFE3DA;">
       {% trans "اتبع الخطوات التالية لتحديد الأطر المطلوبة، تقييم الضوابط، رفع الأدلة، معالجة الفجوات، وتجهيز التقارير." %}
@@ -22,7 +22,7 @@
         <p class="font-semibold text-sm mb-2">{{ journey.next_action.title }}</p>
         {% if journey.next_action.url_name and journey.next_action.action_label %}
         <a href="{% url journey.next_action.url_name %}" data-busy="جارٍ فتح الخطوة..."
-           class="inline-block rounded-lg text-xs font-semibold px-3 py-2" style="background:#fff;color:#0F5D46;">
+           class="inline-block rounded-lg text-xs font-semibold px-3 py-2" style="background:#fff;color:#2a5646;">
           {{ journey.next_action.action_label }}</a>
         {% endif %}
       </div>
@@ -33,10 +33,10 @@
   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4">
     {% for st in journey.stages %}
     <div class="rounded-lg p-3 text-center border"
-         style="background:#FFFFFF;border-color:#D9E2DE;{% if st.status == 'current' %}border-color:#0F5D46;box-shadow:0 0 0 1px #0F5D46;{% endif %}">
+         style="background:#FFFFFF;border-color:#D9E2DE;{% if st.status == 'current' %}border-color:#2a5646;box-shadow:0 0 0 1px #2a5646;{% endif %}">
       <div class="text-xs font-bold mb-1" style="color:#111827;">{{ forloop.counter }}. {{ st.title }}</div>
       <div class="w-full rounded-full h-1.5 mb-1" style="background:#F0F2F1;">
-        <div class="h-1.5 rounded-full" style="width:{{ st.progress_percent }}%;background:#0F5D46;"></div>
+        <div class="h-1.5 rounded-full" style="width:{{ st.progress_percent }}%;background:#2a5646;"></div>
       </div>
       {% include "components/status_badge.html" with status=st.status %}
     </div>

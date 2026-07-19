@@ -446,8 +446,8 @@ class BillingViewTests(TestCase):
         self._login(c, 'bvv@x.com')
         resp = self.client.get(reverse('billing:home'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Current subscription')
-        self.assertContains(resp, 'Available plans')
+        self.assertContains(resp, 'الاشتراك الحالي')
+        self.assertContains(resp, 'الخطط المتاحة')
 
     @override_settings(PAYMENT_PROVIDER='manual')
     def test_billing_page_hides_provider_brand_and_secrets(self):
@@ -463,7 +463,7 @@ class BillingViewTests(TestCase):
         u = User.objects.create_user(username='bvorph@x.com', email='bvorph@x.com',
                                      password='longenough12', role='company_admin')
         self.client.force_login(u)
-        self.assertContains(self.client.get(reverse('billing:home')), 'not linked to a company', status_code=200)
+        self.assertContains(self.client.get(reverse('billing:home')), 'غير مرتبط بأي شركة', status_code=200)
 
     def test_auditor_denied(self):
         from auditors.models import AuditorProfile
@@ -471,7 +471,7 @@ class BillingViewTests(TestCase):
                                       password='longenough12', role='auditor')
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
-        self.assertContains(self.client.get(reverse('billing:home')), 'Auditor account', status_code=200)
+        self.assertContains(self.client.get(reverse('billing:home')), 'حساب مدقّق', status_code=200)
 
     def test_staff_without_company_routed_to_crm(self):
         st = User.objects.create_user(username='bvstaff@x.com', email='bvstaff@x.com',
@@ -1602,7 +1602,7 @@ class FeatureReportPdfGateTests(TestCase):
         self._login(c, 'frep1@x.com')
         resp = self.client.get(reverse('compliance:commercial_readiness_report'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'not included in your current plan')
+        self.assertContains(resp, 'غير متضمّنة في باقتك الحالية')
 
     def test_pdf_blocked_when_disabled(self):
         from core.models import AuditLog
@@ -1630,7 +1630,7 @@ class FeatureReportPdfGateTests(TestCase):
         self._login(c, 'frep4@x.com')
         resp = self.client.get(reverse('compliance:commercial_readiness_report'))
         self.assertEqual(resp.status_code, 200)
-        self.assertNotContains(resp, 'not included in your current plan')
+        self.assertNotContains(resp, 'غير متضمّنة في باقتك الحالية')
 
 
 class FeatureAuditorGateTests(TestCase):
@@ -1644,7 +1644,7 @@ class FeatureAuditorGateTests(TestCase):
             full_name='Aud', status='active', is_available=True)
         self.client.force_login(_journey_user(c, email='fcompa@x.com'))
         resp = self.client.post(reverse('auditors:assign', args=[p.id]))
-        self.assertContains(resp, 'not included in your current plan', status_code=200)
+        self.assertContains(resp, 'غير متضمّنة في باقتك الحالية', status_code=200)
 
     def test_auditor_review_allowed_when_plan_enables(self):
         from auditors.models import AuditorProfile, AuditorAssignment
@@ -1708,7 +1708,7 @@ class FeaturePermissionSafetyTests(TestCase):
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
         resp = self.client.post(reverse('risk:generate'))
-        self.assertContains(resp, 'Auditor account', status_code=200)  # blocked, action not run
+        self.assertContains(resp, 'حساب مدقّق', status_code=200)  # blocked, action not run
         self.assertEqual(RiskItem.objects.count(), 0)
 
     def test_feature_blocked_component_safe_wording(self):
@@ -1716,7 +1716,7 @@ class FeaturePermissionSafetyTests(TestCase):
         self.client.force_login(_journey_user(c, email='fsafe1@x.com'))
         body = self.client.get(reverse('compliance:commercial_readiness_report')).content.decode()
         # Safe negated disclaimer must be present...
-        self.assertIn('not an official certification', body.lower())
+        self.assertIn('شهادة امتثال رسمية', body.lower())
         self.assertIn('لا يُعد الاشتراك شهادة امتثال رسمية', body)
         # ...but NO affirmative certification/accreditation claim.
         for w in ('official accreditation', 'government accredited', 'certified by NCA',
@@ -1748,7 +1748,7 @@ class CommercialHappyPathE2ETests(TestCase):
         # Commercial HTML report renders and is NOT the blocked placeholder.
         rep = self.client.get(reverse('compliance:commercial_readiness_report'))
         self.assertEqual(rep.status_code, 200)
-        self.assertNotContains(rep, 'not included in your current plan')
+        self.assertNotContains(rep, 'غير متضمّنة في باقتك الحالية')
 
         # PDF export returns a PDF.
         pdf = self.client.get(reverse('compliance:commercial_readiness_report_pdf'))
@@ -1757,7 +1757,7 @@ class CommercialHappyPathE2ETests(TestCase):
 
         # Billing page shows the plan usage panel.
         body = self.client.get(reverse('billing:home')).content.decode()
-        self.assertIn('Usage limits', body)
+        self.assertIn('حدود الاستخدام', body)
         self.assertNotIn('sk_test_', body)
         self.assertNotIn('sk_live_', body)
 

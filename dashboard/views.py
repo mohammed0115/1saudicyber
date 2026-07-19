@@ -166,11 +166,17 @@ def it_security_dashboard(request):
     critical_count = company_alerts.filter(severity='critical').count()
     alerts = company_alerts.order_by('-created_at')[:20]
 
+    # Real, distinct metrics (the old template bound two cards to the same count).
+    technical_total = technical_controls.count()
+    technical_compliant = technical_controls.filter(status='compliant').count()
+
     context = {
         'company': company,
         'technical_controls': technical_controls,
         'alerts': alerts,
         'critical_count': critical_count,
+        'technical_total': technical_total,
+        'technical_compliant': technical_compliant,
     }
     return render(request, 'dashboard/it_security.html', context)
 
@@ -183,16 +189,30 @@ def bu_manager_dashboard(request):
     if not company:
         return render(request, 'dashboard/no_company.html')
 
-    # Department-level compliance
+    # Department-level compliance (real data only — the old template rendered a variable
+    # `domains`/`training`/`recent actions` the view never supplied, so it showed fabricated
+    # hardcoded rows; those are removed and every number below is now computed).
     company_controls = CompanyControl.objects.filter(company=company).select_related('control__domain')
     domain_stats = company_controls.values('control__domain__name').annotate(
         total=Count('id'),
         compliant=Count('id', filter=Q(status='compliant')),
     )
+    domains = [{
+        'name': d['control__domain__name'] or 'غير مصنّف',
+        'total': d['total'],
+        'compliant': d['compliant'],
+        'score': round(d['compliant'] / d['total'] * 100) if d['total'] else 0,
+    } for d in domain_stats]
+    total_all = sum(d['total'] for d in domains)
+    compliant_all = sum(d['compliant'] for d in domains)
 
+    from core.models import User
     context = {
         'company': company,
-        'domain_stats': domain_stats,
+        'domains': domains,
+        'department_score': round(compliant_all / total_all * 100) if total_all else 0,
+        'team_count': User.objects.filter(company=company).count(),
+        'open_issues': total_all - compliant_all,
     }
     return render(request, 'dashboard/bu_manager.html', context)
 

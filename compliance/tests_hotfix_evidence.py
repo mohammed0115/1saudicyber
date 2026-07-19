@@ -21,7 +21,7 @@ class EvidenceEmptyChecklistTests(TestCase):
         resp = self.client.get(reverse('compliance:evidence_checklist'))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(EvidenceChecklistItem.objects.filter(company=c).count(), 0)
-        self.assertContains(resp, 'Complete Smart Classification first')
+        self.assertContains(resp, 'أكمل التصنيف الذكي أولًا')
 
     def test_upload_against_nonexistent_item_is_safe_not_500(self):
         c = _company()
@@ -115,7 +115,7 @@ class EvidenceScopeApprovalTests(TestCase):
         resp = self.client.get(reverse('compliance:evidence_checklist'))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(EvidenceChecklistItem.objects.filter(company=c).count(), 0)
-        self.assertContains(resp, 'pending approval')
+        self.assertContains(resp, 'قيد الاعتماد')
 
     def test_pending_scope_upload_is_safe_not_500(self):
         c, fv, scope = self._pending_scope_company()

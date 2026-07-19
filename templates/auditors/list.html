@@ -4,14 +4,14 @@
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div style="max-width:880px;margin:0 auto;padding:8px 4px 24px;">
     {% include "compliance/_workflow_stepper.html" %}
-    <h1 style="color:#1F2933;font-size:1.5rem;font-weight:700;margin:0 0 4px;">اختيار مدقق ومراجعة الملف</h1>
-    <p style="color:#667085;font-size:.95rem;margin:0 0 18px;">اختر مدقّقًا أو مراجع امتثال متاحًا داخل المنصّة لإرسال طلب مراجعة ملف شركتك. لا تبدأ المراجعة إلا بعد موافقة المدقق. لا تتم أي معاملة مالية في هذه المرحلة.</p>
+    <h1 style="color:#2b2c27;font-size:1.5rem;font-weight:700;margin:0 0 4px;">اختيار مدقق ومراجعة الملف</h1>
+    <p style="color:#5b5c53;font-size:.95rem;margin:0 0 18px;">اختر مدقّقًا أو مراجع امتثال متاحًا داخل المنصّة لإرسال طلب مراجعة ملف شركتك. لا تبدأ المراجعة إلا بعد موافقة المدقق. لا تتم أي معاملة مالية في هذه المرحلة.</p>
 
     {% if current_assignment %}
       {% if current_assignment.status == 'requested' %}
       <div style="background:#EAF3EF;border:1px solid #CFE3DA;border-radius:12px;padding:18px;margin-bottom:18px;">
-        <p style="margin:0 0 6px;color:#0F5D46;font-weight:700;"><i class="fas fa-hourglass-half ms-1"></i> تم إرسال طلب المراجعة إلى المدقق «{{ current_assignment.auditor.full_name }}»، بانتظار الموافقة.</p>
-        <p style="margin:0 0 12px;color:#1F6B63;font-size:.9rem;">سيظهر ملفك في لوحة المدقق ليقبل الطلب أو يرفضه. يمكنك إلغاء الطلب قبل الموافقة.</p>
+        <p style="margin:0 0 6px;color:#2a5646;font-weight:700;"><i class="fas fa-hourglass-half ms-1"></i> تم إرسال طلب المراجعة إلى المدقق «{{ current_assignment.auditor.full_name }}»، بانتظار الموافقة.</p>
+        <p style="margin:0 0 12px;color:#356a54;font-size:.9rem;">سيظهر ملفك في لوحة المدقق ليقبل الطلب أو يرفضه. يمكنك إلغاء الطلب قبل الموافقة.</p>
         <form method="post" action="{% url 'auditors:cancel_assignment' current_assignment.id %}" data-busy="جارٍ إلغاء الطلب..." style="display:inline;">
           {% csrf_token %}
           <button type="submit" style="background:#FFFFFF;color:#9B2C2C;font-weight:600;padding:9px 18px;border:1px solid #E6C7C7;border-radius:10px;cursor:pointer;">إلغاء الطلب</button>
@@ -19,33 +19,33 @@
       </div>
       {% else %}
       <div style="background:#E7F2EC;border:1px solid #BFE0CC;border-radius:12px;padding:18px;margin-bottom:18px;">
-        <p style="margin:0 0 6px;color:#0F5D46;font-weight:700;"><i class="fas fa-check-circle ms-1"></i> تم قبول طلب المراجعة من المدقق «{{ current_assignment.auditor.full_name }}».</p>
-        <p style="margin:0;color:#1F6B63;font-size:.9rem;">انتقلت رحلتك إلى خطوة مراجعة المدقق. يمكنك متابعة الحالة من صفحة التقارير.</p>
+        <p style="margin:0 0 6px;color:#2a5646;font-weight:700;"><i class="fas fa-check-circle ms-1"></i> تم قبول طلب المراجعة من المدقق «{{ current_assignment.auditor.full_name }}».</p>
+        <p style="margin:0;color:#356a54;font-size:.9rem;">انتقلت رحلتك إلى خطوة مراجعة المدقق. يمكنك متابعة الحالة من صفحة التقارير.</p>
       </div>
       {% endif %}
     {% else %}
       {% if last_rejected %}
-      <div style="background:#FBF3E6;border:1px solid #E6D2A8;border-radius:12px;padding:16px 18px;margin-bottom:18px;color:#8A5A0B;">
+      <div style="background:#f1eadb;border:1px solid #E6D2A8;border-radius:12px;padding:16px 18px;margin-bottom:18px;color:#8a6a1f;">
         <i class="fas fa-circle-info ms-1"></i> تم رفض طلبك من المدقق «{{ last_rejected.auditor.full_name }}»{% if last_rejected.response_note %} — السبب: {{ last_rejected.response_note }}{% endif %}. يمكنك اختيار مدقق آخر من القائمة أدناه.
       </div>
       {% endif %}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
       {% for a in auditors %}
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;padding:20px;display:flex;flex-direction:column;">
-        <h2 style="color:#1F2933;font-size:1.1rem;font-weight:700;margin:0 0 4px;">{{ a.full_name }}</h2>
-        <p style="color:#667085;font-size:.86rem;margin:0 0 4px;">{{ a.specialization|default:"تدقيق امتثال سيبراني" }}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:20px;display:flex;flex-direction:column;">
+        <h2 style="color:#2b2c27;font-size:1.1rem;font-weight:700;margin:0 0 4px;">{{ a.full_name }}</h2>
+        <p style="color:#5b5c53;font-size:.86rem;margin:0 0 4px;">{{ a.specialization|default:"تدقيق امتثال سيبراني" }}</p>
         <p style="color:#9aa4b2;font-size:.82rem;margin:0 0 6px;">{{ a.organization_name }}{% if a.city %} — {{ a.city }}{% endif %}</p>
-        {% if a.bio %}<p style="color:#667085;font-size:.82rem;margin:0 0 14px;line-height:1.7;">{{ a.bio|truncatechars:120 }}</p>{% endif %}
+        {% if a.bio %}<p style="color:#5b5c53;font-size:.82rem;margin:0 0 14px;line-height:1.7;">{{ a.bio|truncatechars:120 }}</p>{% endif %}
         <form method="post" action="{% url 'auditors:assign' a.id %}" data-busy="جارٍ إرسال طلب المراجعة..." style="margin-top:auto;">
           {% csrf_token %}
-          <input type="text" name="note" placeholder="ملاحظة للمدقق (اختياري)" style="width:100%;border:1px solid #D8E1DD;border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:8px;">
-          <button type="submit" style="width:100%;background:#0F5D46;color:#fff;font-weight:600;padding:10px 16px;border:none;border-radius:10px;cursor:pointer;">
+          <input type="text" name="note" placeholder="ملاحظة للمدقق (اختياري)" style="width:100%;border:1px solid #e3e1d9;border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:8px;">
+          <button type="submit" style="width:100%;background:#2a5646;color:#fff;font-weight:600;padding:10px 16px;border:none;border-radius:10px;cursor:pointer;">
             طلب مراجعة من هذا المدقق
           </button>
         </form>
       </div>
       {% empty %}
-      <div style="grid-column:1/-1;background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;padding:24px;text-align:center;color:#667085;">
+      <div style="grid-column:1/-1;background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:24px;text-align:center;color:#5b5c53;">
         لا يوجد مدقّقون متاحون حاليًا. يرجى المحاولة لاحقًا.
       </div>
       {% endfor %}
@@ -53,7 +53,7 @@
     {% endif %}
 
     <div style="margin-top:18px;">
-      <a href="{% url 'compliance:reports_index' %}" style="color:#667085;text-decoration:none;font-size:.9rem;">← العودة إلى التقارير</a>
+      <a href="{% url 'compliance:reports_index' %}" style="color:#5b5c53;text-decoration:none;font-size:.9rem;">← العودة إلى التقارير</a>
     </div>
   </div>
 </div>

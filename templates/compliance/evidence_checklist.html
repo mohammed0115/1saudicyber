@@ -33,7 +33,6 @@
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
         <i class="fas fa-lock mr-1"></i>
         يرجى إنشاء خطة الضوابط قبل رفع الأدلة.
-        <span class="block text-amber-700 mt-1">The control plan must be generated before evidence upload.</span>
         <div class="mt-2 flex flex-wrap gap-3">
             <a href="{% url 'compliance:control_plan' %}" class="underline font-medium">إنشاء خطة الضوابط</a>
         </div>
@@ -42,19 +41,17 @@
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
         <i class="fas fa-hourglass-half mr-1"></i>
         نطاق الأطر قيد الاعتماد. ستتوفّر قائمة الأدلة بعد اعتماد النطاق.
-        <span class="block text-amber-700 mt-1">Framework scope is pending approval. Evidence checklist will be available after approval.</span>
         <div class="mt-2 flex flex-wrap gap-3">
-            <a href="{% url 'compliance:applicability_review' %}" class="underline font-medium">مراجعة الأطر · Review frameworks</a>
+            <a href="{% url 'compliance:applicability_review' %}" class="underline font-medium">مراجعة الأطر</a>
         </div>
     </div>
     {% else %}
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
         <i class="fas fa-circle-info mr-1"></i>
         لم يتم توليد قائمة أدلة بعد. أكمل التصنيف الذكي أولًا لتحديد الأطر والضوابط المنطبقة.
-        <span class="block text-amber-700 mt-1">No evidence checklist has been generated yet. Complete Smart Classification first.</span>
         <div class="mt-2 flex flex-wrap gap-3">
-            <a href="{% url 'compliance:intake' %}" class="underline font-medium">التصنيف الذكي · Smart Classification</a>
-            <a href="{% url 'compliance:control_plan' %}" class="underline font-medium">خطة الضوابط · Control plan</a>
+            <a href="{% url 'compliance:intake' %}" class="underline font-medium">التصنيف الذكي</a>
+            <a href="{% url 'compliance:control_plan' %}" class="underline font-medium">خطة الضوابط</a>
         </div>
     </div>
     {% endif %}
@@ -85,7 +82,7 @@
                     <td class="px-4 py-2 text-gov-gray-700">{{ it.evidence_requirement.title|req_title_ar }}</td>
                     <td class="px-4 py-2 text-xs">{{ it.evidence_requirement.requirement_level|level_ar }}</td>
                     <td class="px-4 py-2 text-xs">{{ it.priority|priority_ar }}</td>
-                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">{{ it.status|checklist_status_ar }}</span></td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-gov-gray-200 text-gov-gray-700 text-xs">{{ it.status|checklist_status_ar }}</span></td>
                     <td class="px-4 py-2 text-xs">
                         {% with subs=it.submissions.all %}
                         {% if subs %}
@@ -111,7 +108,7 @@
         <div class="px-4 py-2">{% include "components/pagination.html" %}</div>
     </div>
 
-    <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
+    <div class="bg-gov-gray-100 border border-gov-gray-200 text-gov-gray-700 rounded-lg p-4 text-sm">
         <i class="fas fa-lock"></i>
         رفع الأدلة وربطها يتم من صفحة رفع الأدلة. لا رفع في هذه الصفحة.
     </div>

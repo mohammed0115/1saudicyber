@@ -80,10 +80,26 @@ def crm_dashboard(request):
 
 @platform_admin_required
 def crm_companies_list(request):
-    """Read-only list of all companies with linked-user counts and CRM status."""
+    """Read-only list of all companies with search, status filter, and pagination."""
+    from django.db.models import Q
+    from django.core.paginator import Paginator
+    from core.models import Company
     companies = crm.companies_overview().select_related('crm_profile', 'crm_profile__assigned_staff')
+    q = (request.GET.get('q') or '').strip()
+    status = (request.GET.get('status') or '').strip()
+    if q:
+        companies = companies.filter(
+            Q(name__icontains=q) | Q(name_ar__icontains=q) | Q(cr_number__icontains=q))
+    if status:
+        companies = companies.filter(status=status)
+    page = Paginator(companies, 25).get_page(request.GET.get('page'))
     return render(request, 'platform_admin/companies_list.html', {
-        'companies': companies,
+        'companies': page,
+        'page_obj': page,
+        'q': q,
+        'selected_status': status,
+        'status_choices': Company.STATUS_CHOICES,
+        'total_count': page.paginator.count,
     })
 
 
@@ -117,7 +133,34 @@ def crm_company_detail(request, company_id):
         'admin_journey': crm.admin_company_journey(company),
         'auditor_engagement': crm.admin_auditor_engagement(company),
         'assignable_auditors': _assignable_auditors(),
+        # F1: truthful framework usage vs plan limit (limit is display-only / unenforced).
+        'framework_entitlement': crm.company_framework_entitlement(company),
+        # F-AUDIT A1: controls where the parallel auditor-verdict silos disagree (read-only).
+        'verdict_disagreements': _verdict_disagreements(company),
+        # H4 — audit findings + maturity oversight for this company.
+        **_audit_oversight(company),
     })
+
+
+def _audit_oversight(company):
+    """H4 — read-only findings summary + latest-assessment maturity for the admin console."""
+    from auditor_portal.models import AuditFinding
+    from auditor_portal.findings_service import assessment_maturity
+    from compliance.models import Assessment
+    findings = list(AuditFinding.objects.filter(company_control__company=company)
+                    .select_related('company_control__control')[:50])
+    latest = Assessment.objects.filter(company=company).order_by('-created_at').first()
+    return {
+        'audit_findings': findings,
+        'audit_open_findings': sum(1 for f in findings if f.is_open),
+        'audit_maturity': assessment_maturity(latest) if latest else None,
+    }
+
+
+def _verdict_disagreements(company):
+    """F-AUDIT A1: read-only oversight — controls whose auditor-verdict silos conflict."""
+    from compliance.verdict_resolver import company_verdict_disagreements
+    return company_verdict_disagreements(company)
 
 
 def _assignable_auditors():
@@ -419,3 +462,64 @@ def auditor_approval_action(request, profile_id):
     except svc.AuditorAdminError as e:
         messages.error(request, str(e))
     return redirect('platform_admin:auditor_detail', profile_id=profile.id)
+
+
+@platform_admin_required
+def crm_rfi_dashboard(request):
+    """Central cross-company RFI dashboard for platform admin (read-only monitoring).
+
+    Aggregates every DocumentRequest (RFI) across companies with status buckets and
+    overdue highlighting. Admin monitors — it never issues or alters an auditor verdict.
+    """
+    from auditor_portal.models import DocumentRequest
+    from django.utils import timezone
+    import datetime as _dt
+
+    status = request.GET.get('status', '')
+    base = DocumentRequest.objects.select_related(
+        'assessment__company', 'company_control__control', 'auditor')
+    qs = base.filter(status=status) if status else base
+    rows = list(qs.order_by('-created_at')[:300])
+
+    today = timezone.now().date()
+    for r in rows:
+        r.is_overdue = bool(r.due_date and r.due_date < today and r.status in DocumentRequest.OPEN_STATES)
+        r.age_days = (today - r.created_at.date()).days if r.created_at else 0
+
+    counts = {
+        'open': base.filter(status='open').count(),
+        'responded': base.filter(status='responded').count(),
+        'under_review': base.filter(status='under_review').count(),
+        'closed': base.filter(status='closed').count(),
+        'total': base.count(),
+        'overdue': base.filter(status__in=DocumentRequest.OPEN_STATES,
+                               due_date__lt=today).count(),
+    }
+    return render(request, 'platform_admin/rfi_dashboard.html', {
+        'rows': rows, 'counts': counts, 'selected_status': status,
+    })
+
+
+@platform_admin_required
+def crm_messages(request):
+    """Central inbox of all company message threads for platform admin.
+
+    Read-only overview so admins can find and open any conversation (fixes the
+    'admin lands on the wrong/empty thread' gap). Access to each thread is still
+    enforced by messaging.can_access_thread on the thread view itself.
+    """
+    from django.db.models import Max, Count
+    from auditor_portal.models import CompanyMessage
+    from core.models import Company
+    agg = (CompanyMessage.objects.values('company')
+           .annotate(last=Max('created_at'), cnt=Count('id')).order_by('-last')[:100])
+    company_map = {c.id: c for c in Company.objects.filter(id__in=[a['company'] for a in agg])}
+    rows = []
+    for a in agg:
+        company = company_map.get(a['company'])
+        if not company:
+            continue
+        last_msg = (CompanyMessage.objects.filter(company_id=a['company'])
+                    .select_related('sender').order_by('-created_at').first())
+        rows.append({'company': company, 'count': a['cnt'], 'last_at': a['last'], 'last': last_msg})
+    return render(request, 'platform_admin/messages.html', {'rows': rows})

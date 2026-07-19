@@ -48,6 +48,17 @@ def register(request):
                 license_or_membership_no=d.get('license_or_membership_no', ''),
                 specialization=d.get('specialization', ''), city=d.get('city', ''),
                 bio=d.get('bio', ''), status='pending_review')
+            # Notify platform admins (in-app) that an auditor is awaiting approval.
+            try:
+                from core.notify_services import notify_many
+                from django.urls import reverse
+                from core.models import User as _U
+                notify_many(_U.objects.filter(is_staff=True),
+                            'طلب تسجيل مدقّق جديد بانتظار الموافقة',
+                            body=d['full_name'], url=reverse('platform_admin:auditor_list'),
+                            kind='assignment')
+            except Exception:
+                pass
             login(request, user)
             # Phase 8D-3B-AUTH-A: email a 6-digit verification OTP (non-blocking).
             from core import otp_services as otp

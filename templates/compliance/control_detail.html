@@ -1,13 +1,14 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}{{ control.control_id }} - 1SaudiCyber{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
     <!-- Breadcrumb -->
     <nav class="flex items-center text-sm text-gov-gray-500">
-        <a href="{% url 'compliance:controls_list' %}" class="hover:text-gov-green-700">Controls</a>
-        <i class="fas fa-chevron-right mx-2 text-xs"></i>
-        <span class="text-gov-green-800 font-medium">{{ control.control_id }}</span>
+        <a href="{% url 'compliance:controls_list' %}" class="hover:text-gov-green-700">الضوابط</a>
+        <i class="fas fa-chevron-left mx-2 text-xs"></i>
+        <span class="text-gov-green-800 font-medium" dir="ltr">{{ control.control_id }}</span>
     </nav>
 
     <!-- Control Info -->
@@ -16,17 +17,18 @@
             <div class="flex-1">
                 <div class="flex items-center gap-3 mb-3">
                     <span class="text-xs px-2.5 py-1 rounded-full font-medium
-                        {% if control.framework.code == 'NCA_ECC' %}bg-blue-100 text-blue-800
-                        {% elif control.framework.code == 'ARAMCO_SACS002' %}bg-purple-100 text-purple-800
-                        {% else %}bg-orange-100 text-orange-800{% endif %}">
+                        {% if control.framework.code == 'NCA_ECC' %}bg-gov-green-100 text-gov-green-800
+                        {% elif control.framework.code == 'ARAMCO_SACS002' %}bg-amber-50 text-amber-800
+                        {% else %}bg-gov-gray-200 text-gov-gray-700{% endif %}">
                         {{ control.framework.name }}
                     </span>
                     <span class="text-xs px-2.5 py-1 rounded-full font-medium bg-gov-gray-100 text-gov-gray-700">{{ control.domain.name }}</span>
                 </div>
-                <h1 class="text-xl font-bold text-gov-green-800 mb-2">{{ control.control_id }} — {{ control.title }}</h1>
-                <p class="text-gov-gray-600 leading-relaxed">{{ control.description }}</p>
+                <h1 class="text-xl font-bold text-gov-green-800 mb-2"><span dir="ltr">{{ control.control_id }}</span> — {% if control.title_ar %}{{ control.title_ar }}{% else %}<span dir="ltr">{{ control.title }}</span>{% endif %}</h1>
                 {% if control.description_ar %}
-                <p class="text-gov-gray-600 leading-relaxed mt-2" dir="rtl">{{ control.description_ar }}</p>
+                <p class="text-gov-gray-600 leading-relaxed">{{ control.description_ar }}</p>
+                {% else %}
+                <p class="text-gov-gray-600 leading-relaxed" dir="ltr">{{ control.description }}</p>
                 {% endif %}
             </div>
         </div>
@@ -34,9 +36,9 @@
         <!-- Evidence Requirements -->
         <div class="mt-6 p-4 bg-gov-green-50 rounded-lg border border-gov-green-200">
             <h3 class="font-semibold text-gov-green-800 text-sm mb-2">
-                <i class="fas fa-clipboard-list mr-1"></i> Required Evidence
+                <i class="fas fa-clipboard-list me-1"></i> الأدلة المطلوبة
             </h3>
-            <p class="text-sm text-gov-green-700">{{ control.evidence_type|default:"Policy document, screenshot, or technical report demonstrating compliance." }}</p>
+            <p class="text-sm text-gov-green-700">{{ control.evidence_type|default:"وثيقة سياسة أو لقطة شاشة أو تقرير تقني يُثبت الامتثال." }}</p>
         </div>
     </div>
 
@@ -44,43 +46,51 @@
     {% if company_control.ai_verdict %}
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
         <h2 class="font-bold text-gov-green-800 mb-4">
-            <i class="fas fa-robot mr-2"></i> AI Analysis Result
+            <i class="fas fa-robot me-2"></i> نتيجة التحليل الآلي <span class="text-xs font-normal text-gov-gray-500">(استشاري — ليست قرارًا نهائيًا)</span>
         </h2>
         <div class="grid md:grid-cols-3 gap-4 mb-4">
             <div class="p-4 rounded-lg {% if company_control.ai_verdict == 'compliant' %}bg-green-50 border border-green-200{% elif company_control.ai_verdict == 'partially_compliant' %}bg-yellow-50 border border-yellow-200{% else %}bg-red-50 border border-red-200{% endif %}">
-                <div class="text-sm font-medium text-gov-gray-600">Verdict</div>
-                <div class="text-lg font-bold capitalize {% if company_control.ai_verdict == 'compliant' %}text-green-800{% elif company_control.ai_verdict == 'partially_compliant' %}text-yellow-800{% else %}text-red-800{% endif %}">
-                    {{ company_control.ai_verdict|default:"Pending" }}
+                <div class="text-sm font-medium text-gov-gray-600">المؤشّر الاستشاري</div>
+                <div class="text-lg font-bold {% if company_control.ai_verdict == 'compliant' %}text-green-800{% elif company_control.ai_verdict == 'partially_compliant' %}text-yellow-800{% else %}text-red-800{% endif %}">
+                    {% if company_control.ai_verdict == 'compliant' %}ممتثل
+                    {% elif company_control.ai_verdict == 'partially_compliant' %}ممتثل جزئيًا
+                    {% elif company_control.ai_verdict == 'non_compliant' %}غير ممتثل
+                    {% else %}قيد الانتظار{% endif %}
                 </div>
             </div>
             <div class="p-4 rounded-lg bg-gov-gray-50 border border-gov-gray-200">
-                <div class="text-sm font-medium text-gov-gray-600">Confidence</div>
+                <div class="text-sm font-medium text-gov-gray-600">مستوى الثقة</div>
                 <div class="text-lg font-bold text-gov-green-800">{{ company_control.ai_confidence|floatformat:0 }}%</div>
             </div>
             <div class="p-4 rounded-lg bg-gov-gray-50 border border-gov-gray-200">
-                <div class="text-sm font-medium text-gov-gray-600">Status</div>
-                <div class="text-lg font-bold text-gov-green-800 capitalize">{{ company_control.status }}</div>
+                <div class="text-sm font-medium text-gov-gray-600">الحالة</div>
+                <div class="text-lg font-bold text-gov-green-800">
+                    {% if company_control.status == 'compliant' %}ممتثل
+                    {% elif company_control.status == 'in_progress' %}قيد التنفيذ
+                    {% elif company_control.status == 'non_compliant' %}غير ممتثل
+                    {% elif company_control.status == 'not_started' %}لم يبدأ
+                    {% else %}{{ company_control.get_status_display }}{% endif %}
+                </div>
             </div>
         </div>
 
         <!-- Reasoning -->
-        {% if company_control.ai_reasoning %}
-        <div class="mb-4">
-            <h4 class="font-medium text-gov-gray-700 mb-2">Analysis (English)</h4>
-            <p class="text-sm text-gov-gray-600 bg-gov-gray-50 p-3 rounded-lg">{{ company_control.ai_reasoning }}</p>
-        </div>
-        {% endif %}
         {% if company_control.ai_reasoning_ar %}
         <div class="mb-4">
-            <h4 class="font-medium text-gov-gray-700 mb-2">التحليل (عربي)</h4>
-            <p class="text-sm text-gov-gray-600 bg-gov-gray-50 p-3 rounded-lg" dir="rtl">{{ company_control.ai_reasoning_ar }}</p>
+            <h4 class="font-medium text-gov-gray-700 mb-2">التحليل</h4>
+            <p class="text-sm text-gov-gray-600 bg-gov-gray-50 p-3 rounded-lg">{{ company_control.ai_reasoning_ar }}</p>
+        </div>
+        {% elif company_control.ai_reasoning %}
+        <div class="mb-4">
+            <h4 class="font-medium text-gov-gray-700 mb-2">التحليل</h4>
+            <p class="text-sm text-gov-gray-600 bg-gov-gray-50 p-3 rounded-lg" dir="ltr">{{ company_control.ai_reasoning }}</p>
         </div>
         {% endif %}
 
         <!-- Recommendations -->
         {% if company_control.ai_recommendations %}
         <div>
-            <h4 class="font-medium text-gov-gray-700 mb-2">Recommendations</h4>
+            <h4 class="font-medium text-gov-gray-700 mb-2">التوصيات</h4>
             <div class="text-sm text-gov-gray-600 bg-gov-gray-50 p-3 rounded-lg whitespace-pre-line">{{ company_control.ai_recommendations }}</div>
         </div>
         {% endif %}
@@ -90,7 +100,7 @@
     <!-- Upload Evidence -->
     <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
         <h2 class="font-bold text-gov-green-800 mb-3 flex items-center gap-2">
-            <i class="fas fa-cloud-upload-alt"></i> Upload Evidence
+            <i class="fas fa-cloud-upload-alt"></i> رفع دليل
         </h2>
         <form id="ctrl-ev-form" method="post" action="{% url 'compliance:upload_evidence' control.id %}"
               enctype="multipart/form-data" data-busy="جارٍ الرفع والتحليل...">
@@ -101,15 +111,15 @@
 
             <div data-block="idle">
                 <label id="ctrl-ev-drop" for="ctrl-ev-file" tabindex="0" role="button"
-                       aria-label="Drag a file or click to browse"
+                       aria-label="اسحب ملفًا أو انقر للاختيار"
                        class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed
                               border-gov-gray-300 bg-gov-gray-50 px-6 py-9 text-center transition-colors
                               hover:border-gov-green-500 hover:bg-gov-green-50
                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gov-green-700 focus-visible:ring-offset-2">
                     <span class="flex h-11 w-11 items-center justify-center rounded-full bg-gov-green-800/10">
                         <i class="fas fa-cloud-arrow-up text-lg text-gov-green-800"></i></span>
-                    <span class="text-sm font-semibold text-gov-gray-800">Drag &amp; drop or click to browse</span>
-                    <span id="ctrl-ev-help" class="text-xs text-gov-gray-500">PDF, DOCX, PNG, JPG · advisory OCR/AI (not a final decision)</span>
+                    <span class="text-sm font-semibold text-gov-gray-800">اسحب وأفلت الملف أو انقر للاختيار</span>
+                    <span id="ctrl-ev-help" class="text-xs text-gov-gray-500">PDF · DOCX · PNG · JPG — تحليل استشاري (ليس قرارًا نهائيًا)</span>
                 </label>
             </div>
 
@@ -120,14 +130,14 @@
                         <p data-file-name dir="auto" class="truncate text-sm font-semibold text-gov-gray-900"></p>
                         <p data-file-size class="text-xs text-gov-gray-500" dir="ltr"></p>
                     </div>
-                    <button type="button" data-remove aria-label="Remove file"
+                    <button type="button" data-remove aria-label="إزالة الملف"
                             class="grid h-8 w-8 place-items-center rounded-lg text-gov-gray-400 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"><i class="fas fa-xmark"></i></button>
                 </div>
             </div>
 
             <div data-block="error" hidden id="ctrl-ev-error" class="rounded-xl border border-red-200 bg-red-50 p-3" role="alert">
                 <p class="flex items-center gap-2 text-sm font-semibold text-red-800"><i class="fas fa-triangle-exclamation"></i> <span data-error-msg></span></p>
-                <button type="button" data-retry class="mt-2 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400">Retry</button>
+                <button type="button" data-retry class="mt-2 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400">إعادة المحاولة</button>
             </div>
 
             <button id="ctrl-ev-submit" type="submit"
@@ -135,7 +145,7 @@
                            transition-colors bg-gov-green-800 hover:bg-gov-green-900
                            disabled:cursor-not-allowed disabled:bg-gov-gray-300 disabled:text-gov-gray-500
                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gov-green-700 focus-visible:ring-offset-2">
-                <i class="fas fa-robot"></i> Upload &amp; Analyze with AI
+                <i class="fas fa-robot"></i> رفع وتحليل استشاري
             </button>
         </form>
     </div>
@@ -144,7 +154,6 @@
     {% if evidences %}
     <style>
         @keyframes evFadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        /* Rows animate in when the list renders (i.e. right after an upload redirect). */
         .evidence-row { animation: evFadeInUp .35s ease-out both; }
         .evidence-row:nth-child(2) { animation-delay: .05s; }
         .evidence-row:nth-child(3) { animation-delay: .10s; }
@@ -152,36 +161,34 @@
     </style>
     <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
         <h2 class="font-bold text-gov-green-800 mb-3 flex items-center gap-2">
-            <i class="fas fa-folder-open"></i> Uploaded Evidence ({{ evidences.count }})
+            <i class="fas fa-folder-open"></i> الأدلة المرفوعة ({{ evidences.count }})
         </h2>
         <ul class="divide-y divide-gov-gray-100">
             {% for ev in evidences %}
             <li class="evidence-row flex items-center gap-3 py-3">
                 <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg
-                    {% if ev.file_type == 'pdf' %}bg-red-50 text-red-600{% elif ev.file_type in 'docx,doc' %}bg-blue-50 text-blue-600{% elif ev.file_type in 'png,jpg,jpeg,tiff,bmp' %}bg-purple-50 text-purple-600{% else %}bg-gov-gray-100 text-gray-500{% endif %}">
+                    {% if ev.file_type == 'pdf' %}bg-red-50 text-red-600{% elif ev.file_type in 'docx,doc' %}bg-gov-gray-100 text-gov-gray-600{% elif ev.file_type in 'png,jpg,jpeg,tiff,bmp' %}bg-amber-50 text-amber-700{% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">
                     <i class="fas {% if ev.file_type == 'pdf' %}fa-file-pdf{% elif ev.file_type in 'docx,doc' %}fa-file-word{% elif ev.file_type in 'png,jpg,jpeg,tiff,bmp' %}fa-file-image{% else %}fa-file{% endif %}"></i></span>
                 <div class="min-w-0 flex-1 text-start">
-                    <div class="truncate text-sm font-semibold text-gov-gray-900">{{ ev.original_filename }}</div>
-                    <div class="text-xs text-gov-gray-500" dir="ltr">{{ ev.uploaded_at|date:"M d, Y H:i" }} · {{ ev.file_size|filesizeformat }}</div>
+                    <div class="truncate text-sm font-semibold text-gov-gray-900" dir="auto">{{ ev.original_filename }}</div>
+                    <div class="text-xs text-gov-gray-500" dir="ltr">{{ ev.uploaded_at|date:"Y-m-d H:i" }} · {{ ev.file_size|filesizeformat }}</div>
                 </div>
                 {% if ev.ai_verdict == 'compliant' %}
-                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800"><i class="fas fa-check text-[10px]"></i> Compliant</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800"><i class="fas fa-check text-[10px]"></i> ممتثل</span>
                 {% elif ev.ai_verdict == 'partially_compliant' %}
-                <span class="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">Partially compliant</span>
+                <span class="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">ممتثل جزئيًا</span>
                 {% elif ev.ai_verdict == 'non_compliant' %}
-                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800"><i class="fas fa-xmark text-[10px]"></i> Non-compliant</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800"><i class="fas fa-xmark text-[10px]"></i> غير ممتثل</span>
                 {% elif ev.ai_verdict == 'error' %}
-                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800" title="Automated analysis failed — please retry or await human review"><i class="fas fa-triangle-exclamation text-[10px]"></i> Analysis failed</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800" title="تعذّر التحليل الآلي — أعد المحاولة أو انتظر المراجعة البشرية"><i class="fas fa-triangle-exclamation text-[10px]"></i> فشل التحليل</span>
                 {% elif ev.status == 'uploaded' or ev.status == 'processing' or ev.status == 'ai_analyzing' %}
                     {% if ai_enabled %}
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700"><i class="fas fa-circle-notch fa-spin text-[11px]"></i> AI processing…</span>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700"><i class="fas fa-circle-notch fa-spin text-[11px]"></i> جارٍ التحليل…</span>
                     {% else %}
-                    <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600" title="Automated analysis is not enabled on this environment"><i class="fas fa-user-clock text-[10px]"></i> Pending human review</span>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gov-gray-600" title="التحليل الآلي غير مُفعّل في هذه البيئة"><i class="fas fa-user-clock text-[10px]"></i> بانتظار مراجعة بشرية</span>
                     {% endif %}
-                {% elif ev.ai_verdict %}
-                <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">{{ ev.ai_verdict }}</span>
                 {% else %}
-                <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600" title="Automated analysis is not enabled on this environment"><i class="fas fa-user-clock text-[10px]"></i> Pending human review</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-gov-gray-100 px-2.5 py-0.5 text-xs font-medium text-gov-gray-600" title="التحليل الآلي غير مُفعّل في هذه البيئة"><i class="fas fa-user-clock text-[10px]"></i> بانتظار مراجعة بشرية</span>
                 {% endif %}
             </li>
             {% endfor %}
@@ -205,8 +212,8 @@
       function showError(m){ q('[data-error-msg]').textContent=m; setState('error'); }
       function select(file){ if(!file) return;
         const ext=(file.name.split('.').pop()||'').toLowerCase();
-        if(!ACCEPT.includes(ext)) return showError('Unsupported file type: .'+ext);
-        if(file.size>MAX) return showError('File exceeds 50MB.');
+        if(!ACCEPT.includes(ext)) return showError('نوع ملف غير مدعوم: .'+ext);
+        if(file.size>MAX) return showError('حجم الملف يتجاوز 50 ميغابايت.');
         q('[data-file-name]').textContent=file.name; q('[data-file-size]').textContent=fmt(file.size);
         q('[data-file-icon] i').className='fas '+iconFor(ext); setState('selected'); }
       input.addEventListener('change', ()=>select(input.files[0]));
@@ -223,13 +230,13 @@
     {% if mapped_controls %}
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
         <h2 class="font-bold text-gov-green-800 mb-4">
-            <i class="fas fa-link mr-2"></i> Cross-Mapped Controls
+            <i class="fas fa-link me-2"></i> ضوابط مرتبطة (تعيين متقاطع)
         </h2>
-        <p class="text-sm text-gov-gray-600 mb-4">Evidence uploaded here also applies to these related controls:</p>
+        <p class="text-sm text-gov-gray-600 mb-4">الأدلة المرفوعة هنا تنطبق أيضًا على هذه الضوابط ذات الصلة:</p>
         <div class="grid md:grid-cols-2 gap-3">
             {% for mc in mapped_controls %}
             <a href="{% url 'compliance:control_detail' mc.id %}" class="p-3 bg-gov-gray-50 rounded-lg hover:bg-gov-green-50 transition flex items-center gap-3">
-                <span class="text-xs px-2 py-1 rounded bg-gov-green-100 text-gov-green-800 font-mono">{{ mc.control_id }}</span>
+                <span class="text-xs px-2 py-1 rounded bg-gov-green-100 text-gov-green-800 font-mono" dir="ltr">{{ mc.control_id }}</span>
                 <span class="text-sm text-gov-gray-700">{{ mc.title|truncatechars:50 }}</span>
             </a>
             {% endfor %}

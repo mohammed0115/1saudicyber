@@ -6,91 +6,91 @@
   <div style="max-width:960px;margin:0 auto;padding:8px 4px 28px;">
 
     <div style="margin-bottom:14px;">
-      <p style="color:#1F6B63;font-weight:600;margin:0 0 4px;">{% trans "قرار المدقق النهائي" %}</p>
-      <h1 style="color:#1F2933;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;">{{ submission.original_filename }}</h1>
-      <p style="color:#667085;font-size:.9rem;margin:0;">{{ submission.checklist_item.evidence_requirement.title }}</p>
+      <p style="color:#356a54;font-weight:600;margin:0 0 4px;">{% trans "قرار المدقق النهائي" %}</p>
+      <h1 style="color:#2b2c27;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;">{{ submission.original_filename }}</h1>
+      <p style="color:#5b5c53;font-size:.9rem;margin:0;">{{ submission.checklist_item.evidence_requirement.title }}</p>
     </div>
 
     {# Disclaimer #}
-    <div style="background:#FBF6EC;border:1px solid #E6D7B8;border-radius:12px;padding:12px 16px;margin-bottom:18px;color:#7A5B16;font-size:.9rem;">
+    <div style="background:#f1eadb;border:1px solid #dcc79a;border-radius:12px;padding:12px 16px;margin-bottom:18px;color:#8a6a1f;font-size:.9rem;">
       <i class="fas fa-circle-info ms-1"></i> {% trans "هذا القرار يمثل مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية." %}
     </div>
 
     {# Review context: rule suggestion + AI advisory + extraction #}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:18px;">
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;">
-        <p style="color:#667085;font-size:.82rem;margin:0 0 4px;">{% trans "الحالة المقترحة من محرك القواعد" %}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "الحالة المقترحة من محرك القواعد" %}</p>
         {% if rule_evaluation and rule_evaluation.status == 'completed' %}
           <p style="margin:0;font-weight:700;color:#1F4F8B;">{{ rule_evaluation.suggested_status_ar }}</p>
           <p style="margin:3px 0 0;color:#9A6A12;font-size:.78rem;">{% trans "مقترح — بانتظار مراجعة المدقق" %}</p>
         {% else %}<p style="margin:0;color:#9AA5A0;">—</p>{% endif %}
       </div>
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;">
-        <p style="color:#667085;font-size:.82rem;margin:0 0 4px;">{% trans "التحليل الاستشاري للذكاء الاصطناعي" %}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "التحليل الاستشاري للذكاء الاصطناعي" %}</p>
         {% if ai_analysis and ai_analysis.status == 'completed' %}
-          <p style="margin:0;font-weight:600;color:#1F2933;">{{ ai_analysis.relevance_ar }} — {{ ai_analysis.confidence }}%</p>
+          <p style="margin:0;font-weight:600;color:#2b2c27;">{{ ai_analysis.relevance_ar }} — {{ ai_analysis.confidence }}%</p>
           <p style="margin:3px 0 0;color:#9AA5A0;font-size:.78rem;">{% trans "استشاري فقط" %}</p>
         {% else %}<p style="margin:0;color:#9AA5A0;">—</p>{% endif %}
       </div>
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;">
-        <p style="color:#667085;font-size:.82rem;margin:0 0 4px;">{% trans "النص المستخرج من الدليل" %}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "النص المستخرج من الدليل" %}</p>
         {% if extraction and extraction.status == 'extracted' %}
-          <p style="margin:0;font-weight:600;color:#0F5D46;">{{ extraction.char_count }} {% trans "حرف" %}</p>
+          <p style="margin:0;font-weight:600;color:#2a5646;">{{ extraction.char_count }} {% trans "حرف" %}</p>
         {% else %}<p style="margin:0;color:#9AA5A0;">—</p>{% endif %}
       </div>
     </div>
 
     {% if rule_evaluation.rationale %}
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
-      <p style="color:#667085;font-size:.82rem;margin:0 0 4px;">{% trans "سبب الاقتراح" %}</p>
-      <p style="margin:0;color:#1F2933;font-size:.9rem;">{{ rule_evaluation.rationale }}</p>
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+      <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "سبب الاقتراح" %}</p>
+      <p style="margin:0;color:#2b2c27;font-size:.9rem;">{{ rule_evaluation.rationale }}</p>
     </div>
     {% endif %}
 
     {# Current verdict #}
     {% if verdict %}
     <div style="background:#E7F2EC;border:1px solid #BFE0CF;border-radius:12px;padding:16px;margin-bottom:18px;">
-      <p style="color:#0F5D46;font-weight:700;margin:0 0 4px;">{% trans "الحالة بعد مراجعة المدقق" %}: {{ verdict.status_ar }}</p>
-      <p style="margin:0;color:#1F2933;font-size:.9rem;">{{ verdict.rationale }}</p>
+      <p style="color:#2a5646;font-weight:700;margin:0 0 4px;">{% trans "الحالة بعد مراجعة المدقق" %}: {{ verdict.status_ar }}</p>
+      <p style="margin:0;color:#2b2c27;font-size:.9rem;">{{ verdict.rationale }}</p>
       {% if verdict.required_actions %}
-      <ul style="margin:8px 0 0;padding-inline-start:18px;color:#7A5B16;font-size:.86rem;">
+      <ul style="margin:8px 0 0;padding-inline-start:18px;color:#8a6a1f;font-size:.86rem;">
         {% for a in verdict.required_actions %}<li>{{ a }}</li>{% endfor %}
       </ul>
       {% endif %}
-      <p style="margin:8px 0 0;color:#667085;font-size:.78rem;">{% trans "تمت مراجعته بواسطة المدقق" %}</p>
+      <p style="margin:8px 0 0;color:#5b5c53;font-size:.78rem;">{% trans "تمت مراجعته بواسطة المدقق" %}</p>
     </div>
     {% endif %}
 
     {% if can_submit %}
     {# Verdict form (staff / assigned auditor) #}
     <form method="post" action="{% url 'compliance:auditor_verdict' submission.id %}" data-busy="جارٍ حفظ قرار المدقق..."
-          style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;padding:20px;">
+          style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:20px;">
       {% csrf_token %}
-      <h2 style="color:#0F5D46;font-weight:700;font-size:1.05rem;margin:0 0 14px;">{% trans "الحالة بعد مراجعة المدقق" %}</h2>
-      <label style="display:block;color:#1F2933;font-size:.9rem;margin:0 0 6px;">{% trans "الحالة بعد مراجعة المدقق" %}</label>
-      <select name="status" required style="width:100%;border:1px solid #D8E1DD;border-radius:10px;padding:10px 12px;margin-bottom:14px;background:#fff;">
-        {% for s in allowed_statuses %}<option value="{{ s }}" {% if verdict and verdict.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      <h2 style="color:#2a5646;font-weight:700;font-size:1.05rem;margin:0 0 14px;">{% trans "الحالة بعد مراجعة المدقق" %}</h2>
+      <label style="display:block;color:#2b2c27;font-size:.9rem;margin:0 0 6px;">{% trans "الحالة بعد مراجعة المدقق" %}</label>
+      <select name="status" required style="width:100%;border:1px solid #e3e1d9;border-radius:10px;padding:10px 12px;margin-bottom:14px;background:#fff;">
+        {% for code, label in allowed_status_choices %}<option value="{{ code }}" {% if verdict and verdict.status == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
-      <label style="display:block;color:#1F2933;font-size:.9rem;margin:0 0 6px;">{% trans "سبب القرار" %}</label>
-      <textarea name="rationale" required rows="4" style="width:100%;box-sizing:border-box;border:1px solid #D8E1DD;border-radius:10px;padding:10px 12px;margin-bottom:14px;">{{ verdict.rationale|default:'' }}</textarea>
-      <label style="display:block;color:#1F2933;font-size:.9rem;margin:0 0 6px;">{% trans "مستوى الثقة" %} (0–100)</label>
+      <label style="display:block;color:#2b2c27;font-size:.9rem;margin:0 0 6px;">{% trans "سبب القرار" %}</label>
+      <textarea name="rationale" required rows="4" style="width:100%;box-sizing:border-box;border:1px solid #e3e1d9;border-radius:10px;padding:10px 12px;margin-bottom:14px;">{{ verdict.rationale|default:'' }}</textarea>
+      <label style="display:block;color:#2b2c27;font-size:.9rem;margin:0 0 6px;">{% trans "مستوى الثقة" %} (0–100)</label>
       <input type="number" name="confidence" min="0" max="100" value="{{ verdict.confidence|default:0 }}"
-             style="width:120px;border:1px solid #D8E1DD;border-radius:10px;padding:10px 12px;margin-bottom:14px;">
-      <label style="display:block;color:#1F2933;font-size:.9rem;margin:0 0 6px;">{% trans "الإجراءات المطلوبة" %}</label>
+             style="width:120px;border:1px solid #e3e1d9;border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <label style="display:block;color:#2b2c27;font-size:.9rem;margin:0 0 6px;">{% trans "الإجراءات المطلوبة" %}</label>
       <input type="text" name="required_actions" placeholder="—"
-             style="width:100%;box-sizing:border-box;border:1px solid #D8E1DD;border-radius:10px;padding:10px 12px;margin-bottom:16px;">
-      <button type="submit" style="background:#0F5D46;color:#fff;font-weight:600;padding:11px 24px;border:none;border-radius:10px;cursor:pointer;">
+             style="width:100%;box-sizing:border-box;border:1px solid #e3e1d9;border-radius:10px;padding:10px 12px;margin-bottom:16px;">
+      <button type="submit" style="background:#2a5646;color:#fff;font-weight:600;padding:11px 24px;border:none;border-radius:10px;cursor:pointer;">
         {% trans "حفظ قرار المدقق" %}</button>
     </form>
     {% else %}
-    <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:16px;color:#667085;">
+    <div style="background:#F1F3F2;border:1px solid #e3e1d9;border-radius:12px;padding:16px;color:#5b5c53;">
       {% trans "يمكنك عرض القرار، ولا تملك صلاحية تعديله." %}
     </div>
     {% endif %}
 
     <div style="margin-top:16px;">
       <a href="{% url 'compliance:evidence_submission_detail' submission.id %}"
-         style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:11px 22px;border:1px solid #D8E1DD;border-radius:10px;text-decoration:none;">
+         style="background:#FFFFFF;color:#2b2c27;font-weight:600;padding:11px 22px;border:1px solid #e3e1d9;border-radius:10px;text-decoration:none;">
         {% trans "العودة إلى تفاصيل الدليل" %}</a>
     </div>
   </div>

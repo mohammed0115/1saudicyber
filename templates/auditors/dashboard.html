@@ -1,90 +1,169 @@
 {% extends "base.html" %}
+{% load crm_display %}
 {% block title %}لوحة المدقّق - 1SaudiCyber{% endblock %}
 {% block content %}
-<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
-  <div style="max-width:880px;margin:0 auto;padding:8px 4px 24px;">
-    <h1 style="color:#1F2933;font-size:1.5rem;font-weight:700;margin:0 0 4px;">لوحة المدقق</h1>
-    <p style="color:#667085;font-size:.95rem;margin:0 0 10px;">هذه مراجعة داخلية/استشارية داخل المنصة ولا تمثل شهادة امتثال رسمية من NCA أو Aramco أو SABIC.</p>
+<div dir="rtl" class="bg-gov-gray-50" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:py-10 space-y-6">
 
-    {% if framework_badges %}
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px;">
-      {% for b in framework_badges %}
-      <span title="{{ b.label }}" style="font-size:.78rem;background:#EAF3EF;color:#0F5D46;border:1px solid #CFE3DA;border-radius:999px;padding:4px 12px;" dir="auto">{{ b.label }}</span>
-      {% endfor %}
+    {# ── Hero header ── #}
+    <div class="flex items-start gap-4">
+      <div class="hidden sm:grid place-items-center w-14 h-14 rounded-2xl bg-gov-green-800 text-white shrink-0 shadow-sm">
+        <i class="fas fa-user-shield text-xl"></i>
+      </div>
+      <div class="min-w-0">
+        <p class="text-gov-green-700 font-semibold text-sm">مساحة المدقّق</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gov-gray-800 mt-0.5">لوحة المدقّق</h1>
+        <p class="text-gov-gray-500 text-sm mt-1.5 max-w-2xl">مراجعة داخلية/استشارية داخل المنصة — لا تمثّل شهادة امتثال رسمية من NCA أو Aramco أو SABIC.</p>
+        {% if framework_badges %}
+        <div class="flex flex-wrap gap-2 mt-3">
+          {% for b in framework_badges %}
+          <span title="{{ b.label }}" dir="auto" class="text-xs bg-gov-green-50 text-gov-green-800 border border-gov-green-100 rounded-full px-3 py-1">{{ b.label }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
     </div>
-    <p style="color:#98A2B3;font-size:.78rem;margin:0 0 16px;">قدرات مراجعة مستنتجة داخليًا من ملف المدقق — لا تمثل تخويلًا أو اعتمادًا رسميًا من أي جهة.</p>
+
+    {% if not user.email_verified %}
+    {# Auditor email verification — the OTP is emailed at registration; this is where it is entered. #}
+    <div class="bg-white rounded-2xl border border-gov-sand/50 shadow-sm overflow-hidden">
+      <div class="bg-gov-sand/10 border-b border-gov-sand/40 px-5 sm:px-6 py-4">
+        <h2 class="font-bold text-gov-gray-800 flex items-center gap-2">
+          <span class="grid place-items-center w-8 h-8 rounded-lg bg-gov-sand/25" style="color:#8a6a1f"><i class="fas fa-envelope-circle-check"></i></span>
+          أكّد بريدك الإلكتروني أولًا
+        </h2>
+      </div>
+      <div class="px-5 sm:px-6 py-5">
+        <p class="text-sm text-gov-gray-600 leading-relaxed mb-4">
+          أرسلنا رمز تحقّق من 6 أرقام إلى <span dir="ltr" class="font-medium text-gov-gray-800">{{ user.email }}</span>. أدخِله للمتابعة.
+          <span class="block text-xs text-gov-gray-400 mt-1">تفعيل حساب المدقّق من الإدارة خطوة منفصلة تأتي بعد تأكيد البريد.</span>
+        </p>
+        <form method="post" action="{% url 'core:verify_email_otp' %}" data-busy="جارٍ التحقق..." class="flex flex-wrap items-center gap-3">
+          {% csrf_token %}
+          <input type="text" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" required autofocus placeholder="••••••" dir="ltr"
+                 class="w-44 text-center text-2xl font-bold tracking-[0.4em] text-gov-gray-800 bg-white border border-gov-gray-300 rounded-xl py-3 px-4 focus:outline-none focus:border-gov-green-600 focus:ring-4 focus:ring-gov-green-600/15">
+          <button type="submit" class="bg-gov-green-800 hover:bg-gov-green-900 text-white font-semibold px-7 py-3.5 rounded-xl shadow-sm transition inline-flex items-center gap-2">
+            <i class="fas fa-check"></i> تأكيد الرمز
+          </button>
+        </form>
+        <form method="post" action="{% url 'core:resend_email_otp' %}" data-busy="جارٍ إرسال الرمز..." class="mt-3">
+          {% csrf_token %}
+          <button type="submit" class="text-sm font-medium hover:underline" style="color:#8a6a1f">لم يصلك الرمز؟ إعادة الإرسال</button>
+        </form>
+      </div>
+    </div>
     {% endif %}
 
     {% include "components/next_action_card.html" with next_action=auditor_journey.next_action %}
 
     {% if not profile.is_active_auditor %}
-      <div style="background:#FBF6EC;border:1px solid #E6D7B8;color:#7A5B16;border-radius:12px;padding:18px;font-size:.95rem;line-height:1.8;">
-        <i class="fas fa-hourglass-half ms-1"></i>
-        {% if profile.status == 'suspended' %}{{ auditor_journey.suspended_message }}
-        {% elif profile.status == 'inactive' %}{{ auditor_journey.rejected_message }}
-        {% else %}{{ auditor_journey.pending_message }}{% endif %}
-        <span style="display:block;color:#8A6D2A;margin-top:4px;font-size:.85rem;">حسابك ({{ profile.get_status_display }}) لا يتيح الوصول إلى بيانات الشركات حتى يتم التفعيل.</span>
+      {# Account status (pending / suspended / inactive) #}
+      <div class="bg-gov-sand/10 border border-gov-sand/40 rounded-2xl px-5 sm:px-6 py-5">
+        <div class="flex items-start gap-3">
+          <span class="grid place-items-center w-9 h-9 rounded-xl bg-gov-sand/25 shrink-0" style="color:#8a6a1f"><i class="fas fa-hourglass-half"></i></span>
+          <div class="text-sm leading-relaxed" style="color:#8a6a1f">
+            {% if profile.status == 'suspended' %}{{ auditor_journey.suspended_message }}
+            {% elif profile.status == 'inactive' %}{{ auditor_journey.rejected_message }}
+            {% else %}{{ auditor_journey.pending_message }}{% endif %}
+            <span class="block text-xs mt-1" style="color:#9a7b2e">حسابك ({{ profile.status|auditor_status_ar }}) لا يتيح الوصول إلى بيانات الشركات حتى يتم التفعيل.</span>
+          </div>
+        </div>
       </div>
     {% else %}
       {# A) Pending review requests awaiting the auditor's approval #}
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;overflow:hidden;margin-bottom:18px;">
-        <div style="padding:12px 16px;background:#FBF3E6;color:#8A5A0B;font-weight:700;">طلبات مراجعة بانتظار موافقتك</div>
-        <div style="padding:6px 0;">
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm overflow-hidden">
+        <div class="px-5 sm:px-6 py-3.5 bg-gov-sand/10 border-b border-gov-sand/30 font-bold" style="color:#8a6a1f">طلبات مراجعة بانتظار موافقتك</div>
+        <div>
           {% for a in pending_requests %}
-          <div style="border-top:1px solid #EEF2F0;padding:14px 16px;">
-            <p style="margin:0;color:#1F2933;font-weight:700;">{{ a.company.name_ar|default:a.company.name }}</p>
-            <p style="margin:2px 0 0;color:#667085;font-size:.85rem;">السجل التجاري: <span dir="ltr">{{ a.company.cr_number }}</span> · النطاق: {{ a.get_scope_display }} · تاريخ الطلب: {{ a.requested_at|date:"Y-m-d H:i" }}</p>
-            <p style="margin:2px 0 0;color:#667085;font-size:.85rem;">مصدر الطلب: {% if a.requested_by.is_staff or a.requested_by.is_superuser %}إسناد من إدارة المنصة{% else %}طلب من الشركة{% endif %}</p>
-            {% if a.notes %}<p style="margin:4px 0 0;color:#667085;font-size:.85rem;">ملاحظة الشركة: {{ a.notes }}</p>{% endif %}
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:flex-start;">
-              <form method="post" action="{% url 'auditors:assignment_respond' a.id %}" data-busy="جارٍ قبول الطلب..." style="display:inline;">
+          <div class="border-t border-gov-gray-100 first:border-t-0 px-5 sm:px-6 py-4">
+            <p class="font-bold text-gov-gray-800">{{ a.company.name_ar|default:a.company.name }}</p>
+            <p class="text-sm text-gov-gray-500 mt-1">السجل التجاري: <span dir="ltr">{{ a.company.cr_number }}</span> · النطاق: {{ a.scope|engagement_scope_ar }} · تاريخ الطلب: {{ a.requested_at|date:"Y-m-d H:i" }}</p>
+            <p class="text-sm text-gov-gray-500 mt-0.5">مصدر الطلب: {% if a.requested_by.is_staff or a.requested_by.is_superuser %}إسناد من إدارة المنصة{% else %}طلب من الشركة{% endif %}</p>
+            {% if a.notes %}<p class="text-sm text-gov-gray-500 mt-1">ملاحظة الشركة: {{ a.notes }}</p>{% endif %}
+            <div class="flex flex-wrap gap-3 mt-3 items-start">
+              <form method="post" action="{% url 'auditors:assignment_respond' a.id %}" data-busy="جارٍ قبول الطلب...">
                 {% csrf_token %}<input type="hidden" name="action" value="accept">
-                <button type="submit" style="background:#0F5D46;color:#fff;font-weight:600;padding:9px 18px;border:none;border-radius:10px;cursor:pointer;">قبول الطلب</button>
+                <button type="submit" class="bg-gov-green-800 hover:bg-gov-green-900 text-white font-semibold px-5 py-2.5 rounded-xl transition">قبول الطلب</button>
               </form>
-              <form method="post" action="{% url 'auditors:assignment_respond' a.id %}" data-busy="جارٍ رفض الطلب..." style="display:flex;gap:6px;align-items:center;">
+              <form method="post" action="{% url 'auditors:assignment_respond' a.id %}" data-busy="جارٍ رفض الطلب..." class="flex gap-2 items-center">
                 {% csrf_token %}<input type="hidden" name="action" value="reject">
-                <input type="text" name="reason" required placeholder="سبب الرفض (مطلوب)" style="border:1px solid #E6C7C7;border-radius:8px;padding:8px 10px;font-size:.85rem;">
-                <button type="submit" style="background:#FFFFFF;color:#9B2C2C;font-weight:600;padding:9px 16px;border:1px solid #E6C7C7;border-radius:10px;cursor:pointer;">رفض الطلب</button>
+                <input type="text" name="reason" required placeholder="سبب الرفض (مطلوب)" class="border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-100">
+                <button type="submit" class="bg-white text-red-700 font-semibold px-4 py-2.5 rounded-xl border border-red-200 hover:bg-red-50 transition">رفض الطلب</button>
               </form>
             </div>
           </div>
           {% empty %}
-          <p style="padding:16px;margin:0;color:#667085;">لا توجد طلبات مراجعة بانتظار موافقتك حاليًا.</p>
+          <p class="px-5 sm:px-6 py-5 text-gov-gray-500">لا توجد طلبات مراجعة بانتظار موافقتك حاليًا.</p>
           {% endfor %}
         </div>
       </div>
 
       {# B) Accepted / assigned companies #}
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;overflow:hidden;">
-        <div style="padding:12px 16px;background:#EAF3EF;color:#0F5D46;font-weight:700;">الشركات المقبولة/المسندة</div>
-        <table style="width:100%;font-size:.9rem;border-collapse:collapse;">
-          <thead style="color:#667085;"><tr>
-            <th style="text-align:right;padding:10px 16px;">الشركة</th>
-            <th style="text-align:right;padding:10px 16px;">النطاق</th>
-            <th style="text-align:right;padding:10px 16px;"></th>
-          </tr></thead>
-          <tbody>
-          {% for a in accepted_assignments %}
-            <tr style="border-top:1px solid #EEF2F0;">
-              <td style="padding:10px 16px;color:#1F2933;">{{ a.company.name_ar|default:a.company.name }}</td>
-              <td style="padding:10px 16px;color:#667085;">{{ a.get_scope_display }}</td>
-              <td style="padding:10px 16px;white-space:nowrap;">
-                <a href="{% url 'auditors:assignment_detail' a.id %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">ملف المراجعة</a>
-                <span style="color:#D0D5DD;margin:0 6px;">·</span>
-                <a href="{% url 'auditor_portal:dashboard' %}" style="color:#0F5D46;text-decoration:none;font-weight:600;">مساحة مراجعة الأدلة</a>
-              </td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="3" style="padding:18px 16px;text-align:right;color:#667085;line-height:1.8;">لا توجد شركات مقبولة بعد. اقبل طلب مراجعة لتظهر الشركة هنا.</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm overflow-hidden">
+        <div class="px-5 sm:px-6 py-3.5 bg-gov-green-50 border-b border-gov-green-100 text-gov-green-800 font-bold">الشركات المقبولة/المسندة</div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-gov-gray-500"><tr>
+              <th class="text-right px-5 sm:px-6 py-3 font-medium">الشركة</th>
+              <th class="text-right px-5 sm:px-6 py-3 font-medium">النطاق</th>
+              <th class="text-right px-5 sm:px-6 py-3"></th>
+            </tr></thead>
+            <tbody class="divide-y divide-gov-gray-100">
+            {% for a in accepted_assignments %}
+              <tr>
+                <td class="px-5 sm:px-6 py-3 text-gov-gray-800">{{ a.company.name_ar|default:a.company.name }}</td>
+                <td class="px-5 sm:px-6 py-3 text-gov-gray-500">{{ a.scope|engagement_scope_ar }}</td>
+                <td class="px-5 sm:px-6 py-3 whitespace-nowrap">
+                  <a href="{% url 'auditors:assignment_detail' a.id %}" class="text-gov-green-700 font-semibold hover:underline">ملف المراجعة</a>
+                  <span class="text-gov-gray-300 mx-1.5">·</span>
+                  <a href="{% url 'auditor_portal:dashboard' %}" class="text-gov-green-700 font-semibold hover:underline">مساحة مراجعة الأدلة</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="px-5 sm:px-6 py-5 text-gov-gray-500 leading-relaxed">لا توجد شركات مقبولة بعد. اقبل طلب مراجعة لتظهر الشركة هنا.</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     {% endif %}
 
-    <div style="margin-top:18px;">
-      {% include "components/journey_stepper.html" with journey=auditor_journey %}
+    {# ── Guided review journey — Arabic-only status pills (never language-dependent) ── #}
+    <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm px-5 sm:px-6 py-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-gov-green-800">مسار المراجعة الموجّه</h2>
+        <span class="text-xs font-medium text-gov-gray-500">{{ auditor_journey.completed_count }} / {{ auditor_journey.total }} مكتملة</span>
+      </div>
+      <ol class="relative">
+        {% for s in auditor_journey.steps %}
+        <li class="flex gap-4">
+          <div class="flex flex-col items-center">
+            <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-bold shrink-0
+              {% if s.status == 'completed' %}bg-gov-green-800 text-white
+              {% elif s.status == 'current' %}bg-white text-gov-green-800 border-2 border-gov-green-800
+              {% elif s.status == 'blocked' %}bg-gov-gray-100 text-gov-gray-400
+              {% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">
+              {% if s.status == 'completed' %}<i class="fas fa-check text-[0.7rem]"></i>
+              {% elif s.status == 'blocked' %}<i class="fas fa-lock text-[0.6rem]"></i>
+              {% else %}{{ s.order }}{% endif %}
+            </span>
+            {% if not forloop.last %}<span class="w-px flex-1 my-1 {% if s.status == 'completed' %}bg-gov-green-200{% else %}bg-gov-gray-200{% endif %}"></span>{% endif %}
+          </div>
+          <div class="pb-5 flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="font-semibold text-gov-gray-800 leading-tight">{{ s.title }}</p>
+              {% if s.status == 'completed' %}<span class="text-[0.7rem] font-medium px-2 py-0.5 rounded-full bg-gov-green-50 text-gov-green-800 border border-gov-green-100"><i class="fas fa-circle-check me-1"></i>مكتمل</span>
+              {% elif s.status == 'current' %}<span class="text-[0.7rem] font-medium px-2 py-0.5 rounded-full bg-gov-green-800 text-white"><i class="fas fa-location-arrow me-1"></i>الخطوة الحالية</span>
+              {% elif s.status == 'blocked' %}<span class="text-[0.7rem] font-medium px-2 py-0.5 rounded-full border" style="background:#f7f1e3;border-color:#e6d2a8;color:#8a6a1f"><i class="fas fa-lock me-1"></i>بانتظار خطوة سابقة</span>
+              {% else %}<span class="text-[0.7rem] font-medium px-2 py-0.5 rounded-full bg-gov-gray-100 text-gov-gray-500">لم يبدأ</span>{% endif %}
+            </div>
+            <p class="text-xs text-gov-gray-500 mt-1 leading-relaxed">{{ s.description }}</p>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
     </div>
+
   </div>
 </div>
 {% endblock %}

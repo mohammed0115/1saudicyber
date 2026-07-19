@@ -118,6 +118,17 @@ def engagement_status_ar(value):
     return _ENGAGEMENT_STATUS_AR.get(key, value)
 
 
+_ENGAGEMENT_SCOPE_AR = {
+    'reports_only': 'التقارير فقط', 'evidence_review': 'مراجعة الأدلة', 'full_review': 'مراجعة كاملة',
+}
+
+
+@register.filter
+def engagement_scope_ar(value):
+    """Auditor-assignment scope (code or English display) -> Arabic label."""
+    return _ENGAGEMENT_SCOPE_AR.get(str(value or '').strip().lower().replace(' ', '_'), value)
+
+
 # billing.access.FEATURE_FLAG short codes -> Arabic (plan feature labels). Display only.
 _FEATURE_CODE_AR = {
     'evidence_upload': 'رفع الأدلة',
@@ -125,7 +136,7 @@ _FEATURE_CODE_AR = {
     'risk_engine': 'محرك المخاطر',
     'commercial_reports': 'التقارير التجارية',
     'pdf_export': 'تصدير PDF',
-    'auditor_review': 'مراجعة المدقق',
+    'auditor_review': 'طلب مراجعة مدقق ذاتيًا',
 }
 
 
@@ -134,6 +145,24 @@ def feature_code_ar(value):
     """Plan feature code (e.g. 'evidence_upload') -> Arabic label, keeping unknown as-is."""
     key = str(value or '').strip().lower()
     return _FEATURE_CODE_AR.get(key, value)
+
+
+# F-AUDIT A1: normalized auditor-verdict status -> Arabic (for the cross-silo disagreement
+# panel). Display only; mirrors the shared verdict vocabulary in compliance.verdict_resolver.
+_VERDICT_NORM_AR = {
+    'compliant': 'مطابق',
+    'partially_compliant': 'مطابق جزئيًا',
+    'non_compliant': 'غير مطابق',
+    'not_applicable': 'لا ينطبق',
+    'needs_more_evidence': 'يتطلب أدلة إضافية',
+    'not_reviewed': 'لم يُراجَع',
+}
+
+
+@register.filter
+def verdict_norm_ar(value):
+    """Normalized verdict status -> Arabic label, keeping unknown/empty as-is."""
+    return _VERDICT_NORM_AR.get(str(value or '').strip().lower(), value)
 
 
 # billing.Payment.PROVIDER_CHOICES -> Arabic ('Moyasar' is a brand, kept as-is).

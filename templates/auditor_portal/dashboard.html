@@ -9,6 +9,23 @@
     <p class="text-gov-gray-500 text-xs mt-1">هذه مراجعة داخلية/استشارية داخل المنصة ولا تمثل شهادة امتثال رسمية من NCA أو Aramco أو SABIC.</p>
 </div>
 
+{% if attention %}
+{# Requires your attention — cross-company action summary with a link to the full queue. #}
+<div class="bg-gov-green-800 text-white rounded-2xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+  <div>
+    <p class="font-bold flex items-center gap-2"><i class="fas fa-bell"></i> يتطلب انتباهك</p>
+    <p class="text-gov-green-100 text-sm mt-1">
+      <span class="font-semibold text-white">{{ attention.totals.unreviewed }}</span> ضابط بانتظار المراجعة ·
+      <span class="font-semibold text-white">{{ attention.totals.rfi_responses }}</span> ردّ RFI ·
+      <span class="font-semibold text-white">{{ attention.totals.open_rfi }}</span> RFI مفتوح
+    </p>
+  </div>
+  <a href="{% url 'auditor_portal:review_queue' %}" class="shrink-0 bg-white text-gov-green-800 font-semibold px-5 py-2.5 rounded-xl hover:bg-gov-green-50 transition inline-flex items-center gap-2">
+    <i class="fas fa-list-check"></i> فتح طابور المراجعة
+  </a>
+</div>
+{% endif %}
+
 <!-- Stats -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
@@ -35,8 +52,8 @@
     </div>
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <div class="flex items-center">
-            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-                <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+            <div class="w-12 h-12 bg-gov-green-100 rounded-lg flex items-center justify-center shrink-0">
+                <i class="fas fa-file-alt text-gov-green-600 text-xl"></i>
             </div>
             <div class="mr-4">
                 <p class="text-sm text-gov-gray-500">إجمالي المسند</p>
@@ -57,7 +74,6 @@
             <thead class="bg-gov-gray-50 text-gov-gray-500">
                 <tr>
                     <th class="px-6 py-3 text-right font-medium">الشركة</th>
-                    <th class="px-6 py-3 text-right font-medium">النطاق</th>
                     <th class="px-6 py-3 text-right font-medium">الحالة</th>
                     <th class="px-6 py-3 text-right font-medium">تاريخ الإنشاء</th>
                     <th class="px-6 py-3 text-right font-medium">الإجراء</th>
@@ -70,19 +86,18 @@
                         <div class="font-medium text-gov-green-800">{{ assessment.company.name_ar|default:assessment.company.name }}</div>
                         <div class="text-xs text-gov-gray-500">السجل التجاري: <span dir="ltr">{{ assessment.company.cr_number }}</span></div>
                     </td>
-                    <td class="px-6 py-4 text-gov-gray-600">جميع الأطر ضمن النطاق المعتمد</td>
                     <td class="px-6 py-4">
                         <span class="px-3 py-1 rounded-full text-xs font-medium
                             {% if assessment.status == 'completed' %}bg-green-100 text-green-800
                             {% elif assessment.status == 'auditor_review' %}bg-yellow-100 text-yellow-800
-                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {% else %}bg-gov-gray-100 text-gov-gray-800{% endif %}">
                             {% if assessment.status == 'completed' %}مكتملة{% elif assessment.status == 'auditor_review' %}بانتظار مراجعة المدقق{% elif assessment.status == 'in_progress' %}قيد المراجعة{% else %}قيد الإعداد{% endif %}
                         </span>
                     </td>
                     <td class="px-6 py-4 text-gov-gray-500">{{ assessment.created_at|date:"Y-m-d" }}</td>
                     <td class="px-6 py-4">
                         <a href="{% url 'auditor_portal:review_assessment' assessment.id %}" class="text-gov-green-700 hover:text-gov-green-900 font-medium whitespace-nowrap">
-                            <i class="fas fa-eye ml-1"></i> مراجعة
+                            <i class="fas fa-eye me-1"></i> مراجعة
                         </a>
                     </td>
                 </tr>

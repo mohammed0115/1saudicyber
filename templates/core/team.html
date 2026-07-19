@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load crm_display %}
+{% block title %}فريق العمل - 1SaudiCyber{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gov-green-800">فريق العمل</h1>
+    <p class="text-gov-gray-600 text-sm mt-1">أعضاء منشأتك وأدوارهم، ودعوة أعضاء جدد.</p>
+  </div>
+
+  {% if can_invite %}
+  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-5">
+    <h2 class="font-semibold text-gov-green-800 mb-3">دعوة عضو جديد</h2>
+    <form method="post" class="flex flex-wrap items-end gap-3">
+      {% csrf_token %}
+      <label class="flex-1 min-w-[220px] text-sm"><span class="block text-gov-gray-500 mb-1">البريد الإلكتروني</span>
+        <input type="email" name="email" required dir="ltr" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gov-green-500"></label>
+      <label class="min-w-[170px] text-sm"><span class="block text-gov-gray-500 mb-1">الدور</span>
+        <select name="role" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+          {% for r in invitable_roles %}<option value="{{ r }}">{{ r|role_ar }}</option>{% endfor %}
+        </select></label>
+      <button type="submit" class="bg-gov-green-800 text-white px-5 py-2 rounded-lg font-medium hover:bg-gov-green-900 text-sm">إرسال الدعوة</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-5">
+    <h2 class="font-semibold text-gov-green-800 mb-3">الأعضاء ({{ members|length }})</h2>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-gov-gray-500"><tr><th class="text-start py-2">العضو</th><th class="text-start py-2">البريد</th><th class="text-start py-2">الدور</th></tr></thead>
+      <tbody class="divide-y divide-gov-gray-100">
+        {% for m in members %}
+        <tr><td class="py-2">{{ m.get_full_name|default:"—" }}</td><td class="py-2" dir="ltr">{{ m.email }}</td><td class="py-2">{{ m.role|role_ar }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+
+  {% if invites %}
+  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-5">
+    <h2 class="font-semibold text-gov-green-800 mb-3">دعوات معلّقة ({{ invites|length }})</h2>
+    <ul class="divide-y divide-gov-gray-100 text-sm">
+      {% for i in invites %}
+      <li class="py-2 flex items-center justify-between gap-2 flex-wrap">
+        <span dir="ltr">{{ i.email }}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">{{ i.role|role_ar }} · بانتظار القبول</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

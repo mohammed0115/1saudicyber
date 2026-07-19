@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}قبول الدعوة - 1SaudiCyber{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-6 space-y-4">
+    <div>
+      <h1 class="text-xl font-bold text-gov-green-800">الانضمام إلى فريق «{{ invite.company.name }}»</h1>
+      <p class="text-gov-gray-600 text-sm mt-1">البريد: <span dir="ltr">{{ invite.email }}</span> · الدور: {{ invite.get_role_display }}</p>
+    </div>
+    {% if error %}<div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-3 text-sm">{{ error }}</div>{% endif %}
+    <form method="post" class="space-y-3">
+      {% csrf_token %}
+      <div class="flex gap-2">
+        <label class="flex-1 text-sm"><span class="block text-gov-gray-500 mb-1">الاسم الأول</span>
+          <input type="text" name="first_name" required class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gov-green-500"></label>
+        <label class="flex-1 text-sm"><span class="block text-gov-gray-500 mb-1">اسم العائلة</span>
+          <input type="text" name="last_name" required class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gov-green-500"></label>
+      </div>
+      <label class="block text-sm"><span class="block text-gov-gray-500 mb-1">كلمة المرور (12 حرفًا على الأقل)</span>
+        <input type="password" name="password" required minlength="12" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gov-green-500"></label>
+      <button type="submit" class="w-full bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-gov-green-900 text-sm">الانضمام وتفعيل الحساب</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

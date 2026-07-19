@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}الإشعارات - 1SaudiCyber{% endblock %}
+{% block content %}
+<div dir="rtl" class="bg-gov-gray-50" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 lg:py-10 space-y-6">
+
+    <div class="flex items-start gap-4">
+      <div class="hidden sm:grid place-items-center w-14 h-14 rounded-2xl bg-gov-green-800 text-white shrink-0 shadow-sm">
+        <i class="fas fa-bell text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gov-green-700 font-semibold text-sm">مركز الإشعارات</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gov-gray-800 mt-0.5">الإشعارات</h1>
+        <p class="text-gov-gray-500 text-sm mt-1.5">آخر التحديثات على ملفك — الإسناد، الأدلة، طلبات المعلومات، الأحكام، والتقارير.</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm overflow-hidden">
+      <div class="divide-y divide-gov-gray-100">
+        {% for n in notes %}
+        <form method="post" action="{% url 'core:notification_open' n.id %}">
+          {% csrf_token %}
+          <button type="submit" class="w-full text-right flex items-start gap-3 px-5 sm:px-6 py-4 hover:bg-gov-gray-50 transition {% if not n.is_read %}bg-gov-green-50/40{% endif %}">
+            <span class="grid place-items-center w-9 h-9 rounded-xl shrink-0 mt-0.5
+              {% if n.kind == 'rfi' %}bg-amber-50 text-amber-700
+              {% elif n.kind == 'verdict' %}bg-green-50 text-green-700
+              {% elif n.kind == 'assignment' %}bg-sky-50 text-sky-700
+              {% elif n.kind == 'finding' %}bg-red-50 text-red-700
+              {% elif n.kind == 'payment' %}bg-gov-green-50 text-gov-green-700
+              {% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">
+              <i class="fas {% if n.kind == 'rfi' %}fa-file-circle-question{% elif n.kind == 'verdict' %}fa-gavel{% elif n.kind == 'assignment' %}fa-user-check{% elif n.kind == 'finding' %}fa-triangle-exclamation{% elif n.kind == 'payment' %}fa-credit-card{% elif n.kind == 'report' %}fa-file-lines{% elif n.kind == 'message' %}fa-comment{% else %}fa-circle-info{% endif %} text-sm"></i>
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm font-semibold text-gov-gray-800">{{ n.title }}{% if not n.is_read %}<span class="inline-block w-2 h-2 rounded-full bg-gov-green-600 me-1 align-middle"></span>{% endif %}</span>
+              {% if n.body %}<span class="block text-xs text-gov-gray-500 mt-0.5 leading-relaxed">{{ n.body }}</span>{% endif %}
+              <span class="block text-[0.7rem] text-gov-gray-400 mt-1">{{ n.created_at|date:"Y-m-d H:i" }}</span>
+            </span>
+          </button>
+        </form>
+        {% empty %}
+        <div class="px-6 py-14 text-center">
+          <i class="fas fa-bell-slash text-gov-gray-300 text-4xl mb-3"></i>
+          <p class="text-gov-gray-500">لا إشعارات بعد. ستظهر التحديثات هنا فور حدوثها.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -394,7 +394,7 @@ class GuidedAuditorWorkflowTests(TestCase):
     def test_register_page_shows_journey_roadmap(self):
         resp = self.client.get(reverse('auditors:register'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'مسار المراجعة الموجّه')
+        self.assertContains(resp, 'رحلتك كمدقّق')
 
 
 class PlatformAdminAuditorApprovalTests(TestCase):
@@ -2122,7 +2122,8 @@ class PlatformAdminPolishCTests(TestCase):
     def test_date_hint_present(self):
         c = self._company()
         self.client.force_login(self._staff())
-        self.assertContains(self.client.get(self._detail(c)), 'صيغة التاريخ: YYYY-MM-DD')
+        # F7 clarified the hint (stored value vs browser-rendered display).
+        self.assertContains(self.client.get(self._detail(c)), 'القيمة المخزّنة بصيغة YYYY-MM-DD')
 
     # permissions unchanged
     def test_company_user_denied(self):
@@ -2255,7 +2256,7 @@ class AuditorPortalJourneyPhaseATests(TestCase):
         resp = self.client.get(reverse('auditors:register'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'تسجيل جهة تدقيق / مراجع امتثال')
-        self.assertContains(resp, 'الحساب لا يصبح فعالاً إلا بعد مراجعة إدارة المنصة')
+        self.assertContains(resp, 'يُفعَّل الحساب بعد مراجعة إدارة المنصة')
         body = resp.content.decode()
         for bad in ('شهادة رسمية', 'معتمد رسمياً من NCA', 'اعتماد رسمي من أرامكو'):
             self.assertNotIn(bad, body)
@@ -2267,7 +2268,7 @@ class AuditorPortalJourneyPhaseATests(TestCase):
         self.client.force_login(u)
         resp = self.client.get(reverse('auditors:dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'هذه مراجعة داخلية/استشارية داخل المنصة ولا تمثل شهادة امتثال رسمية')
+        self.assertContains(resp, 'مراجعة داخلية/استشارية داخل المنصة — لا تمثّل شهادة امتثال رسمية')
         self.assertContains(resp, 'مراجع جاهزية NCA ECC')
 
     def test_accepted_company_shows_review_workspace_link(self):
@@ -2316,3 +2317,812 @@ class AuditorPortalJourneyPhaseATests(TestCase):
         self.assertIn('لا تمثل شهادة امتثال رسمية', body)
         for en in ('Auditor Portal', 'Assigned Assessments', 'Pending Review', 'No assessments assigned'):
             self.assertNotIn(en, body)
+
+
+class F4AuditorReviewStateTests(TestCase):
+    """UAT-...-F4 — the admin journey's steps 10/11/12 are three DISTINCT auditor-review
+    milestones derived from real persisted workflow data (not one shared boolean)."""
+
+    def _setup(self):
+        from compliance.models import Assessment, CompanyControl
+        from compliance.tests import _company_with_control
+        c, ctl = _company_with_control()
+        cc = CompanyControl.objects.get_or_create(company=c, control=ctl)[0]
+        u, _ap = _auditor(status='active')
+        a = Assessment.objects.create(company=c, assigned_auditor=u,
+                                      assessment_type='formal_audit', status='auditor_review')
+        return c, ctl, cc, u, a
+
+    def _state(self, c):
+        from auditors.crm_services import auditor_review_state
+        return auditor_review_state(c)
+
+    def _step_done(self, c, key):
+        from auditors.crm_services import admin_company_journey
+        j = admin_company_journey(c)
+        return next(s for s in j['steps'] if s['key'] == key)['status'] == 'completed'
+
+    # 1) no review activity -> all three incomplete
+    def test_no_activity_all_incomplete(self):
+        c, ctl, cc, u, a = self._setup()
+        st = self._state(c)
+        self.assertFalse(st['review_started'])
+        self.assertFalse(st['has_final_verdict'])
+        self.assertFalse(st['has_final_report'])
+        self.assertFalse(self._step_done(c, 'evidence_review'))
+        self.assertFalse(self._step_done(c, 'internal_verdict'))
+        self.assertFalse(self._step_done(c, 'readiness_report'))
+
+    # 6) assignment/request alone is NOT review
+    def test_assignment_alone_is_not_review(self):
+        from compliance.tests import _company_with_assessments
+        from auditors import services
+        c, _fv, _s = _company_with_assessments()
+        _u, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=None)   # requested, not accepted/reviewed
+        st = self._state(c)
+        self.assertFalse(st['review_started'])
+        self.assertFalse(self._step_done(c, 'evidence_review'))
+
+    # 2) meaningful review (control verdict) but no final verdict/report
+    def test_control_verdict_completes_step10_only(self):
+        from auditor_portal.models import AuditorControlVerdict
+        c, ctl, cc, u, a = self._setup()
+        AuditorControlVerdict.objects.create(assessment=a, company_control=cc,
+                                             auditor=u, status='compliant')
+        st = self._state(c)
+        self.assertTrue(st['review_started'])
+        self.assertFalse(st['has_final_verdict'])
+        self.assertFalse(st['has_final_report'])
+        self.assertTrue(self._step_done(c, 'evidence_review'))
+        self.assertFalse(self._step_done(c, 'internal_verdict'))
+        self.assertFalse(self._step_done(c, 'readiness_report'))
+
+    # 2b) an auditor NOTE is meaningful review but not a verdict/report
+    def test_note_completes_step10_only(self):
+        from auditor_portal.models import AuditorNote
+        c, ctl, cc, u, a = self._setup()
+        AuditorNote.objects.create(assessment=a, company_control=cc, auditor=u, note='observation')
+        st = self._state(c)
+        self.assertTrue(st['review_started'])
+        self.assertFalse(st['has_final_verdict'])
+        self.assertFalse(st['has_final_report'])
+
+    # 3/5) legacy AuditorFinalVerdict -> step10 + step11, NOT step12 (backward compatible)
+    def test_final_verdict_completes_step10_and_11_not_12(self):
+        from compliance.models import AuditorFinalVerdict
+        from compliance.tests import _company_with_submission
+        c, item, sub = _company_with_submission()
+        u, _ap = _auditor(status='active')
+        AuditorFinalVerdict.objects.create(submission=sub, reviewer=u, status='final_c',
+                                           rationale='reviewed')
+        st = self._state(c)
+        self.assertTrue(st['review_started'])
+        self.assertTrue(st['has_final_verdict'])
+        self.assertFalse(st['has_final_report'])
+        self.assertTrue(self._step_done(c, 'evidence_review'))
+        self.assertTrue(self._step_done(c, 'internal_verdict'))
+        self.assertFalse(self._step_done(c, 'readiness_report'))
+
+    # 4/7) a submitted AuditReport -> all three complete (no draft AuditReport exists)
+    def test_report_completes_all_three(self):
+        from auditor_portal.models import AuditReport
+        c, ctl, cc, u, a = self._setup()
+        AuditReport.objects.create(assessment=a, auditor=u, verdict='pass',
+                                   executive_summary='internal review')
+        st = self._state(c)
+        self.assertTrue(st['review_started'])
+        self.assertTrue(st['has_final_verdict'])
+        self.assertTrue(st['has_final_report'])
+        self.assertTrue(self._step_done(c, 'evidence_review'))
+        self.assertTrue(self._step_done(c, 'internal_verdict'))
+        self.assertTrue(self._step_done(c, 'readiness_report'))
+
+    # monotonicity: report => verdict => started
+    def test_milestones_are_monotonic(self):
+        from auditor_portal.models import AuditReport
+        c, ctl, cc, u, a = self._setup()
+        AuditReport.objects.create(assessment=a, auditor=u, verdict='fail', executive_summary='x')
+        st = self._state(c)
+        self.assertTrue(st['has_final_report'] and st['has_final_verdict'] and st['review_started'])
+
+    # 8) 8-step and 12-step agree on the auditor-review milestone
+    def test_8step_and_12step_agree_on_review(self):
+        from auditor_portal.models import AuditorControlVerdict
+        from auditors.crm_services import company_journey_summary
+        c, ctl, cc, u, a = self._setup()
+        AuditorControlVerdict.objects.create(assessment=a, company_control=cc,
+                                             auditor=u, status='compliant')
+        eight = company_journey_summary(c)
+        step7 = next(s for s in eight['steps'] if s['key'] == 'auditor_review')
+        self.assertEqual(step7['status'], 'completed')          # 8-step review done
+        self.assertTrue(self._step_done(c, 'evidence_review'))  # 12-step review done
+
+
+class F2ReadinessAvailabilityTests(TestCase):
+    """UAT-...-F2 — distinguish 'readiness not calculated' from a genuine calculated 0%.
+    The discriminator is `readiness_available` (existence of ControlGapAssessment rows),
+    NEVER `readiness_percent == 0`."""
+
+    def _staff(self, email='f2_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _gap_company(self, cr='9797970001'):
+        """A company with a generated control plan (so the readiness card renders)."""
+        from compliance.models import (Framework, FrameworkVersion, CompanyFrameworkScope,
+                                        Control, Domain, ControlApplicabilityResult)
+        c = Company.objects.create(name='F2 Co', cr_number=cr, sector='technology',
+                                   size='small', contact_email='f2@co.example')
+        fw = Framework.objects.create(code='NCAF2%s' % cr[-2:], name='NCA')
+        fv = FrameworkVersion.objects.create(code='NCA-ECC-2-2024', framework=fw, version_label='ECC')
+        dom = Domain.objects.create(framework=fw, code='D', name='D')
+        sc = CompanyFrameworkScope.objects.create(company=c, framework_version=fv, status='approved')
+        ctrl = Control.objects.create(framework=fw, framework_version=fv, domain=dom,
+                                      control_id='E-1', title='t', description='d')
+        ControlApplicabilityResult.objects.create(company=c, framework_scope=sc, control=ctrl,
+                                                   decision='applicable')
+        return c, ctrl
+
+    # A) uncalculated readiness is NOT available (and not a calculated 0%)
+    def test_uncalculated_not_available(self):
+        from auditors.crm_services import company_gap_summary, company_report_summary
+        c, ctrl = self._gap_company('9797970011')
+        g = company_gap_summary(c); r = company_report_summary(c)
+        self.assertFalse(g['readiness_available'])
+        self.assertFalse(r['readiness_available'])
+        self.assertEqual(g['readiness_percent'], 0)   # numeric value preserved for compat
+        self.assertIsNone(g['calculated_at'])
+
+    # B) a real calculated 0% IS available (rows exist, all missing)
+    def test_calculated_zero_is_available(self):
+        from compliance.models import ControlGapAssessment
+        from auditors.crm_services import company_gap_summary
+        c, ctrl = self._gap_company('9797970012')
+        ControlGapAssessment.objects.create(company=c, control=ctrl, status='missing')
+        g = company_gap_summary(c)
+        self.assertTrue(g['readiness_available'])
+        self.assertEqual(g['readiness_percent'], 0)   # genuine calculated zero
+
+    # C) a real calculated non-zero readiness
+    def test_calculated_nonzero(self):
+        from compliance.models import ControlGapAssessment
+        from auditors.crm_services import company_gap_summary
+        c, ctrl = self._gap_company('9797970013')
+        ControlGapAssessment.objects.create(company=c, control=ctrl, status='compliant')
+        g = company_gap_summary(c)
+        self.assertTrue(g['readiness_available'])
+        self.assertGreater(g['readiness_percent'], 0)
+
+    # report_summary carries the same availability signal
+    def test_report_summary_availability(self):
+        from compliance.models import ControlGapAssessment
+        from auditors.crm_services import company_report_summary
+        c, ctrl = self._gap_company('9797970014')
+        self.assertFalse(company_report_summary(c)['readiness_available'])
+        ControlGapAssessment.objects.create(company=c, control=ctrl, status='compliant')
+        self.assertTrue(company_report_summary(c)['readiness_available'])
+
+    # PROOF: percent==0 in BOTH uncalculated and calculated-0, yet availability differs
+    def test_discriminator_is_not_percent_zero(self):
+        from compliance.models import ControlGapAssessment
+        from auditors.crm_services import company_gap_summary
+        c, ctrl = self._gap_company('9797970015')
+        before = company_gap_summary(c)
+        ControlGapAssessment.objects.create(company=c, control=ctrl, status='missing')  # calc = 0
+        after = company_gap_summary(c)
+        self.assertEqual(before['readiness_percent'], 0)
+        self.assertEqual(after['readiness_percent'], 0)          # identical percent
+        self.assertFalse(before['readiness_available'])          # but availability flips
+        self.assertTrue(after['readiness_available'])
+
+    # D) template: uncalculated shows 'لم تُحسب بعد'; calculated shows a percentage
+    def test_template_shows_not_calculated_then_percent(self):
+        from compliance.models import ControlGapAssessment
+        c, ctrl = self._gap_company('9797970016')
+        self.client.force_login(self._staff())
+        url = reverse('platform_admin:company_detail', args=[c.id])
+        body = self.client.get(url).content.decode()
+        self.assertIn('لم تُحسب بعد', body)                      # no gap rows yet
+        ControlGapAssessment.objects.create(company=c, control=ctrl, status='compliant')
+        body2 = self.client.get(url).content.decode()
+        self.assertIn('100%', body2)                             # calculated readiness shown
+
+
+class F5NextActionRoutingTests(TestCase):
+    """UAT-...-F5 — the "next action" CTA is actor-aware: auditor-owned steps route to
+    the admin-accessible auditor-monitoring section (#auditor), NEVER to #evidence
+    counters or an auditor-only route, and the wording shows who owns the step."""
+
+    def _staff(self, email='f5_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _company(self, cr='9898980001'):
+        return Company.objects.create(name='F5 Co', cr_number=cr, sector='technology',
+                                      size='small', contact_email='f5@co.example')
+
+    def _progressed(self):
+        """Company progressed through steps 1-8 so auditor_selection/acceptance is next."""
+        from compliance.tests import _company_with_assessments, _journey_user
+        from compliance.models import CompanyIntakeProfile, EvidenceChecklistItem, EvidenceSubmission
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from billing.subscription_access import activate_company_subscription
+        c, fv, scope = _company_with_assessments()
+        u = _journey_user(c)                               # email_verified -> step 2 done
+        CompanyIntakeProfile.objects.get_or_create(company=c, defaults=dict(uses_cloud_services=True))
+        item = EvidenceChecklistItem.objects.filter(company=c).first()
+        EvidenceSubmission.objects.create(
+            company=c, checklist_item=item, uploaded_file=SimpleUploadedFile('e.pdf', b'%PDF-1.4'),
+            original_filename='e.pdf', file_type='pdf', file_size=8, file_hash='h', version=1,
+            status='pending_review', uploaded_by=u)                       # step 6 done
+        activate_company_subscription(c, 'Plan', days=30)                 # step 7 done
+        return c, u
+
+    def _next(self, c):
+        from auditors.crm_services import admin_company_journey
+        return admin_company_journey(c)['next_action']
+
+    # ---- routing-map invariants (the F5 rules, deterministic) ----
+    def test_routing_map_invariants(self):
+        from auditors.crm_services import _ADMIN_STEP_NAV
+        # auditor-owned steps route to the on-page auditor monitoring section
+        for key in ('auditor_acceptance', 'evidence_review', 'internal_verdict'):
+            self.assertEqual(_ADMIN_STEP_NAV[key][0], '#auditor', key)
+        # step 10 must NOT route to the evidence counters
+        self.assertNotEqual(_ADMIN_STEP_NAV['evidence_review'][0], '#evidence')
+        # report step routes to the readiness/report-status section with monitoring wording
+        self.assertEqual(_ADMIN_STEP_NAV['readiness_report'][0], '#evidence')
+        self.assertIn('متابعة', _ADMIN_STEP_NAV['readiness_report'][1])
+        # EVERY destination is an on-page admin anchor (never an auditor-only/company route)
+        for key, (href, _label) in _ADMIN_STEP_NAV.items():
+            self.assertTrue(href.startswith('#'), '%s -> %s' % (key, href))
+
+    # ---- admin-owned step: genuinely actionable ----
+    def test_admin_owned_email_verification_is_actionable(self):
+        c = self._company('9898980010')                    # bare -> email_verification is next
+        na = self._next(c)
+        self.assertEqual(na['key'], 'email_verification')
+        self.assertEqual(na['actor'], 'admin')
+        self.assertTrue(na['is_actionable_by_admin'])
+        self.assertTrue(na['anchor'].startswith('#'))
+
+    # ---- step 9 auditor acceptance pending ----
+    def test_auditor_acceptance_next_is_auditor_owned(self):
+        from auditors import services
+        c, u = self._progressed()
+        _au, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=None)   # requested, not accepted
+        na = self._next(c)
+        self.assertEqual(na['key'], 'auditor_acceptance')
+        self.assertEqual(na['actor'], 'auditor')
+        self.assertFalse(na['is_actionable_by_admin'])         # admin cannot accept
+        self.assertEqual(na['anchor'], '#auditor')
+
+    # ---- step 10 evidence review ----
+    def test_evidence_review_next_routes_to_auditor_not_evidence(self):
+        from auditors import services
+        c, u = self._progressed()
+        au, ap = _auditor(status='active')
+        a, _ = services.create_assignment(c, ap, requested_by=None)
+        services.respond_to_assignment(a, 'accept', responder=au)   # accepted -> step 9 done
+        na = self._next(c)
+        self.assertEqual(na['key'], 'evidence_review')
+        self.assertNotEqual(na['anchor'], '#evidence')
+        self.assertEqual(na['anchor'], '#auditor')
+        self.assertFalse(na['is_actionable_by_admin'])
+        self.assertEqual(na['actor_label'], 'المدقق')
+
+    # ---- step 11 internal verdict ----
+    def test_internal_verdict_next_is_auditor_owned(self):
+        from auditors import services
+        from compliance.models import Assessment
+        from auditor_portal.models import AuditorControlVerdict, AuditorNote
+        c, u = self._progressed()
+        au, ap = _auditor(status='active')
+        a, _ = services.create_assignment(c, ap, requested_by=None)
+        services.respond_to_assignment(a, 'accept', responder=au)
+        # a control verdict makes review_started True (step 10 done) but no final verdict yet
+        ass = Assessment.objects.create(company=c, assigned_auditor=au,
+                                        assessment_type='formal_audit', status='auditor_review')
+        from compliance.models import CompanyControl, ControlAssessment
+        ctrl = ControlAssessment.objects.filter(company=c).first().control
+        cc = CompanyControl.objects.get_or_create(company=c, control=ctrl)[0]
+        AuditorControlVerdict.objects.create(assessment=ass, company_control=cc,
+                                             auditor=au, status='compliant')
+        na = self._next(c)
+        self.assertEqual(na['key'], 'internal_verdict')
+        self.assertEqual(na['actor'], 'auditor')
+        self.assertEqual(na['anchor'], '#auditor')
+
+    # ---- step 12 readiness report ----
+    def test_readiness_report_next_monitoring_no_cert(self):
+        from auditors import services
+        from compliance.tests import _company_with_submission
+        from compliance.models import AuditorFinalVerdict
+        c, u = self._progressed()
+        au, ap = _auditor(status='active')
+        a, _ = services.create_assignment(c, ap, requested_by=None)
+        services.respond_to_assignment(a, 'accept', responder=au)
+        # a final verdict (step 11 done) but no report -> readiness_report is next
+        from compliance.models import EvidenceSubmission
+        sub = EvidenceSubmission.objects.filter(company=c).first()
+        AuditorFinalVerdict.objects.create(submission=sub, reviewer=au, status='final_c',
+                                           rationale='reviewed')
+        na = self._next(c)
+        self.assertEqual(na['key'], 'readiness_report')
+        self.assertFalse(na['is_actionable_by_admin'])
+        self.assertTrue(na['anchor'].startswith('#'))
+        for bad in ('شهادة', 'Certified', 'official certificate'):
+            self.assertNotIn(bad, na['button_label'] + na['reason'])
+
+    # ---- company context + CTA wording in the rendered page ----
+    def test_rendered_cta_preserves_company_and_ownership(self):
+        from auditors import services
+        c, u = self._progressed()
+        au, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=None)
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn(c.name, body)                                    # company context on page
+        self.assertIn('بانتظار إجراء من المدقق', body)                 # ownership wording
+        self.assertIn('href="#auditor"', body)                         # CTA routes to monitor section
+
+    # ---- security: admin cannot open a specific auditor's scoped workspace ----
+    def test_admin_cannot_open_specific_auditor_workspace(self):
+        # review_assessment is scoped to assigned_auditor=request.user; a platform admin
+        # (not the assigned auditor) gets 404 -> no impersonation / cross-actor data access.
+        # (This is why the F5 CTA routes to the on-page #auditor section, not the portal.)
+        from auditors import services
+        from compliance.models import Assessment
+        c, u = self._progressed()
+        au, ap = _auditor(status='active')
+        a, _ = services.create_assignment(c, ap, requested_by=None)
+        services.respond_to_assignment(a, 'accept', responder=au)
+        ass = Assessment.objects.create(company=c, assigned_auditor=au,
+                                        assessment_type='formal_audit', status='auditor_review')
+        self.client.force_login(self._staff())
+        self.assertEqual(self.client.get(
+            reverse('auditor_portal:review_assessment', args=[ass.id])).status_code, 404)
+
+
+class F1FrameworkEntitlementTests(TestCase):
+    """UAT-...-F1 — truthful framework usage vs plan limit. max_frameworks is display-only
+    (NOT in FEATURE_LIMIT), so it is not enforced; the helper reports the honest state and
+    never mutates data. The enforced-branch logic is exercised via a patched FEATURE_LIMIT."""
+
+    def _staff(self, email='f1_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _company(self, cr):
+        return Company.objects.create(name='F1 Co', cr_number=cr, sector='technology',
+                                      size='small', contact_email='f1@co.example')
+
+    def _approved_scopes(self, c, n):
+        from compliance.models import Framework, FrameworkVersion, CompanyFrameworkScope
+        fw = Framework.objects.create(code='F1FW%s' % c.id, name='NCA')
+        for i in range(n):
+            fv = FrameworkVersion.objects.create(code='FVK-%s-%d' % (c.id, i), framework=fw,
+                                                 version_label='v%d' % i)
+            CompanyFrameworkScope.objects.create(company=c, framework_version=fv, status='approved')
+
+    def _plan(self, c, code='basic'):
+        from billing import subscription_services as bsvc
+        bsvc.start_trial(c, bsvc.get_plan(code))
+
+    def _ent(self, c):
+        from auditors.crm_services import company_framework_entitlement
+        return company_framework_entitlement(c)
+
+    # 1) approved count is company-scoped
+    def test_approved_count_is_company_scoped(self):
+        a = self._company('9191F10001'); self._approved_scopes(a, 3)
+        b = self._company('9191F10002'); self._approved_scopes(b, 1)
+        self.assertEqual(self._ent(a)['approved_count'], 3)
+        self.assertEqual(self._ent(b)['approved_count'], 1)
+
+    # 5) non-approved scopes do NOT consume approved capacity
+    def test_non_approved_scopes_not_counted(self):
+        from compliance.models import Framework, FrameworkVersion, CompanyFrameworkScope
+        c = self._company('9191F10003')
+        fw = Framework.objects.create(code='F1FWx', name='NCA')
+        for st in ('proposed', 'rejected', 'needs_review'):
+            fv = FrameworkVersion.objects.create(code='FVX-%s' % st, framework=fw, version_label=st)
+            CompanyFrameworkScope.objects.create(company=c, framework_version=fv, status=st)
+        self.assertEqual(self._ent(c)['approved_count'], 0)
+
+    # production truth: NOT enforced, so additions are never blocked by this limit
+    def test_max_frameworks_not_enforced_in_production(self):
+        c = self._company('9191F10004'); self._plan(c, 'basic')     # basic max_frameworks=1
+        self._approved_scopes(c, 7)                                 # 7 approved on a limit-1 plan
+        ent = self._ent(c)
+        self.assertFalse(ent['enforced'])
+        self.assertEqual(ent['approved_count'], 7)
+        self.assertEqual(ent['plan_limit'], 1)
+        self.assertTrue(ent['can_add_framework'])                  # not blocked (display-only)
+        self.assertFalse(ent['over_limit'])                        # no false "over limit" claim
+
+    # mutation path does not enforce: approving beyond the plan limit still works
+    def test_approval_path_does_not_enforce_limit(self):
+        from compliance.models import Framework, FrameworkVersion, CompanyFrameworkScope
+        from compliance.framework_scope import approve_framework_scope
+        c = self._company('9191F10005'); self._plan(c, 'basic')
+        self._approved_scopes(c, 1)                                # already at plan limit (1)
+        fw = Framework.objects.create(code='F1FWn', name='NCA')
+        fv = FrameworkVersion.objects.create(code='FVN-1', framework=fw, version_label='n')
+        extra = CompanyFrameworkScope.objects.create(company=c, framework_version=fv, status='proposed')
+        approve_framework_scope(extra)                             # not blocked
+        extra.refresh_from_db()
+        self.assertEqual(extra.status, 'approved')
+        self.assertEqual(self._ent(c)['approved_count'], 2)        # exceeded the "limit" freely
+
+    # 2/3/4) enforced-branch logic via patched FEATURE_LIMIT (below / at / over)
+    def test_enforced_branch_below_at_over(self):
+        from unittest import mock
+        import billing.access as ba
+        c = self._company('9191F10006'); self._plan(c, 'professional')   # max_frameworks=3
+        with mock.patch.dict(ba.FEATURE_LIMIT, {'frameworks': 'max_frameworks'}):
+            self._approved_scopes(c, 1)                            # below
+            e = self._ent(c)
+            self.assertTrue(e['enforced']); self.assertTrue(e['can_add_framework'])
+            self.assertFalse(e['at_limit']); self.assertEqual(e['remaining'], 2)
+            self._approved_scopes_more(c, 2)                       # -> 3 total (at limit)
+            e = self._ent(c)
+            self.assertTrue(e['at_limit']); self.assertFalse(e['can_add_framework'])
+            self.assertFalse(e['over_limit']); self.assertEqual(e['remaining'], 0)
+            self._approved_scopes_more(c, 1)                       # -> 4 total (over limit)
+            e = self._ent(c)
+            self.assertTrue(e['over_limit']); self.assertFalse(e['can_add_framework'])
+
+    def _approved_scopes_more(self, c, n):
+        from compliance.models import Framework, FrameworkVersion, CompanyFrameworkScope
+        fw = Framework.objects.get_or_create(code='F1FWmore%s' % c.id, defaults={'name': 'NCA'})[0]
+        base = CompanyFrameworkScope.objects.filter(company=c).count()
+        for i in range(n):
+            fv = FrameworkVersion.objects.create(code='FVM-%s-%d' % (c.id, base + i), framework=fw,
+                                                 version_label='m%d' % (base + i))
+            CompanyFrameworkScope.objects.create(company=c, framework_version=fv, status='approved')
+
+    # 6/7) upgrade increases capacity; downgrade preserves existing scopes (no deletion)
+    def test_upgrade_downgrade_preserves_scopes(self):
+        from unittest import mock
+        import billing.access as ba
+        from billing import subscription_services as bsvc
+        c = self._company('9191F10007'); self._plan(c, 'professional')   # limit 3
+        self._approved_scopes(c, 3)
+        with mock.patch.dict(ba.FEATURE_LIMIT, {'frameworks': 'max_frameworks'}):
+            self.assertEqual(self._ent(c)['at_limit'], True)
+            # downgrade to basic (limit 1) -> existing 3 scopes preserved, over limit, no additions
+            sub = bsvc.get_current_subscription(c); sub.plan = bsvc.get_plan('basic'); sub.save()
+            e = self._ent(c)
+            self.assertEqual(e['approved_count'], 3)               # PRESERVED (no deletion)
+            self.assertTrue(e['over_limit']); self.assertFalse(e['can_add_framework'])
+            # upgrade to enterprise (max_frameworks=0 == unlimited) -> additions allowed again
+            sub.plan = bsvc.get_plan('enterprise'); sub.save()
+            e = self._ent(c)
+            self.assertEqual(e['approved_count'], 3)               # still preserved
+            self.assertTrue(e['can_add_framework'])                # 0 limit = not capped
+
+    # 9/10) UI: no bare "7/1"; shows approved usage + unenforced plan-limit note
+    def test_ui_is_truthful_not_ambiguous(self):
+        c = self._company('9191F10008'); self._plan(c, 'basic')
+        self._approved_scopes(c, 7)
+        # make the readiness/feature section render: needs control plan
+        from compliance.models import (CompanyFrameworkScope, Control, Domain,
+                                        ControlApplicabilityResult)
+        sc = CompanyFrameworkScope.objects.filter(company=c, status='approved').first()
+        dom = Domain.objects.create(framework=sc.framework_version.framework, code='DD', name='D')
+        ctrl = Control.objects.create(framework=sc.framework_version.framework,
+                                      framework_version=sc.framework_version, domain=dom,
+                                      control_id='E-9', title='t', description='d')
+        ControlApplicabilityResult.objects.create(company=c, framework_scope=sc, control=ctrl,
+                                                   decision='applicable')
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertNotIn('7/1', body)                              # no ambiguous bare ratio
+        self.assertIn('غير مطبق آليًا', body)                     # truthful unenforced note
+        self.assertIn('أطر معتمدة', body)
+
+
+class F3EvidenceManualReadingLabelTests(TestCase):
+    """UAT-...-F3 — the evidence 'manual_review' bucket (auto text-extraction produced no
+    usable text) is labelled unambiguously as an EXTRACTION state, not an auditor review.
+    Backend key + counts are unchanged."""
+
+    def _staff(self, email='f3_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _company(self, cr='9393F30001'):
+        return Company.objects.create(name='F3 Co', cr_number=cr, sector='technology',
+                                      size='small', contact_email='f3@co.example')
+
+    # counts unchanged: a no-text extraction still lands in manual_review
+    def test_manual_reading_bucket_counted_unchanged(self):
+        from compliance.tests import _company_with_submission
+        from compliance.models import EvidenceTextExtraction
+        from auditors.crm_services import company_evidence_summary
+        c, item, sub = _company_with_submission()
+        EvidenceTextExtraction.objects.create(submission=sub, status='no_text_extracted', char_count=0)
+        s = company_evidence_summary(c)
+        self.assertIn('manual_review', s)                 # backend key preserved
+        self.assertEqual(s['manual_review'], 1)
+        self.assertEqual(s['extracted'], 0)
+        self.assertEqual(s['failed'], 0)
+
+    def test_extracted_bucket_unchanged(self):
+        from compliance.tests import _company_with_submission
+        from compliance.models import EvidenceTextExtraction
+        from auditors.crm_services import company_evidence_summary
+        c, item, sub = _company_with_submission()
+        EvidenceTextExtraction.objects.create(submission=sub, status='extracted', char_count=42)
+        s = company_evidence_summary(c)
+        self.assertEqual(s['extracted'], 1)
+        self.assertEqual(s['manual_review'], 0)
+
+    # the metric is EXTRACTION-based: an auditor review artifact must NOT change it
+    def test_auditor_review_does_not_affect_manual_reading_bucket(self):
+        from compliance.tests import _company_with_control
+        from compliance.models import Assessment, CompanyControl
+        from auditor_portal.models import AuditorControlVerdict
+        from auditors.crm_services import company_evidence_summary
+        c, ctl = _company_with_control()
+        u, _ap = _auditor(status='active')
+        a = Assessment.objects.create(company=c, assigned_auditor=u,
+                                      assessment_type='formal_audit', status='auditor_review')
+        cc = CompanyControl.objects.get_or_create(company=c, control=ctl)[0]
+        AuditorControlVerdict.objects.create(assessment=a, company_control=cc, auditor=u,
+                                             status='compliant')
+        self.assertEqual(company_evidence_summary(c)['manual_review'], 0)  # unaffected by auditor review
+
+    # UI: unambiguous extraction label; old ambiguous label gone (this metric)
+    def test_admin_page_uses_unambiguous_label(self):
+        c = self._company()
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('تحتاج قراءة يدوية (استخراج)', body)
+        self.assertNotIn('الأدلة قيد المراجعة', body)     # old ambiguous stat-card label removed
+
+
+class F6AuditorReviewEntitlementVsAssignmentTests(TestCase):
+    """UAT-...-F6 — the plan 'auditor_review' badge describes the company's SELF-SERVICE
+    request capability, not the actual auditor assignment. The two are shown independently
+    with no contradiction, and admin assignment / plan changes are unaffected."""
+
+    def _staff(self, email='f6_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _company(self, cr, plan='basic'):
+        from billing import subscription_services as bsvc
+        c = Company.objects.create(name='F6 Co', cr_number=cr, sector='technology',
+                                   size='small', contact_email='f6@co.example')
+        bsvc.start_trial(c, bsvc.get_plan(plan))
+        return c
+
+    def _body(self, c):
+        self.client.force_login(self._staff())
+        return self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+
+    _BADGE = 'طلب مراجعة مدقق ذاتيًا'
+    _NOTE = 'يصف إتاحة الطلب من الشركة ضمن الخطة فقط'
+
+    # CASE A — flag off, no assignment: capability described, not an operational block
+    def test_case_a_off_no_assignment(self):
+        c = self._company('9696F60001', plan='basic')     # auditor_review_enabled=False
+        body = self._body(c)
+        self.assertIn(self._BADGE, body)                   # self-service label (not "مراجعة المدقق")
+        self.assertIn(self._NOTE, body)                    # disambiguation note
+        self.assertIn('لا يوجد مدقق مرتبط بهذه الشركة بعد', body)   # actual state, separate
+
+    # CASE B — flag off + admin-assigned auditor: both render, no contradiction
+    def test_case_b_off_admin_assigned(self):
+        from auditors import services
+        c = self._company('9696F60002', plan='basic')
+        _u, ap = _auditor(status='active', full_name='Ω Auditor')
+        services.create_assignment(c, ap, requested_by=self._staff())   # admin assignment
+        body = self._body(c)
+        self.assertIn(self._BADGE, body)                   # plan capability still shown honestly
+        self.assertIn(self._NOTE, body)
+        self.assertIn('Ω Auditor', body)                   # actual assigned auditor shown separately
+        self.assertIn('أسندته الإدارة', body)              # engagement source
+
+    # CASE C — flag on, no assignment: capability included does not imply assignment
+    def test_case_c_on_no_assignment(self):
+        c = self._company('9696F60003', plan='professional')   # auditor_review_enabled=True
+        body = self._body(c)
+        self.assertIn(self._BADGE, body)
+        self.assertIn('لا يوجد مدقق مرتبط بهذه الشركة بعد', body)
+
+    # CASE D — flag on + assignment: both independently correct
+    def test_case_d_on_assigned(self):
+        from auditors import services
+        c = self._company('9696F60004', plan='professional')
+        _u, ap = _auditor(status='active', full_name='Δ Auditor')
+        services.create_assignment(c, ap, requested_by=self._staff())
+        body = self._body(c)
+        self.assertIn(self._BADGE, body)
+        self.assertIn('Δ Auditor', body)
+
+    # CASE E — plan downgrade must NOT mutate/cancel an existing assignment
+    def test_case_e_downgrade_preserves_assignment(self):
+        from auditors import services
+        from auditors.models import AuditorAssignment
+        from billing import subscription_services as bsvc
+        c = self._company('9696F60005', plan='professional')
+        _u, ap = _auditor(status='active')
+        services.create_assignment(c, ap, requested_by=self._staff())
+        self.assertEqual(AuditorAssignment.objects.filter(company=c).count(), 1)
+        sub = bsvc.get_current_subscription(c); sub.plan = bsvc.get_plan('basic'); sub.save()
+        # display fix does not touch assignments
+        self.assertEqual(AuditorAssignment.objects.filter(company=c).count(), 1)
+        self.assertEqual(AuditorAssignment.objects.get(company=c).status, 'requested')
+
+    # self-service gate unchanged: blocked on plans without the feature
+    def test_self_service_gate_unchanged(self):
+        import billing.access as bacc
+        c_basic = self._company('9696F60006', plan='basic')
+        c_pro = self._company('9696F60007', plan='professional')
+        self.assertFalse(bacc.check_feature_access(c_basic, 'auditor_review').allowed)
+        self.assertTrue(bacc.check_feature_access(c_pro, 'auditor_review').allowed)
+
+    # admin assignment unaffected by the plan flag (no gate)
+    def test_admin_assignment_unaffected_by_flag(self):
+        from auditors.models import AuditorAssignment
+        c = self._company('9696F60008', plan='basic')     # flag off
+        _u, ap = _auditor(status='active')
+        self.client.force_login(self._staff())
+        self.client.post(reverse('platform_admin:assign_auditor', args=[c.id]), {'auditor_id': ap.id})
+        self.assertTrue(AuditorAssignment.objects.filter(company=c).exists())
+
+
+class F7DateDisplayConsistencyTests(TestCase):
+    """UAT-...-F7 — server-rendered dates are consistently Y-m-d; the native date input
+    carries the machine value YYYY-MM-DD; no backend date mutation on render."""
+
+    def _staff(self, email='f7_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _company(self, cr='9797F70001'):
+        return Company.objects.create(name='F7 Co', cr_number=cr, sector='technology',
+                                      size='small', contact_email='f7@co.example')
+
+    def test_native_date_input_has_machine_value_yyyy_mm_dd(self):
+        import datetime
+        from auditors.models import CompanyCRMProfile
+        c = self._company()
+        CompanyCRMProfile.objects.create(company=c, next_follow_up_date=datetime.date(2027, 3, 5))
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('value="2027-03-05"', body)         # machine value = YYYY-MM-DD
+        self.assertIn('القيمة المخزّنة بصيغة YYYY-MM-DD', body)   # clarifying hint
+        self.assertIn('type="date"', body)                # native input kept
+
+    def test_server_dates_are_iso_and_not_mutated(self):
+        import datetime
+        from auditors.models import CompanyCRMProfile
+        c = self._company('9797F70002')
+        # DateField (no timezone) -> server text is deterministic Y-m-d, no DD-MM-YYYY.
+        p = CompanyCRMProfile.objects.create(company=c, next_follow_up_date=datetime.date(2026, 12, 1))
+        self.client.force_login(self._staff())
+        body = self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+        self.assertIn('2026-12-01', body)                 # rendered as ISO Y-m-d
+        self.assertNotIn('01-12-2026', body)              # never DD-MM-YYYY server text
+        p.refresh_from_db()
+        self.assertEqual(p.next_follow_up_date, datetime.date(2026, 12, 1))  # GET didn't mutate
+
+
+class F8CompanyDetailNavigationTests(TestCase):
+    """UAT-...-F8 — anchor navigation is enhanced (labelled, sticky, progressive active
+    highlight) without tabs/hiding; every anchor resolves and all sections render."""
+
+    def _staff(self, email='f8_admin@x.com'):
+        existing = User.objects.filter(email=email).first()
+        return existing or User.objects.create_user(
+            username=email, email=email, password='longenough12', role='admin', is_staff=True)
+
+    def _body(self, cr='9898F80001'):
+        c = Company.objects.create(name='F8 Co', cr_number=cr, sector='technology',
+                                   size='small', contact_email='f8@co.example')
+        self.client.force_login(self._staff())
+        return self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode(), c
+
+    def test_all_anchors_resolve_to_existing_section_ids(self):
+        import re
+        body, _c = self._body()
+        ids = set(re.findall(r'id="([a-z-]+)"', body))
+        hrefs = set(re.findall(r'href="#([a-z-]+)"', body))
+        self.assertTrue(hrefs, 'no in-page anchors found')
+        missing = [h for h in hrefs if h not in ids]
+        self.assertEqual(missing, [], 'anchors without a matching section id: %s' % missing)
+
+    def test_f5_cta_targets_exist(self):
+        body, _c = self._body('9898F80002')
+        for sid in ('journey', 'auditor', 'evidence', 'billing', 'followup'):
+            self.assertIn('id="%s"' % sid, body)          # F5 CTA anchors still land somewhere
+
+    def test_all_sections_present_and_not_hidden(self):
+        body, _c = self._body('9898F80003')
+        for sid in ('admin-journey', 'overview', 'journey', 'auditor', 'evidence',
+                    'billing', 'users', 'followup', 'log'):
+            self.assertIn('id="%s"' % sid, body)
+        # sections are rendered inline (no tab-hiding of the company sections was added)
+        self.assertNotIn('data-tab', body)
+        self.assertNotIn('role="tabpanel"', body)
+
+    def test_nav_usable_without_js(self):
+        body, _c = self._body('9898F80004')
+        # plain anchor links present (work with JS disabled); nav is labelled as sections
+        self.assertIn('href="#journey"', body)
+        self.assertIn('id="company-sections-nav"', body)
+        self.assertIn('أقسام الصفحة', body)               # aria-label
+        self.assertIn('الأقسام:', body)                    # visible section label
+
+    def test_progressive_enhancement_markup_present(self):
+        body, _c = self._body('9898F80005')
+        self.assertIn('IntersectionObserver', body)        # progressive active-highlight script
+        self.assertIn('nav-active', body)                  # active-section style hook
+
+    def test_forms_and_post_actions_still_present(self):
+        body, c = self._body('9898F80006')
+        # key POST workflows must not have disappeared
+        self.assertIn(reverse('platform_admin:update_status', args=[c.id]), body)
+        self.assertIn(reverse('platform_admin:add_note', args=[c.id]), body)
+        self.assertIn(reverse('platform_admin:subscription_action', args=[c.id]), body)
+        self.assertGreaterEqual(body.count('csrfmiddlewaretoken'), 4)
+
+
+class A1VerdictConflictPanelTests(TestCase):
+    """F-AUDIT A1: the platform-admin company detail surfaces cross-silo verdict conflicts,
+    and hides the panel entirely when the silos agree."""
+
+    def _staff(self, email='a1_admin@x.com'):
+        return User.objects.create_user(username=email, email=email, password='longenough12',
+                                        role='admin', is_staff=True)
+
+    def _conflicted_company(self, cr='9898A10001'):
+        from compliance.models import (Framework, Domain, Control, ControlAssessment,
+                                        Assessment, CompanyControl)
+        from auditor_portal.models import AuditorControlVerdict
+        c = Company.objects.create(name='A1 Co', cr_number=cr, sector='technology',
+                                   size='small', contact_email='a1@co.example')
+        fw = Framework.objects.get_or_create(code='NCA', defaults={'name': 'NCA'})[0]
+        dom = Domain.objects.get_or_create(framework=fw, name='Gov', defaults={'code': 'GOV'})[0]
+        ctl = Control.objects.create(framework=fw, domain=dom, control_id='NCA-2-1',
+                                     title='T', description='d')
+        ControlAssessment.objects.create(company=c, control=ctl, status='compliant')
+        a = Assessment.objects.create(company=c, assessment_type='formal_audit')
+        cc = CompanyControl.objects.create(company=c, control=ctl)
+        AuditorControlVerdict.objects.create(assessment=a, company_control=cc, status='non_compliant')
+        return c, ctl
+
+    def _get(self, c):
+        self.client.force_login(self._staff())
+        return self.client.get(reverse('platform_admin:company_detail', args=[c.id])).content.decode()
+
+    def test_conflict_panel_shown_when_silos_disagree(self):
+        c, ctl = self._conflicted_company()
+        body = self._get(c)
+        self.assertIn('تعارض أحكام المدقق', body)
+        self.assertIn('NCA-2-1', body)
+        self.assertIn('id="verdict-conflicts"', body)
+
+    def test_no_panel_when_no_conflict(self):
+        from compliance.models import Framework, Domain, Control, ControlAssessment
+        c = Company.objects.create(name='A1 OK', cr_number='9898A10009', sector='technology',
+                                   size='small', contact_email='a1ok@co.example')
+        fw = Framework.objects.get_or_create(code='NCA', defaults={'name': 'NCA'})[0]
+        dom = Domain.objects.get_or_create(framework=fw, name='Gov', defaults={'code': 'GOV'})[0]
+        ctl = Control.objects.create(framework=fw, domain=dom, control_id='NCA-2-2',
+                                     title='T', description='d')
+        ControlAssessment.objects.create(company=c, control=ctl, status='compliant')
+        body = self._get(c)
+        self.assertNotIn('تعارض أحكام المدقق', body)    # single silo -> no conflict panel

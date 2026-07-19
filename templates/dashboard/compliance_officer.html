@@ -35,8 +35,8 @@
 
     {% elif not has_control_plan %}
     {# State 2: approved scope, but the control plan has not been generated yet. #}
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-8 text-center">
-        <i class="fas fa-list-check text-blue-500 text-4xl mb-4"></i>
+    <div class="bg-gov-gray-100 border border-gov-gray-200 rounded-xl p-8 text-center">
+        <i class="fas fa-list-check text-gov-gray-600 text-4xl mb-4"></i>
         <p class="text-gov-gray-700 text-lg mb-4">تم اعتماد نطاق الأطر، لكن خطة الضوابط لم تُنشأ بعد.</p>
         <a href="{% url 'compliance:control_plan' %}" class="inline-block bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
             إنشاء خطة الضوابط

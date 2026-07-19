@@ -104,20 +104,20 @@ class PasswordResetUxTests(TestCase):
     def test_reset_request_page_is_professional(self):
         body = self.client.get(reverse('core:password_reset')).content.decode()
         self.assertIn('auth-card', body)
-        self.assertIn('reset instructions if the account exists', body)
+        self.assertIn('تعليمات إعادة التعيين إذا كان الحساب موجودًا', body)
         self.assertNotIn('as_p', body)
 
     def test_unknown_email_shows_safe_done_page(self):
         resp = self.client.post(reverse('core:password_reset'),
                                 {'email': 'nobody@nowhere.test'}, follow=True)
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'If an account exists')
+        self.assertContains(resp, 'إذا كان هناك حساب مرتبط بهذا البريد')
 
     def test_confirm_invalid_token_safe_message(self):
         resp = self.client.get(reverse('core:password_reset_confirm',
                                         kwargs={'uidb64': 'AB', 'token': 'bad-token'}))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'invalid or has expired')
+        self.assertContains(resp, 'غير صالح أو انتهت صلاحيته')
 
 
 # ---------------------------------------------------------------------------

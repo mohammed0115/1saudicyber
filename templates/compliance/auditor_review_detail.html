@@ -4,9 +4,10 @@
 <div class="max-w-3xl mx-auto space-y-6">
     <a href="{% url 'compliance:auditor_review_queue' %}" class="text-gov-green-700 hover:underline text-sm">رجوع للقائمة</a>
     <div>
-        <h1 class="text-2xl font-bold text-gov-green-800">{{ control.control_id }} — {{ control.title }}</h1>
+        <h1 class="text-2xl font-bold text-gov-green-800">{{ control.control_id }} — {% if control.title_ar %}{{ control.title_ar }}{% else %}<span dir="ltr">{{ control.title }}</span>{% endif %}</h1>
         <p class="text-gov-gray-600 text-sm">{{ control.framework_version.code }} · {{ control.domain.name }}</p>
-        <p class="text-gov-gray-700 mt-2 text-sm">{{ control.description }}</p>
+        {% if control.description_ar %}<p class="text-gov-gray-700 mt-2 text-sm">{{ control.description_ar }}</p>{% endif %}
+        <p class="text-gov-gray-500 mt-1 text-xs" dir="ltr">{{ control.description }}</p>
         <a href="{% url 'risk:create' %}?assessment_id={{ assessment.id }}" data-busy="جارٍ تحميل النموذج..."
            class="text-gov-green-700 hover:underline text-xs">إنشاء خطر من تقييم الضابط</a>
     </div>

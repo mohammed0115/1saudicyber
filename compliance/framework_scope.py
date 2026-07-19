@@ -8,6 +8,7 @@ never the legacy 334, never OTCC/DCC (which have no official controls).
 
 Standalone module (not a `services/` package) to avoid colliding with compliance/services.py.
 """
+from django.db import transaction
 from django.utils import timezone
 
 from compliance.models import (
@@ -68,6 +69,49 @@ def reject_framework_scope(scope, reason, user=None):
     scope.rejection_reason = reason or ''
     scope.save(update_fields=['status', 'rejected_by', 'rejected_at', 'rejection_reason', 'updated_at'])
     return scope
+
+
+def reconcile_scope_after_reclassification(company):
+    """F-AUDIT R1: after a re-classification, de-scope controls whose framework is no
+    longer applicable — SOFT invalidation only, never a delete.
+
+    For each CompanyFrameworkScope whose framework is now `not_applicable` (per the
+    freshly-written FrameworkApplicabilityResult), flip its still-`applicable`
+    ControlApplicabilityResult rows to `not_applicable` (so they drop out of checklist /
+    assessment / gap generation, which all filter on decision='applicable') and mark the
+    scope `rejected` (de-scoped).
+
+    Deliberately preserved:
+      * manual overrides — a `manually_overridden` framework never lands in the
+        not_applicable set (evaluate_company keeps it), and CAR rows with decision
+        `manually_overridden` are untouched (we only move `applicable` rows).
+      * uploaded EvidenceSubmission files and AuditorFinalVerdict records — nothing is
+        deleted, so no evidence or auditor decision is destroyed. A control that becomes
+        applicable again on a later re-classification is simply re-planned to `applicable`.
+
+    Idempotent (already-`rejected` scopes are skipped). Returns a summary dict.
+    """
+    not_applicable_fv_ids = set(
+        FrameworkApplicabilityResult.objects
+        .filter(company=company, decision='not_applicable')
+        .values_list('framework_version_id', flat=True))
+    if not not_applicable_fv_ids:
+        return {'frameworks_descoped': 0, 'controls_descoped': 0}
+    frameworks_descoped = 0
+    controls_descoped = 0
+    with transaction.atomic():
+        stale_scopes = list(CompanyFrameworkScope.objects
+                            .filter(company=company, framework_version_id__in=not_applicable_fv_ids)
+                            .exclude(status='rejected'))
+        for scope in stale_scopes:
+            controls_descoped += (ControlApplicabilityResult.objects
+                                  .filter(framework_scope=scope, decision='applicable')
+                                  .update(decision='not_applicable'))
+            scope.status = 'rejected'
+            scope.rejection_reason = 'أُلغي النطاق تلقائيًا: لم يعد الإطار منطبقًا بعد إعادة التصنيف.'
+            scope.save(update_fields=['status', 'rejection_reason', 'updated_at'])
+            frameworks_descoped += 1
+    return {'frameworks_descoped': frameworks_descoped, 'controls_descoped': controls_descoped}
 
 
 def generate_control_applicability_plan(company, framework_scope, *, apply=False):

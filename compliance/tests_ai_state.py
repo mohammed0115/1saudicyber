@@ -25,12 +25,12 @@ class ControlDetailAiStateTests(TestCase):
     def test_no_key_shows_pending_human_review_not_processing(self):
         control = self._setup()
         body = self.client.get(reverse('compliance:control_detail', args=[control.id])).content.decode()
-        self.assertIn('Pending human review', body)
-        self.assertNotIn('AI processing', body)
+        self.assertIn('بانتظار مراجعة بشرية', body)     # honest state (Arabic label)
+        self.assertNotIn('جارٍ التحليل', body)
 
     @override_settings(OPENAI_API_KEY='sk-test-key')
     def test_key_present_allows_ai_processing_label(self):
         control = self._setup()
         body = self.client.get(reverse('compliance:control_detail', args=[control.id])).content.decode()
-        self.assertIn('AI processing', body)
-        self.assertNotIn('Pending human review', body)
+        self.assertIn('جارٍ التحليل', body)             # AI processing (Arabic label)
+        self.assertNotIn('بانتظار مراجعة بشرية', body)

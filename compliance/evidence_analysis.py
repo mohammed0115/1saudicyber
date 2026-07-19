@@ -21,22 +21,56 @@ from django.utils import timezone
 
 from compliance.models import EvidenceSubmission, EvidenceAnalysisResult
 
-PROMPT_VERSION = 'advisory-v1'
+PROMPT_VERSION = 'advisory-v2-consultative'
 MAX_EXTRACT_CHARS = 20000   # cap stored/extracted text
 MAX_XLSX_ROWS = 500
 TEXT_LIKE = {'txt', 'csv'}
 # pdf/images deliberately deferred (no heavy OCR in this phase).
 OCR_DEFERRED = {'pdf', 'png', 'jpg', 'jpeg'}
 
+# Consultative evidence-analysis engine (advisory ONLY). Encodes a 15-phase
+# senior-consultant methodology (intake → classification → mapping → extraction →
+# quality → control analysis → cross-referencing → contradictions → completeness →
+# risk → remediation → confidence → gaps → RFI). The AI is a decision-support engine
+# — it NEVER issues a compliance verdict; the human auditor is authoritative.
 ADVISORY_SYSTEM_PROMPT = (
-    "You are an assistant helping a human auditor review cybersecurity compliance evidence. "
-    "You DO NOT make compliance decisions. You DO NOT mark anything compliant or non-compliant. "
-    "You DO NOT accept or reject evidence. The final decision belongs to a human auditor. "
-    "Given a control statement, an evidence requirement, and extracted evidence text, return a JSON "
-    "object with keys: summary, requirement_match (how the evidence relates to the requirement), "
-    "potential_gaps, risk_flags (array of short strings), confidence (0.0-1.0), needs_human_review "
-    "(boolean). Never invent evidence that is not in the text. If the text is empty or insufficient, "
-    "say so and set needs_human_review=true."
+    "You are the Cybersecurity Compliance Intelligence Engine inside 1SaudiCyber — a senior "
+    "GRC consultant (20+ yrs: NCA ECC/CSCC, ISO 27001, NIST CSF, CIS, SAMA, cloud security, "
+    "internal/external audit). You provide ADVISORY analysis to help a company and a human "
+    "auditor decide — you are NOT an accreditation body.\n"
+    "HARD RULES (never violate): you DO NOT issue a final compliance decision; DO NOT mark a "
+    "control compliant/non-compliant; DO NOT accept/reject evidence; DO NOT change any status; "
+    "DO NOT close an RFI. The human auditor's professional verdict is final. Never invent evidence "
+    "not present in the text; if text is empty/insufficient, say so and set needs_human_review=true.\n"
+    "METHOD: think like a consultant AND an auditor AND a risk manager. Do NOT rely on one file — "
+    "cross-reference the CURRENT evidence with the OTHER evidence already analyzed for this control "
+    "(provided), look for contradictions between policy and implementation, and note missing links. "
+    "Every conclusion must state the evidence it rests on and whether it is confirmed or needs "
+    "further verification. Prefer 'evidence suggests a possible gap requiring verification' over "
+    "absolute compliance statements.\n"
+    "Return ONLY a JSON object with these keys:\n"
+    "  document_classification: {type, confidence}  // Policy/Procedure/Log/Config/Screenshot/Report/"
+    "Certificate/Register/RiskRegister/IncidentReport/BackupReport/NetworkDiagram/AuditReport/Contract/"
+    "TrainingRecord/VendorAssessment/Other\n"
+    "  summary: string  // concise executive summary\n"
+    "  requirement_match: string  // how the evidence relates to the evidence requirement\n"
+    "  extracted_entities: {assets, servers, users, mfa, backup, firewall, encryption, cloud_services, "
+    "vendors, ip_addresses, urls, dates, versions}  // each an array of short strings actually found\n"
+    "  quality: {grade: Excellent|Good|Acceptable|Weak|Insufficient, reason}\n"
+    "  control_analysis: string  // consultative reasoning, e.g. 'policy found but no proof of "
+    "implementation'; connect the evidence pieces\n"
+    "  contradictions: [string]  // policy-vs-implementation or evidence-vs-evidence conflicts\n"
+    "  completeness: {completeness, consistency, freshness, traceability, authenticity, coverage}  // each 0-100\n"
+    "  potential_gaps: string\n"
+    "  risk_flags: [string]  // short flags\n"
+    "  risk_analysis: [string]  // gap -> plausible risk (e.g. no MFA -> credential theft/privilege escalation)\n"
+    "  remediation_suggestions: [{priority: high|medium|low, action}]  // ordered by priority; suggestions only\n"
+    "  missing_evidence: [string]  // what is missing to reach a stronger conclusion\n"
+    "  rfi_suggestions: [string]  // concrete info to request from the company (do NOT create/close RFIs)\n"
+    "  confidence: 0.0-1.0  // based on: amount + quality + coherence + freshness of evidence, and # of contradictions\n"
+    "  confidence_rationale: string  // WHY this score\n"
+    "  needs_human_review: boolean\n"
+    "All prose in Arabic. Keep arrays short and grounded strictly in the provided text."
 )
 
 
@@ -79,13 +113,26 @@ def extract_text_from_submission(submission):
             text = '\n'.join(parts)
             return text[:MAX_EXTRACT_CHARS], len(text) > MAX_EXTRACT_CHARS, ''
         if ext in OCR_DEFERRED:
-            return '', False, 'OCR not available in advisory pipeline (deferred); needs human review'
+            # OCR the image/PDF via the platform's tesseract pipeline (ara+eng). Heavy —
+            # run async in production (EVIDENCE_ASYNC_ENABLED) so it stays off the request thread.
+            try:
+                from ai_engine.services import extract_text_from_image, extract_text_from_pdf
+                path = submission.uploaded_file.path  # local storage; S3 has no local path
+                res = extract_text_from_pdf(path) if ext == 'pdf' else extract_text_from_image(path)
+                txt = (res.get('text', '') if isinstance(res, dict) else str(res or '')) or ''
+                conf = res.get('confidence') if isinstance(res, dict) else None
+                if txt.strip():
+                    note = 'ocr' + (' (confidence %.2f)' % conf if isinstance(conf, (int, float)) else '')
+                    return txt[:MAX_EXTRACT_CHARS], len(txt) > MAX_EXTRACT_CHARS, note
+                return '', False, 'OCR produced no readable text; needs human review'
+            except Exception as exc:
+                return '', False, 'OCR error: %s; needs human review' % type(exc).__name__
         return '', False, f'unsupported file type: {ext}'
     except Exception as exc:  # never leak file content; only the error class/message
         return '', False, f'extraction error: {type(exc).__name__}'
 
 
-def _run_ai(control, requirement, text):
+def _run_ai(control, requirement, text, related_context=''):
     """Call the AI provider for an advisory analysis. Returns (result_dict, error, model, provider)."""
     api_key = getattr(settings, 'OPENAI_API_KEY', '') or ''
     if not api_key:
@@ -94,10 +141,14 @@ def _run_ai(control, requirement, text):
         from ai_engine.services import get_openai_client
         client = get_openai_client()
         model = getattr(settings, 'OPENAI_MODEL', 'gpt-4o')
+        related_block = (f"\nOTHER EVIDENCE ALREADY ANALYZED FOR THIS CONTROL (cross-reference against "
+                         f"these; look for contradictions and coverage):\n---\n{related_context[:3000]}\n---\n"
+                         if related_context else "\n(No other evidence has been analyzed for this control yet.)\n")
         user = (f"CONTROL: {control.control_id} — {control.title}\n{control.description}\n\n"
                 f"EVIDENCE REQUIREMENT: {getattr(requirement, 'title', '')} — "
                 f"{getattr(requirement, 'description', '')}\n\n"
-                f"EXTRACTED EVIDENCE TEXT:\n---\n{text[:8000]}\n---\n\n"
+                f"CURRENT EVIDENCE TEXT:\n---\n{text[:8000]}\n---\n"
+                f"{related_block}\n"
                 "Return ONLY the JSON object described. The final compliance decision is the auditor's.")
         resp = client.chat.completions.create(
             model=model, temperature=0.2, response_format={'type': 'json_object'},
@@ -130,11 +181,31 @@ def analyze_evidence_submission(submission, *, apply=False):
         fields.update(status='needs_human_review',
                       error_message=note or 'No text extracted', summary='', confidence=None)
     else:
-        data, err, model, provider = _run_ai(control, requirement, text)
+        # Cross-reference context: prior advisory analyses for the SAME control (never one file alone).
+        related_context = ''
+        try:
+            prior = (EvidenceAnalysisResult.objects
+                     .filter(company=submission.company, control=control)
+                     .exclude(evidence_submission=submission).order_by('-id')[:5])
+            related_context = '\n'.join(
+                f"- {(p.summary or '')[:300]}" for p in prior if (p.summary or '').strip())
+        except Exception:
+            related_context = ''
+        data, err, model, provider = _run_ai(control, requirement, text, related_context)
         if data is None:
             fields.update(status='needs_human_review', error_message=err, model_used=model,
                           provider=provider, summary='', confidence=None)
         else:
+            # Top-level fields keep the existing UI contract; the full 15-phase consultative
+            # output is preserved (additively) in analysis_metadata['advisory'].
+            _adv_keys = ('document_classification', 'extracted_entities', 'quality',
+                         'control_analysis', 'contradictions', 'completeness', 'risk_analysis',
+                         'remediation_suggestions', 'missing_evidence', 'rfi_suggestions',
+                         'confidence_rationale', 'needs_human_review')
+            advisory = {k: data.get(k) for k in _adv_keys if data.get(k) is not None}
+            meta = dict(fields.get('analysis_metadata') or {})
+            meta['advisory'] = advisory
+            meta['cross_referenced'] = bool(related_context)
             fields.update(
                 status='completed', model_used=model, provider=provider,
                 summary=str(data.get('summary', ''))[:4000],
@@ -142,7 +213,7 @@ def analyze_evidence_submission(submission, *, apply=False):
                 potential_gaps=str(data.get('potential_gaps', ''))[:4000],
                 risk_flags=data.get('risk_flags', []) if isinstance(data.get('risk_flags'), list) else [],
                 confidence=data.get('confidence') if isinstance(data.get('confidence'), (int, float)) else None,
-                error_message='')
+                analysis_metadata=meta, error_message='')
 
     if not apply:
         return {'submission': submission.id, 'would_status': fields['status'],

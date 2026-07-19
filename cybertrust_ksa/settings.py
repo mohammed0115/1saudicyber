@@ -65,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.ContentSecurityPolicyMiddleware',
+    'core.middleware.EnforceAdminMFAMiddleware',
     'core.middleware.AuditLogMiddleware',
 ]
 
@@ -82,6 +83,7 @@ TEMPLATES = [
                 'django.template.context_processors.i18n',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.notifications',
             ],
         },
     },
@@ -156,6 +158,19 @@ if TESTING:
         'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     }
 
+# DD-fix (scalability): when an S3 bucket is configured, store evidence media on S3 so the
+# app scales horizontally (uploads no longer live on one node's disk). Falls back to local
+# FileSystemStorage otherwise. Requires django-storages + boto3 (in requirements).
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', '')
+if AWS_STORAGE_BUCKET_NAME and not TESTING:
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'me-central-1')  # KSA region by default (PDPL)
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', '') or None
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = True   # signed, expiring URLs — evidence never publicly listable
+    STORAGES['default'] = {'BACKEND': 'storages.backends.s3.S3Storage'}
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -179,6 +194,9 @@ REST_FRAMEWORK = {
         'user': '100/min',
         'anon': '20/min',
     },
+    # DD-fix: paginate list endpoints (was unbounded — a 417-control company returned all).
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 25,
 }
 
 from datetime import timedelta
@@ -293,3 +311,61 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_EVIDENCE_FILE_SIZE + (5 * 1024 * 1024)
 ALLOWED_EVIDENCE_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'tiff', 'bmp', 'docx', 'xlsx', 'txt', 'csv']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ============================================================================
+# DD-fix batch — ops / performance / security hardening
+# ============================================================================
+
+# ---- Cache (Redis in prod via REDIS_URL; safe local-memory fallback) --------
+_REDIS_URL = os.getenv('REDIS_URL', '')
+if _REDIS_URL and not TESTING:
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                          'LOCATION': _REDIS_URL}}
+else:
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                          'LOCATION': 'cybertrust-local'}}
+
+# ---- Session hardening (DD: explicit flags + bounded lifetime) --------------
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False   # JS must read it for AJAX POSTs
+SESSION_COOKIE_AGE = int(os.getenv('SESSION_COOKIE_AGE', str(60 * 60 * 12)))  # 12h default
+SESSION_SAVE_EVERY_REQUEST = True   # sliding expiry on activity
+
+# ---- Login brute-force throttle (DD: HTML /login/ had no protection) --------
+# Cache-based lockout, no extra dependency. See core/login_throttle.py.
+LOGIN_FAILURE_LIMIT = int(os.getenv('LOGIN_FAILURE_LIMIT', '8'))
+LOGIN_FAILURE_WINDOW = int(os.getenv('LOGIN_FAILURE_WINDOW', '900'))   # 15 min
+
+# ---- Enforce MFA for staff/admin (DD: MFA was optional). Opt-in via env so the
+# default keeps existing sessions working; set True in production for privileged users.
+ENFORCE_ADMIN_MFA = os.getenv('ENFORCE_ADMIN_MFA', 'False') == 'True'
+
+# ---- Structured logging (DD: no LOGGING config existed) ---------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {'format': '[{asctime}] {levelname} {name}: {message}', 'style': '{'},
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'standard'},
+    },
+    'root': {'handlers': ['console'], 'level': os.getenv('LOG_LEVEL', 'INFO')},
+    'loggers': {
+        'django.request': {'handlers': ['console'], 'level': 'ERROR', 'propagate': False},
+        'cybertrust': {'handlers': ['console'], 'level': os.getenv('LOG_LEVEL', 'INFO'), 'propagate': False},
+    },
+}
+
+# ---- Error tracking (DD: no monitoring). Active only if SENTRY_DSN set. ------
+_SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+if _SENTRY_DSN and not DEBUG and not TESTING:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        sentry_sdk.init(dsn=_SENTRY_DSN, integrations=[DjangoIntegration()],
+                        traces_sample_rate=float(os.getenv('SENTRY_TRACES_RATE', '0.1')),
+                        send_default_pii=False, environment=os.getenv('SENTRY_ENV', 'production'))
+    except Exception:
+        pass   # never let telemetry wiring break boot

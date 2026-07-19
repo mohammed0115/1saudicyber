@@ -4,29 +4,29 @@
 {% block content %}
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:16px;padding:32px;
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:16px;padding:32px;
                 box-shadow:0 2px 10px rgba(31,41,51,0.05);text-align:center;">
       <div style="width:56px;height:56px;border-radius:14px;background:#F4F1EA;display:flex;
                   align-items:center;justify-content:center;margin:0 auto 18px;">
-        <i class="fas fa-lock" style="color:#0F5D46;font-size:1.4rem;"></i>
+        <i class="fas fa-lock" style="color:#2a5646;font-size:1.4rem;"></i>
       </div>
-      <h1 style="color:#1F2933;font-size:1.45rem;font-weight:700;margin:0 0 10px;">تفعيل الاشتراك مطلوب لتنزيل التقارير</h1>
-      <p style="color:#667085;font-size:.98rem;margin:0 0 8px;">
+      <h1 style="color:#2b2c27;font-size:1.45rem;font-weight:700;margin:0 0 10px;">تفعيل الاشتراك مطلوب لتنزيل التقارير</h1>
+      <p style="color:#5b5c53;font-size:.98rem;margin:0 0 8px;">
         يمكنك إكمال رحلة الامتثال ورفع الأدلة، لكن
         {% if mode == 'export' %}تنزيل ملفات التقارير{% elif mode == 'assign' %}إسناد الملف إلى مدقق داخل المنصة{% else %}عرض التقارير الكاملة{% endif %}
         يتطلب اشتراكًا فعالًا.
       </p>
-      <p style="color:#667085;font-size:.92rem;margin:0 0 24px;">
+      <p style="color:#5b5c53;font-size:.92rem;margin:0 0 24px;">
         للمتابعة، تواصل مع فريق المنصّة أو فعّل الاشتراك من الإدارة.
       </p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
         <a href="mailto:contact@1saudicyber.com?subject=طلب%20تفعيل%20الاشتراك"
-           style="background:#0F5D46;color:#fff;font-weight:600;padding:11px 20px;border-radius:10px;text-decoration:none;">
+           style="background:#2a5646;color:#fff;font-weight:600;padding:11px 20px;border-radius:10px;text-decoration:none;">
           طلب تفعيل الاشتراك
         </a>
         <a href="{% url 'compliance:dashboard' %}"
-           style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:11px 20px;border-radius:10px;
-                  text-decoration:none;border:1px solid #D8E1DD;">
+           style="background:#FFFFFF;color:#2b2c27;font-weight:600;padding:11px 20px;border-radius:10px;
+                  text-decoration:none;border:1px solid #e3e1d9;">
           العودة إلى لوحة الرحلة
         </a>
       </div>

@@ -27,10 +27,20 @@ def terms_of_use(request):
 def landing_page(request):
     """Phase 0: Landing page with platform overview."""
     from compliance.models import Control
+    from django.conf import settings
+    from django.core.cache import cache
+    # DD-fix (perf): the official control catalog (~417 rows) changes only on import;
+    # cache the count so the public landing page doesn't COUNT on every anonymous hit.
+    # Skipped under TESTING so the shared locmem cache never pollutes test isolation.
+    controls_monitored = None if getattr(settings, 'TESTING', False) else cache.get('official_controls_count')
+    if controls_monitored is None:
+        controls_monitored = Control.objects.count()
+        if not getattr(settings, 'TESTING', False):
+            cache.set('official_controls_count', controls_monitored, 3600)
     stats = {
         'companies_registered': Company.objects.count(),
         'assessments_completed': 0,
-        'controls_monitored': Control.objects.count(),
+        'controls_monitored': controls_monitored,
         'faster_assessments': 75,
         'cost_reduction': 60,
     }
@@ -144,10 +154,18 @@ def register_company(request):
 def login_view(request):
     """User login. If MFA is enabled, defer to a TOTP challenge before completing login."""
     if request.method == 'POST':
+        from core import login_throttle
         username = request.POST.get('username', '')
         password = request.POST.get('password', '')
+        # DD-fix: brute-force lockout on the HTML login form.
+        if login_throttle.is_locked(username, request):
+            return render(request, 'core/login.html', {
+                'login_error': _('تم إيقاف المحاولات مؤقتًا بسبب تكرار الفشل. حاول لاحقًا.'),
+                'email': username,
+            })
         user = authenticate(request, username=username, password=password)
         if user:
+            login_throttle.clear(username, request)
             if getattr(user, 'mfa_enabled', False):
                 request.session['mfa_pending_user'] = user.id
                 request.session['mfa_next'] = request.GET.get('next', '/dashboard/')
@@ -155,13 +173,13 @@ def login_view(request):
             login(request, user)
             next_url = request.GET.get('next', '/dashboard/')
             return redirect(next_url)
+        login_throttle.record_failure(username, request)
         # PILOT-HOTFIX-B (C): surface the failure INLINE on /login/ via template
         # context — NOT via global django messages, which persist in the session and
         # leaked onto unrelated pages (password reset / platform-admin / get-started).
         # Preserve the email for convenience; never echo the password back.
         return render(request, 'core/login.html', {
-            'login_error': 'بيانات الدخول غير صحيحة. حاول مرة أخرى. '
-                           '· Invalid credentials. Please try again.',
+            'login_error': _('بيانات الدخول غير صحيحة. حاول مرة أخرى.'),
             'email': username,
         })
     return render(request, 'core/login.html')
@@ -181,7 +199,7 @@ def mfa_challenge(request):
             next_url = request.session.pop('mfa_next', '/dashboard/')
             request.session.pop('mfa_pending_user', None)
             return redirect(next_url)
-        messages.error(request, 'Invalid authentication code.')
+        messages.error(request, 'رمز المصادقة غير صحيح.')
     return render(request, 'core/mfa_challenge.html')
 
 
@@ -196,7 +214,7 @@ def mfa_setup(request):
             request.user.save(update_fields=['mfa_enabled'])
             messages.success(request, _('تم تفعيل التحقق بخطوتين.'))
             return redirect('dashboard:main')
-        messages.error(request, 'Invalid code. Please re-scan and try again.')
+        messages.error(request, 'الرمز غير صحيح. أعد المسح وحاول مرة أخرى.')
     uri = mfa_provisioning_uri(request.user)
     return render(request, 'core/mfa_setup.html', {'provisioning_uri': uri, 'secret': request.user.mfa_secret})
 
@@ -207,13 +225,13 @@ def verify_email(request, token):
     try:
         vt = EmailVerificationToken.objects.select_related('user').get(token=token, used=False)
     except EmailVerificationToken.DoesNotExist:
-        messages.error(request, 'This verification link is invalid or already used.')
+        messages.error(request, 'رابط التحقق غير صالح أو استُخدم من قبل.')
         return redirect('core:login')
     vt.used = True
     vt.save(update_fields=['used'])
     vt.user.email_verified = True
     vt.user.save(update_fields=['email_verified'])
-    messages.success(request, 'Email verified successfully.')
+    messages.success(request, 'تم توثيق بريدك الإلكتروني بنجاح.')
     return redirect('dashboard:main' if request.user.is_authenticated else 'core:login')
 
 
@@ -227,21 +245,24 @@ def verify_email(request, token):
 def verify_email_otp(request):
     """Enter the 6-digit OTP emailed at registration to mark email verified."""
     from . import otp_services as otp
+    from auditors.models import AuditorProfile
     user = request.user
+    # Auditors have no company; after verifying, route them to their own dashboard.
+    dest = 'auditors:dashboard' if AuditorProfile.objects.filter(user=user).exists() else 'dashboard:main'
     if user.email_verified:
-        messages.info(request, 'بريدك الإلكتروني مُوثّق بالفعل · Your email is already verified.')
-        return redirect('dashboard:main')
+        messages.info(request, 'بريدك الإلكتروني مُوثّق بالفعل.')
+        return redirect(dest)
 
     if request.method == 'POST':
         ok, reason = otp.verify_otp(user, request.POST.get('code', ''))
         if ok:
-            messages.success(request, 'تم توثيق بريدك الإلكتروني بنجاح · Email verified successfully.')
-            return redirect('dashboard:main')
+            messages.success(request, 'تم توثيق بريدك الإلكتروني بنجاح.')
+            return redirect(dest)
         msgs = {
-            'no_otp': 'لا يوجد رمز نشِط. اطلب رمزًا جديدًا · No active code. Please request a new one.',
-            'expired': 'انتهت صلاحية الرمز. اطلب رمزًا جديدًا · The code has expired. Request a new one.',
-            'too_many_attempts': 'تم تجاوز عدد المحاولات المسموح بها. اطلب رمزًا جديدًا · Too many attempts. Request a new code.',
-            'invalid': 'الرمز غير صحيح. حاول مرة أخرى · Invalid code. Please try again.',
+            'no_otp': 'لا يوجد رمز نشِط. اطلب رمزًا جديدًا.',
+            'expired': 'انتهت صلاحية الرمز. اطلب رمزًا جديدًا.',
+            'too_many_attempts': 'تم تجاوز عدد المحاولات المسموح بها. اطلب رمزًا جديدًا.',
+            'invalid': 'الرمز غير صحيح. حاول مرة أخرى.',
         }
         messages.error(request, msgs.get(reason, msgs['invalid']))
         return render(request, 'core/verify_email_otp.html', {'email': user.email})
@@ -259,9 +280,9 @@ def resend_email_otp(request):
         return redirect('dashboard:main')
     if otp.can_resend(user):
         otp.issue_and_send(user)
-        messages.success(request, 'تم إرسال رمز تحقق جديد إلى بريدك · A new verification code has been sent to your email.')
+        messages.success(request, 'تم إرسال رمز تحقق جديد إلى بريدك.')
     else:
-        messages.info(request, 'يرجى الانتظار قبل طلب رمز جديد · Please wait a moment before requesting a new code.')
+        messages.info(request, 'يرجى الانتظار قليلًا قبل طلب رمز جديد.')
     return redirect('core:verify_email_otp')
 
 
@@ -410,17 +431,96 @@ def delete_company_data(request):
     their company and all associated data. Requires explicit typed confirmation.
     """
     if request.user.role not in ('company_admin', 'admin'):
-        messages.error(request, 'Only a company administrator can request data deletion.')
+        messages.error(request, 'حذف البيانات متاح لمسؤول الشركة فقط.')
         return redirect('dashboard:main')
     company = request.user.company
     if request.method == 'POST':
         confirm = request.POST.get('confirm', '').strip().upper()
         if not company or confirm != 'DELETE':
-            messages.error(request, 'Type DELETE to confirm.')
+            messages.error(request, 'اكتب DELETE للتأكيد.')
             return render(request, 'core/delete_company.html', {'company': company})
         name = company.name
         logout(request)
         company.delete()  # cascades to controls, evidence, scores, alerts, users
-        messages.success(request, f'All data for {name} has been permanently deleted.')
+        messages.success(request, f'تم حذف جميع بيانات «{name}» نهائيًا.')
         return redirect('core:landing')
     return render(request, 'core/delete_company.html', {'company': company})
+
+
+# ============================================================
+# DD-fix (commercial) — team invites / user management
+# ============================================================
+@login_required
+def team_view(request):
+    """Company admins manage their team: list members + pending invites, send new invites."""
+    from .models import UserInvite
+    from .invite_services import create_invite, INVITABLE_ROLES
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+    can_invite = request.user.role in ('company_admin', 'admin') or request.user.is_staff
+    if request.method == 'POST':
+        if not can_invite:
+            messages.error(request, 'لا تملك صلاحية دعوة أعضاء.')
+            return redirect('core:team')
+        try:
+            create_invite(company, request.POST.get('email', ''),
+                          request.POST.get('role', 'compliance_officer'), request.user)
+            messages.success(request, 'تم إرسال الدعوة.')
+        except ValueError as e:
+            messages.error(request, 'تعذّر إرسال الدعوة: %s' % (
+                'البريد مستخدم بالفعل' if 'already exists' in str(e) else 'تحقّق من البريد'))
+        return redirect('core:team')
+    return render(request, 'core/team.html', {
+        'members': company.users.order_by('role', 'email'),
+        'invites': UserInvite.objects.filter(company=company, status='pending'),
+        'can_invite': can_invite,
+        'invitable_roles': INVITABLE_ROLES,
+    })
+
+
+def accept_invite_view(request, token):
+    """Public accept-invite page: set name + password to join the company."""
+    from .models import UserInvite
+    from .invite_services import accept_invite
+    invite = UserInvite.objects.filter(token=token).first()
+    if invite is None or not invite.is_valid():
+        return render(request, 'core/invite_invalid.html', status=404)
+    if request.method == 'POST':
+        pwd = request.POST.get('password', '')
+        if len(pwd) < 12:
+            return render(request, 'core/accept_invite.html',
+                          {'invite': invite, 'error': 'كلمة المرور يجب ألا تقل عن 12 حرفًا.'})
+        try:
+            user = accept_invite(invite, first_name=request.POST.get('first_name', ''),
+                                 last_name=request.POST.get('last_name', ''), password=pwd)
+        except ValueError:
+            return render(request, 'core/invite_invalid.html', status=404)
+        login(request, user)
+        return redirect('/dashboard/')
+    return render(request, 'core/accept_invite.html', {'invite': invite})
+
+
+@login_required
+def notifications_inbox(request):
+    """In-app notification inbox for the current user. Marks all as read on view."""
+    from .models import Notification
+    notes = list(Notification.objects.filter(recipient=request.user)[:100])
+    # Mark unread as read (viewing the inbox clears the badge).
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    return render(request, 'core/notifications.html', {'notes': notes})
+
+
+@login_required
+@require_http_methods(["POST"])
+def notification_open(request, note_id):
+    """Mark one notification read and redirect to its target url (or the inbox)."""
+    from .models import Notification
+    n = Notification.objects.filter(id=note_id, recipient=request.user).first()
+    if n:
+        if not n.is_read:
+            n.is_read = True
+            n.save(update_fields=['is_read'])
+        if n.url:
+            return redirect(n.url)
+    return redirect('core:notifications_inbox')

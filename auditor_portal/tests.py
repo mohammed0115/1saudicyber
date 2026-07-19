@@ -108,6 +108,31 @@ class AuditorPortalNoCertificateTests(TestCase):
         self.assertNotEqual(c.status, 'certified')
 
 
+class AuditorPortalRequirePostTests(TestCase):
+    """F-AUDIT: mutation views reject GET (405), matching save_verdict/RFI parity."""
+
+    def _assessment_for(self, c, email):
+        aud = _assigned_auditor_user(c, email=email)
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        return aud, Assessment.objects.get(assigned_auditor=aud)
+
+    def test_add_note_get_is_405(self):
+        c, ctl = _company_with_control()
+        aud, a = self._assessment_for(c, 'apt_rp_note@x.com')
+        cc = _company_control(c, ctl)
+        resp = self.client.get(reverse('auditor_portal:add_note', args=[a.id, cc.id]))
+        self.assertEqual(resp.status_code, 405)
+        self.assertEqual(AuditorNote.objects.count(), 0)
+
+    def test_submit_report_get_is_405(self):
+        c, ctl = _company_with_control()
+        aud, a = self._assessment_for(c, 'apt_rp_rep@x.com')
+        resp = self.client.get(reverse('auditor_portal:submit_report', args=[a.id]))
+        self.assertEqual(resp.status_code, 405)
+        self.assertFalse(AuditReport.objects.filter(assessment=a).exists())
+
+
 class AuditorPortalWorkspaceArabicTests(TestCase):
     """UAT-AUDITOR-PORTAL-REVIEW-WORKSPACE-ARABIC-RTL-B — Arabic/RTL review workspace,
     safe advisory-only wording, reason-required document requests, access control."""
@@ -329,7 +354,7 @@ class AuditorPortalVerdictRfiTests(TestCase):
         cu = _journey_user(c, email='rfi_cu@x.com')
         self.client.force_login(cu)
         body = self.client.get(reverse('auditor_portal:company_rfi_list')).content.decode()
-        self.assertIn('طلبات استكمال من المدقق', body)
+        self.assertIn('طلبات المعلومات (RFI)', body)
         self.assertIn('سياسة كلمات المرور', body)
         self.client.post(reverse('auditor_portal:company_rfi_respond', args=[rfi.id]),
                          {'response_text': 'تم رفع السياسة'})

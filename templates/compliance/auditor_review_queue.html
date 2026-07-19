@@ -16,9 +16,6 @@
         </form>
         {% endif %}
     </div>
-    {% if messages %}{% for m in messages %}
-    <div class="bg-gov-green-50 border border-gov-green-200 text-gov-green-800 rounded-lg p-3">{{ m }}</div>
-    {% endfor %}{% endif %}
     {% if not assessments %}
     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
         <i class="fas fa-circle-info mr-1"></i>
@@ -39,7 +36,7 @@
                     <td class="px-4 py-2 font-mono text-xs">{{ a.control.control_id }}</td>
                     <td class="px-4 py-2 text-xs text-gov-gray-500">{{ a.control.framework_version.code }}</td>
                     <td class="px-4 py-2 text-gov-gray-700">{{ a.control.title|truncatechars:60 }}</td>
-                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">{{ a.get_status_display }}</span></td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-gov-gray-200 text-gov-gray-700 text-xs">{{ a.get_status_display }}</span></td>
                     <td class="px-4 py-2"><a href="{% url 'compliance:auditor_review_detail' a.id %}" class="text-gov-green-700 hover:underline text-xs">مراجعة</a></td>
                 </tr>
             {% empty %}

@@ -1,60 +1,79 @@
-{% comment %}Phase 4D — read-only company workflow stepper. Expects `stepper` in context.{% endcomment %}
+{% comment %}Phase 4D — read-only company workflow stepper (slim + collapsible). Expects `stepper` in context.{% endcomment %}
 {% if stepper %}
-<div dir="rtl" class="ct-workflow-stepper bg-white rounded-xl border border-gov-gray-100 shadow-sm p-4 mb-4"
+<div dir="rtl" class="ct-workflow-stepper bg-white rounded-xl border border-gov-gray-100 shadow-sm px-4 py-3 mb-4"
      style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="text-gov-green-800 font-bold text-sm">مسار عمل الشركة</h2>
-    <span class="text-xs text-gov-gray-500">{{ stepper.completed_count }} / {{ stepper.total }} مكتملة</span>
-  </div>
 
-  <!-- Next recommended action -->
-  <div class="rounded-lg p-3 mb-3 text-sm flex items-center justify-between gap-3"
-       style="background:#EAF3EF;border:1px solid #CFE3DA;color:#0F5D46;">
-    <span><i class="fas fa-arrow-left ms-1"></i> الخطوة التالية: {{ stepper.next_action.title }}</span>
-    <a href="{% url stepper.next_action.action_url_name %}" data-busy="جارٍ فتح الخطوة..."
-       class="whitespace-nowrap font-semibold underline">{{ stepper.next_action.action_label }}</a>
-  </div>
-
-  {% comment %}Desktop: grouped horizontal compact stepper{% endcomment %}
-  <div class="ct-stepper-horizontal hidden md:block">
-    {% for g in stepper.groups %}
-    <div class="mb-2">
-      <div class="text-xs font-semibold text-gov-green-700 mb-1">{{ g.title }}</div>
-      <div class="flex flex-wrap gap-2">
-        {% for s in g.stages %}
-        <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs border"
-              style="{% if s.status == 'completed' %}background:#EAF3EF;border-color:#CFE3DA;color:#0F5D46;
-                     {% elif s.status == 'current' %}background:#FFFFFF;border-color:#0F5D46;color:#0F5D46;
-                     {% elif s.status == 'needs_action' %}background:#FBF6EC;border-color:#E6D7B8;color:#7A5B16;
-                     {% elif s.status == 'locked' %}background:#F4F1EA;border-color:#E5DCC8;color:#9aa4b2;
-                     {% else %}background:#F7F9F8;border-color:#D8E1DD;color:#667085;{% endif %}">
-          <i class="fas {% if s.status == 'completed' %}fa-circle-check{% elif s.status == 'locked' %}fa-lock{% elif s.status == 'current' %}fa-location-arrow{% elif s.status == 'needs_action' %}fa-circle-exclamation{% else %}fa-circle{% endif %}"></i>
-          {{ s.order }}. {{ s.title }}
-        </span>
-        {% endfor %}
-      </div>
+  {% comment %}Slim header row: title · current stage · progress · count — always visible.{% endcomment %}
+  <div class="flex items-center gap-3 flex-wrap">
+    <h2 class="text-gov-green-800 font-bold text-sm shrink-0">مسار عمل الشركة</h2>
+    <span class="text-xs text-gov-gray-500 shrink-0">الخطوة التالية: <span class="text-gov-green-700 font-semibold">{{ stepper.next_action.title }}</span></span>
+    <div class="flex-1 min-w-[120px] h-2 rounded-full bg-gov-gray-100 overflow-hidden" aria-hidden="true">
+      <div class="h-full rounded-full transition-all duration-500"
+           style="width:{% widthratio stepper.completed_count stepper.total 100 %}%;background:linear-gradient(90deg,#356a54,#3b7a66);"></div>
     </div>
-    {% endfor %}
+    <span class="text-xs font-medium text-gov-gray-500 shrink-0">{{ stepper.completed_count }} / {{ stepper.total }}</span>
+    <a href="{% url stepper.next_action.action_url_name %}" data-busy="جارٍ فتح الخطوة..."
+       class="shrink-0 text-xs font-semibold text-white bg-gov-green-700 hover:bg-gov-green-800 rounded-lg px-3 py-1.5 transition">
+      {{ stepper.next_action.action_label }}
+    </a>
   </div>
 
-  {% comment %}Mobile: vertical timeline{% endcomment %}
-  <ol class="ct-stepper-vertical md:hidden space-y-2">
-    {% for s in stepper.stages %}
-    <li class="flex items-start gap-2">
-      <span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-            style="{% if s.status == 'completed' %}background:#0F5D46;color:#fff;
-                   {% elif s.status == 'current' %}background:#EAF3EF;color:#0F5D46;border:1px solid #0F5D46;
-                   {% elif s.status == 'needs_action' %}background:#FBF6EC;color:#7A5B16;
-                   {% elif s.status == 'locked' %}background:#F4F1EA;color:#9aa4b2;
-                   {% else %}background:#F4F1EA;color:#667085;{% endif %}">{{ s.order }}</span>
-      <div class="min-w-0">
-        <p class="text-sm text-gov-gray-800">{{ s.title }}</p>
-        <p class="text-xs {% if s.status == 'current' %}text-gov-green-700{% elif s.status == 'locked' %}text-gov-gray-400{% else %}text-gov-gray-500{% endif %}">
-          {% if s.status == 'locked' %}يتطلب اشتراكًا فعالًا{% else %}{{ s.status_label }}{% endif %}
-        </p>
-      </div>
-    </li>
-    {% endfor %}
-  </ol>
+  {% comment %}Collapsible detail: full journey, hidden by default so the page task stays the hero.{% endcomment %}
+  <details class="mt-2 group">
+    <summary class="list-none cursor-pointer text-xs text-gov-gray-500 hover:text-gov-green-700 inline-flex items-center gap-1 select-none">
+      <i class="fas fa-chevron-down text-[0.65rem] transition-transform group-open:rotate-180"></i>
+      عرض كل المراحل
+    </summary>
+
+    {% comment %}Desktop: compact numbered-circle strip — all steps fit, no scrollbar. Title on hover; click navigates.{% endcomment %}
+    <div class="hidden md:flex flex-wrap items-center gap-y-3 mt-3 pt-3 border-t border-gov-gray-100">
+      {% for s in stepper.stages %}
+      {% if not forloop.first %}<span class="w-5 h-px bg-gov-gray-200 shrink-0" aria-hidden="true"></span>{% endif %}
+      {% if s.status == 'locked' %}
+      <span class="grid place-items-center w-8 h-8 rounded-full text-xs font-bold shrink-0 cursor-not-allowed"
+            title="{{ s.order }}. {{ s.title }} — مقفل (يتطلب اشتراكًا فعّالًا)"
+            style="background:#F4F1EA;color:#9aa4b2;border:1px solid #E5DCC8;">
+        <i class="fas fa-lock text-[0.65rem]"></i>
+      </span>
+      {% else %}
+      <a href="{% url s.action_url_name %}" data-busy="جارٍ فتح الخطوة..."
+         title="{{ s.order }}. {{ s.title }} — {{ s.status_label }} (انقر للانتقال)"
+         class="grid place-items-center w-8 h-8 rounded-full text-xs font-bold shrink-0 transition hover:scale-110"
+         style="{% if s.status == 'completed' %}background:#2a5646;color:#fff;border:1px solid #2a5646;
+                {% elif s.status == 'current' %}background:#fff;color:#2a5646;border:2px solid #2a5646;box-shadow:0 0 0 3px rgba(42,86,70,.15);
+                {% elif s.status == 'needs_action' %}background:#f1eadb;color:#8a6a1f;border:1px solid #dcc79a;
+                {% else %}background:#F7F9F8;color:#8a8c82;border:1px solid #e3e1d9;{% endif %}">
+        {% if s.status == 'completed' %}<i class="fas fa-check text-[0.7rem]"></i>{% else %}{{ s.order }}{% endif %}
+      </a>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {% comment %}Mobile: vertical timeline — rows are clickable (locked ones are not).{% endcomment %}
+    <ol class="ct-stepper-vertical md:hidden space-y-1 mt-3 pt-3 border-t border-gov-gray-100">
+      {% for s in stepper.stages %}
+      <li>
+        {% if s.status == 'locked' %}
+        <div class="flex items-start gap-2 p-2 rounded-lg">
+          <span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style="background:#F4F1EA;color:#9aa4b2;">{{ s.order }}</span>
+          <div class="min-w-0"><p class="text-sm text-gov-gray-800">{{ s.title }}</p><p class="text-xs text-gov-gray-400">يتطلب اشتراكًا فعالًا</p></div>
+        </div>
+        {% else %}
+        <a href="{% url s.action_url_name %}" data-busy="جارٍ فتح الخطوة..." class="flex items-start gap-2 p-2 rounded-lg hover:bg-gov-gray-50 transition">
+          <span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                style="{% if s.status == 'completed' %}background:#2a5646;color:#fff;
+                       {% elif s.status == 'current' %}background:#EAF3EF;color:#2a5646;border:1px solid #2a5646;
+                       {% elif s.status == 'needs_action' %}background:#f1eadb;color:#8a6a1f;
+                       {% else %}background:#F4F1EA;color:#5b5c53;{% endif %}">{{ s.order }}</span>
+          <div class="min-w-0">
+            <p class="text-sm text-gov-gray-800">{{ s.title }}</p>
+            <p class="text-xs {% if s.status == 'current' %}text-gov-green-700{% else %}text-gov-gray-500{% endif %}">{{ s.status_label }}</p>
+          </div>
+        </a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </details>
 </div>
 {% endif %}

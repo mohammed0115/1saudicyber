@@ -220,7 +220,67 @@ class AuditLog(models.Model):
     class Meta:
         db_table = 'audit_logs'
         ordering = ['-created_at']
+        indexes = [models.Index(fields=['company', '-created_at'])]   # DD: per-tenant audit trail
 
     def __str__(self):
         who = self.user.email if self.user else 'anonymous'
         return f"{who} {self.method} {self.path} [{self.status_code}]"
+
+
+class UserInvite(models.Model):
+    """DD-fix (commercial) — invite a teammate to a company with a role.
+
+    A company_admin/admin invites an email; an accept link (token) lets the invitee set a
+    password and join that company with the chosen role. Tenant-scoped: the invite carries
+    the inviter's company, so acceptance can never join a different tenant.
+    """
+    STATUS_CHOICES = [('pending', 'Pending'), ('accepted', 'Accepted'), ('cancelled', 'Cancelled')]
+
+    company = models.ForeignKey('Company', on_delete=models.CASCADE, related_name='invites')
+    email = models.EmailField()
+    role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, default='compliance_officer')
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    invited_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='sent_invites')
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'user_invites'
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['company', 'status'])]
+
+    def is_valid(self):
+        from django.utils import timezone
+        return self.status == 'pending' and self.expires_at > timezone.now()
+
+
+class Notification(models.Model):
+    """In-app notification for any user (company, auditor, or platform admin).
+
+    Complements the existing email side-effects with a persistent, in-app inbox +
+    unread badge. Created via core.notify_services.notify(...). Read-only history;
+    never carries a compliance decision.
+    """
+    KIND_CHOICES = [
+        ('rfi', 'RFI'), ('finding', 'Finding'), ('assignment', 'Assignment'),
+        ('verdict', 'Verdict'), ('message', 'Message'), ('payment', 'Payment'),
+        ('report', 'Report'), ('system', 'System'),
+    ]
+    recipient = models.ForeignKey('User', on_delete=models.CASCADE, related_name='notifications')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES, default='system')
+    title = models.CharField(max_length=200)
+    body = models.CharField(max_length=500, blank=True)
+    url = models.CharField(max_length=300, blank=True)  # relative link to the related item
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'notifications'
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['recipient', 'is_read'])]
+
+    def __str__(self):
+        return f"{self.recipient_id}: {self.title[:40]}"

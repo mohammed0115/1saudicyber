@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}دعوة غير صالحة - 1SaudiCyber{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto text-center py-16">
+  <i class="fas fa-link-slash text-gov-gray-300 text-5xl mb-4"></i>
+  <h1 class="text-xl font-bold text-gov-green-800">هذه الدعوة غير صالحة أو منتهية</h1>
+  <p class="text-gov-gray-600 text-sm mt-2">اطلب من مدير منشأتك إرسال دعوة جديدة.</p>
+  <a href="{% url 'core:login' %}" class="inline-block mt-5 text-gov-green-700 hover:text-gov-green-900 font-medium text-sm">العودة لتسجيل الدخول</a>
+</div>
+{% endblock %}

@@ -1,5 +1,16 @@
 {% extends "base.html" %}
 {% block title %}تصنيف الشركة - 1SaudiCyber{% endblock %}
+{% block extra_head %}
+<style>
+  /* Selectable question cards */
+  .ct-check-card{transition:border-color .15s, background-color .15s, box-shadow .15s;}
+  .ct-check-card input[type=checkbox]{width:1.2rem;height:1.2rem;accent-color:#356a54;cursor:pointer;}
+  .ct-check-card:hover{border-color:#9cbfb2;background:#f6faf8;}
+  .ct-check-card:has(input:checked){border-color:#3b7a66;background:#EAF3EF;box-shadow:0 0 0 1px #3b7a66 inset;}
+  .ct-check-card .ct-tick{opacity:0;transition:opacity .15s;}
+  .ct-check-card:has(input:checked) .ct-tick{opacity:1;}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto space-y-6">
@@ -18,31 +29,32 @@
         {% endfor %}
     {% endif %}
 
-    <form method="post" data-busy="جارٍ حفظ البيانات..." class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-5">
+    <form method="post" data-busy="جارٍ حفظ البيانات..." class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-3">
         {% csrf_token %}
         {% if form.non_field_errors %}
             <div class="text-red-600 text-sm">{{ form.non_field_errors }}</div>
         {% endif %}
         {% for field in form %}
         {% if field.field.widget.input_type == 'checkbox' %}
-        {# Yes/no answers keep the compact checkbox-beside-label layout. #}
-        <div class="border-b border-gov-gray-100 pb-4" data-field="{{ field.name }}">
-            <label class="flex items-start gap-3 cursor-pointer text-right">
+        {# Yes/no answers as full-width selectable cards. #}
+        <div data-field="{{ field.name }}">
+            <label class="ct-check-card flex items-start gap-3 cursor-pointer rounded-xl border border-gov-gray-200 p-4">
                 <span class="pt-0.5 shrink-0">{{ field }}</span>
-                <span class="min-w-0">
+                <span class="min-w-0 flex-1">
                     <span class="block text-sm font-medium text-gov-gray-800">{{ field.label }}</span>
                     {% if field.help_text %}
-                        <span class="block text-xs text-gov-gray-500 mt-1">{{ field.help_text }}</span>
+                        <span class="block text-xs text-gov-gray-500 mt-1 leading-relaxed">{{ field.help_text }}</span>
                     {% endif %}
                     {% if field.errors %}
                         <span class="block text-xs text-red-600 mt-1">{{ field.errors|striptags }}</span>
                     {% endif %}
                 </span>
+                <span class="ct-tick shrink-0 self-center text-gov-green-600"><i class="fas fa-circle-check"></i></span>
             </label>
         </div>
         {% else %}
         {# Selects / text / textarea: label above a full-width bordered input (RTL). #}
-        <div class="border-b border-gov-gray-100 pb-4 text-right" data-field="{{ field.name }}">
+        <div class="rounded-xl border border-gov-gray-200 p-4 text-right" data-field="{{ field.name }}">
             <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gov-gray-800 mb-1">{{ field.label }}</label>
             {% if field.help_text %}
                 <span class="block text-xs text-gov-gray-500 mb-2">{{ field.help_text }}</span>

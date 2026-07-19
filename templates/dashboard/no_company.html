@@ -1,33 +1,30 @@
 {% extends "base.html" %}
-{% block title %}{% if user.is_staff or user.is_superuser %}Get Solution Staff{% else %}Account status{% endif %} - 1SaudiCyber{% endblock %}
+{% block title %}{% if user.is_staff or user.is_superuser %}موظّف شركة احصل الحل{% else %}حالة الحساب{% endif %} - 1SaudiCyber{% endblock %}
 {% block content %}
-<div class="max-w-xl mx-auto text-center py-20 px-4">
+<div dir="rtl" class="max-w-xl mx-auto text-center py-20 px-4" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   {% if user.is_staff or user.is_superuser %}
     {# Get Solution staff/admin opened a customer compliance page without a company context. #}
     <i class="fas fa-building-shield text-gov-green-700 text-5xl mb-6"></i>
-    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">You are signed in as Get Solution staff</h2>
-    <p class="text-gov-gray-600 mb-2">Use the CRM console to view companies and operations.</p>
-    <p class="text-gov-gray-500 mb-6" dir="rtl">أنت مسجّل الدخول كموظّف لدى شركة احصل الحل. استخدم وحدة CRM لعرض الشركات.</p>
+    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">أنت مسجّل الدخول كموظّف لدى شركة احصل الحل</h2>
+    <p class="text-gov-gray-600 mb-6">استخدم وحدة CRM لعرض الشركات والعمليات.</p>
     <a href="{% url 'platform_admin:dashboard' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
-      <i class="fas fa-table-columns mr-2"></i> Get Solution CRM
+      <i class="fas fa-table-columns mr-2"></i> وحدة CRM — شركة احصل الحل
     </a>
   {% elif user.auditor_profile %}
     {# An auditor account landed on a company page — point to the auditor portal. #}
     <i class="fas fa-user-shield text-gov-green-700 text-5xl mb-6"></i>
-    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">Auditor account</h2>
-    <p class="text-gov-gray-600 mb-2">This action requires a different portal. Use the auditor portal to view your assigned files.</p>
-    <p class="text-gov-gray-500 mb-6" dir="rtl">هذا حساب مدقّق. استخدم بوابة المدقّق لعرض الملفات المسندة إليك.</p>
+    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">حساب مدقّق</h2>
+    <p class="text-gov-gray-600 mb-6">يتطلب هذا الإجراء بوابة مختلفة. استخدم بوابة المدقّق لعرض الملفات المسندة إليك.</p>
     <a href="{% url 'auditors:dashboard' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
-      <i class="fas fa-clipboard-check mr-2"></i> Auditor portal · بوابة المدقّق
+      <i class="fas fa-clipboard-check mr-2"></i> بوابة المدقّق
     </a>
   {% else %}
     {# Normal account not linked to any company. #}
     <i class="fas fa-building text-gov-gray-300 text-5xl mb-6"></i>
-    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">This account is not linked to a company</h2>
-    <p class="text-gov-gray-600 mb-2">No company is linked to your account. Please contact Get Solution support.</p>
-    <p class="text-gov-gray-500 mb-6" dir="rtl">لا توجد شركة مرتبطة بحسابك. يرجى التواصل مع دعم شركة احصل الحل.</p>
+    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">هذا الحساب غير مرتبط بأي شركة</h2>
+    <p class="text-gov-gray-600 mb-6">لا توجد شركة مرتبطة بحسابك. يرجى التواصل مع دعم شركة احصل الحل.</p>
     <a href="{% url 'core:landing' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
-      <i class="fas fa-home mr-2"></i> Back to Home
+      <i class="fas fa-home mr-2"></i> العودة إلى الرئيسية
     </a>
   {% endif %}
 </div>

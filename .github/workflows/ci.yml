@@ -1,0 +1,56 @@
+# DD-fix — Continuous Integration: run Django checks + the full test suite on every push/PR.
+name: CI
+
+on:
+  push:
+    branches: [ main, cybertrust-execution ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      DEBUG: "True"                 # dev-mode for the test run (SQLite, no external services)
+      DJANGO_SECRET_KEY: "ci-only-insecure-key-not-for-production-use-1234567890"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install system deps (OCR/PDF)
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr poppler-utils
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Migration drift check
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run test suite
+        run: python manage.py test --parallel --verbosity 1
+
+  deploy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Django deploy checklist (production settings)
+        env:
+          DEBUG: "False"
+          DJANGO_SECRET_KEY: "ci-only-strong-secret-key-with-enough-length-and-entropy-9f3a7c1e"
+          ALLOWED_HOSTS: "example.com"
+        run: python manage.py check --deploy

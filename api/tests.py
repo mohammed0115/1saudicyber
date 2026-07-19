@@ -48,3 +48,60 @@ class EvidenceAnalyzeIsolationTests(TestCase):
 
     def test_anonymous_denied(self):
         self.assertEqual(self.client.post(self.url).status_code, 401)
+
+
+class ApiEndpointCoverageTests(TestCase):
+    """DD-fix: broaden API coverage (was near-untested) — auth, tenant scope, JWT."""
+
+    def _register(self, cr, email):
+        payload = {'company_name': f'Co{cr}', 'cr_number': cr, 'sector': 'technology',
+                   'size': 'small', 'email': email, 'password': 'longenough12',
+                   'first_name': 'A', 'last_name': 'B', 'target_nca': True}
+        r = self.client.post('/api/v1/register/', data=payload, content_type='application/json')
+        self.assertEqual(r.status_code, 201, r.content)
+        return {'HTTP_AUTHORIZATION': f"Bearer {r.json()['access']}"}, r.json()
+
+    def setUp(self):
+        make_framework_with_controls('NCA_ECC', 3)
+        self.auth, self.reg = self._register('6666666666', 'apicov@x.com')
+
+    def test_controls_list_requires_auth(self):
+        self.assertEqual(self.client.get('/api/v1/controls/').status_code, 401)
+
+    def test_controls_list_returns_data_for_authed(self):
+        r = self.client.get('/api/v1/controls/', **self.auth)
+        self.assertEqual(r.status_code, 200)
+
+    def test_control_detail_and_404(self):
+        from compliance.models import Control
+        cid = Control.objects.first().id
+        self.assertEqual(self.client.get(f'/api/v1/controls/{cid}/', **self.auth).status_code, 200)
+        self.assertEqual(self.client.get('/api/v1/controls/99999/', **self.auth).status_code, 404)
+
+    def test_classify_requires_auth(self):
+        self.assertEqual(self.client.post('/api/v1/classify/').status_code, 401)
+
+    def test_gap_analysis_requires_auth(self):
+        self.assertEqual(self.client.get('/api/v1/gap-analysis/').status_code, 401)
+
+    def test_dashboards_require_auth(self):
+        for path in ('/api/v1/dashboard/executive/', '/api/v1/dashboard/compliance/',
+                     '/api/v1/monitoring/scores/', '/api/v1/monitoring/alerts/'):
+            self.assertEqual(self.client.get(path).status_code, 401, path)
+
+    def test_dashboards_ok_for_authed(self):
+        for path in ('/api/v1/dashboard/executive/', '/api/v1/dashboard/compliance/'):
+            self.assertEqual(self.client.get(path, **self.auth).status_code, 200, path)
+
+    def test_jwt_refresh_flow(self):
+        r = self.client.post('/api/v1/token/refresh/',
+                             data={'refresh': self.reg['refresh']}, content_type='application/json')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('access', r.json())
+
+    def test_register_rejects_bad_cr(self):
+        r = self.client.post('/api/v1/register/', content_type='application/json',
+                             data={'company_name': 'X', 'cr_number': 'abc', 'sector': 'technology',
+                                   'size': 'small', 'email': 'bad@x.com', 'password': 'longenough12',
+                                   'first_name': 'A', 'last_name': 'B', 'target_nca': True})
+        self.assertEqual(r.status_code, 400)

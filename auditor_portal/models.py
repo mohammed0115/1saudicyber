@@ -3,13 +3,12 @@ Auditor Portal Models - Audit sessions, notes, findings
 """
 from django.db import models
 from core.models import Company, User
-from compliance.models import Assessment, CompanyControl
 
 
 class AuditorNote(models.Model):
     """Notes added by auditor during review."""
-    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='auditor_notes')
-    company_control = models.ForeignKey(CompanyControl, on_delete=models.CASCADE, related_name='auditor_portal_notes')
+    assessment = models.ForeignKey('compliance.Assessment', on_delete=models.CASCADE, related_name='auditor_notes')
+    company_control = models.ForeignKey('compliance.CompanyControl', on_delete=models.CASCADE, related_name='auditor_portal_notes')
     auditor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audit_notes')
     note = models.TextField()
     is_finding = models.BooleanField(default=False)
@@ -41,8 +40,8 @@ class DocumentRequest(models.Model):
     PRIORITY_CHOICES = [('low', 'Low'), ('medium', 'Medium'), ('high', 'High')]
     OPEN_STATES = ('open', 'pending', 'responded', 'under_review')
 
-    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='document_requests')
-    company_control = models.ForeignKey(CompanyControl, on_delete=models.CASCADE, related_name='document_requests')
+    assessment = models.ForeignKey('compliance.Assessment', on_delete=models.CASCADE, related_name='document_requests')
+    company_control = models.ForeignKey('compliance.CompanyControl', on_delete=models.CASCADE, related_name='document_requests')
     auditor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='document_requests')
     title = models.CharField(max_length=200, blank=True)
     description = models.TextField()
@@ -70,6 +69,8 @@ class CompanyRFIResponse(models.Model):
     response_text = models.TextField()
     linked_evidence = models.ForeignKey('compliance.Evidence', on_delete=models.SET_NULL,
                                         null=True, blank=True, related_name='rfi_responses')
+    # Optional file the company attaches directly to its RFI response.
+    attachment = models.FileField(upload_to='rfi_responses/%Y/%m/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -93,15 +94,29 @@ class AuditorControlVerdict(models.Model):
         ('not_applicable', 'Not Applicable'),
     ]
     IMPACT_CHOICES = [('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')]
+    # G1 — framework-native implementation/maturity level (feeds the domain compliance %).
+    IMPLEMENTATION_CHOICES = [
+        ('not_implemented', 'Not Implemented'),
+        ('partially_implemented', 'Partially Implemented'),
+        ('implemented', 'Implemented'),
+        ('not_applicable', 'Not Applicable'),
+    ]
+    IMPLEMENTATION_AR = {
+        'not_implemented': 'غير مطبّق', 'partially_implemented': 'مطبّق جزئيًا',
+        'implemented': 'مطبّق', 'not_applicable': 'لا ينطبق',
+    }
+    # Weight for the maturity/compliance % (not_applicable is excluded from the denominator).
+    IMPLEMENTATION_WEIGHT = {'implemented': 1.0, 'partially_implemented': 0.5, 'not_implemented': 0.0}
     # Statuses that count as a completed internal review of the control.
     REVIEWED_STATES = ('compliant', 'partially_compliant', 'non_compliant',
                        'needs_more_evidence', 'not_applicable')
 
-    assessment = models.ForeignKey(Assessment, on_delete=models.CASCADE, related_name='control_verdicts')
-    company_control = models.ForeignKey(CompanyControl, on_delete=models.CASCADE, related_name='auditor_verdicts')
+    assessment = models.ForeignKey('compliance.Assessment', on_delete=models.CASCADE, related_name='control_verdicts')
+    company_control = models.ForeignKey('compliance.CompanyControl', on_delete=models.CASCADE, related_name='auditor_verdicts')
     auditor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name='control_verdicts')
     status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='not_reviewed')
+    implementation_level = models.CharField(max_length=25, choices=IMPLEMENTATION_CHOICES, blank=True)
     rationale = models.TextField(blank=True)
     recommendation = models.TextField(blank=True)
     impact = models.CharField(max_length=10, choices=IMPACT_CHOICES, blank=True)
@@ -116,10 +131,14 @@ class AuditorControlVerdict(models.Model):
     def is_reviewed(self):
         return self.status in self.REVIEWED_STATES
 
+    @property
+    def implementation_level_ar(self):
+        return self.IMPLEMENTATION_AR.get(self.implementation_level, self.implementation_level)
+
 
 class AuditReport(models.Model):
     """Final audit report submitted by auditor."""
-    assessment = models.OneToOneField(Assessment, on_delete=models.CASCADE, related_name='final_report')
+    assessment = models.OneToOneField('compliance.Assessment', on_delete=models.CASCADE, related_name='final_report')
     auditor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audit_reports')
     verdict = models.CharField(max_length=25, choices=[
         ('pass', 'Pass'), ('conditional_pass', 'Conditional Pass'), ('fail', 'Fail'),
@@ -132,3 +151,107 @@ class AuditReport(models.Model):
 
     class Meta:
         db_table = 'audit_reports'
+
+
+class AuditFinding(models.Model):
+    """G2 — a recorded non-conformity/observation from an auditor's control review.
+
+    A verdict is the overall control decision; a FINDING is a specific gap with a
+    severity that drives a corrective-action (CAPA) lifecycle. Internal readiness
+    review only — never an official NCA/Aramco/SABIC certification.
+    """
+    SEVERITY_CHOICES = [
+        ('major_nc', 'Major Non-Conformity'),
+        ('minor_nc', 'Minor Non-Conformity'),
+        ('observation', 'Observation'),
+        ('ofi', 'Opportunity For Improvement'),
+    ]
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_remediation', 'In Remediation'),
+        ('reverify', 'Pending Re-verification'),
+        ('closed', 'Closed'),
+        ('reopened', 'Reopened'),
+    ]
+    OPEN_STATES = ('open', 'in_remediation', 'reverify', 'reopened')
+    SEVERITY_AR = {'major_nc': 'عدم مطابقة رئيسي', 'minor_nc': 'عدم مطابقة ثانوي',
+                   'observation': 'ملاحظة', 'ofi': 'فرصة تحسين'}
+    STATUS_AR = {'open': 'مفتوح', 'in_remediation': 'قيد التصحيح', 'reverify': 'بانتظار إعادة التحقّق',
+                 'closed': 'مُغلق', 'reopened': 'أُعيد فتحه'}
+
+    assessment = models.ForeignKey('compliance.Assessment', on_delete=models.CASCADE, related_name='audit_findings')
+    company_control = models.ForeignKey('compliance.CompanyControl', on_delete=models.CASCADE, related_name='audit_findings')
+    auditor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='raised_findings')
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    root_cause = models.TextField(blank=True)
+    evidence_reference = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'audit_findings'
+        ordering = ['-created_at']
+
+    @property
+    def severity_ar(self):
+        return self.SEVERITY_AR.get(self.severity, self.severity)
+
+    @property
+    def status_ar(self):
+        return self.STATUS_AR.get(self.status, self.status)
+
+    @property
+    def is_open(self):
+        return self.status in self.OPEN_STATES
+
+
+class CorrectiveAction(models.Model):
+    """G2 — a CAPA entry: how the company remediates a finding (owner + due date),
+    and the auditor's re-verification outcome."""
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('in_progress', 'In Progress'),
+        ('done', 'Done (awaiting re-test)'),
+        ('verified', 'Verified'),
+    ]
+    STATUS_AR = {'planned': 'مُخطّط', 'in_progress': 'قيد التنفيذ',
+                 'done': 'مُنجز (بانتظار إعادة الاختبار)', 'verified': 'تم التحقّق'}
+
+    finding = models.ForeignKey(AuditFinding, on_delete=models.CASCADE, related_name='corrective_actions')
+    description = models.TextField()
+    owner = models.CharField(max_length=160, blank=True)   # company-side responsible party
+    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+    verification_note = models.TextField(blank=True)       # auditor re-test note
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='corrective_actions')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'corrective_actions'
+        ordering = ['due_date', 'created_at']
+
+    @property
+    def status_ar(self):
+        return self.STATUS_AR.get(self.status, self.status)
+
+
+class CompanyMessage(models.Model):
+    """G5 — lightweight in-app message on a company's engagement thread.
+
+    Participants (enforced in the view via messaging.can_access_thread): the company's
+    own users, its ACCEPTED assigned auditor(s), and platform staff. Internal
+    communication only — not an official record or certification artefact.
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='thread_messages')
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='sent_thread_messages')
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'company_messages'
+        ordering = ['created_at']

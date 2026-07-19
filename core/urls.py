@@ -50,4 +50,10 @@ urlpatterns = [
         success_url=reverse_lazy('core:password_reset_complete')), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='core/password_reset_complete.html'), name='password_reset_complete'),
+
+    # DD-fix (commercial) — team invites / user management
+    path('team/', views.team_view, name='team'),
+    path('notifications/', views.notifications_inbox, name='notifications_inbox'),
+    path('notifications/<int:note_id>/open/', views.notification_open, name='notification_open'),
+    path('invite/<str:token>/', views.accept_invite_view, name='accept_invite'),
 ]

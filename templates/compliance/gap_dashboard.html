@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}تحليل الفجوات · Gap Analysis - 1SaudiCyber{% endblock %}
+{% block title %}تحليل الفجوات - 1SaudiCyber{% endblock %}
 {% block content %}
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div class="max-w-5xl mx-auto px-4 py-6 space-y-6">
 
     <div>
-      <p class="text-gov-green-700 font-semibold text-sm mb-1">تحليل الفجوات الأولي · Preliminary gap analysis</p>
-      <h1 class="text-2xl font-bold text-gov-green-800">الجاهزية الداخلية · Internal readiness</h1>
+      <p class="text-gov-green-700 font-semibold text-sm mb-1">تحليل الفجوات الأولي</p>
+      <h1 class="text-2xl font-bold text-gov-green-800">الجاهزية الداخلية</h1>
       <p class="text-gov-gray-600 text-sm mt-1">{{ company.name_ar|default:company.name }}</p>
     </div>
 
@@ -15,7 +15,6 @@
       <i class="fas fa-circle-info"></i>
       هذه نتيجة <strong>جاهزية داخلية أولية مبنية على الأدلة</strong> ومحسوبة آليًا بقواعد حتمية — وتتطلب مراجعة بشرية.
       لا تُعد شهادة امتثال رسمية ولا اعتمادًا من أي جهة.
-      <span class="block text-xs text-amber-700 mt-1">Evidence-based preliminary internal readiness — requires human review. Not an official certification.</span>
     </div>
 
     {% if messages %}{% for m in messages %}
@@ -26,9 +25,9 @@
     <form method="post" action="{% url 'compliance:run_gap_recalc' %}" data-smart-processing>
       {% csrf_token %}
       <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium text-sm">
-        <i class="fas fa-rotate mr-1"></i> إعادة حساب تحليل الفجوات · Recalculate gap analysis
+        <i class="fas fa-rotate mr-1"></i> إعادة حساب تحليل الفجوات
       </button>
-      {% if summary.calculated_at %}<span class="text-xs text-gov-gray-500 ms-3">آخر حساب · Last calculated: {{ summary.calculated_at|date:"Y-m-d H:i" }}</span>{% endif %}
+      {% if summary.calculated_at %}<span class="text-xs text-gov-gray-500 ms-3">آخر حساب: {{ summary.calculated_at|date:"Y-m-d H:i" }}</span>{% endif %}
     </form>
     {% include "components/smart_processing.html" %}
 
@@ -37,7 +36,6 @@
       <i class="fas fa-chart-simple text-3xl text-gov-gray-300 mb-3"></i>
       <p>لم يتم حساب الجاهزية بعد، أو لا توجد ضوابط منطبقة بعد.</p>
       <p class="text-sm text-gov-gray-500 mt-1">اعتمد الأطر وولّد خطة الضوابط ثم ارفع الأدلة، ثم اضغط «إعادة حساب تحليل الفجوات».</p>
-      <p class="text-xs text-gov-gray-400 mt-1">No readiness calculated yet, or no applicable controls. Approve frameworks, build the control plan, upload evidence, then recalculate.</p>
     </div>
     {% else %}
 
@@ -45,27 +43,27 @@
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-center">
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
         <div class="text-2xl font-bold text-gov-green-800">{{ summary.overall_readiness_percent }}%</div>
-        <div class="text-xs text-gov-gray-500 mt-1">الجاهزية · Readiness</div></div>
+        <div class="text-xs text-gov-gray-500 mt-1">الجاهزية</div></div>
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
         <div class="text-2xl font-bold text-gov-green-700">{{ summary.overall.compliant }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">جاهز · Compliant</div></div>
+        <div class="text-xs text-gov-gray-500 mt-1">جاهز</div></div>
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
-        <div class="text-2xl font-bold text-blue-700">{{ summary.overall.partially_compliant }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">جزئي · Partial</div></div>
+        <div class="text-2xl font-bold text-gov-gray-700">{{ summary.overall.partially_compliant }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">جزئي</div></div>
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
         <div class="text-2xl font-bold text-red-700">{{ summary.overall.missing }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">مفقود · Missing</div></div>
+        <div class="text-xs text-gov-gray-500 mt-1">مفقود</div></div>
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
         <div class="text-2xl font-bold text-amber-600">{{ summary.overall.needs_review }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">مراجعة · Needs review</div></div>
+        <div class="text-xs text-gov-gray-500 mt-1">مراجعة</div></div>
       <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
         <div class="text-2xl font-bold text-gov-gray-500">{{ summary.overall.not_applicable }}</div>
-        <div class="text-xs text-gov-gray-500 mt-1">غير منطبق · N/A</div></div>
+        <div class="text-xs text-gov-gray-500 mt-1">غير منطبق</div></div>
     </div>
 
     {# Per-framework readiness #}
     <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
-      <h2 class="font-bold text-gov-green-800 mb-3">جاهزية الأطر · Framework readiness</h2>
+      <h2 class="font-bold text-gov-green-800 mb-3">جاهزية الأطر</h2>
       <div class="space-y-3">
         {% for fw in summary.frameworks %}
         <div>
@@ -86,16 +84,35 @@
 
     {# Per-control gap list #}
     <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm overflow-hidden">
-      <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">الضوابط والحالة · Controls &amp; status</div>
+      <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold flex items-center justify-between gap-3 flex-wrap">
+        <span>الضوابط والحالة</span>
+        <form method="get" class="flex items-center gap-2">
+          <select name="status" aria-label="تصفية حسب الحالة" onchange="this.form.submit()" class="text-xs border border-gov-gray-300 rounded-lg px-2 py-1.5 bg-white text-gov-gray-700">
+            <option value="">كل الحالات</option>
+            <option value="missing" {% if sel_status == 'missing' %}selected{% endif %}>مفقود</option>
+            <option value="needs_review" {% if sel_status == 'needs_review' %}selected{% endif %}>يحتاج مراجعة</option>
+            <option value="partially_compliant" {% if sel_status == 'partially_compliant' %}selected{% endif %}>ممتثل جزئيًا</option>
+            <option value="compliant" {% if sel_status == 'compliant' %}selected{% endif %}>ممتثل</option>
+            <option value="not_applicable" {% if sel_status == 'not_applicable' %}selected{% endif %}>غير منطبق</option>
+          </select>
+          {% if fw_codes %}
+          <select name="framework" aria-label="تصفية حسب الإطار" onchange="this.form.submit()" class="text-xs border border-gov-gray-300 rounded-lg px-2 py-1.5 bg-white text-gov-gray-700">
+            <option value="">كل الأطر</option>
+            {% for fw in fw_codes %}<option value="{{ fw }}" {% if sel_fw == fw %}selected{% endif %}>{{ fw }}</option>{% endfor %}
+          </select>
+          {% endif %}
+          {% if sel_status or sel_fw %}<a href="{% url 'compliance:gap_dashboard' %}" class="text-xs text-gov-gray-500 hover:underline">مسح</a>{% endif %}
+        </form>
+      </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="text-gov-gray-500">
             <tr>
-              <th class="text-right px-4 py-2">الضابط · Control</th>
-              <th class="text-right px-4 py-2">الحالة الأولية · Preliminary status</th>
-              <th class="text-right px-4 py-2">الأدلة · Evidence</th>
-              <th class="text-right px-4 py-2">نص · Text</th>
-              <th class="text-right px-4 py-2">السبب · Reason</th>
+              <th class="text-right px-4 py-2">الضابط</th>
+              <th class="text-right px-4 py-2">الحالة الأولية</th>
+              <th class="text-right px-4 py-2">الأدلة</th>
+              <th class="text-right px-4 py-2">نص</th>
+              <th class="text-right px-4 py-2">السبب</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gov-gray-100">
@@ -105,16 +122,16 @@
               <td class="px-4 py-2">
                 <span class="text-xs px-2.5 py-1 rounded-full font-medium
                   {% if r.status == 'compliant' %}bg-green-100 text-green-800
-                  {% elif r.status == 'partially_compliant' %}bg-blue-100 text-blue-800
+                  {% elif r.status == 'partially_compliant' %}bg-gov-gray-200 text-gov-gray-700
                   {% elif r.status == 'missing' %}bg-red-100 text-red-800
                   {% elif r.status == 'needs_review' %}bg-amber-100 text-amber-800
-                  {% else %}bg-gray-100 text-gray-600{% endif %}">{{ r.get_status_display }}</span>
+                  {% else %}bg-gov-gray-100 text-gov-gray-600{% endif %}">{{ r.get_status_display }}</span>
               </td>
               <td class="px-4 py-2 text-gov-gray-600">{{ r.evidence_count }}</td>
               <td class="px-4 py-2 text-gov-gray-600">{{ r.extracted_text_available_count }}</td>
               <td class="px-4 py-2 text-gov-gray-600">
                 {{ r.reason }}
-                {% if r.status == 'missing' %}<a href="{% url 'compliance:evidence_checklist' %}" class="text-gov-green-700 hover:underline whitespace-nowrap">· رفع الأدلة · Upload evidence</a>{% endif %}
+                {% if r.status == 'missing' %}<a href="{% url 'compliance:evidence_checklist' %}" class="text-gov-green-700 hover:underline whitespace-nowrap">· رفع الأدلة</a>{% endif %}
               </td>
             </tr>
             {% endfor %}

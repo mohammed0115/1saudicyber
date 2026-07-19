@@ -27,18 +27,31 @@ def controls_list(request):
 
     selected_framework = request.GET.get('framework', '')
     selected_domain = request.GET.get('domain', '')
+    search_q = request.GET.get('q', '').strip()
 
     controls = Control.objects.select_related('framework', 'domain')
     if selected_framework:
         controls = controls.filter(framework__code=selected_framework)
     if selected_domain:
         controls = controls.filter(domain_id=selected_domain)
+    if search_q:
+        from django.db.models import Q
+        controls = controls.filter(
+            Q(control_id__icontains=search_q) | Q(title__icontains=search_q)
+            | Q(title_ar__icontains=search_q))
 
     # Get company control statuses
     company_controls = {
         cc.control_id: cc for cc in
         CompanyControl.objects.filter(company=company).select_related('control')
     }
+
+    # F-UIUX: attach the REAL per-control status so the list's Status column is live
+    # (it previously rendered a fixed "Not Started"/"Pending" pill for every row).
+    controls = list(controls)
+    for c in controls:
+        cc = company_controls.get(c.id)
+        c.company_status = cc.status if cc else 'not_started'
 
     # Populate filters from frameworks/domains that ACTUALLY have controls, so the
     # dropdowns can never appear empty while the library holds controls (Manus 8D-2).
@@ -57,6 +70,7 @@ def controls_list(request):
         'company_controls': company_controls,
         'selected_framework': selected_framework,
         'selected_domain': selected_domain,
+        'search_q': search_q,
         'has_filter_options': frameworks.exists() or domains.exists(),
     }
     from .journey import build_page_guide
@@ -65,8 +79,14 @@ def controls_list(request):
 
 
 @login_required
+@company_portal_required
 def control_detail(request, control_id):
-    """View a specific control and its evidence."""
+    """View a specific control and its evidence.
+
+    F-AUDIT SEC2: requires a linked company. Previously @login_required only, so a
+    staff/auditor/unlinked account (company is None) hit get_or_create(company=None)
+    and 500'd; this also adds the missing tenant guard (company users only).
+    """
     control = get_object_or_404(Control, id=control_id)
     company = request.user.company
 
@@ -376,7 +396,7 @@ def auditor_verdict_view(request, submission_id):
     only). Company users may view their own but never submit. Internal decision only —
     never a certificate; never finalizes reports.
     """
-    from .models import EvidenceSubmission
+    from .models import EvidenceSubmission, AuditorFinalVerdict
     from .auditor_verdict import (can_view_submission_review, can_submit_final_verdict,
                                   allowed_statuses_for, record_auditor_final_verdict, VerdictError)
     sub = EvidenceSubmission.objects.filter(id=submission_id).first()
@@ -409,7 +429,9 @@ def auditor_verdict_view(request, submission_id):
         'rule_evaluation': getattr(sub, 'rule_evaluation', None),
         'verdict': getattr(sub, 'auditor_final_verdict', None),
         'can_submit': can_submit,
-        'allowed_statuses': allowed_statuses_for(sub),
+        # F-UIUX: pass (code, Arabic-label) pairs so the dropdown never shows raw codes.
+        'allowed_status_choices': [
+            (s, AuditorFinalVerdict.STATUS_AR.get(s, s)) for s in allowed_statuses_for(sub)],
     })
 
 
@@ -492,16 +514,26 @@ def intake_wizard(request):
             from .models import CompanyFrameworkScope
             invalidated = CompanyFrameworkScope.objects.filter(
                 company=company, status='approved').update(status='needs_review')
+            # F-AUDIT R1: soft-invalidate controls whose framework is no longer applicable
+            # (de-scope stale ControlApplicabilityResult -> not_applicable). No deletes, so
+            # uploaded evidence + auditor verdicts are preserved.
+            from .framework_scope import reconcile_scope_after_reclassification
+            reconciled = reconcile_scope_after_reclassification(company)
             # UAT-7: audit the intake change (best-effort; never blocks the save).
             try:
                 from core.models import AuditLog
                 AuditLog.objects.create(user=request.user, company=company, action='intake_saved',
                                         method='POST', path=request.path,
-                                        metadata={'scopes_invalidated': invalidated})
+                                        metadata={'scopes_invalidated': invalidated, **reconciled})
             except Exception:
                 pass
             if invalidated:
                 messages.info(request, 'تم تحديث الإدخال؛ يلزم إعادة اعتماد نطاق الأطر قبل المتابعة.')
+            if reconciled['controls_descoped']:
+                messages.info(
+                    request,
+                    'تحدّث النطاق: %d ضابط لم يعد منطبقًا وأُزيل من حسابات الجاهزية (لم تُحذف أي أدلة).'
+                    % reconciled['controls_descoped'])
             messages.success(request, 'تم حفظ ملف التصنيف وتحديد الأطر المنطبقة.')
             return redirect('compliance:applicability_review')
     else:
@@ -929,6 +961,24 @@ def evidence_submission_list(request, item_id):
         'item': item, 'submissions': item.submissions.all()})
 
 
+# F-AUDIT E4 (display-only): Arabic labels + tone for AuditorFinalVerdict.status, shown on
+# the evidence-detail page so the compliance judgment is distinct from the file `status`.
+_VERDICT_AR = {
+    'final_c': 'مطابق', 'final_compliance': 'مطابق',
+    'final_pc': 'مطابق جزئيًا',
+    'final_nc': 'غير مطابق', 'final_noncompliance': 'غير مطابق',
+    'final_na': 'لا ينطبق', 'final_not_applicable': 'لا ينطبق',
+    'needs_more_evidence': 'يتطلب أدلة إضافية',
+}
+_VERDICT_TONE = {
+    'final_c': 'green', 'final_compliance': 'green',
+    'final_pc': 'amber',
+    'final_nc': 'red', 'final_noncompliance': 'red',
+    'final_na': 'gray', 'final_not_applicable': 'gray',
+    'needs_more_evidence': 'amber',
+}
+
+
 @login_required
 @company_portal_required
 def evidence_submission_detail(request, submission_id):
@@ -942,9 +992,40 @@ def evidence_submission_detail(request, submission_id):
     sub = get_object_or_404(EvidenceSubmission, id=submission_id, company=request.user.company)
     analysis = getattr(sub, 'analysis', None)
     extraction = getattr(sub, 'text_extraction', None)
+    # F-AUDIT E4 (display-only): the file `status` is a FILE-lifecycle field ("was the
+    # file reviewed/accepted"), NOT the compliance judgment — that lives in
+    # AuditorFinalVerdict. Surface the compliance verdict here so "مقبول" (file accepted)
+    # is never misread as "مطابق" (compliant). No logic/model change.
+    verdict = getattr(sub, 'auditor_final_verdict', None)
+    verdict_ar = _VERDICT_AR.get(getattr(verdict, 'status', None)) if verdict else None
+    verdict_tone = _VERDICT_TONE.get(getattr(verdict, 'status', None), 'gray') if verdict else None
     return render(request, 'compliance/evidence_submission_detail.html',
                   {'submission': sub, 'analysis': analysis, 'extraction': extraction,
-                   'can_analyze': request.user.is_staff})
+                   'can_analyze': request.user.is_staff,
+                   'verdict': verdict, 'verdict_ar': verdict_ar, 'verdict_tone': verdict_tone})
+
+
+@login_required
+def download_evidence_file(request, submission_id):
+    """F-AUDIT S1: authenticated, tenant-scoped download of an evidence file.
+
+    Evidence must never be fetched through a raw, unauthenticated /media/ URL — a guessable
+    path (evidence_v2/YYYY/MM/<name>) would otherwise leak another tenant's files. Access is
+    limited to the owning company, a platform admin, or the assigned auditor — the same set
+    allowed to view the review (reuses can_view_submission_review). This is also the auditor's
+    only way to actually open the evidence they judge. A non-owner / unknown id returns a safe
+    404 (never reveals existence). In production /media/evidence* should be served internal-only
+    (e.g. nginx X-Accel-Redirect); this view is the sole authorized in-app entry point.
+    """
+    from django.http import FileResponse, Http404
+    from .models import EvidenceSubmission
+    from .auditor_verdict import can_view_submission_review
+    sub = EvidenceSubmission.objects.filter(id=submission_id).first()
+    if sub is None or not can_view_submission_review(request.user, sub) or not sub.uploaded_file:
+        raise Http404()
+    return FileResponse(
+        sub.uploaded_file.open('rb'), as_attachment=True,
+        filename=sub.original_filename or sub.uploaded_file.name.rsplit('/', 1)[-1])
 
 
 # ============================================================
@@ -1153,11 +1234,21 @@ def gap_dashboard(request):
     """Read-only internal readiness dashboard for the user's company."""
     from .gap_engine import get_company_gap_summary, gap_rows, STATUS_AR
     company = request.user.company
+    rows = gap_rows(company)
+    # Read-only filters (status + framework) — narrow the list without touching the summary.
+    sel_status = request.GET.get('status', '')
+    sel_fw = request.GET.get('framework', '')
+    if sel_status:
+        rows = [r for r in rows if r.status == sel_status]
+    if sel_fw:
+        rows = [r for r in rows if getattr(r.framework_version, 'code', '') == sel_fw]
+    fw_codes = sorted({getattr(r.framework_version, 'code', '') for r in gap_rows(company) if r.framework_version_id})
     return render(request, 'compliance/gap_dashboard.html', {
         'company': company,
         'summary': get_company_gap_summary(company),
-        'rows': gap_rows(company),
+        'rows': rows,
         'status_ar': STATUS_AR,
+        'sel_status': sel_status, 'sel_fw': sel_fw, 'fw_codes': fw_codes,
     })
 
 
@@ -1345,3 +1436,49 @@ def export_evidence_matrix_xlsx(request):
     resp['Content-Disposition'] = 'attachment; filename="evidence_matrix.xlsx"'
     wb.save(resp)
     return resp
+
+
+@login_required
+@company_portal_required
+def auditor_review_status(request):
+    """Company-facing UNIFIED auditor-review status: assigned auditor, verdict
+    distribution, reviewed/remaining controls, open RFIs, recent verdicts — in one
+    place. Read-only: the company can view but never alter the auditor's verdict.
+    """
+    company = request.user.company
+    if not company:
+        return render(request, 'dashboard/no_company.html')
+
+    from auditors.models import AuditorAssignment
+    from auditor_portal.models import AuditorControlVerdict, DocumentRequest
+    from auditor_portal.workspace import review_workspace_summary
+
+    assignment = (AuditorAssignment.objects
+                  .filter(company=company, status__in=('requested', 'accepted', 'completed'))
+                  .select_related('auditor', 'auditor__user').order_by('-requested_at').first())
+
+    assessment = (Assessment.objects.filter(company=company, assigned_auditor__isnull=False)
+                  .order_by('-created_at').first()
+                  or Assessment.objects.filter(company=company).order_by('-created_at').first())
+
+    summary = review_workspace_summary(assessment) if assessment else None
+
+    recent_verdicts = []
+    open_rfis = []
+    if assessment:
+        recent_verdicts = list(
+            AuditorControlVerdict.objects.filter(assessment=assessment)
+            .exclude(status='not_reviewed')
+            .select_related('company_control__control').order_by('-updated_at')[:8])
+        open_rfis = list(
+            DocumentRequest.objects.filter(assessment=assessment,
+                                           status__in=DocumentRequest.OPEN_STATES)
+            .select_related('company_control__control').order_by('-created_at')[:8])
+
+    return render(request, 'compliance/auditor_review_status.html', {
+        'assignment': assignment,
+        'assessment': assessment,
+        'summary': summary,
+        'recent_verdicts': recent_verdicts,
+        'open_rfis': open_rfis,
+    })

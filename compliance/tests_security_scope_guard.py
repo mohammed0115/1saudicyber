@@ -6,7 +6,9 @@ from django.test import TestCase
 from django.urls import reverse
 
 from core.models import User, Company, AuditLog
-from compliance.models import (Evidence, CompanyFrameworkScope, Framework, FrameworkVersion)
+from compliance.models import (Evidence, CompanyFrameworkScope, Framework, FrameworkVersion,
+                               Domain, Control, ControlApplicabilityResult, FrameworkApplicabilityResult)
+from compliance.framework_scope import reconcile_scope_after_reclassification
 from compliance.tests import (_company_with_control, _journey_user, _company_with_submission)
 
 
@@ -123,3 +125,68 @@ class ScopeApprovalGuardTests(TestCase):
         scope = CompanyFrameworkScope.objects.create(company=c, framework_version=fv, status='proposed')
         res = generate_evidence_checklist_for_framework_scope(scope, apply=True)
         self.assertEqual(res['status'], 'skipped')         # not approved -> no checklist generated
+
+
+class ReclassificationReconcileTests(TestCase):
+    """F-AUDIT R1: re-classification soft-invalidates controls whose framework no longer
+    applies (decision -> not_applicable), never deleting evidence or auditor verdicts."""
+
+    def _fw(self, fwcode, fvcode):
+        fw = Framework.objects.get_or_create(code=fwcode, defaults={'name': fwcode})[0]
+        fv = FrameworkVersion.objects.get_or_create(code=fvcode, defaults={'framework': fw})[0]
+        return fw, fv
+
+    def _control(self, fw, fv, cid):
+        dom = Domain.objects.get_or_create(framework=fw, name='D', defaults={'code': 'D'})[0]
+        return Control.objects.create(framework=fw, framework_version=fv, domain=dom,
+                                      control_id=cid, title=cid, description='x',
+                                      is_legacy_import=False)
+
+    def test_descopes_only_the_no_longer_applicable_framework(self):
+        c = _other_company()
+        fwA, fvA = self._fw('NCA', 'NCA-ECC-2-2024')     # becomes not_applicable
+        fwB, fvB = self._fw('SACS', 'ARAMCO-SACS-002')   # stays applicable
+        scopeA = CompanyFrameworkScope.objects.create(company=c, framework_version=fvA, status='approved')
+        scopeB = CompanyFrameworkScope.objects.create(company=c, framework_version=fvB, status='approved')
+        carA = ControlApplicabilityResult.objects.create(
+            company=c, framework_scope=scopeA, control=self._control(fwA, fvA, 'A-1'), decision='applicable')
+        carB = ControlApplicabilityResult.objects.create(
+            company=c, framework_scope=scopeB, control=self._control(fwB, fvB, 'B-1'), decision='applicable')
+        FrameworkApplicabilityResult.objects.create(company=c, framework_version=fvA, decision='not_applicable')
+        FrameworkApplicabilityResult.objects.create(company=c, framework_version=fvB, decision='applicable')
+
+        res = reconcile_scope_after_reclassification(c)
+
+        carA.refresh_from_db(); carB.refresh_from_db()
+        scopeA.refresh_from_db(); scopeB.refresh_from_db()
+        self.assertEqual(carA.decision, 'not_applicable')   # de-scoped -> drops from readiness
+        self.assertEqual(scopeA.status, 'rejected')
+        self.assertEqual(carB.decision, 'applicable')       # still-applicable framework untouched
+        self.assertEqual(scopeB.status, 'approved')
+        self.assertEqual(res, {'frameworks_descoped': 1, 'controls_descoped': 1})
+
+    def test_preserves_manual_override_and_is_idempotent(self):
+        c = _other_company()
+        fwA, fvA = self._fw('NCA', 'NCA-ECC-2-2024')
+        scopeA = CompanyFrameworkScope.objects.create(company=c, framework_version=fvA, status='approved')
+        car = ControlApplicabilityResult.objects.create(
+            company=c, framework_scope=scopeA, control=self._control(fwA, fvA, 'A-1'), decision='applicable')
+        carM = ControlApplicabilityResult.objects.create(
+            company=c, framework_scope=scopeA, control=self._control(fwA, fvA, 'A-2'), decision='manually_overridden')
+        FrameworkApplicabilityResult.objects.create(company=c, framework_version=fvA, decision='not_applicable')
+
+        reconcile_scope_after_reclassification(c)
+        car.refresh_from_db(); carM.refresh_from_db()
+        self.assertEqual(car.decision, 'not_applicable')
+        self.assertEqual(carM.decision, 'manually_overridden')   # manual override preserved (not touched)
+
+        res2 = reconcile_scope_after_reclassification(c)         # already-rejected scope is skipped
+        self.assertEqual(res2, {'frameworks_descoped': 0, 'controls_descoped': 0})
+
+    def test_no_op_when_nothing_became_not_applicable(self):
+        c = _other_company()
+        fwA, fvA = self._fw('NCA', 'NCA-ECC-2-2024')
+        CompanyFrameworkScope.objects.create(company=c, framework_version=fvA, status='approved')
+        FrameworkApplicabilityResult.objects.create(company=c, framework_version=fvA, decision='applicable')
+        self.assertEqual(reconcile_scope_after_reclassification(c),
+                         {'frameworks_descoped': 0, 'controls_descoped': 0})

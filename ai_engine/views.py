@@ -7,7 +7,6 @@ from django.http import JsonResponse
 from django.utils import timezone
 from .services import classify_company, generate_gap_analysis
 from .models import AIClassificationLog, GapAnalysis
-from compliance.models import CompanyControl
 from core.roles import company_portal_required
 
 

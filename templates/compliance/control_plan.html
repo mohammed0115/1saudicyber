@@ -69,7 +69,7 @@
                     <td class="px-4 py-2 font-mono text-xs">{{ r.control.control_id }}</td>
                     <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.control.framework_version.code }}</td>
                     <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.control.domain.name|domain_ar }}</td>
-                    <td class="px-4 py-2 text-gov-gray-700" dir="ltr">{{ r.control.title|normalize_en|truncatechars:70 }}</td>
+                    <td class="px-4 py-2 text-gov-gray-700">{% if r.control.title_ar %}{{ r.control.title_ar|truncatechars:70 }}{% else %}<span dir="ltr">{{ r.control.title|normalize_en|truncatechars:70 }}</span>{% endif %}</td>
                     <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-gov-green-100 text-gov-green-800 text-xs">{% if r.decision == 'applicable' %}منطبق{% elif r.decision == 'not_applicable' %}غير منطبق{% else %}{{ r.get_decision_display }}{% endif %}</span></td>
                     <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.reason }}</td>
                 </tr>
@@ -81,7 +81,7 @@
         <div class="px-4 py-2">{% include "components/pagination.html" %}</div>
     </div>
 
-    <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
+    <div class="bg-gov-gray-100 border border-gov-gray-200 text-gov-gray-700 rounded-lg p-4 text-sm">
         <i class="fas fa-lock"></i>
         متطلبات الأدلة وقائمة الرفع ستُولَّد في مرحلة لاحقة.
     </div>

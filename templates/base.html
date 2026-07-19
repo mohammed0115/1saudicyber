@@ -10,31 +10,38 @@
             theme: {
                 extend: {
                     colors: {
+                        /* Calm "Sakinah" palette — muted pine (was vivid/clashing greens). */
                         'gov-green': {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            200: '#bbf7d0',
-                            300: '#86efac',
-                            400: '#4ade80',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#1a4731',
-                            900: '#14532d',
-                            950: '#0a2e1a',
+                            50: '#eff4f1',
+                            100: '#e1ece7',
+                            200: '#c4d9d0',
+                            300: '#9ec2b3',
+                            400: '#6fa48f',
+                            500: '#4c8a72',
+                            600: '#3d7961',
+                            700: '#356a54',
+                            800: '#2a5646',
+                            900: '#1f4135',
+                            950: '#12271f',
                         },
+                        /* Warm greige neutrals (was cold blue-grays). */
                         'gov-gray': {
-                            50: '#f9fafb',
-                            100: '#f3f4f6',
-                            200: '#e5e7eb',
-                            300: '#d1d5db',
-                            400: '#9ca3af',
-                            500: '#6b7280',
-                            600: '#4b5563',
-                            700: '#374151',
-                            800: '#1f2937',
-                            900: '#111827',
-                        }
+                            50: '#f6f5f1',
+                            100: '#efede7',
+                            200: '#e3e1d9',
+                            300: '#cfcdc3',
+                            400: '#a8a79c',
+                            500: '#797a70',
+                            600: '#5b5c53',
+                            700: '#42433c',
+                            800: '#2b2c27',
+                            900: '#1a1b17',
+                        },
+                        /* Muted semantics + sand accent, separate from the brand hue. */
+                        'gov-sand': '#b49a6a',
+                        'gov-ok': '#4e9c7f',
+                        'gov-warn': '#c08a3e',
+                        'gov-crit': '#b4675c',
                     },
                     fontFamily: {
                         'sans': ['Inter', 'Noto Sans Arabic', 'sans-serif'],
@@ -49,9 +56,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', 'Noto Sans Arabic', sans-serif; }
-        .gradient-gov { background: linear-gradient(135deg, #1a4731 0%, #14532d 50%, #0a2e1a 100%); }
+        .gradient-gov { background: linear-gradient(135deg, #2a5646 0%, #1f4135 50%, #12271f 100%); }
         .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-        .score-ring { background: conic-gradient(#16a34a var(--score), #e5e7eb var(--score)); }
+        .score-ring { background: conic-gradient(#3b7a66 var(--score), #e3e1d9 var(--score)); }
+
+        /* ── Site-wide form polish (Sakinah). Bare inputs get this baseline; Tailwind
+           utility classes still override per-element, so styled inputs are untouched. ── */
+        input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=submit]):not([type=button]),
+        select, textarea {
+            border: 1px solid #d3d6ca; border-radius: 12px; padding: 10px 14px;
+            background: #ffffff; color: #26302b; font-family: inherit; font-size: 0.92rem;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        input:not([type=checkbox]):not([type=radio]):not([type=file]):focus-visible,
+        select:focus-visible, textarea:focus-visible,
+        input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,
+        select:focus, textarea:focus {
+            outline: none; border-color: #3b7a66; box-shadow: 0 0 0 3px rgba(59,122,102,.15);
+        }
+        input::placeholder, textarea::placeholder { color: #a8a79c; }
+        /* Buttons & links: smooth, accessible focus ring everywhere. */
+        button, a, [role="button"], summary { transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+        a:focus-visible, button:focus-visible, [role="button"]:focus-visible, summary:focus-visible {
+            outline: 2px solid #3b7a66; outline-offset: 2px; border-radius: 6px;
+        }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
@@ -74,6 +103,9 @@
                     <a href="{% url 'platform_admin:auditor_list' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المدققون" %}</a>
                     {% elif user.role == 'auditor' %}
                     <a href="{% url 'auditors:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة المدقق" %}</a>
+                    <a href="{% url 'auditor_portal:review_queue' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "طابور المراجعة" %}</a>
+                    <a href="{% url 'auditor_portal:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مساحة مراجعة الأدلة" %}</a>
+                    <a href="{% url 'auditors:onboarding' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الملف الشخصي" %}</a>
                     {% else %}
                     <a href="{% url 'dashboard:main' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة التحكم" %}</a>
                     <a href="{% url 'compliance:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مسار الامتثال" %}</a>
@@ -83,10 +115,20 @@
                     <a href="{% url 'monitoring:overview' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المراقبة" %}</a>
                     <details class="relative">
                         <summary class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer list-none">{% trans "المزيد" %} <i class="fas fa-chevron-down text-xs"></i></summary>
-                        <div class="absolute end-0 mt-2 w-52 bg-gov-green-800 rounded-lg shadow-xl p-2 z-50">
+                        <div class="absolute end-0 mt-2 w-56 bg-gov-green-800 rounded-lg shadow-xl p-2 z-50">
                             <a href="{% url 'compliance:controls_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
                             <a href="{% url 'compliance:control_plan' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
+                            <a href="{% url 'compliance:gap_dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
+                            <a href="{% url 'risk:list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
+                            <div class="border-t border-gov-green-700 my-1"></div>
+                            <a href="{% url 'compliance:auditor_review_status' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "حالة مراجعة المدقّق" %}</a>
+                            <a href="{% url 'auditor_portal:company_findings' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "ملاحظات التدقيق" %}</a>
+                            <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
+                            {% if user.company_id %}<a href="{% url 'auditor_portal:message_thread' user.company_id %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراسلة" %}</a>{% endif %}
                             <a href="{% url 'compliance:auditor_review_queue' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراجعة" %}</a>
+                            <div class="border-t border-gov-green-700 my-1"></div>
+                            <a href="{% url 'billing:home' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
+                            {% if user.role == 'company_admin' %}<a href="{% url 'core:team' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "فريق العمل" %}</a>{% endif %}
                         </div>
                     </details>
                     {% endif %}
@@ -100,22 +142,39 @@
                         <span class="text-gov-green-400">|</span>
                         <button type="submit" name="language" value="en" class="px-1 {% if LANGUAGE_CODE != 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">English</button>
                     </form>
+                    <a href="{% url 'core:notifications_inbox' %}" class="relative text-gov-green-100 hover:text-white px-1" title="{% trans 'الإشعارات' %}" aria-label="{% trans 'الإشعارات' %}{% if nav_unread %} ({{ nav_unread }} غير مقروء){% endif %}">
+                        <i class="fas fa-bell text-lg" aria-hidden="true"></i>
+                        {% if nav_unread %}<span class="absolute -top-1 -end-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[0.6rem] font-bold flex items-center justify-center">{{ nav_unread }}</span>{% endif %}
+                    </a>
                     <span class="hidden sm:inline text-gov-green-200 text-sm truncate max-w-[140px]">{{ user.get_full_name|default:user.username }}</span>
                     <a href="{% url 'core:logout' %}" class="text-gov-green-200 hover:text-white text-sm whitespace-nowrap"><i class="fas fa-sign-out-alt"></i> {% trans "تسجيل الخروج" %}</a>
                     <details class="md:hidden relative">
-                        <summary class="text-white cursor-pointer list-none px-1"><i class="fas fa-bars text-lg"></i></summary>
+                        <summary class="text-white cursor-pointer list-none px-1" role="button" aria-label="{% trans 'القائمة' %}"><i class="fas fa-bars text-lg" aria-hidden="true"></i></summary>
                         <div class="absolute end-0 mt-2 w-56 bg-gov-green-800 rounded-lg shadow-xl p-2 z-50">
+                            {% if user.is_staff or user.is_superuser %}
+                            <a href="{% url 'platform_admin:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "Get Solution CRM" %}</a>
+                            <a href="{% url 'platform_admin:companies_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الشركات" %}</a>
+                            <a href="{% url 'platform_admin:auditor_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المدققون" %}</a>
+                            {% elif user.role == 'auditor' %}
+                            <a href="{% url 'auditors:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "لوحة المدقق" %}</a>
+                            <a href="{% url 'auditor_portal:review_queue' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "طابور المراجعة" %}</a>
+                            <a href="{% url 'auditor_portal:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "مساحة مراجعة الأدلة" %}</a>
+                            <a href="{% url 'auditors:onboarding' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الملف الشخصي" %}</a>
+                            {% else %}
                             <a href="{% url 'dashboard:main' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "لوحة التحكم" %}</a>
                             <a href="{% url 'compliance:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "مسار الامتثال" %}</a>
                             <a href="{% url 'compliance:intake' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "التصنيف" %}</a>
                             <a href="{% url 'compliance:applicability_review' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الأطر" %}</a>
                             <a href="{% url 'compliance:control_plan' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
                             <a href="{% url 'compliance:evidence_checklist' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الأدلة" %}</a>
-                            <a href="{% url 'compliance:auditor_review_queue' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراجعة" %}</a>
+                            <a href="{% url 'compliance:gap_dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
+                            <a href="{% url 'risk:list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
+                            <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
                             <a href="{% url 'compliance:reports_index' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "التقارير" %}</a>
                             <a href="{% url 'monitoring:overview' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراقبة" %}</a>
                             <a href="{% url 'compliance:controls_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
-                            {% if user.role == 'auditor' %}<a href="{% url 'auditors:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "لوحة المدقق" %}</a>{% endif %}
+                            <a href="{% url 'billing:home' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
+                            {% endif %}
                             <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-2 px-3 py-2 border-t border-gov-green-700 mt-1">
                                 {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
                                 <button type="submit" name="language" value="ar" class="text-sm {% if LANGUAGE_CODE == 'ar' %}text-white font-bold{% else %}text-gov-green-100{% endif %}">العربية</button>
@@ -150,7 +209,7 @@
     {% if messages %}
     <div class="max-w-7xl mx-auto px-4 mt-4">
         {% for message in messages %}
-        <div class="rounded-lg p-4 mb-2 {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+        <div class="rounded-lg p-4 mb-2 {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-gov-gray-100 text-gov-gray-700 border border-gov-gray-200{% endif %}">
             <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
             {{ message }}
         </div>
@@ -167,11 +226,11 @@
     <!-- Footer -->
     <footer class="bg-gov-green-950 text-gov-green-200 py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-            <p>&copy; {% now "Y" %} 1SaudiCyber (1saudicyber.com). AI-Powered Cybersecurity Compliance Platform.</p>
+            <p>&copy; {% now "Y" %} 1SaudiCyber (1saudicyber.com) — منصّة امتثال الأمن السيبراني المدعومة بالذكاء الاصطناعي.</p>
             <p class="mt-1"><a href="{% url 'core:privacy' %}" class="hover:text-white">{% trans "سياسة الخصوصية" %}</a>
                <span class="mx-2 text-gov-green-600">|</span>
                <a href="{% url 'core:terms' %}" class="hover:text-white">{% trans "شروط الاستخدام" %}</a></p>
-            <p class="mt-1 text-gov-green-400">Aligned with NCA ECC, Aramco SACS-002, SABIC CyberTrust Standards</p>
+            <p class="mt-1 text-gov-green-400" dir="rtl">متوافقة مع معايير الهيئة الوطنية للأمن السيبراني (NCA ECC) وأرامكو (SACS-002) وسابك (CyberTrust).</p>
         </div>
     </footer>
     {% endif %}
@@ -181,12 +240,12 @@
     <div id="ct-busy-overlay" aria-live="polite" aria-hidden="true"
          style="display:none;position:fixed;inset:0;z-index:60;background:rgba(31,41,51,0.45);
                 align-items:center;justify-content:center;">
-        <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:14px;padding:28px 36px;
+        <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:28px 36px;
                     box-shadow:0 8px 30px rgba(31,41,51,0.12);text-align:center;min-width:240px;">
             <div style="margin:0 auto 14px;width:38px;height:38px;border-radius:50%;
-                        border:3px solid #D8E1DD;border-top-color:#0F5D46;animation:ct-spin 0.9s linear infinite;"></div>
-            <p id="ct-busy-msg" style="color:#1F2933;font-size:0.95rem;margin:0;">جارٍ المعالجة...</p>
-            <p style="color:#667085;font-size:0.8rem;margin:6px 0 0;">يرجى الانتظار، قد تستغرق هذه الخطوة لحظات.</p>
+                        border:3px solid #e3e1d9;border-top-color:#2a5646;animation:ct-spin 0.9s linear infinite;"></div>
+            <p id="ct-busy-msg" style="color:#2b2c27;font-size:0.95rem;margin:0;">جارٍ المعالجة...</p>
+            <p style="color:#5b5c53;font-size:0.8rem;margin:6px 0 0;">يرجى الانتظار، قد تستغرق هذه الخطوة لحظات.</p>
         </div>
     </div>
     <style>@keyframes ct-spin{to{transform:rotate(360deg)}}</style>

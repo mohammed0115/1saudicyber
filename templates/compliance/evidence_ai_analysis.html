@@ -6,26 +6,26 @@
   <div style="max-width:920px;margin:0 auto;padding:8px 4px 28px;">
 
     <div style="margin-bottom:14px;">
-      <p style="color:#1F6B63;font-weight:600;margin:0 0 4px;">{% trans "التحليل الاستشاري للذكاء الاصطناعي" %}</p>
-      <h1 dir="auto" style="color:#1F2933;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;unicode-bidi:plaintext;">{{ submission|display_evidence_filename }}</h1>
-      <p style="color:#667085;font-size:.9rem;margin:0;">{{ submission.checklist_item.evidence_requirement.title }}</p>
+      <p style="color:#356a54;font-weight:600;margin:0 0 4px;">{% trans "التحليل الاستشاري للذكاء الاصطناعي" %}</p>
+      <h1 dir="auto" style="color:#2b2c27;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;unicode-bidi:plaintext;">{{ submission|display_evidence_filename }}</h1>
+      <p style="color:#5b5c53;font-size:.9rem;margin:0;">{{ submission.checklist_item.evidence_requirement.title }}</p>
     </div>
 
     {# Disclaimer #}
-    <div style="background:#FBF6EC;border:1px solid #E6D7B8;border-radius:12px;padding:12px 16px;margin-bottom:18px;color:#7A5B16;font-size:.9rem;">
+    <div style="background:#f1eadb;border:1px solid #dcc79a;border-radius:12px;padding:12px 16px;margin-bottom:18px;color:#8a6a1f;font-size:.9rem;">
       <i class="fas fa-circle-info ms-1"></i> {% trans "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال." %}
       {% trans "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق." %}
     </div>
 
     {% if not can_run %}
     {# Honest, specific reason: extraction gate OR AI-service state (residency / no key). #}
-    <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:18px;color:#667085;margin-bottom:18px;">
+    <div style="background:#F1F3F2;border:1px solid #e3e1d9;border-radius:12px;padding:18px;color:#5b5c53;margin-bottom:18px;">
       {{ gate_reason|default:"خدمة التحليل الاستشاري غير متاحة حاليًا." }}
       {% if ai_available %}
       {# AI service is up — the only blocker is text extraction; offer the extract action. #}
       <div style="margin-top:12px;">
         <a href="{% url 'compliance:evidence_extraction' submission.id %}"
-           style="background:#0F5D46;color:#fff;font-weight:600;padding:10px 20px;border-radius:10px;text-decoration:none;">
+           style="background:#2a5646;color:#fff;font-weight:600;padding:10px 20px;border-radius:10px;text-decoration:none;">
           {% trans "استخراج النص من الدليل" %}</a>
       </div>
       {% endif %}
@@ -34,7 +34,7 @@
     {# Run / re-run action #}
     <form method="post" action="{% url 'compliance:run_evidence_ai_analysis' submission.id %}" data-busy="جارٍ تشغيل التحليل الاستشاري..." style="margin-bottom:18px;">
       {% csrf_token %}
-      <button type="submit" style="background:#0F5D46;color:#fff;font-weight:600;padding:11px 22px;border:none;border-radius:10px;cursor:pointer;">
+      <button type="submit" style="background:#2a5646;color:#fff;font-weight:600;padding:11px 22px;border:none;border-radius:10px;cursor:pointer;">
         {% if analysis %}{% trans "إعادة تشغيل التحليل الاستشاري" %}{% else %}{% trans "تشغيل التحليل الاستشاري" %}{% endif %}
       </button>
     </form>
@@ -42,44 +42,44 @@
 
     {% if analysis and analysis.status == 'completed' %}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px;">
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:14px;">
-        <p style="color:#667085;font-size:.8rem;margin:0 0 4px;">{% trans "حالة التحليل" %}</p>
-        <p style="margin:0;font-weight:700;color:#0F5D46;">{{ analysis.status_ar }}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:14px;">
+        <p style="color:#5b5c53;font-size:.8rem;margin:0 0 4px;">{% trans "حالة التحليل" %}</p>
+        <p style="margin:0;font-weight:700;color:#2a5646;">{{ analysis.status_ar }}</p>
       </div>
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:14px;">
-        <p style="color:#667085;font-size:.8rem;margin:0 0 4px;">{% trans "مدى ارتباط الدليل بالضابط" %}</p>
-        <p style="margin:0;font-weight:600;color:#1F2933;">{{ analysis.relevance_ar }}</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:14px;">
+        <p style="color:#5b5c53;font-size:.8rem;margin:0 0 4px;">{% trans "مدى ارتباط الدليل بالضابط" %}</p>
+        <p style="margin:0;font-weight:600;color:#2b2c27;">{{ analysis.relevance_ar }}</p>
       </div>
-      <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:14px;">
-        <p style="color:#667085;font-size:.8rem;margin:0 0 4px;">{% trans "مستوى الثقة" %}</p>
-        <p style="margin:0;font-weight:600;color:#1F2933;">{{ analysis.confidence }}%</p>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:14px;">
+        <p style="color:#5b5c53;font-size:.8rem;margin:0 0 4px;">{% trans "مستوى الثقة" %}</p>
+        <p style="margin:0;font-weight:600;color:#2b2c27;">{{ analysis.confidence }}%</p>
       </div>
     </div>
 
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:14px;">
-      <h2 style="color:#0F5D46;font-weight:700;font-size:1rem;margin:0 0 8px;">{% trans "ملخص التحليل" %}</h2>
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;margin-bottom:14px;">
+      <h2 style="color:#2a5646;font-weight:700;font-size:1rem;margin:0 0 8px;">{% trans "ملخص التحليل" %}</h2>
       {% if analysis.summary %}
-      <p style="color:#1F2933;font-size:.92rem;line-height:1.8;margin:0;white-space:pre-wrap;">{{ analysis.summary }}</p>
+      <p style="color:#2b2c27;font-size:.92rem;line-height:1.8;margin:0;white-space:pre-wrap;">{{ analysis.summary }}</p>
       {% else %}
-      <p style="color:#1F2933;font-size:.92rem;line-height:1.8;margin:0;">النص المرفوع لا يحتوي على دليل مباشر كافٍ يثبت تطبيق متطلب هذا الضابط؛ قد يكون ملفًا تجريبيًا أو عامًا.</p>
+      <p style="color:#2b2c27;font-size:.92rem;line-height:1.8;margin:0;">النص المرفوع لا يحتوي على دليل مباشر كافٍ يثبت تطبيق متطلب هذا الضابط؛ قد يكون ملفًا تجريبيًا أو عامًا.</p>
       {% endif %}
       {% if analysis.confidence == 0 %}
-      <p style="color:#7A5B16;font-size:.9rem;margin:8px 0 0;">تم التحليل، لكن الدليل غير كافٍ لإثبات الامتثال لهذا الضابط.</p>
+      <p style="color:#8a6a1f;font-size:.9rem;margin:8px 0 0;">تم التحليل، لكن الدليل غير كافٍ لإثبات الامتثال لهذا الضابط.</p>
       {% endif %}
     </div>
 
     {% if analysis.matched_signals %}
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:14px;">
-      <h2 style="color:#0F5D46;font-weight:700;font-size:.98rem;margin:0 0 8px;">{% trans "إشارات مطابقة" %}</h2>
-      <ul style="margin:0;padding-inline-start:18px;color:#1F2933;font-size:.9rem;">
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;margin-bottom:14px;">
+      <h2 style="color:#2a5646;font-weight:700;font-size:.98rem;margin:0 0 8px;">{% trans "إشارات مطابقة" %}</h2>
+      <ul style="margin:0;padding-inline-start:18px;color:#2b2c27;font-size:.9rem;">
         {% for s in analysis.matched_signals %}<li style="margin:3px 0;">{{ s }}</li>{% endfor %}
       </ul>
     </div>
     {% endif %}
 
-    <div style="background:#FFF8F0;border:1px solid #E6D7B8;border-radius:12px;padding:16px;margin-bottom:14px;">
-      <h2 style="color:#7A5B16;font-weight:700;font-size:.98rem;margin:0 0 8px;">{% trans "عناصر ناقصة" %}</h2>
-      <ul style="margin:0;padding-inline-start:18px;color:#7A5B16;font-size:.9rem;">
+    <div style="background:#FFF8F0;border:1px solid #dcc79a;border-radius:12px;padding:16px;margin-bottom:14px;">
+      <h2 style="color:#8a6a1f;font-weight:700;font-size:.98rem;margin:0 0 8px;">{% trans "عناصر ناقصة" %}</h2>
+      <ul style="margin:0;padding-inline-start:18px;color:#8a6a1f;font-size:.9rem;">
         {% for m in analysis.missing_items %}<li style="margin:3px 0;">{{ m }}</li>
         {% empty %}
         <li style="margin:3px 0;">دليل محدد يثبت تطبيق المتطلب</li>
@@ -88,9 +88,9 @@
       </ul>
     </div>
 
-    <div style="background:#FFFFFF;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:14px;">
-      <h2 style="color:#0F5D46;font-weight:700;font-size:.98rem;margin:0 0 8px;">{% trans "توصيات استشارية" %}</h2>
-      <ul style="margin:0;padding-inline-start:18px;color:#1F2933;font-size:.9rem;">
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;margin-bottom:14px;">
+      <h2 style="color:#2a5646;font-weight:700;font-size:.98rem;margin:0 0 8px;">{% trans "توصيات استشارية" %}</h2>
+      <ul style="margin:0;padding-inline-start:18px;color:#2b2c27;font-size:.9rem;">
         {% for r in analysis.recommendations %}<li style="margin:3px 0;">{{ r }}</li>
         {% empty %}
         <li style="margin:3px 0;">ارفع مستندًا رسميًا يوضح الإجراء أو السياسة أو السجل المرتبط بهذا الضابط</li>
@@ -99,13 +99,13 @@
       </ul>
     </div>
     {% elif analysis and analysis.status != 'completed' %}
-    <div style="background:#F1F3F2;border:1px solid #D8E1DD;border-radius:12px;padding:16px;margin-bottom:18px;color:#667085;">
+    <div style="background:#F1F3F2;border:1px solid #e3e1d9;border-radius:12px;padding:16px;margin-bottom:18px;color:#5b5c53;">
       {% trans "حالة التحليل" %}: {{ analysis.status_ar }}{% if analysis.error_message %} — {{ analysis.error_message }}{% endif %}
     </div>
     {% endif %}
 
     <a href="{% url 'compliance:evidence_submission_detail' submission.id %}"
-       style="background:#FFFFFF;color:#1F2933;font-weight:600;padding:11px 22px;border:1px solid #D8E1DD;border-radius:10px;text-decoration:none;">
+       style="background:#FFFFFF;color:#2b2c27;font-weight:600;padding:11px 22px;border:1px solid #e3e1d9;border-radius:10px;text-decoration:none;">
       {% trans "العودة إلى تفاصيل الدليل" %}</a>
   </div>
 </div>

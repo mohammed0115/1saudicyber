@@ -11,10 +11,6 @@
       <p class="text-gov-gray-600 text-sm mt-1">منصة 1SaudiCyber مملوكة ومُدارة بواسطة شركة احصل الحل. مراجعة وتفعيل حسابات المدققين المسجّلين حديثًا.</p>
     </div>
 
-    {% if messages %}{% for m in messages %}
-      <div class="rounded-lg p-3 text-sm {% if m.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% else %}bg-green-50 border border-green-200 text-green-800{% endif %}">{{ m }}</div>
-    {% endfor %}{% endif %}
-
     {# Summary cards #}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <a href="?status=pending_review" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
@@ -24,7 +20,7 @@
         <div class="text-2xl font-bold text-gov-green-700">{{ summary.active }}</div>
         <div class="text-xs text-gov-gray-500 mt-1">مفعّل</div></a>
       <a href="?status=suspended" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
-        <div class="text-2xl font-bold text-orange-700">{{ summary.suspended }}</div>
+        <div class="text-2xl font-bold text-amber-800">{{ summary.suspended }}</div>
         <div class="text-xs text-gov-gray-500 mt-1">موقوف مؤقتًا</div></a>
       <a href="?status=inactive" class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center hover:shadow-md transition">
         <div class="text-2xl font-bold text-gov-gray-600">{{ summary.inactive }}</div>
@@ -65,7 +61,7 @@
                 <span class="text-xs px-2.5 py-1 rounded-full font-medium
                   {% if a.status == 'active' %}bg-green-100 text-green-800
                   {% elif a.status == 'pending_review' %}bg-amber-100 text-amber-800
-                  {% elif a.status == 'suspended' %}bg-orange-100 text-orange-800
+                  {% elif a.status == 'suspended' %}bg-amber-100 text-amber-800
                   {% else %}bg-gray-100 text-gray-600{% endif %}">{{ a.status|auditor_status_ar }}</span>
               </td>
               <td class="px-4 py-3 text-gov-gray-500">{{ a.created_at|date:"Y-m-d" }}</td>

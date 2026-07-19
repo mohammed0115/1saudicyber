@@ -2729,6 +2729,31 @@ def _company_with_submission(fv_code='ARAMCO-SACS-002', **subkw):
     return c, item, sub
 
 
+class EvidenceDownloadS1Tests(TestCase):
+    """F-AUDIT S1: evidence files download only through an authenticated, tenant-scoped
+    view — never a raw unauthenticated /media/ URL."""
+
+    def test_owner_can_download_own_evidence(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024', content=b'secret-policy-bytes')
+        self.client.force_login(_journey_user(c))
+        resp = self.client.get(reverse('compliance:download_evidence_file', args=[sub.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(b''.join(resp.streaming_content), b'secret-policy-bytes')
+
+    def test_other_company_cannot_download(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        other = Company.objects.create(name='OtherDL', cr_number='7777770001', sector='technology',
+                                       size='small', contact_email='odl@x.com')
+        self.client.force_login(_journey_user(other, email='dl_other@x.com'))
+        resp = self.client.get(reverse('compliance:download_evidence_file', args=[sub.id]))
+        self.assertEqual(resp.status_code, 404)   # tenant-scoped, non-enumerable
+
+    def test_anonymous_is_redirected_to_login(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        resp = self.client.get(reverse('compliance:download_evidence_file', args=[sub.id]))
+        self.assertEqual(resp.status_code, 302)
+
+
 class EvidenceAnalysisModelTests(TestCase):
     def test_evidence_analysis_result_can_be_created(self):
         c, item, sub = _company_with_submission()
@@ -3612,7 +3637,7 @@ class JourneyEmptyStateTests(TestCase):
         self.client.force_login(user)
         resp = self.client.get(reverse('compliance:evidence_checklist'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Complete Smart Classification first')
+        self.assertContains(resp, 'أكمل التصنيف الذكي أولًا')
 
     def test_auditor_review_empty_state(self):
         c = _company()
@@ -5325,6 +5350,70 @@ def _assigned_auditor_user(company, email='aud6f@x.com'):
     return u
 
 
+class EvidenceDetailVerdictDisplayTests(TestCase):
+    """F-AUDIT E4 (display-only): the evidence-detail page must show the compliance
+    verdict distinctly from the file-lifecycle status, so a non-compliant control's
+    'accepted' file is never misread as 'compliant'."""
+
+    def test_noncompliant_verdict_shown_distinct_from_file_status(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        record_auditor_final_verdict(sub, _staff_user(), status='final_nc',
+                                     rationale='ضوابط ناقصة.', confidence=70)
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'accepted')          # file lifecycle unchanged (by design)
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(
+            reverse('compliance:evidence_submission_detail', args=[sub.id])).content.decode()
+        self.assertIn('حالة مراجعة الملف', body)          # relabeled file-status
+        self.assertIn('حكم المدقق (الامتثال)', body)      # distinct compliance line
+        self.assertIn('غير مطابق', body)                  # the non-compliant verdict is surfaced
+
+    def test_no_verdict_hides_compliance_line(self):
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        self.client.force_login(_journey_user(c))
+        body = self.client.get(
+            reverse('compliance:evidence_submission_detail', args=[sub.id])).content.decode()
+        self.assertIn('حالة مراجعة الملف', body)
+        self.assertNotIn('حكم المدقق (الامتثال)', body)   # no verdict yet -> line hidden
+
+
+class VerdictStalenessR2Tests(TestCase):
+    """F-AUDIT R2: a verdict on an OLD evidence version is flagged stale (derived,
+    no migration) once a NEWER version is uploaded for the same checklist item."""
+
+    def _newer_version(self, c, item, version):
+        s = _submission(c, item, name='p%d.txt' % version)
+        s.version = version
+        s.save(update_fields=['version'])
+        return s
+
+    def test_verdict_not_stale_when_only_version(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        v = record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='ok')
+        self.assertFalse(v.is_stale)
+
+    def test_verdict_becomes_stale_after_newer_upload(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')   # version 1
+        v = record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='ok')
+        self._newer_version(c, item, 2)                                     # newer evidence arrives
+        self.assertTrue(v.is_stale)                                         # verdict now outdated
+
+    def test_report_counts_stale_separately(self):
+        from compliance.auditor_verdict import record_auditor_final_verdict
+        from compliance.report_finalization import build_auditor_reviewed_report
+        c, item, sub = _company_with_submission(fv_code='NCA-ECC-2-2024')
+        record_auditor_final_verdict(sub, _staff_user(), status='final_c', rationale='ok')
+        self._newer_version(c, item, 2)
+        rep = build_auditor_reviewed_report(c)
+        self.assertEqual(rep.reviewed_count, 1)
+        self.assertEqual(rep.stale_count, 1)
+        self.assertEqual(rep.current_reviewed_count, 0)   # the only verdict is on outdated evidence
+        self.assertTrue(rep.rows[0].is_stale)
+
+
 class AuditorVerdictServiceTests(TestCase):
     def _sub(self, fv_code='NCA-ECC-2-2024'):
         return _company_with_submission(fv_code=fv_code)
@@ -6325,7 +6414,7 @@ class EvidenceOCRMVPTests(TestCase):
         self.client.force_login(orphan)
         resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[item.id]))
         self.assertEqual(resp.status_code, 200)  # no 500
-        self.assertContains(resp, 'not linked to a company')
+        self.assertContains(resp, 'غير مرتبط بأي شركة')
 
     def test_auditor_cannot_upload_via_company_portal(self):
         from auditors.models import AuditorProfile
@@ -6337,7 +6426,7 @@ class EvidenceOCRMVPTests(TestCase):
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
         resp = self.client.get(reverse('compliance:evidence_upload_v2', args=[item.id]))
-        self.assertContains(resp, 'Auditor account', status_code=200)
+        self.assertContains(resp, 'حساب مدقّق', status_code=200)
 
     def test_upload_rejects_unsupported_type(self):
         from compliance.models import EvidenceSubmission
@@ -6379,7 +6468,7 @@ class EvidenceOCRMVPTests(TestCase):
         c, item, sub = _company_with_submission(name='e.txt', content=b'hello', ftype='txt')
         self._login_company(c, 'ocrstat@x.com')
         body = self.client.get(reverse('compliance:evidence_submission_detail', args=[sub.id])).content.decode()
-        self.assertIn('Text extraction', body)
+        self.assertIn('استخراج النص', body)
 
     # ---- CRM evidence summary ----
     def test_crm_company_detail_shows_evidence_summary(self):
@@ -6400,8 +6489,8 @@ class EvidenceOCRMVPTests(TestCase):
         self._login_company(c, 'ocranim@x.com')
         body = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id])).content.decode()
         self.assertIn('data-smart-processing', body)
-        self.assertIn('Processing evidence', body)
-        self.assertIn('Reading file', body)
+        self.assertIn('جاري تحليل الدليل', body)
+        self.assertIn('قراءة الملف', body)
 
     def test_processing_animation_no_unsafe_wording(self):
         c, item, sub = _company_with_submission(name='e.txt', content=b'x', ftype='txt')
@@ -6535,7 +6624,7 @@ class GapDashboardViewTests(TestCase):
         self._login(c, 'gapv@x.com')
         resp = self.client.get(reverse('compliance:gap_dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Internal readiness')
+        self.assertContains(resp, 'جاهزية داخلي')
 
     def test_disclaimer_and_distribution_present(self):
         from compliance.gap_engine import recalculate_company_gap
@@ -6543,9 +6632,9 @@ class GapDashboardViewTests(TestCase):
         recalculate_company_gap(c)
         self._login(c, 'gapd@x.com')
         body = self.client.get(reverse('compliance:gap_dashboard')).content.decode()
-        self.assertIn('Not an official certification', body)
-        self.assertIn('Framework readiness', body)
-        self.assertIn('Missing', body)  # status distribution card
+        self.assertIn('شهادة امتثال رسمية', body)
+        self.assertIn('جاهزية الأطر', body)
+        self.assertIn('مفقود', body)  # status distribution card
 
     def test_missing_control_links_to_evidence(self):
         from compliance.gap_engine import recalculate_company_gap
@@ -6553,7 +6642,7 @@ class GapDashboardViewTests(TestCase):
         recalculate_company_gap(c)  # no evidence -> missing rows
         self._login(c, 'gapm@x.com')
         body = self.client.get(reverse('compliance:gap_dashboard')).content.decode()
-        self.assertIn('Upload evidence', body)
+        self.assertIn('رفع الأدلة', body)
         self.assertIn(reverse('compliance:evidence_checklist'), body)
 
     def test_smart_processing_animation_present(self):
@@ -6561,7 +6650,7 @@ class GapDashboardViewTests(TestCase):
         self._login(c, 'gapa@x.com')
         body = self.client.get(reverse('compliance:gap_dashboard')).content.decode()
         self.assertIn('data-smart-processing', body)
-        self.assertIn('Processing evidence', body)
+        self.assertIn('جاري تحليل الدليل', body)
 
     def test_empty_company_dashboard_no_500(self):
         c = _company()
@@ -6600,7 +6689,7 @@ class GapDashboardViewTests(TestCase):
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
         resp = self.client.get(reverse('compliance:gap_dashboard'))
-        self.assertContains(resp, 'Auditor account', status_code=200)
+        self.assertContains(resp, 'حساب مدقّق', status_code=200)
 
     def test_staff_without_company_routed_to_crm(self):
         from core.models import User
@@ -6709,7 +6798,7 @@ class CommercialReportViewTests(TestCase):
         self.client.force_login(u)
         resp = self.client.get(reverse(self.URL))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'not linked to a company')
+        self.assertContains(resp, 'غير مرتبط بأي شركة')
 
     def test_auditor_denied(self):
         from auditors.models import AuditorProfile
@@ -6718,7 +6807,7 @@ class CommercialReportViewTests(TestCase):
                                       password='longenough12', role='auditor')
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
-        self.assertContains(self.client.get(reverse(self.URL)), 'Auditor account', status_code=200)
+        self.assertContains(self.client.get(reverse(self.URL)), 'حساب مدقّق', status_code=200)
 
     def test_staff_without_company_routed_to_crm(self):
         from core.models import User
@@ -6733,19 +6822,19 @@ class CommercialReportViewTests(TestCase):
         self._login(c, 'crc@x.com')
         body = self.client.get(reverse(self.URL)).content.decode()
         self.assertIn(c.name, body)
-        self.assertIn('Internal readiness report', body)
+        self.assertIn('تقرير جاهزية داخلي', body)
         self.assertIn('لا يُعد شهادة امتثال رسمية', body)  # safe negated disclaimer
-        self.assertIn('Not an official certification', body)
+        self.assertIn('شهادة امتثال رسمية', body)
 
     def test_report_sections_present(self):
         c, item, sub = self._prepared()
         self._login(c, 'crs@x.com')
         body = self.client.get(reverse(self.URL)).content.decode()
-        for section in ('Executive summary', 'Framework readiness', 'Evidence summary',
-                        'Gap summary', 'Risk summary', 'Remediation plan'):
+        for section in ('الملخص التنفيذي', 'جاهزية الأطر', 'ملخص الأدلة',
+                        'ملخص الفجوات', 'ملخص المخاطر', 'خطة المعالجة'):
             self.assertIn(section, body)
-        self.assertIn('Readiness', body)  # overall readiness card
-        self.assertIn('Recommended next actions', body)
+        self.assertIn('الجاهزية', body)  # overall readiness card
+        self.assertIn('الإجراءات الموصى بها', body)
 
     def test_report_empty_company_no_500(self):
         c = _company()
@@ -6770,7 +6859,7 @@ class CommercialReportViewTests(TestCase):
         self._login(c, 'cranim@x.com')
         body = self.client.get(reverse(self.URL)).content.decode()
         self.assertIn('data-smart-processing', body)
-        self.assertIn('Processing evidence', body)
+        self.assertIn('جاري تحليل الدليل', body)
 
     def test_refresh_writes_audit(self):
         from core.models import AuditLog
@@ -6861,7 +6950,7 @@ class CommercialReportPDFTests(TestCase):
         self.client.force_login(u)
         resp = self.client.get(reverse(self.URL))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'not linked to a company')
+        self.assertContains(resp, 'غير مرتبط بأي شركة')
 
     def test_auditor_denied(self):
         from auditors.models import AuditorProfile
@@ -6870,7 +6959,7 @@ class CommercialReportPDFTests(TestCase):
                                       password='longenough12', role='auditor')
         AuditorProfile.objects.create(user=au, full_name='A', status='active')
         self.client.force_login(au)
-        self.assertContains(self.client.get(reverse(self.URL)), 'Auditor account', status_code=200)
+        self.assertContains(self.client.get(reverse(self.URL)), 'حساب مدقّق', status_code=200)
 
     def test_staff_without_company_routed_to_crm(self):
         from core.models import User
@@ -7376,3 +7465,23 @@ class AIAnalysisPageI18NTests(TestCase):
         self.client.force_login(self._user_for(c, 'aifn@x.com'))
         resp = self.client.get(self._url(sub))
         self.assertContains(resp, 'سجل_MFA.txt')          # original name preserved (dir=auto for bidi)
+
+
+class ControlDetailGuardTests(TestCase):
+    """F-AUDIT SEC2 — control_detail requires a linked company (no null-company 500)."""
+
+    def test_company_user_can_view_control_detail(self):
+        c, ctl = _company_with_control()
+        self.client.force_login(_journey_user(c))
+        self.assertEqual(
+            self.client.get(reverse('compliance:control_detail', args=[ctl.id])).status_code, 200)
+
+    def test_unlinked_staff_is_guarded_not_500(self):
+        from core.models import User
+        c, ctl = _company_with_control()
+        staff = User.objects.create_user(email='cd_staff@x.com', username='cd_staff@x.com',
+                                         password='longenough12', role='admin', is_staff=True)  # no company
+        self.client.force_login(staff)
+        resp = self.client.get(reverse('compliance:control_detail', args=[ctl.id]))
+        self.assertNotEqual(resp.status_code, 500)                       # was a 500 before the guard
+        self.assertTemplateNotUsed(resp, 'compliance/control_detail.html')  # guard blocked access

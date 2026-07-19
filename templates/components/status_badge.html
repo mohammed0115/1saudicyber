@@ -1,11 +1,11 @@
 {% load i18n %}{% comment %}Expects `status`. Bilingual-ready (Arabic default msgid).{% endcomment %}
 <span class="ct-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-      style="{% if status == 'completed' %}background:#E7F2EC;border:1px solid #CFE3DA;color:#0F5D46;
-             {% elif status == 'current' %}background:#0F5D46;color:#fff;
-             {% elif status == 'needs_action' %}background:#FBF0DC;border:1px solid #E6D7B8;color:#8A5A12;
+      style="{% if status == 'completed' %}background:#E7F2EC;border:1px solid #CFE3DA;color:#2a5646;
+             {% elif status == 'current' %}background:#2a5646;color:#fff;
+             {% elif status == 'needs_action' %}background:#FBF0DC;border:1px solid #dcc79a;color:#8A5A12;
              {% elif status == 'blocked' %}background:#FBF0DC;border:1px solid #E6C98C;color:#8A5A12;
              {% elif status == 'locked' %}background:#F0F2F1;border:1px solid #D9E2DE;color:#6B7280;
-             {% elif status == 'optional' %}background:#EAF1EF;border:1px solid #D9E2DE;color:#1F6B63;
+             {% elif status == 'optional' %}background:#EAF1EF;border:1px solid #D9E2DE;color:#356a54;
              {% else %}background:#F0F2F1;border:1px solid #D9E2DE;color:#6B7280;{% endif %}">
   <i class="fas {% if status == 'completed' %}fa-circle-check{% elif status == 'current' %}fa-location-arrow{% elif status == 'needs_action' %}fa-circle-exclamation{% elif status == 'blocked' %}fa-lock{% elif status == 'locked' %}fa-lock{% elif status == 'optional' %}fa-circle-dot{% else %}fa-clock{% endif %} text-[0.65rem]"></i>
   {% if status == 'completed' %}{% trans "مكتمل" %}

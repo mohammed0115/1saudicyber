@@ -91,6 +91,7 @@ class RiskItem(models.Model):
     class Meta:
         db_table = 'risk_items'
         ordering = ['-inherent_score', '-created_at']
+        indexes = [models.Index(fields=['company', 'status'])]   # DD: tenant risk-register scans
 
     def __str__(self):
         return f"{self.company_id}:{self.title} ({self.severity})"

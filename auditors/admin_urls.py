@@ -26,6 +26,8 @@ urlpatterns = [
     path('companies/<int:company_id>/auditor/assign/', admin_views.crm_assign_auditor, name='assign_auditor'),
     path('companies/<int:company_id>/auditor/cancel-request/', admin_views.crm_cancel_auditor_request, name='cancel_auditor_request'),
     path('auditor-requests/', admin_views.crm_auditor_requests, name='auditor_requests'),
+    path('rfi/', admin_views.crm_rfi_dashboard, name='rfi_dashboard'),
+    path('messages/', admin_views.crm_messages, name='messages'),
     path('unlinked-accounts/', admin_views.crm_unlinked_accounts, name='unlinked_accounts'),
 
     # Auditor approval (Phase 8D-3A)

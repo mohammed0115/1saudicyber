@@ -39,6 +39,8 @@ urlpatterns = [
     path('evidence-checklist/<int:item_id>/upload/', views.evidence_upload_v2, name='evidence_upload_v2'),
     path('evidence-checklist/<int:item_id>/submissions/', views.evidence_submission_list, name='evidence_submission_list'),
     path('evidence-submissions/<int:submission_id>/', views.evidence_submission_detail, name='evidence_submission_detail'),
+    # F-AUDIT S1: authenticated, tenant-scoped evidence download (never raw /media/).
+    path('evidence-submissions/<int:submission_id>/download/', views.download_evidence_file, name='download_evidence_file'),
     # Phase 6C — read-only text-extraction preview
     path('evidence-submissions/<int:submission_id>/extraction/', views.evidence_extraction_preview, name='evidence_extraction'),
     # Phase 6C-FIX-A — run + persist a text-extraction attempt (POST, owner-only)
@@ -61,6 +63,7 @@ urlpatterns = [
 
     # Phase 3G — Auditor review + control assessment
     path('auditor-review/', views.auditor_review_queue, name='auditor_review_queue'),
+    path('auditor-review/status/', views.auditor_review_status, name='auditor_review_status'),
     path('auditor-review/generate/', views.generate_assessments_view, name='generate_assessments'),
     path('auditor-review/<int:assessment_id>/', views.auditor_review_detail, name='auditor_review_detail'),
 

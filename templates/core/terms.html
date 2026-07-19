@@ -3,38 +3,38 @@
 {% block title %}{% trans "شروط الاستخدام" %} - 1SaudiCyber{% endblock %}
 {% block content %}
 <div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
-  <div style="max-width:820px;margin:0 auto;padding:24px 16px 36px;color:#1F2933;line-height:1.95;">
+  <div style="max-width:820px;margin:0 auto;padding:24px 16px 36px;color:#2b2c27;line-height:1.95;">
     <h1 style="font-size:1.6rem;font-weight:700;margin:0 0 6px;">{% trans "شروط الاستخدام" %}</h1>
-    <p style="color:#667085;font-size:.9rem;margin:0 0 20px;">{% trans "آخر تحديث:" %} {% now "Y-m-d" %}</p>
+    <p style="color:#5b5c53;font-size:.9rem;margin:0 0 20px;">{% trans "آخر تحديث:" %} {% now "Y-m-d" %}</p>
 
     <p>باستخدامك منصّة <strong>1SaudiCyber</strong> فإنك توافق على هذه الشروط التي تنظّم استخدام
        خدمات جاهزية ومراجعة الامتثال السيبراني داخل المنصّة.</p>
 
-    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#0F5D46;">طبيعة الخدمة</h2>
+    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#2a5646;">طبيعة الخدمة</h2>
     <p>توفّر المنصّة أدوات لتنظيم الأدلة، والتصنيف الاستشاري، وقابلية تطبيق الضوابط، والتحليل
        الاستشاري، والحالة النظامية المقترحة، ومراجعة المدقّق الداخلية. جميع هذه المخرجات داخلية
        ومساعدة، والقرار النهائي للامتثال يعتمد على الأدلة ومراجعة المدقّق.</p>
 
-    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#0F5D46;">حدود المسؤولية</h2>
+    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#2a5646;">حدود المسؤولية</h2>
     <ul style="padding-inline-start:20px;margin:0;">
       <li>المخرجات الآلية (الذكاء الاصطناعي ومحرك القواعد) استشارية ومقترحة فقط.</li>
       <li>المنصّة لا تُصدر شهادة امتثال رسمية ولا تمنح اعتمادًا حكوميًا أو تنظيميًا.</li>
       <li>أنت مسؤول عن صحّة البيانات والأدلة التي ترفعها.</li>
     </ul>
 
-    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#0F5D46;">الاستخدام المقبول</h2>
+    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#2a5646;">الاستخدام المقبول</h2>
     <p>تلتزم باستخدام المنصّة لأغراض مشروعة، وعدم محاولة الوصول إلى بيانات شركات أخرى أو الإخلال
        بأمن المنصّة.</p>
 
-    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#0F5D46;">الاشتراك</h2>
+    <h2 style="font-size:1.1rem;font-weight:700;margin:22px 0 8px;color:#2a5646;">الاشتراك</h2>
     <p>قد تتطلّب بعض الميزات (مثل تنزيل التقارير الكاملة وإسناد المدقّق) اشتراكًا فعّالًا.</p>
 
-    <div style="background:#FBF6EC;border:1px solid #E6D7B8;border-radius:12px;padding:14px 16px;margin-top:22px;color:#7A5B16;font-size:.92rem;">
+    <div style="background:#f1eadb;border:1px solid #dcc79a;border-radius:12px;padding:14px 16px;margin-top:22px;color:#8a6a1f;font-size:.92rem;">
       توضيح مهم: نتائج المنصّة تمثّل مراجعة داخلية للجاهزية والامتثال، ولا تُعد شهادة امتثال رسمية
       أو اعتمادًا من أي جهة.
     </div>
 
-    <p style="margin-top:22px;"><a href="{% url 'core:privacy' %}" style="color:#0F5D46;font-weight:600;">{% trans "سياسة الخصوصية" %}</a></p>
+    <p style="margin-top:22px;"><a href="{% url 'core:privacy' %}" style="color:#2a5646;font-weight:600;">{% trans "سياسة الخصوصية" %}</a></p>
   </div>
 </div>
 {% endblock %}

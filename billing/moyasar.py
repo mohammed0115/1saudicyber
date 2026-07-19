@@ -35,20 +35,27 @@ def moyasar_mode():
 
 
 def publishable_key_for_template():
-    """Return the publishable key ONLY when it is a safe sandbox key (pk_test_...).
+    """Return the publishable key that matches the configured mode.
 
-    Anything else (empty, or a live pk_live_ key) returns '' so no live key ever
-    reaches the browser in this sandbox-only phase.
+    DD-fix: live payments are now supported. In `sandbox` mode only a `pk_test_` key is
+    exposed to the browser (a live key is dropped as a safety net); in `live` mode a
+    `pk_live_` key is required. Any mismatch returns '' so a wrong-mode key never reaches
+    the browser. Go-live therefore needs BOTH `MOYASAR_MODE=live` and a `pk_live_` key.
     """
     key = (getattr(settings, 'MOYASAR_PUBLISHABLE_KEY', '') or '').strip()
-    if key.startswith('pk_test_'):
-        return key
-    return ''
+    if moyasar_mode() == 'live':
+        return key if key.startswith('pk_live_') else ''
+    return key if key.startswith('pk_test_') else ''
 
 
 def is_configured():
-    """True only when a safe sandbox publishable key is present."""
+    """True when a publishable key valid for the current mode is present."""
     return bool(publishable_key_for_template())
+
+
+def is_live():
+    """True when running in live payment mode."""
+    return moyasar_mode() == 'live'
 
 
 def build_callback_url(request, payment):

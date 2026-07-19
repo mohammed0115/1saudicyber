@@ -7,14 +7,14 @@ get_next_recommended_action, build_auditor_journey). Read-only.
 {% endcomment %}
 {% if next_action %}
 <div dir="rtl" class="ct-next-action rounded-xl border p-4 mb-5"
-     style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#0F5D46;border-color:#0F5D46;color:#fff;">
+     style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#2a5646;border-color:#2a5646;color:#fff;">
   <p style="margin:0 0 4px;color:#BFE3CF;font-weight:600;font-size:.82rem;">الخطوة التالية الموصى بها</p>
   <p style="margin:0 0 12px;font-weight:700;font-size:1.02rem;">{{ next_action.title }}</p>
   {% with u=next_action.action_url_name|default:next_action.url_name %}
   {% if u and next_action.action_label %}
   <a href="{% url u %}" data-busy="جارٍ فتح الخطوة..."
      class="inline-block rounded-lg text-sm font-semibold px-4 py-2"
-     style="background:#FFFFFF;color:#0F5D46;">
+     style="background:#FFFFFF;color:#2a5646;">
     {{ next_action.action_label }}
   </a>
   {% endif %}
