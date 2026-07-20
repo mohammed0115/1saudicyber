@@ -230,7 +230,11 @@ def add_manual_payment(company, plan, amount, actor=None, reference='', note='')
 def confirm_manual_payment(payment, actor=None, reason=''):
     """Confirm a PENDING manual payment -> paid + activate/extend the subscription. Fail-closed:
     never double-confirms; only a pending manual payment can be confirmed."""
-    payment = Payment.objects.select_for_update().select_related('subscription').get(pk=payment.pk)
+    # NOTE: do NOT select_related('subscription') here — subscription is a nullable FK
+    # (SET_NULL), so select_related adds a LEFT OUTER JOIN and PostgreSQL rejects
+    # SELECT ... FOR UPDATE over the nullable side ("cannot be applied to the nullable
+    # side of an outer join") → 500. Lock only the Payment row; access .subscription lazily.
+    payment = Payment.objects.select_for_update().get(pk=payment.pk)
     if payment.provider != 'manual':
         raise SubscriptionError('هذه ليست دفعة يدوية · Not a manual payment.')
     if payment.status == 'paid':
@@ -244,7 +248,11 @@ def confirm_manual_payment(payment, actor=None, reason=''):
 def reject_manual_payment(payment, actor=None, reason=''):
     """Reject a PENDING manual payment -> failed. Never activates; a confirmed (paid) payment
     cannot be rejected (no reversal here)."""
-    payment = Payment.objects.select_for_update().select_related('subscription').get(pk=payment.pk)
+    # NOTE: do NOT select_related('subscription') here — subscription is a nullable FK
+    # (SET_NULL), so select_related adds a LEFT OUTER JOIN and PostgreSQL rejects
+    # SELECT ... FOR UPDATE over the nullable side ("cannot be applied to the nullable
+    # side of an outer join") → 500. Lock only the Payment row; access .subscription lazily.
+    payment = Payment.objects.select_for_update().get(pk=payment.pk)
     if payment.provider != 'manual':
         raise SubscriptionError('هذه ليست دفعة يدوية · Not a manual payment.')
     if payment.status == 'paid':

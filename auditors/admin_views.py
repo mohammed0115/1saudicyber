@@ -5,11 +5,14 @@ Company / شركة احصل الحل) to review and act on auditor accounts. Acc
 restricted to authenticated staff/superuser; company users, auditor users, and
 anonymous visitors are denied. Read-only listing + POST-only state changes.
 """
+import logging
 from functools import wraps
 
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
+
+logger = logging.getLogger(__name__)
 
 from .models import AuditorProfile, AuditorAssignment
 from . import admin_services as svc
@@ -270,6 +273,11 @@ def crm_confirm_manual_payment(request, company_id, payment_id):
             messages.success(request, 'تم تأكيد الدفعة اليدوية وتفعيل الاشتراك.')
         except bsvc.SubscriptionError as e:
             messages.error(request, str(e))
+        except Exception:
+            # Never 500 the admin on a payment action — log the full traceback and
+            # surface a safe message so the operator can retry / report.
+            logger.exception('confirm_manual_payment failed (company=%s, payment=%s)', company_id, payment_id)
+            messages.error(request, 'تعذّر تأكيد الدفعة بسبب خطأ غير متوقّع. تم تسجيل الخطأ — حاول مرة أخرى أو راجع الدعم.')
     return redirect('platform_admin:company_detail', company_id=company.id)
 
 
@@ -293,6 +301,9 @@ def crm_reject_manual_payment(request, company_id, payment_id):
             messages.success(request, 'تم رفض الدفعة اليدوية.')
         except bsvc.SubscriptionError as e:
             messages.error(request, str(e))
+        except Exception:
+            logger.exception('reject_manual_payment failed (company=%s, payment=%s)', company_id, payment_id)
+            messages.error(request, 'تعذّر رفض الدفعة بسبب خطأ غير متوقّع. تم تسجيل الخطأ — حاول مرة أخرى أو راجع الدعم.')
     return redirect('platform_admin:company_detail', company_id=company.id)
 
 
