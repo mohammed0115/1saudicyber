@@ -741,5 +741,38 @@
     });
   })();
   </script>
+
+  {# Company-360 tabs: show one section at a time. Progressive enhancement — without JS all sections remain visible. #}
+  <script>
+  (function(){
+    var MAIN=['admin-journey','overview','journey','auditor','evidence','billing','users','followup','log'];
+    var AUDITOR_EXTRA=['verdict-conflicts','findings','auditors'];
+    var nav=document.getElementById('company-sections-nav');
+    if(!nav) return;
+    function sec(id){return document.getElementById(id);}
+    function showTab(id){
+      if(MAIN.indexOf(id)<0) id='overview';
+      MAIN.concat(AUDITOR_EXTRA).forEach(function(s){var e=sec(s); if(e) e.style.display='none';});
+      var t=sec(id); if(t) t.style.display='';
+      if(id==='auditor') AUDITOR_EXTRA.forEach(function(s){var e=sec(s); if(e) e.style.display='';});
+      nav.querySelectorAll('a[href^="#"]').forEach(function(a){
+        var on=a.getAttribute('href')==='#'+id;
+        a.classList.toggle('bg-gov-green-700',on); a.classList.toggle('text-white',on);
+        a.classList.toggle('text-gov-gray-600',!on);
+      });
+      try{history.replaceState(null,'','#'+id);}catch(e){}
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    nav.querySelectorAll('a[href^="#"]').forEach(function(a){
+      a.addEventListener('click',function(ev){ev.preventDefault(); showTab(a.getAttribute('href').slice(1));});
+    });
+    // Deep links from within the page (e.g. "إسناد مدقق ←" → #auditor) act as tab switches too.
+    document.querySelectorAll('a[href="#auditor"],a[href="#followup"],a[href="#billing"],a[href="#journey"]').forEach(function(a){
+      a.addEventListener('click',function(ev){ev.preventDefault(); showTab(a.getAttribute('href').slice(1));});
+    });
+    var initial=(location.hash||'').slice(1);
+    showTab(MAIN.indexOf(initial)>=0?initial:'overview');
+  })();
+  </script>
 </div>
 {% endblock %}
