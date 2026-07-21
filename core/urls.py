@@ -53,6 +53,7 @@ urlpatterns = [
 
     # DD-fix (commercial) — team invites / user management
     path('team/', views.team_view, name='team'),
+    path('settings/', views.settings_hub, name='settings'),
     path('notifications/', views.notifications_inbox, name='notifications_inbox'),
     path('notifications/<int:note_id>/open/', views.notification_open, name='notification_open'),
     path('invite/<str:token>/', views.accept_invite_view, name='accept_invite'),

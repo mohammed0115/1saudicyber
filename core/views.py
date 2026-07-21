@@ -524,3 +524,19 @@ def notification_open(request, note_id):
         if n.url:
             return redirect(n.url)
     return redirect('core:notifications_inbox')
+
+
+@login_required
+def settings_hub(request):
+    """Unified company settings hub — profile summary + links to security (MFA),
+    team management, and data deletion. Read-only overview; each action lives on
+    its own audited page. Company users only.
+    """
+    company = getattr(request.user, 'company', None)
+    if company is None:
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'core/settings.html', {
+        'company': company,
+        'mfa_enabled': getattr(request.user, 'mfa_enabled', False),
+        'is_company_admin': request.user.role == 'company_admin',
+    })

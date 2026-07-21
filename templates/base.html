@@ -129,6 +129,7 @@
                             <div class="border-t border-gov-green-700 my-1"></div>
                             <a href="{% url 'billing:home' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
                             {% if user.role == 'company_admin' %}<a href="{% url 'core:team' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "فريق العمل" %}</a>{% endif %}
+                            <a href="{% url 'core:settings' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الإعدادات" %}</a>
                         </div>
                     </details>
                     {% endif %}

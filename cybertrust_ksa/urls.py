@@ -16,8 +16,34 @@ def healthz(request):
     return JsonResponse({'status': 'ok'})
 
 
+def readyz(request):
+    """Readiness probe — verifies the DB (and cache) are reachable. 503 if not.
+
+    For orchestrators (k8s readiness): a running web process with a dead DB should
+    be pulled from the LB. Still minimal — no settings/version leakage.
+    """
+    checks = {'db': 'ok', 'cache': 'ok'}
+    healthy = True
+    try:
+        from django.db import connection
+        with connection.cursor() as c:
+            c.execute('SELECT 1')
+            c.fetchone()
+    except Exception:
+        checks['db'] = 'down'; healthy = False
+    try:
+        from django.core.cache import cache
+        cache.set('readyz', '1', 5)
+        cache.get('readyz')
+    except Exception:
+        checks['cache'] = 'degraded'  # cache is non-fatal for readiness
+    status = 'ok' if healthy else 'error'
+    return JsonResponse({'status': status, **checks}, status=200 if healthy else 503)
+
+
 urlpatterns = [
     path('healthz/', healthz, name='healthz'),
+    path('readyz/', readyz, name='readyz'),
     path('i18n/', include('django.conf.urls.i18n')),  # set_language (bilingual switcher)
     path('admin/', admin.site.urls),
     path('api/v1/', include('api.urls')),

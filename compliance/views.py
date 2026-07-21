@@ -1023,9 +1023,19 @@ def download_evidence_file(request, submission_id):
     sub = EvidenceSubmission.objects.filter(id=submission_id).first()
     if sub is None or not can_view_submission_review(request.user, sub) or not sub.uploaded_file:
         raise Http404()
-    return FileResponse(
-        sub.uploaded_file.open('rb'), as_attachment=True,
+    # In-app preview: serve images/PDF INLINE only (safe types), everything else as an
+    # attachment. Never serve HTML/SVG inline (stored-XSS); force nosniff on inline.
+    _INLINE = {'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+               'gif': 'image/gif', 'pdf': 'application/pdf'}
+    ext = (sub.file_type or '').lower()
+    inline = request.GET.get('inline') == '1' and ext in _INLINE
+    resp = FileResponse(
+        sub.uploaded_file.open('rb'), as_attachment=not inline,
         filename=sub.original_filename or sub.uploaded_file.name.rsplit('/', 1)[-1])
+    if inline:
+        resp['Content-Type'] = _INLINE[ext]
+        resp['X-Content-Type-Options'] = 'nosniff'
+    return resp
 
 
 # ============================================================

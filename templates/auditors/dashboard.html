@@ -100,7 +100,12 @@
 
       {# B) Accepted / assigned companies #}
       <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm overflow-hidden">
-        <div class="px-5 sm:px-6 py-3.5 bg-gov-green-50 border-b border-gov-green-100 text-gov-green-800 font-bold">الشركات المقبولة/المسندة</div>
+        <div class="px-5 sm:px-6 py-3.5 bg-gov-green-50 border-b border-gov-green-100 text-gov-green-800 font-bold flex items-center justify-between gap-3 flex-wrap">
+          <span>الشركات المقبولة/المسندة</span>
+          <input type="text" id="assignedSearch" placeholder="بحث باسم الشركة…" aria-label="بحث الشركات المُسندة"
+                 oninput="(function(q){document.querySelectorAll('#assignedTbody tr[data-company]').forEach(function(r){r.style.display=r.getAttribute('data-company').indexOf(q)>-1?'':'none'})})(this.value.toLowerCase())"
+                 class="text-xs font-normal border border-gov-gray-300 rounded-lg px-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-gov-green-500/30">
+        </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="text-gov-gray-500"><tr>
@@ -108,9 +113,9 @@
               <th class="text-right px-5 sm:px-6 py-3 font-medium">النطاق</th>
               <th class="text-right px-5 sm:px-6 py-3"></th>
             </tr></thead>
-            <tbody class="divide-y divide-gov-gray-100">
+            <tbody id="assignedTbody" class="divide-y divide-gov-gray-100">
             {% for a in accepted_assignments %}
-              <tr>
+              <tr data-company="{{ a.company.name_ar|default:a.company.name|lower }}">
                 <td class="px-5 sm:px-6 py-3 text-gov-gray-800">{{ a.company.name_ar|default:a.company.name }}</td>
                 <td class="px-5 sm:px-6 py-3 text-gov-gray-500">{{ a.scope|engagement_scope_ar }}</td>
                 <td class="px-5 sm:px-6 py-3 whitespace-nowrap">

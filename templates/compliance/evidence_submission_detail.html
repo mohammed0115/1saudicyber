@@ -6,6 +6,18 @@
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-2 text-sm">
         <p><span class="text-gov-gray-500">الملف:</span> {{ submission.original_filename }}
            <a href="{% url 'compliance:download_evidence_file' submission.id %}" class="text-gov-green-700 hover:text-gov-green-900 font-medium ms-2"><i class="fas fa-download me-1"></i>تنزيل</a></p>
+        {# In-app preview for image/PDF evidence (served inline + nosniff) #}
+        {% with ft=submission.file_type|lower %}
+        {% if ft == 'png' or ft == 'jpg' or ft == 'jpeg' or ft == 'gif' %}
+        <div class="mt-2 border border-gov-gray-100 rounded-lg overflow-hidden bg-gov-gray-50">
+          <img src="{% url 'compliance:download_evidence_file' submission.id %}?inline=1" alt="معاينة الدليل" class="max-w-full max-h-96 mx-auto object-contain">
+        </div>
+        {% elif ft == 'pdf' %}
+        <details class="mt-2"><summary class="cursor-pointer text-gov-green-700 text-sm font-medium">معاينة الملف</summary>
+          <iframe src="{% url 'compliance:download_evidence_file' submission.id %}?inline=1" title="معاينة الدليل" class="w-full h-96 mt-1 border border-gov-gray-100 rounded-lg"></iframe>
+        </details>
+        {% endif %}
+        {% endwith %}
         <p><span class="text-gov-gray-500">النسخة:</span> v{{ submission.version }}</p>
         <p><span class="text-gov-gray-500">النوع/الحجم:</span> {{ submission.file_type }} — {{ submission.file_size }} بايت</p>
         <p><span class="text-gov-gray-500">SHA-256:</span> <span class="font-mono text-xs break-all">{{ submission.file_hash }}</span></p>
