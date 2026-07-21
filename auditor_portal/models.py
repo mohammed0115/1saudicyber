@@ -82,8 +82,8 @@ class AuditorControlVerdict(models.Model):
     """The auditor's INTERNAL verdict for one control within an assessment.
 
     Internal readiness review only — never an official NCA/Aramco/SABIC certification.
-    One current verdict per (assessment, company_control); updates overwrite in place
-    (history is a future enhancement).
+    One current verdict per (assessment, company_control); updates overwrite in place.
+    Every change is also appended to AuditorControlVerdictHistory for a full audit trail.
     """
     STATUS_CHOICES = [
         ('not_reviewed', 'Not Reviewed'),
@@ -255,3 +255,32 @@ class CompanyMessage(models.Model):
     class Meta:
         db_table = 'company_messages'
         ordering = ['created_at']
+
+
+class AuditorControlVerdictHistory(models.Model):
+    """Append-only audit trail of every internal verdict recorded on a control.
+
+    AuditorControlVerdict holds the CURRENT verdict (overwritten in place on each
+    save). This model preserves the FULL history — every change, who made it, when —
+    so a past internal verdict is defensible and reproducible. Never edited/deleted.
+    """
+    assessment = models.ForeignKey('compliance.Assessment', on_delete=models.CASCADE,
+                                   related_name='verdict_history')
+    company_control = models.ForeignKey('compliance.CompanyControl', on_delete=models.CASCADE,
+                                        related_name='verdict_history')
+    auditor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='verdict_history_entries')
+    status = models.CharField(max_length=25)
+    implementation_level = models.CharField(max_length=25, blank=True)
+    impact = models.CharField(max_length=20, blank=True)
+    rationale = models.TextField(blank=True)
+    recommendation = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'auditor_control_verdict_history'
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['assessment', 'company_control'])]
+
+    def __str__(self):
+        return f"{self.company_control_id}:{self.status}@{self.created_at:%Y-%m-%d}"

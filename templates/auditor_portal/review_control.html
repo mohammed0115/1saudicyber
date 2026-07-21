@@ -102,6 +102,20 @@
           <p class="text-xs text-gov-gray-400 mt-2">آخر تحديث: {{ verdict.updated_at|date:"Y-m-d H:i" }}{% if verdict.auditor %} · المدقق: {{ verdict.auditor.get_full_name|default:verdict.auditor.email }}{% endif %}</p>
         </div>
         {% endif %}
+        {% if verdict_history|length > 1 %}
+        <details class="mb-4 text-sm">
+          <summary class="cursor-pointer text-gov-gray-600 hover:text-gov-green-800 select-none"><i class="fas fa-clock-rotate-left ms-1"></i> سجل الأحكام السابقة ({{ verdict_history|length }})</summary>
+          <ol class="mt-3 border-s-2 border-gov-gray-200 ps-4 space-y-3">
+            {% for h in verdict_history %}
+            <li class="relative">
+              <p><span class="font-medium">{{ h.status|verdict_status_ar }}</span>{% if h.impact %} · <span class="text-gov-gray-500">الأثر:</span> {{ h.impact|impact_ar }}{% endif %}</p>
+              {% if h.rationale %}<p class="text-gov-gray-600 mt-0.5">{{ h.rationale }}</p>{% endif %}
+              <p class="text-xs text-gov-gray-400 mt-1">{{ h.created_at|date:"Y-m-d H:i" }}{% if h.auditor %} · {{ h.auditor.get_full_name|default:h.auditor.email }}{% endif %}</p>
+            </li>
+            {% endfor %}
+          </ol>
+        </details>
+        {% endif %}
         <form method="post" action="{% url 'auditor_portal:save_verdict' assessment.id company_control.id %}" class="grid gap-3">
           {% csrf_token %}
           <label class="text-sm"><span class="block text-gov-gray-500 mb-1">الحالة</span>

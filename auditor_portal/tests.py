@@ -300,6 +300,21 @@ class AuditorPortalVerdictRfiTests(TestCase):
         self.assertEqual(AuditorControlVerdict.objects.get(assessment=a, company_control=cc).status,
                          'partially_compliant')
 
+    def test_verdict_change_is_recorded_in_history(self):
+        """Each save appends an append-only history row (current stays single)."""
+        from auditor_portal.models import AuditorControlVerdict, AuditorControlVerdictHistory
+        c, ctl, aud, a, cc = self._setup(email='vr_hist@x.com')
+        self.client.force_login(aud)
+        self.client.post(self._verdict_url(a, cc), {'status': 'compliant'})
+        self.client.post(self._verdict_url(a, cc),
+                         {'status': 'non_compliant', 'rationale': 'ثغرة', 'recommendation': 'عالجها'})
+        # one current verdict, two history rows (newest first)
+        self.assertEqual(AuditorControlVerdict.objects.filter(assessment=a, company_control=cc).count(), 1)
+        hist = list(AuditorControlVerdictHistory.objects.filter(assessment=a, company_control=cc))
+        self.assertEqual(len(hist), 2)
+        self.assertEqual(hist[0].status, 'non_compliant')
+        self.assertEqual(hist[1].status, 'compliant')
+
     def test_other_auditor_cannot_create_verdict(self):
         from auditor_portal.models import AuditorControlVerdict
         c, ctl, audA, aA, ccA = self._setup(email='vr_a@x.com')

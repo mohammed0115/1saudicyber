@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST
 from core.roles import company_portal_required
 from compliance.models import Assessment, CompanyControl, Evidence
 from .models import (AuditorNote, DocumentRequest, AuditReport, AuditorControlVerdict,
-                     CompanyRFIResponse)
+                     AuditorControlVerdictHistory, CompanyRFIResponse)
 
 # Verdict validation: which negative/partial states require a written rationale /
 # recommendation before the internal verdict can be saved.
@@ -204,6 +204,10 @@ def review_control(request, assessment_id, control_id):
             assessment=assessment, company_control=company_control)
             .prefetch_related('responses')),
         'verdict': verdict,
+        # Append-only verdict trail (most recent first) — shown only when there's real history.
+        'verdict_history': list(AuditorControlVerdictHistory.objects.filter(
+            assessment=assessment, company_control=company_control)
+            .select_related('auditor')[:20]),
         'verdict_status_choices': AuditorControlVerdict.STATUS_CHOICES,
         # G1 — implementation/maturity levels for the verdict form.
         'implementation_choices': AuditorControlVerdict.IMPLEMENTATION_CHOICES,
@@ -270,6 +274,11 @@ def save_verdict(request, assessment_id, control_id):
         defaults=dict(auditor=request.user, status=status, rationale=rationale,
                       recommendation=recommendation, impact=impact,
                       implementation_level=implementation_level, reviewed_at=timezone.now()))
+    # Append-only audit trail: preserve every verdict change (who/what/when) for defensibility.
+    AuditorControlVerdictHistory.objects.create(
+        assessment=assessment, company_control=company_control, auditor=request.user,
+        status=status, implementation_level=implementation_level, impact=impact,
+        rationale=rationale, recommendation=recommendation)
     messages.success(request, 'تم حفظ الحكم الداخلي على الضابط.')
     return redirect('auditor_portal:review_control', assessment_id=assessment_id, control_id=control_id)
 

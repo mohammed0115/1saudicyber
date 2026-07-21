@@ -607,6 +607,22 @@ class BillingCRMTests(TestCase):
         with self.assertRaises(bsvc.SubscriptionError):
             bsvc.reject_manual_payment(p, reason='no')
 
+    def test_paid_payment_does_not_resurrect_cancelled_subscription(self):
+        """Defensive invariant: mark_payment_paid activates only from
+        pending_payment/past_due/inactive/expired — never a CANCELLED subscription.
+        A cancelled sub must require an explicit re-subscribe, not a stray paid payment."""
+        c = _company()
+        p = bsvc.add_manual_payment(c, bsvc.get_plan('basic'), '499', note='r')
+        sub = p.subscription
+        bsvc.cancel_subscription(sub, reason='customer request')
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'cancelled')
+        # Confirming the still-pending payment must NOT flip the cancelled sub back to active.
+        bsvc.confirm_manual_payment(p, reason='late wire')
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'cancelled')
+        self.assertFalse(company_has_active_subscription(c))
+
     def test_manual_payment_created_writes_audit(self):
         from core.models import AuditLog
         c = _company()

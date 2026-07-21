@@ -14,6 +14,7 @@ Safety:
 
 Standalone module (not a `services/` package) to avoid colliding with compliance/services.py.
 """
+import hashlib
 import json
 
 from django.conf import settings
@@ -22,6 +23,17 @@ from django.utils import timezone
 from compliance.models import EvidenceSubmission, EvidenceAnalysisResult
 
 PROMPT_VERSION = 'advisory-v2-consultative'
+
+
+def _content_fingerprint(control, requirement, text, related_context):
+    """Stable hash of everything that feeds the AI call. If it matches a prior
+    completed analysis for the same submission, the (expensive) model call is skipped."""
+    h = hashlib.sha256()
+    for part in (PROMPT_VERSION, str(getattr(control, 'id', '')),
+                 str(getattr(requirement, 'id', '')), text or '', related_context or ''):
+        h.update(part.encode('utf-8', 'ignore'))
+        h.update(b'\x00')
+    return h.hexdigest()
 MAX_EXTRACT_CHARS = 20000   # cap stored/extracted text
 MAX_XLSX_ROWS = 500
 TEXT_LIKE = {'txt', 'csv'}
@@ -191,6 +203,16 @@ def analyze_evidence_submission(submission, *, apply=False):
                 f"- {(p.summary or '')[:300]}" for p in prior if (p.summary or '').strip())
         except Exception:
             related_context = ''
+        # Cache: if this submission already has a completed analysis whose inputs
+        # (text + control + requirement + prompt version + related context) are unchanged,
+        # reuse it instead of paying for another model call. Any input change invalidates it.
+        fingerprint = _content_fingerprint(control, requirement, text, related_context)
+        if apply:
+            existing = EvidenceAnalysisResult.objects.filter(evidence_submission=submission).first()
+            if (existing is not None and existing.status == 'completed'
+                    and (existing.analysis_metadata or {}).get('content_hash') == fingerprint):
+                return {'submission': submission.id, 'status': existing.status,
+                        'id': existing.id, 'cached': True}
         data, err, model, provider = _run_ai(control, requirement, text, related_context)
         if data is None:
             fields.update(status='needs_human_review', error_message=err, model_used=model,
@@ -206,6 +228,7 @@ def analyze_evidence_submission(submission, *, apply=False):
             meta = dict(fields.get('analysis_metadata') or {})
             meta['advisory'] = advisory
             meta['cross_referenced'] = bool(related_context)
+            meta['content_hash'] = fingerprint
             fields.update(
                 status='completed', model_used=model, provider=provider,
                 summary=str(data.get('summary', ''))[:4000],
