@@ -514,7 +514,7 @@ class BillingViewTests(TestCase):
         c = _company()
         self._login(c, 'bvsafe@x.com')
         body = self.client.get(reverse('billing:home')).content.decode()
-        self.assertIn('not an official certification', body.lower())
+        self.assertIn('شهادة امتثال رسمية', body.lower())
         for w in ('معتمد من NCA', 'اعتماد حكومي', 'certified by NCA', 'official accreditation',
                   'government accredited'):
             self.assertNotIn(w, body)
@@ -808,7 +808,7 @@ class MoyasarNotConfiguredTests(TestCase):
         pay = Payment.objects.get(company=c)
         resp = self.client.get(reverse('billing:checkout', args=[pay.id]))
         self.assertEqual(resp.status_code, 200)
-        self.assertIn('not configured yet', resp.content.decode())
+        self.assertIn('لم تتم تهيئة الدفع', resp.content.decode())
 
     def test_checkout_does_not_crash_without_key(self):
         c = _company()
@@ -957,7 +957,7 @@ class MoyasarSafetyTests(TestCase):
             self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
             pay = Payment.objects.get(company=c)
             body = self.client.get(reverse('billing:checkout', args=[pay.id])).content.decode()
-            self.assertIn('not an official certification', body.lower())
+            self.assertIn('شهادة امتثال رسمية', body.lower())
             for w in ('certified by NCA', 'government accredited', 'official accreditation'):
                 self.assertNotIn(w, body)
 
@@ -1356,7 +1356,7 @@ class MoyasarPhase8ICSecurityUITests(TestCase):
         bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
         pay = Payment.objects.get(company=c); pay.provider_payment_id = 'moy_w'; pay.save()
         body = self.client.get(reverse('billing:home')).content.decode()
-        self.assertIn('Waiting for payment verification', body)
+        self.assertIn('بانتظار التحقق من الدفع', body)
         self.assertNotIn(_SECRET, body)
 
     def test_billing_failed_state(self):
@@ -1365,7 +1365,7 @@ class MoyasarPhase8ICSecurityUITests(TestCase):
         bsvc.create_pending_subscription(c, bsvc.get_plan('basic'), provider='moyasar')
         pay = Payment.objects.get(company=c); pay.status = 'failed'; pay.save()
         body = self.client.get(reverse('billing:home')).content.decode()
-        self.assertIn('did not complete', body)
+        self.assertIn('لم تكتمل عملية الدفع', body)
 
     def test_crm_shows_safe_moyasar_verification(self):
         from auditors import crm_services as crm
@@ -1666,9 +1666,9 @@ class FeatureBillingCrmUiTests(TestCase):
         c = _company(); _activate(c, _feat_plan(max_evidence_files=100))
         self._login(c, 'fbill1@x.com')
         body = self.client.get(reverse('billing:home')).content.decode()
-        self.assertIn('Your plan features', body)
+        self.assertIn('ميزات خطتك', body)
         self.assertIn('evidence_upload', body)
-        self.assertIn('Usage limits', body)
+        self.assertIn('حدود الاستخدام', body)
         self.assertIn('PDF exports', body)
 
     def test_billing_links_to_select_plan(self):
