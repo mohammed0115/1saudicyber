@@ -216,7 +216,10 @@ def mfa_setup(request):
             return redirect('dashboard:main')
         messages.error(request, 'الرمز غير صحيح. أعد المسح وحاول مرة أخرى.')
     uri = mfa_provisioning_uri(request.user)
-    return render(request, 'core/mfa_setup.html', {'provisioning_uri': uri, 'secret': request.user.mfa_secret})
+    # Show the plaintext secret (decrypted) for manual authenticator entry — the stored
+    # field is ciphertext (DD P1).
+    return render(request, 'core/mfa_setup.html',
+                  {'provisioning_uri': uri, 'secret': request.user.get_mfa_secret()})
 
 
 def verify_email(request, token):

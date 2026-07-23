@@ -118,12 +118,15 @@ def evidence_upload(request):
     except Control.DoesNotExist:
         return Response({'detail': 'Control not found.'}, status=404)
 
-    import os
-    ext = os.path.splitext(f.name)[1].lower().replace('.', '')
-    if ext not in ALLOWED():
-        return Response({'detail': f'Unsupported type .{ext}.'}, status=400)
+    # Size cap first (cheap), then magic-byte validation — parity with the web upload paths.
+    # Extension + size alone lets a spoofed file through; validate_evidence_file sniffs the
+    # real content type so a renamed executable/HTML cannot masquerade as allowed evidence.
     if f.size > MAXSZ():
         return Response({'detail': 'File too large.'}, status=400)
+    from compliance.upload_validation import validate_evidence_file
+    ok, ext, err = validate_evidence_file(f, ALLOWED())
+    if not ok:
+        return Response({'detail': err or f'Unsupported type .{ext}.'}, status=400)
 
     cc, _ = CompanyControl.objects.get_or_create(company=company, control=control)
     # A storage failure (e.g. MEDIA_ROOT not writable) must NOT surface as a 500 with a

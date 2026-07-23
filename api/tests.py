@@ -105,3 +105,43 @@ class ApiEndpointCoverageTests(TestCase):
                                    'size': 'small', 'email': 'bad@x.com', 'password': 'longenough12',
                                    'first_name': 'A', 'last_name': 'B', 'target_nca': True})
         self.assertEqual(r.status_code, 400)
+
+
+class ApiUploadMagicByteTests(TestCase):
+    """DD P1 — the API upload path must reject spoofed files by content (magic bytes),
+    not just by extension + size (parity with the web upload paths)."""
+
+    def _register(self, cr, email):
+        payload = {'company_name': f'Co{cr}', 'cr_number': cr, 'sector': 'technology',
+                   'size': 'small', 'email': email, 'password': 'longenough12',
+                   'first_name': 'A', 'last_name': 'B', 'target_nca': True}
+        r = self.client.post('/api/v1/register/', data=payload, content_type='application/json')
+        self.assertEqual(r.status_code, 201, r.content)
+        return {'HTTP_AUTHORIZATION': f"Bearer {r.json()['access']}"}
+
+    def setUp(self):
+        from compliance.models import Control
+        make_framework_with_controls('NCA_ECC', 2)
+        self.auth = self._register('7777777777', 'upl@x.com')
+        self.control_id = Control.objects.first().id
+
+    def _upload(self, name, content):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post(
+            '/api/v1/evidence/upload/',
+            data={'control_id': self.control_id,
+                  'evidence_file': SimpleUploadedFile(name, content)},
+            **self.auth)
+
+    def test_spoofed_pdf_is_rejected(self):
+        from compliance.models import Evidence
+        with patch('compliance.services.process_evidence_pipeline') as m:
+            resp = self._upload('evil.pdf', b'<html><script>alert(1)</script></html>')
+        self.assertEqual(resp.status_code, 400)
+        m.assert_not_called()                       # never stored / analysed
+        self.assertEqual(Evidence.objects.count(), 0)
+
+    def test_genuine_pdf_is_accepted(self):
+        with patch('compliance.services.process_evidence_pipeline', return_value={'ok': True}):
+            resp = self._upload('good.pdf', b'%PDF-1.4\n1 0 obj<<>>endobj\n%%EOF\n')
+        self.assertEqual(resp.status_code, 201, resp.content)

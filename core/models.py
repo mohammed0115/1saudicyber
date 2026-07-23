@@ -45,7 +45,9 @@ class User(AbstractUser):
     email_verified = models.BooleanField(default=False)
     # Multi-factor authentication (FR-012.3 / NFR-013)
     mfa_enabled = models.BooleanField(default=False)
-    mfa_secret = models.CharField(max_length=64, blank=True)
+    # TOTP secret, encrypted at rest (DD P1). Widened to hold the Fernet ciphertext; never
+    # read/write this field directly — use get_mfa_secret()/set_mfa_secret().
+    mfa_secret = models.CharField(max_length=255, blank=True)
 
     objects = CustomUserManager()
     USERNAME_FIELD = 'email'
@@ -56,6 +58,16 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.get_role_display()})"
+
+    def set_mfa_secret(self, plain):
+        """Store the TOTP secret encrypted at rest. Caller still saves the instance."""
+        from core.crypto import encrypt_secret
+        self.mfa_secret = encrypt_secret(plain)
+
+    def get_mfa_secret(self):
+        """Return the plaintext TOTP secret (decrypts ciphertext; passes legacy plaintext)."""
+        from core.crypto import decrypt_secret
+        return decrypt_secret(self.mfa_secret)
 
 
 class Company(models.Model):

@@ -200,3 +200,23 @@ class MonitoringAdminTests(TestCase):
         self.assertIn(MonitoringCheck, admin.site._registry)
         self.assertIn(MonitoringRun, admin.site._registry)
         self.assertIn(MonitoringFinding, admin.site._registry)
+
+
+class CelerySweepIsolationTests(TestCase):
+    """DD P1 — the fleet-sweep tasks isolate per-company failures: one company raising
+    must not abort the whole sweep."""
+
+    def test_sweep_continues_past_a_failing_company(self):
+        from monitoring.tasks import _sweep
+        _mcompany('S1'); _mcompany('S2', cr='6111111111'); _mcompany('S3', cr='6222222222')
+        seen = []
+
+        def per_company(c):
+            seen.append(c.id)
+            if c.name == 'S2':
+                raise RuntimeError('boom')
+
+        ok, failed = _sweep(per_company)
+        self.assertEqual(ok, 2)         # S1 + S3 succeeded
+        self.assertEqual(failed, 1)     # S2 failed but did not abort the sweep
+        self.assertEqual(len(seen), 3)  # every company was still attempted
