@@ -83,6 +83,24 @@ def auditor_can_view_company_context(assignment):
             and assignment.status == 'accepted')
 
 
+def has_accepted_assignment(user, company):
+    """P0-01: True iff `user` (as an auditor) holds a LIVE accepted assignment to `company`.
+
+    This is the de-provisioning boundary for the auditor portal: access to a company's
+    assessment/controls/evidence must end the moment the assignment is cancelled or rejected,
+    not merely when the AuditorProfile is globally deactivated. Mirrors the messaging boundary
+    (auditor_can_view_company_context / messaging.can_access_thread), which already required a
+    live accepted assignment.
+    """
+    if company is None:
+        return False
+    profile = get_auditor_profile(user)
+    if profile is None:
+        return False
+    return AuditorAssignment.objects.filter(
+        auditor=profile, company=company, status='accepted').exists()
+
+
 def respond_to_assignment(assignment, action, note='', responder=None):
     """Auditor accepts/rejects a 'requested' assignment. Reject requires a reason. Returns
     (ok, error_ar). Idempotent-safe: only a 'requested' assignment can be responded to."""

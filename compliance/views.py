@@ -178,9 +178,9 @@ def upload_evidence(request, control_id):
         if getattr(settings, 'EVIDENCE_ASYNC_ENABLED', False):
             try:
                 from monitoring.tasks import analyze_evidence_async
-                analyze_evidence_async.delay(evidence.id)
+                analyze_evidence_async.delay(evidence.id, expected_company_id=company.id)
             except Exception:
-                process_evidence_pipeline(evidence.id)
+                process_evidence_pipeline(evidence.id, expected_company_id=company.id)
         else:
             process_evidence_pipeline(evidence.id)
         messages.success(request, _('تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا.'))

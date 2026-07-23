@@ -74,7 +74,8 @@ class MFATests(TestCase):
         from core.services import mfa_provisioning_uri, verify_totp
         user = User.objects.create_user(email='m@x.com', password='longenough12')
         mfa_provisioning_uri(user)
-        self.assertTrue(verify_totp(user, pyotp.TOTP(user.mfa_secret).now()))
+        # mfa_secret is encrypted at rest (DD P1) — read the plaintext via the accessor.
+        self.assertTrue(verify_totp(user, pyotp.TOTP(user.get_mfa_secret()).now()))
         self.assertFalse(verify_totp(user, '000000'))
 
 

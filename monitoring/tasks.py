@@ -61,18 +61,21 @@ def run_compliance_checks():
 @shared_task(bind=True, name='ai_engine.tasks.analyze_evidence_async',
              max_retries=3, default_retry_delay=60,
              soft_time_limit=120, time_limit=180)
-def analyze_evidence_async(self, evidence_id):
+def analyze_evidence_async(self, evidence_id, expected_company_id=None):
     """Async wrapper so evidence OCR + AI analysis runs off the request thread (FR-006).
 
     The pipeline itself always lands the row on a terminal status, so a worker crash can
     never leave it 'processing'. On a soft timeout or unexpected error we still force the
     row to a terminal error state before retrying/giving up, so the UI never hangs.
+
+    P0-01: ``expected_company_id`` is forwarded to the pipeline as a defense-in-depth
+    tripwire (see process_evidence_pipeline). Optional for backward compatibility.
     """
     from celery.exceptions import SoftTimeLimitExceeded
     from compliance.services import process_evidence_pipeline, _mark_evidence_error
     from compliance.models import Evidence
     try:
-        return process_evidence_pipeline(evidence_id)
+        return process_evidence_pipeline(evidence_id, expected_company_id=expected_company_id)
     except SoftTimeLimitExceeded:
         ev = Evidence.objects.filter(id=evidence_id).first()
         if ev is not None:

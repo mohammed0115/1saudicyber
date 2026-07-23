@@ -146,10 +146,10 @@ def evidence_upload(request):
     if getattr(settings, 'EVIDENCE_ASYNC_ENABLED', False):
         try:
             from monitoring.tasks import analyze_evidence_async
-            analyze_evidence_async.delay(evidence.id)
+            analyze_evidence_async.delay(evidence.id, expected_company_id=company.id)
             queued = True
         except Exception:
-            process_evidence_pipeline(evidence.id)
+            process_evidence_pipeline(evidence.id, expected_company_id=company.id)
     else:
         process_evidence_pipeline(evidence.id)
     evidence.refresh_from_db()
@@ -169,7 +169,7 @@ def evidence_analyze(request, evidence_id):
         return Response({'detail': 'No company associated.'}, status=400)
     if not Evidence.objects.filter(id=evidence_id, company_control__company=company).exists():
         return Response({'detail': 'Evidence not found.'}, status=status.HTTP_404_NOT_FOUND)
-    result = process_evidence_pipeline(evidence_id)
+    result = process_evidence_pipeline(evidence_id, expected_company_id=company.id)
     return Response(result)
 
 

@@ -44,7 +44,8 @@ class EvidenceAnalyzeIsolationTests(TestCase):
         with patch('compliance.services.process_evidence_pipeline', return_value={'ok': True}) as m:
             resp = self.client.post(self.url, **self.auth_a)
         self.assertEqual(resp.status_code, 200)
-        m.assert_called_once_with(self.evidence.id)
+        # P0-01 defense-in-depth: the owning company is forwarded to the pipeline.
+        m.assert_called_once_with(self.evidence.id, expected_company_id=self.company_a.id)
 
     def test_anonymous_denied(self):
         self.assertEqual(self.client.post(self.url).status_code, 401)

@@ -23,6 +23,29 @@ _RATIONALE_REQUIRED = {'partially_compliant', 'non_compliant', 'needs_more_evide
 _RECOMMENDATION_REQUIRED = {'non_compliant', 'needs_more_evidence'}
 
 
+def _require_live_engagement(user, company):
+    """P0-01 defense: an auditor may act on a company's assessment ONLY while a LIVE accepted
+    assignment exists. Closes the "access persists after de-assignment" gap — the assessment
+    row keeps assigned_auditor after an assignment is cancelled/rejected, so scoping by
+    assigned_auditor alone is not enough. Platform admins are exempt (explicit). Raises Http404
+    (not 403) so a de-provisioned auditor cannot even tell the assessment still exists.
+    """
+    from core.roles import is_platform_admin_user
+    if is_platform_admin_user(user):
+        return
+    from auditors.services import has_accepted_assignment
+    if not has_accepted_assignment(user, company):
+        raise Http404('No live assignment to this company.')
+
+
+def _assigned_assessment_or_404(request, assessment_id):
+    """Resolve an Assessment assigned to this auditor AND still backed by a live accepted
+    assignment. Single entry point used everywhere the auditor portal loads an assessment."""
+    assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
+    _require_live_engagement(request.user, assessment.company)
+    return assessment
+
+
 def _active_auditor_profile(user):
     """Return the user's AuditorProfile only if it is an ACTIVE auditor, else None."""
     if not getattr(user, 'is_authenticated', False):
@@ -145,7 +168,7 @@ def review_queue(request):
 @auditor_required
 def review_assessment(request, assessment_id):
     """Review a specific assessment — view all controls and evidence (own assignment only)."""
-    assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
+    assessment = _assigned_assessment_or_404(request, assessment_id)
     company_controls = (CompanyControl.objects.filter(company=assessment.company)
                         .select_related('control', 'control__framework', 'control__domain')
                         .order_by('control__domain__order', 'control__control_id'))
@@ -176,7 +199,7 @@ def review_assessment(request, assessment_id):
 @auditor_required
 def review_control(request, assessment_id, control_id):
     """Review a specific control's evidence (own assignment + own company only)."""
-    assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
+    assessment = _assigned_assessment_or_404(request, assessment_id)
     company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
     evidences = Evidence.objects.filter(company_control=company_control).order_by('-uploaded_at')
     verdict = AuditorControlVerdict.objects.filter(
@@ -230,7 +253,7 @@ def add_note(request, assessment_id, control_id):
     the inner request.method guard is kept as a harmless belt-and-braces check.
     """
     if request.method == 'POST':
-        assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
+        assessment = _assigned_assessment_or_404(request, assessment_id)
         # SECURITY: scope the control to THIS assessment's company (was: id only -> cross-tenant).
         company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
         AuditorNote.objects.create(
@@ -248,7 +271,7 @@ def add_note(request, assessment_id, control_id):
 @require_POST
 def save_verdict(request, assessment_id, control_id):
     """Record/replace the auditor's INTERNAL verdict for a control (own assignment only)."""
-    assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
+    assessment = _assigned_assessment_or_404(request, assessment_id)
     company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
     status = request.POST.get('status', '')
     if status not in dict(AuditorControlVerdict.STATUS_CHOICES) or status == 'not_reviewed':
@@ -293,7 +316,7 @@ def add_finding(request, assessment_id, control_id):
     the corrective-action (CAPA) lifecycle. Internal review artefact — not a certification.
     """
     from .findings_service import create_finding
-    assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
+    assessment = _assigned_assessment_or_404(request, assessment_id)
     company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
     try:
         finding = create_finding(
@@ -332,6 +355,7 @@ def add_corrective_action(request, finding_id):
     from .models import AuditFinding
     from .findings_service import add_corrective_action as _add
     finding = get_object_or_404(AuditFinding, id=finding_id, assessment__assigned_auditor=request.user)
+    _require_live_engagement(request.user, finding.assessment.company)
     try:
         _add(finding, description=request.POST.get('description', ''),
              owner=request.POST.get('owner', ''), due_date=_parse_date(request.POST.get('due_date')),
@@ -350,6 +374,7 @@ def update_finding_status(request, finding_id):
     from .models import AuditFinding
     from .findings_service import transition_finding
     finding = get_object_or_404(AuditFinding, id=finding_id, assessment__assigned_auditor=request.user)
+    _require_live_engagement(request.user, finding.assessment.company)
     try:
         transition_finding(finding, request.POST.get('status', ''))
         from .notifications import notify_finding_status
@@ -369,6 +394,7 @@ def verify_corrective_action(request, action_id):
     from .findings_service import verify_corrective_action as _verify
     action = get_object_or_404(CorrectiveAction, id=action_id,
                                finding__assessment__assigned_auditor=request.user)
+    _require_live_engagement(request.user, action.finding.assessment.company)
     _verify(action, note=request.POST.get('note', ''), mark_verified=True)
     from .notifications import notify_capa_verified
     notify_capa_verified(action)   # tell the company their CAPA was verified
@@ -470,7 +496,7 @@ def post_message(request, company_id):
 @require_POST
 def request_document(request, assessment_id, control_id):
     """Create an RFI (request for information/evidence) — title + reason + priority."""
-    assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
+    assessment = _assigned_assessment_or_404(request, assessment_id)
     company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
     title = (request.POST.get('title', '') or '').strip()
     desc = (request.POST.get('description', '') or '').strip()
@@ -492,8 +518,10 @@ def request_document(request, assessment_id, control_id):
 
 
 def _auditor_rfi_or_404(request, rfi_id):
-    """An RFI whose assessment belongs to the logged-in auditor, else 404."""
-    return get_object_or_404(DocumentRequest, id=rfi_id, assessment__assigned_auditor=request.user)
+    """An RFI whose assessment belongs to the logged-in auditor AND a live engagement, else 404."""
+    rfi = get_object_or_404(DocumentRequest, id=rfi_id, assessment__assigned_auditor=request.user)
+    _require_live_engagement(request.user, rfi.assessment.company)
+    return rfi
 
 
 @login_required
@@ -622,7 +650,7 @@ def submit_report(request, assessment_id):
     GET now 405s. The inner request.method guard is kept as belt-and-braces.
     """
     if request.method == 'POST':
-        assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
+        assessment = _assigned_assessment_or_404(request, assessment_id)
         # State-machine guard: 'completed' is a terminal state — never re-issue over it.
         if assessment.status == 'completed':
             messages.info(request, 'التقرير الداخلي لهذا التقييم مُصدَر بالفعل.')

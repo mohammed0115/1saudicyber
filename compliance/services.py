@@ -44,10 +44,17 @@ def _mark_evidence_error(evidence, exc):
         logger.exception('Could not mark evidence %s as errored', getattr(evidence, 'id', '?'))
 
 
-def process_evidence_pipeline(evidence_id):
+def process_evidence_pipeline(evidence_id, *, expected_company_id=None):
     """Run OCR + AI analysis for one Evidence row and update all related records.
 
     Always returns a dict and always leaves the Evidence on a terminal status.
+
+    P0-01 defense-in-depth: this is an unguarded raw-id sink (it mutates Evidence, its
+    CompanyControl AI verdict, and writes an AIAuditLog with the company name). Request-facing
+    callers already scope the id to the user's company; when they pass ``expected_company_id``
+    the pipeline refuses to touch an Evidence that belongs to any other company — so a caller
+    that ever forgets to scope cannot turn this into a cross-tenant IDOR. Behaviour is
+    unchanged when the argument is omitted.
     """
     from compliance.models import Evidence
     try:
@@ -57,6 +64,14 @@ def process_evidence_pipeline(evidence_id):
         ).get(id=evidence_id)
     except Evidence.DoesNotExist:
         logger.warning('process_evidence_pipeline: evidence %s not found', evidence_id)
+        return {'error': 'evidence not found'}
+
+    if (expected_company_id is not None
+            and evidence.company_control.company_id != expected_company_id):
+        # Cross-tenant id reached the pipeline — refuse and DO NOT leak existence.
+        logger.error('process_evidence_pipeline: refused cross-company evidence %s '
+                     '(belongs to company %s, expected %s)',
+                     evidence_id, evidence.company_control.company_id, expected_company_id)
         return {'error': 'evidence not found'}
 
     try:
