@@ -44,4 +44,7 @@ class CompanyAdmin(admin.ModelAdmin):
     list_display = ['name', 'cr_number', 'sector', 'size', 'risk_level', 'status', 'created_at']
     list_filter = ['sector', 'size', 'risk_level', 'status', 'target_nca', 'target_aramco', 'target_sabic']
     search_fields = ['name', 'name_ar', 'cr_number', 'contact_email']
-    readonly_fields = ['created_at', 'updated_at', 'classification_date']
+    # P0-02: `status` is product-driven (classification / assignment flow) and, crucially, there
+    # is NO official certification process — so it must not be hand-editable to 'certified' via
+    # the admin. Read-only here until a real accreditation workflow exists.
+    readonly_fields = ['status', 'created_at', 'updated_at', 'classification_date']

@@ -33,10 +33,21 @@ class AssessmentStateMachineTests(TestCase):
         with self.assertRaises(InvalidAssessmentTransition):
             Assessment(status='completed').transition_to('draft', save=False)
 
-    def test_transition_to_same_state_is_noop(self):
-        a = Assessment(status='auditor_review')
-        a.transition_to('auditor_review', save=False)           # no raise, no change
-        self.assertEqual(a.status, 'auditor_review')
+    def test_same_state_transition_is_rejected(self):
+        # No silent no-op: same-state (incl. completed->completed re-issue) must raise.
+        with self.assertRaises(InvalidAssessmentTransition):
+            Assessment(status='auditor_review').transition_to('auditor_review', save=False)
+        with self.assertRaises(InvalidAssessmentTransition):
+            Assessment(status='completed').transition_to('completed', save=False)
+
+    def test_stage_skipping_to_completed_is_rejected(self):
+        # Nothing may skip auditor review to reach 'completed'.
+        for dead in ('draft', 'in_progress', 'ai_complete'):
+            self.assertFalse(Assessment(status=dead).can_transition_to('completed'))
+            with self.assertRaises(InvalidAssessmentTransition):
+                Assessment(status=dead).transition_to('completed', save=False)
+            # legacy states may only advance forward to auditor_review
+            self.assertTrue(Assessment(status=dead).can_transition_to('auditor_review'))
 
 
 class SubmitReportIntegrityTests(TestCase):
@@ -175,3 +186,201 @@ class CertificateSafetyTests(TestCase):
             self.assertEqual(CertificateTracker.objects.filter(company=c).count(), 0)
             c.refresh_from_db()
             self.assertNotEqual(c.status, 'certified')
+
+
+class CompletionPreconditionTests(TestCase):
+    """Fail-closed completion gate (validate_ready_for_completion via submit_report)."""
+
+    def _setup(self, email):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email=email)
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        cc = _company_control(c, ctl)
+        return c, ctl, aud, a, cc
+
+    def test_no_completion_from_wrong_state(self):
+        from auditor_portal.lifecycle import validate_ready_for_completion, CompletionError
+        c, ctl, aud, a, cc = self._setup('pre_state@x.com')
+        a.status = 'draft'; a.save(update_fields=['status'])
+        with self.assertRaises(CompletionError):
+            validate_ready_for_completion(a, aud, 'pass')
+
+    def test_no_completion_when_assignment_cancelled(self):
+        from auditor_portal.models import AuditReport
+        from auditors.models import AuditorAssignment
+        from auditors.services import get_auditor_profile
+        c, ctl, aud, a, cc = self._setup('pre_asg@x.com')
+        AuditorAssignment.objects.filter(auditor=get_auditor_profile(aud), company=c).update(status='cancelled')
+        # de-provisioned auditor cannot even reach submit_report (404 from the live-engagement guard)
+        resp = self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(AuditReport.objects.filter(assessment=a).exists())
+
+    def test_no_completion_with_open_rfi(self):
+        from auditor_portal.models import AuditReport
+        c, ctl, aud, a, cc = self._setup('pre_rfi@x.com')
+        DocumentRequest.objects.create(assessment=a, company_control=cc, auditor=aud,
+                                       description='x', status='open')
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')
+        self.assertFalse(AuditReport.objects.filter(assessment=a).exists())
+
+    def test_pass_rejected_when_a_control_is_non_compliant(self):
+        from auditor_portal.models import AuditReport
+        c, ctl, aud, a, cc = self._setup('pre_incons@x.com')
+        AuditorControlVerdict.objects.create(assessment=a, company_control=cc, auditor=aud,
+                                             status='non_compliant', rationale='r')
+        # inconsistent 'pass' is refused
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')
+        self.assertFalse(AuditReport.objects.filter(assessment=a).exists())
+        # a consistent 'fail' finalizes
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'fail'})
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'completed')
+        self.assertEqual(AuditReport.objects.get(assessment=a).verdict, 'fail')
+
+    def test_missing_verdict_rejected(self):
+        from auditor_portal.models import AuditReport
+        c, ctl, aud, a, cc = self._setup('pre_missing@x.com')
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {})  # no verdict
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')
+        self.assertFalse(AuditReport.objects.filter(assessment=a).exists())
+
+
+class ReportImmutabilityTests(TestCase):
+    def _issue(self, email, verdict='pass'):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email=email)
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': verdict})
+        return a, AuditReport.objects.get(assessment=a)
+
+    def test_issued_report_has_integrity_envelope(self):
+        a, rep = self._issue('imm_env@x.com')
+        self.assertTrue(rep.content_hash)
+        self.assertTrue(rep.verify_integrity())
+        self.assertEqual(rep.assessment_status_at_issue, 'completed')
+        self.assertIsNotNone(rep.submitted_at)      # issued_at
+        self.assertIsNotNone(rep.auditor_id)        # issued_by
+
+    def test_save_on_issued_report_is_refused(self):
+        from auditor_portal.models import ReportImmutableError
+        a, rep = self._issue('imm_save@x.com')
+        rep.verdict = 'fail'
+        with self.assertRaises(ReportImmutableError):
+            rep.save()
+
+    def test_delete_on_issued_report_is_refused(self):
+        from auditor_portal.models import ReportImmutableError
+        a, rep = self._issue('imm_del@x.com')
+        with self.assertRaises(ReportImmutableError):
+            rep.delete()
+        self.assertTrue(AuditReport.objects.filter(pk=rep.pk).exists())
+
+
+class EvidenceSnapshotTests(TestCase):
+    def test_report_captures_evidence_versions_and_new_uploads_do_not_change_it(self):
+        from compliance.tests import _company_with_submission_file
+        from compliance.models import EvidenceSubmission
+        # A company with an evidence submission, plus an auditor assignment + assessment.
+        c, item, sub = _company_with_submission_file(filename='e1.txt', content=b'v1', file_type='txt')
+        aud = _assigned_auditor_user(c, email='snap_aud@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        rep = AuditReport.objects.get(assessment=a)
+        snap_ids = {e['submission_id'] for e in rep.evidence_snapshot}
+        self.assertIn(sub.id, snap_ids)
+        self.assertTrue(any(e['filename'] == 'e1.txt' for e in rep.evidence_snapshot))
+        before = list(rep.evidence_snapshot)
+        # A NEW submission after completion must NOT alter the frozen snapshot.
+        EvidenceSubmission.objects.create(company=c, checklist_item=item,
+                                          original_filename='later.txt', file_type='txt', file_size=2)
+        rep.refresh_from_db()
+        self.assertEqual(rep.evidence_snapshot, before)
+        self.assertTrue(rep.verify_integrity())
+
+
+class RfiRespondAtomicityTests(TestCase):
+    def test_response_and_status_are_atomic_rollback_on_failure(self):
+        from auditor_portal.models import CompanyRFIResponse
+        from unittest import mock
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='rfi_atom_aud@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        cc = _company_control(c, ctl)
+        rfi = DocumentRequest.objects.create(assessment=a, company_control=cc, auditor=aud,
+                                             description='x', status='open')
+        cu = _journey_user(c, email='rfi_atom_cu@x.com')
+        self.client.force_login(cu)
+        # Force the status-save to blow up AFTER the response insert -> whole txn must roll back.
+        with mock.patch('auditor_portal.models.DocumentRequest.save', side_effect=RuntimeError('boom')):
+            with self.assertRaises(RuntimeError):
+                self.client.post(reverse('auditor_portal:company_rfi_respond', args=[rfi.id]),
+                                 {'response_text': 'hi'})
+        self.assertEqual(CompanyRFIResponse.objects.filter(request=rfi).count(), 0)  # rolled back
+        rfi.refresh_from_db()
+        self.assertEqual(rfi.status, 'open')                                          # unchanged
+
+
+class CertifiedInventoryTests(TestCase):
+    def test_company_status_is_readonly_in_admin(self):
+        from django.contrib import admin
+        from core.models import Company
+        ma = admin.site._registry[Company]
+        self.assertIn('status', ma.readonly_fields)   # cannot hand-set 'certified' via admin
+
+    def test_submit_report_does_not_expose_certified_transition(self):
+        # Company.status has no code path to 'certified' (only classified/in_assessment are set).
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='inv_aud@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        c.refresh_from_db()
+        self.assertNotEqual(c.status, 'certified')
+
+
+class LockedUiTests(TestCase):
+    def test_completed_assessment_hides_edit_forms_and_shows_locked_banner(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='ui_aud@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        cc = _company_control(c, ctl)
+        # before close: the verdict edit form is present
+        body = self.client.get(reverse('auditor_portal:review_control', args=[a.id, cc.id])).content.decode()
+        self.assertIn(reverse('auditor_portal:save_verdict', args=[a.id, cc.id]), body)
+        # finalize, then the edit forms are hidden and a locked banner is shown
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        body2 = self.client.get(reverse('auditor_portal:review_control', args=[a.id, cc.id])).content.decode()
+        self.assertNotIn(reverse('auditor_portal:save_verdict', args=[a.id, cc.id]), body2)
+        self.assertNotIn(reverse('auditor_portal:add_note', args=[a.id, cc.id]), body2)
+        self.assertIn('نهائي ومُغلق', body2)
+
+
+class SubmitIdempotencyTests(TestCase):
+    def test_repeated_submit_is_idempotent_single_report(self):
+        # SQLite test DB: proves request-level idempotency (OneToOne + terminal guard). True
+        # row-lock concurrency must be verified on PostgreSQL in CI (see report Remaining Risks).
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='idem_aud@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        for _ in range(3):
+            self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        self.assertEqual(AuditReport.objects.filter(assessment=a).count(), 1)

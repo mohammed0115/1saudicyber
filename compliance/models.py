@@ -215,14 +215,17 @@ class Assessment(models.Model):
         ('expired', 'Expired'),
     ]
 
-    # P0-02 — formal lifecycle. Terminal states are frozen: no re-open, no further edits, no
-    # re-issue. Forward transitions only; a finalized ('completed') review is immutable.
+    # P0-02 — formal lifecycle. Terminal states are frozen (no re-open/edit/re-issue). The ONLY
+    # product path that creates an Assessment does so directly in 'auditor_review'
+    # (auditor_portal.ensure_assessments_for_auditor); 'draft'/'in_progress'/'ai_complete' are
+    # legacy/unused states. This graph is MINIMAL and fail-closed: nothing may skip auditor
+    # review to reach 'completed' — the legacy states can only advance forward to auditor_review.
     TERMINAL_STATES = frozenset({'completed', 'expired'})
     ALLOWED_TRANSITIONS = {
-        'draft': frozenset({'in_progress', 'ai_complete', 'auditor_review', 'completed', 'expired'}),
-        'in_progress': frozenset({'ai_complete', 'auditor_review', 'completed', 'expired'}),
-        'ai_complete': frozenset({'auditor_review', 'completed', 'expired'}),
-        'auditor_review': frozenset({'completed', 'expired'}),
+        'draft': frozenset({'auditor_review'}),
+        'in_progress': frozenset({'auditor_review'}),
+        'ai_complete': frozenset({'auditor_review'}),
+        'auditor_review': frozenset({'completed', 'expired'}),   # the one real transition
         'completed': frozenset(),   # terminal — never re-opened or re-issued
         'expired': frozenset(),     # terminal
     }
@@ -270,9 +273,9 @@ class Assessment(models.Model):
 
     def transition_to(self, new_status, *, save=True, update_fields=None):
         """Move to `new_status`, refusing any illegal transition (raises InvalidAssessmentTransition).
-        Callers that finalize should hold a DB lock (select_for_update) to stay race-safe."""
-        if new_status == self.status:
-            return
+        Same-state transitions are REJECTED too (no silent no-op) — a status is never in its own
+        allowed set — so a re-issue attempt (completed -> completed) fails loudly. Callers that
+        finalize should hold a DB lock (select_for_update) to stay race-safe."""
         if not self.can_transition_to(new_status):
             raise InvalidAssessmentTransition(
                 f"Illegal assessment transition: {self.status!r} -> {new_status!r}")

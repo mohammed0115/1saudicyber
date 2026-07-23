@@ -90,6 +90,12 @@
         <p class="text-xs text-gov-gray-400 mt-1">عرض للقراءة فقط — لا يمكن للمدقق حذف أو استبدال أدلة الشركة.</p>
       </div>
 
+      {% if assessment.is_locked %}
+      <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm flex items-center gap-2">
+        <i class="fas fa-lock"></i> هذا التقييم نهائي ومُغلق — تم إصدار تقريره الداخلي. لا يمكن إجراء أي تعديل.
+      </div>
+      {% endif %}
+
       {# Internal per-control verdict #}
       <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <h2 class="text-lg font-semibold text-gov-green-800 mb-1">الحكم الداخلي على الضابط</h2>
@@ -116,6 +122,7 @@
           </ol>
         </details>
         {% endif %}
+        {% if not assessment.is_locked %}
         <form method="post" action="{% url 'auditor_portal:save_verdict' assessment.id company_control.id %}" class="grid gap-3">
           {% csrf_token %}
           <label class="text-sm"><span class="block text-gov-gray-500 mb-1">الحالة</span>
@@ -147,6 +154,7 @@
             </select></label>
           <div><button type="submit" class="bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-gov-green-900 transition text-sm">حفظ الحكم الداخلي</button></div>
         </form>
+        {% endif %}
       </div>
 
       {# G2 — audit findings (non-conformities/observations) for this control #}
@@ -221,6 +229,7 @@
         <p class="text-sm text-gov-gray-500 mb-3">لا ملاحظات مسجّلة على هذا الضابط.</p>
         {% endfor %}
 
+        {% if not assessment.is_locked %}
         <details class="mt-2">
           <summary class="cursor-pointer text-gov-green-700 text-sm font-medium">＋ تسجيل ملاحظة جديدة</summary>
           <form method="post" action="{% url 'auditor_portal:add_finding' assessment.id company_control.id %}" class="grid gap-3 mt-3">
@@ -241,6 +250,7 @@
             <div><button type="submit" class="bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-gov-green-900 transition text-sm">تسجيل الملاحظة</button></div>
           </form>
         </details>
+        {% endif %}
       </div>
 
       {# RFI list (this control) with company responses + lifecycle #}
@@ -268,6 +278,7 @@
           </div>
           {% endfor %}
           {% if req.closing_note %}<p class="text-xs text-gov-gray-500 mt-2">ملاحظة الإغلاق: {{ req.closing_note }}</p>{% endif %}
+          {% if not assessment.is_locked %}
           <div class="flex flex-wrap gap-2 mt-3">
             {% if req.is_open %}
             <form method="post" action="{% url 'auditor_portal:close_rfi' req.id %}" class="flex items-center gap-1">
@@ -283,6 +294,7 @@
             </form>
             {% endif %}
           </div>
+          {% endif %}
         </div>
         {% empty %}
         <p class="text-gov-gray-400 text-sm">لا توجد طلبات استكمال لهذا الضابط.</p>
@@ -295,6 +307,7 @@
       {# Add note #}
       <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <h3 class="text-lg font-semibold text-gov-green-800 mb-4"><i class="fas fa-pen ml-1"></i> إضافة ملاحظة مدقق</h3>
+        {% if not assessment.is_locked %}
         <form method="post" action="{% url 'auditor_portal:add_note' assessment.id company_control.id %}">
           {% csrf_token %}
           <textarea name="note" rows="4" required class="w-full border border-gov-gray-300 rounded-lg px-4 py-3 text-sm mb-3" placeholder="اكتب ملاحظتك أو الملاحظة الجوهرية..."></textarea>
@@ -304,11 +317,13 @@
           </div>
           <button type="submit" class="w-full bg-gov-green-800 text-white py-2.5 rounded-lg font-medium hover:bg-gov-green-900 transition text-sm">حفظ الملاحظة</button>
         </form>
+        {% endif %}
       </div>
 
       {# Request document / clarification #}
       <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-6">
         <h3 class="text-lg font-semibold text-gov-green-800 mb-4"><i class="fas fa-file-circle-question ml-1"></i> طلب استكمال من الشركة</h3>
+        {% if not assessment.is_locked %}
         <form method="post" action="{% url 'auditor_portal:request_document' assessment.id company_control.id %}">
           {% csrf_token %}
           <input type="text" name="title" required class="w-full border border-gov-gray-300 rounded-lg px-4 py-2.5 text-sm mb-3" placeholder="عنوان الطلب (مطلوب)">
@@ -321,6 +336,7 @@
           </select>
           <button type="submit" class="w-full bg-gov-green-800 text-white py-2.5 rounded-lg font-medium hover:bg-gov-green-900 transition text-sm">إرسال طلب الاستكمال</button>
         </form>
+        {% endif %}
         <p class="text-xs text-gov-gray-400 mt-2">يظهر الطلب للشركة ضمن استكمالاتها المطلوبة إن كان مسار الاستكمال مفعّلاً لديها.</p>
       </div>
 

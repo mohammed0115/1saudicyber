@@ -139,9 +139,20 @@ class AuditorControlVerdict(models.Model):
         return self.IMPLEMENTATION_AR.get(self.implementation_level, self.implementation_level)
 
 
+class ReportImmutableError(Exception):
+    """Raised on any attempt to modify or delete an already-issued AuditReport (P0-02)."""
+
+
 class AuditReport(models.Model):
-    """Final audit report submitted by auditor."""
+    """Final INTERNAL audit report — WRITE-ONCE. One per assessment (OneToOne). Once issued it
+    is immutable: save() refuses content changes and delete() is blocked (see below). It carries
+    an integrity envelope (content_hash + assessment_status_at_issue + snapshot_version) so its
+    provenance and contents are provable after the fact.
+    """
+    SNAPSHOT_VERSION = 1
+
     assessment = models.OneToOneField('compliance.Assessment', on_delete=models.CASCADE, related_name='final_report')
+    # auditor == issued_by; submitted_at == issued_at.
     auditor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='audit_reports')
     verdict = models.CharField(max_length=25, choices=[
         ('pass', 'Pass'), ('conditional_pass', 'Conditional Pass'), ('fail', 'Fail'),
@@ -150,10 +161,48 @@ class AuditReport(models.Model):
     executive_summary_ar = models.TextField(blank=True)
     findings = models.JSONField(default=list)
     recommendations = models.JSONField(default=list)
+    # P0-02 integrity envelope.
+    evidence_snapshot = models.JSONField(default=list)          # [{submission_id, filename, file_hash, version}]
+    assessment_status_at_issue = models.CharField(max_length=20, blank=True)
+    snapshot_version = models.PositiveSmallIntegerField(default=SNAPSHOT_VERSION)
+    content_hash = models.CharField(max_length=64, blank=True)  # sha256 of the issued content
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'audit_reports'
+
+    def compute_content_hash(self):
+        import hashlib
+        import json
+        payload = json.dumps({
+            'assessment': self.assessment_id, 'auditor': self.auditor_id, 'verdict': self.verdict,
+            'executive_summary': self.executive_summary, 'executive_summary_ar': self.executive_summary_ar,
+            'findings': self.findings, 'recommendations': self.recommendations,
+            'evidence_snapshot': self.evidence_snapshot,
+            'assessment_status_at_issue': self.assessment_status_at_issue,
+            'snapshot_version': self.snapshot_version,
+        }, sort_keys=True, ensure_ascii=False, default=str)
+        return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+    def save(self, *args, **kwargs):
+        """WRITE-ONCE: the initial create stamps content_hash; any later modification of an
+        existing row is refused (ReportImmutableError). Model-level, not view-only — this also
+        blocks admin edits, stray update_or_create update paths, and management commands."""
+        if self.pk is not None and AuditReport.objects.filter(pk=self.pk).exists():
+            raise ReportImmutableError(
+                'An issued audit report is immutable and cannot be modified.')
+        self.content_hash = self.compute_content_hash()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """A single-instance delete of an issued report is refused. (A cascade from deleting the
+        parent Assessment is a bulk SQL delete and does not call this — that is the only removal
+        path, and it removes the whole assessment, not just its report.)"""
+        raise ReportImmutableError('An issued audit report cannot be deleted.')
+
+    def verify_integrity(self):
+        """True iff the stored content_hash still matches the current content."""
+        return bool(self.content_hash) and self.content_hash == self.compute_content_hash()
 
 
 class AuditFinding(models.Model):

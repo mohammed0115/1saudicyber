@@ -679,14 +679,19 @@ def company_rfi_respond(request, rfi_id):
     if not text:
         messages.error(request, 'نص الرد مطلوب.')
     else:
-        CompanyRFIResponse.objects.create(request=rfi, responder=request.user,
-                                          response_text=text, attachment=attachment)
-        if rfi.status in ('open', 'pending', 'under_review'):
-            rfi.status = 'responded'
-            rfi.responded_at = timezone.now()
-            rfi.save(update_fields=['status', 'responded_at'])
+        # P0-02: the response insert and the RFI status flip must persist together (or not at
+        # all) — a crash between them must not leave a response attached to a still-open RFI.
+        with transaction.atomic():
+            locked_rfi = (DocumentRequest.objects.select_for_update()
+                          .get(pk=rfi.pk, company_control__company=company))
+            CompanyRFIResponse.objects.create(request=locked_rfi, responder=request.user,
+                                              response_text=text, attachment=attachment)
+            if locked_rfi.status in ('open', 'pending', 'under_review'):
+                locked_rfi.status = 'responded'
+                locked_rfi.responded_at = timezone.now()
+                locked_rfi.save(update_fields=['status', 'responded_at'])
         from .notifications import notify_rfi_response
-        notify_rfi_response(rfi)   # tell the auditor the company answered
+        notify_rfi_response(rfi)   # tell the auditor the company answered (outside the txn)
         messages.success(request, 'تم إرسال ردك إلى المدقق.')
     return redirect('auditor_portal:company_rfi_list')
 
@@ -734,31 +739,24 @@ def submit_report(request, assessment_id):
     GET now 405s. The inner request.method guard is kept as belt-and-braces.
     """
     if request.method == 'POST':
+        from django.db import IntegrityError
+        from .models import AuditFinding, ReportImmutableError
+        from .findings_service import assessment_maturity
+        from .lifecycle import validate_ready_for_completion, build_evidence_snapshot, CompletionError
         # Authorize (assigned auditor + live engagement) on an unlocked read first.
         _assigned_assessment_or_404(request, assessment_id)
-        # Validate the verdict against the report's own choices — never store an arbitrary value.
-        verdict = request.POST.get('verdict', 'fail')
-        if verdict not in dict(AuditReport._meta.get_field('verdict').choices):
-            messages.error(request, 'قيمة الحكم غير صالحة.')
-            return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
+        # A missing verdict is NOT silently defaulted — the validator rejects an empty value.
+        verdict = (request.POST.get('verdict', '') or '').strip()
         try:
             with transaction.atomic():
                 # Lock the row so concurrent submits (double-POST, browser/proxy/Celery retry)
-                # serialize: the loser sees 'completed' after the winner commits. Re-check the
-                # terminal state AFTER acquiring the lock (race-safe issue-once).
+                # serialize: the loser fails the preconditions after the winner commits. All
+                # completion checks (state, live+active auditor, no open RFI, not already issued,
+                # valid+consistent verdict) run AFTER acquiring the lock — race-safe issue-once.
                 assessment = (Assessment.objects.select_for_update()
                               .get(pk=assessment_id, assigned_auditor=request.user))
-                if assessment.status == 'completed':
-                    messages.info(request, 'التقرير الداخلي لهذا التقييم مُصدَر بالفعل.')
-                    return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
-                # Readiness guard: cannot finalize while RFIs are still open (hard block); warn
-                # (but allow) when no internal verdict has been recorded yet.
-                open_rfi = DocumentRequest.objects.filter(
-                    assessment=assessment, status__in=DocumentRequest.OPEN_STATES).count()
-                if open_rfi:
-                    messages.error(request, 'لا يمكن إصدار التقرير الداخلي النهائي قبل إغلاق طلبات '
-                                            'الاستكمال المفتوحة (%d طلب مفتوح).' % open_rfi)
-                    return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
+                validate_ready_for_completion(assessment, request.user, verdict)
+                # Non-blocking advisory: a report with no/partial verdicts is a preliminary one.
                 reviewed = AuditorControlVerdict.objects.filter(
                     assessment=assessment, status__in=AuditorControlVerdict.REVIEWED_STATES).count()
                 total_controls = CompanyControl.objects.filter(company=assessment.company).count()
@@ -768,10 +766,8 @@ def submit_report(request, assessment_id):
                 elif total_controls and reviewed < total_controls:
                     messages.warning(request, 'تنبيه: لم تُراجع كل الضوابط بعد — هذا تقرير مراجعة '
                                               'داخلي مبدئي وليس نهائياً.')
-                # H1 — serialize the audit-core (findings + maturity) into the report so the
-                # deliverable is a SNAPSHOT of the work at finalization, not just a verdict.
-                from .models import AuditFinding
-                from .findings_service import assessment_maturity
+                # SNAPSHOT of the work at finalization: findings + maturity + the evidence versions
+                # reviewed. Frozen into the write-once report; later live changes never alter it.
                 findings_payload = [{
                     'control_id': getattr(f.company_control.control, 'control_id', ''),
                     'severity': f.severity, 'severity_ar': f.severity_ar,
@@ -780,21 +776,25 @@ def submit_report(request, assessment_id):
                 } for f in (AuditFinding.objects.filter(assessment=assessment)
                             .select_related('company_control__control')
                             .prefetch_related('corrective_actions'))]
-                # Report write + state transition happen together, atomically. The OneToOne on
-                # AuditReport.assessment guarantees at most one report per assessment.
-                AuditReport.objects.update_or_create(
-                    assessment=assessment,
-                    defaults=dict(auditor=request.user, verdict=verdict,
-                                  executive_summary=request.POST.get('executive_summary', ''),
-                                  executive_summary_ar=request.POST.get('executive_summary_ar', ''),
-                                  findings=findings_payload,
-                                  recommendations=[assessment_maturity(assessment)]),
-                )
+                # Write-once create (validator already guaranteed no report exists). The OneToOne
+                # unique constraint is the DB backstop against a concurrent second insert.
+                AuditReport.objects.create(
+                    assessment=assessment, auditor=request.user, verdict=verdict,
+                    executive_summary=request.POST.get('executive_summary', ''),
+                    executive_summary_ar=request.POST.get('executive_summary_ar', ''),
+                    findings=findings_payload,
+                    recommendations=[assessment_maturity(assessment)],
+                    evidence_snapshot=build_evidence_snapshot(assessment.company),
+                    assessment_status_at_issue='completed')
                 assessment.completed_at = timezone.now()
-                # Formal transition (validates auditor_review/draft -> completed; refuses illegal).
+                # Formal transition (only auditor_review -> completed is legal; refuses illegal).
                 assessment.transition_to('completed', update_fields=['completed_at'])
-        except InvalidAssessmentTransition:
-            messages.error(request, 'لا يمكن إصدار التقرير من حالة التقييم الحالية.')
+        except CompletionError as exc:
+            messages.error(request, exc.message_ar)
+            return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
+        except (InvalidAssessmentTransition, IntegrityError, ReportImmutableError):
+            # Lost a concurrency race (or an illegal state) — the report is already issued.
+            messages.info(request, 'التقرير الداخلي لهذا التقييم مُصدَر بالفعل.')
             return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
         messages.success(request, 'تم حفظ تقرير المراجعة الداخلي. هذه مراجعة داخلية ولا '
                                   'تمثل شهادة امتثال رسمية أو اعتماداً من أي جهة.')
