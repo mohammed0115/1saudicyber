@@ -7,13 +7,14 @@ platform's stated positioning. It records auditor notes, document requests, and 
 final internal audit report. Access + object scoping are enforced per auditor.
 """
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
+from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from core.roles import company_portal_required
-from compliance.models import Assessment, CompanyControl, Evidence
+from compliance.models import Assessment, CompanyControl, Evidence, InvalidAssessmentTransition
 from .models import (AuditorNote, DocumentRequest, AuditReport, AuditorControlVerdict,
                      AuditorControlVerdictHistory, CompanyRFIResponse)
 
@@ -44,6 +45,19 @@ def _assigned_assessment_or_404(request, assessment_id):
     assessment = get_object_or_404(Assessment, id=assessment_id, assigned_auditor=request.user)
     _require_live_engagement(request.user, assessment.company)
     return assessment
+
+
+_LOCKED_MSG = 'هذا التقييم مُغلق بعد إصدار تقريره الداخلي النهائي ولا يقبل تعديلات جديدة.'
+
+
+def _reject_if_locked(assessment):
+    """P0-02: a finalized (terminal) assessment is immutable. Return a 403 response to return
+    from the view when it is locked, else None. Applied at EVERY artifact-mutation entry point
+    (verdict/finding/CAPA/note/RFI) so a closed assessment can never be edited server-side,
+    regardless of what the UI shows."""
+    if assessment is not None and assessment.is_locked:
+        return HttpResponseForbidden(_LOCKED_MSG)
+    return None
 
 
 def _active_auditor_profile(user):
@@ -254,6 +268,9 @@ def add_note(request, assessment_id, control_id):
     """
     if request.method == 'POST':
         assessment = _assigned_assessment_or_404(request, assessment_id)
+        locked = _reject_if_locked(assessment)
+        if locked:
+            return locked
         # SECURITY: scope the control to THIS assessment's company (was: id only -> cross-tenant).
         company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
         AuditorNote.objects.create(
@@ -272,6 +289,9 @@ def add_note(request, assessment_id, control_id):
 def save_verdict(request, assessment_id, control_id):
     """Record/replace the auditor's INTERNAL verdict for a control (own assignment only)."""
     assessment = _assigned_assessment_or_404(request, assessment_id)
+    locked = _reject_if_locked(assessment)
+    if locked:
+        return locked
     company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
     status = request.POST.get('status', '')
     if status not in dict(AuditorControlVerdict.STATUS_CHOICES) or status == 'not_reviewed':
@@ -292,16 +312,18 @@ def save_verdict(request, assessment_id, control_id):
     implementation_level = request.POST.get('implementation_level', '')
     if implementation_level not in dict(AuditorControlVerdict.IMPLEMENTATION_CHOICES):
         implementation_level = ''
-    AuditorControlVerdict.objects.update_or_create(
-        assessment=assessment, company_control=company_control,
-        defaults=dict(auditor=request.user, status=status, rationale=rationale,
-                      recommendation=recommendation, impact=impact,
-                      implementation_level=implementation_level, reviewed_at=timezone.now()))
-    # Append-only audit trail: preserve every verdict change (who/what/when) for defensibility.
-    AuditorControlVerdictHistory.objects.create(
-        assessment=assessment, company_control=company_control, auditor=request.user,
-        status=status, implementation_level=implementation_level, impact=impact,
-        rationale=rationale, recommendation=recommendation)
+    # P0-02: the current verdict upsert and its append-only history row persist together.
+    with transaction.atomic():
+        AuditorControlVerdict.objects.update_or_create(
+            assessment=assessment, company_control=company_control,
+            defaults=dict(auditor=request.user, status=status, rationale=rationale,
+                          recommendation=recommendation, impact=impact,
+                          implementation_level=implementation_level, reviewed_at=timezone.now()))
+        # Append-only audit trail: preserve every verdict change (who/what/when) for defensibility.
+        AuditorControlVerdictHistory.objects.create(
+            assessment=assessment, company_control=company_control, auditor=request.user,
+            status=status, implementation_level=implementation_level, impact=impact,
+            rationale=rationale, recommendation=recommendation)
     messages.success(request, 'تم حفظ الحكم الداخلي على الضابط.')
     return redirect('auditor_portal:review_control', assessment_id=assessment_id, control_id=control_id)
 
@@ -317,6 +339,9 @@ def add_finding(request, assessment_id, control_id):
     """
     from .findings_service import create_finding
     assessment = _assigned_assessment_or_404(request, assessment_id)
+    locked = _reject_if_locked(assessment)
+    if locked:
+        return locked
     company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
     try:
         finding = create_finding(
@@ -356,6 +381,9 @@ def add_corrective_action(request, finding_id):
     from .findings_service import add_corrective_action as _add
     finding = get_object_or_404(AuditFinding, id=finding_id, assessment__assigned_auditor=request.user)
     _require_live_engagement(request.user, finding.assessment.company)
+    locked = _reject_if_locked(finding.assessment)
+    if locked:
+        return locked
     try:
         _add(finding, description=request.POST.get('description', ''),
              owner=request.POST.get('owner', ''), due_date=_parse_date(request.POST.get('due_date')),
@@ -375,6 +403,9 @@ def update_finding_status(request, finding_id):
     from .findings_service import transition_finding
     finding = get_object_or_404(AuditFinding, id=finding_id, assessment__assigned_auditor=request.user)
     _require_live_engagement(request.user, finding.assessment.company)
+    locked = _reject_if_locked(finding.assessment)
+    if locked:
+        return locked
     try:
         transition_finding(finding, request.POST.get('status', ''))
         from .notifications import notify_finding_status
@@ -395,6 +426,9 @@ def verify_corrective_action(request, action_id):
     action = get_object_or_404(CorrectiveAction, id=action_id,
                                finding__assessment__assigned_auditor=request.user)
     _require_live_engagement(request.user, action.finding.assessment.company)
+    locked = _reject_if_locked(action.finding.assessment)
+    if locked:
+        return locked
     _verify(action, note=request.POST.get('note', ''), mark_verified=True)
     from .notifications import notify_capa_verified
     notify_capa_verified(action)   # tell the company their CAPA was verified
@@ -422,6 +456,9 @@ def company_add_corrective_action(request, finding_id):
     from .findings_service import add_corrective_action as _add
     finding = get_object_or_404(AuditFinding, id=finding_id,
                                 company_control__company=request.user.company)
+    locked = _reject_if_locked(finding.assessment)
+    if locked:
+        return locked
     try:
         _add(finding, description=request.POST.get('description', ''),
              owner=request.POST.get('owner', ''), due_date=_parse_date(request.POST.get('due_date')),
@@ -443,6 +480,9 @@ def company_update_capa(request, action_id):
     from .findings_service import advance_corrective_action
     action = get_object_or_404(CorrectiveAction, id=action_id,
                                finding__company_control__company=request.user.company)
+    locked = _reject_if_locked(action.finding.assessment)
+    if locked:
+        return locked
     try:
         advance_corrective_action(action, request.POST.get('status', ''))
         messages.success(request, 'تم تحديث حالة خطة المعالجة.')
@@ -497,6 +537,9 @@ def post_message(request, company_id):
 def request_document(request, assessment_id, control_id):
     """Create an RFI (request for information/evidence) — title + reason + priority."""
     assessment = _assigned_assessment_or_404(request, assessment_id)
+    locked = _reject_if_locked(assessment)
+    if locked:
+        return locked
     company_control = get_object_or_404(CompanyControl, id=control_id, company=assessment.company)
     title = (request.POST.get('title', '') or '').strip()
     desc = (request.POST.get('description', '') or '').strip()
@@ -530,6 +573,9 @@ def _auditor_rfi_or_404(request, rfi_id):
 def close_rfi(request, rfi_id):
     """Auditor closes an RFI (closing note required)."""
     rfi = _auditor_rfi_or_404(request, rfi_id)
+    locked = _reject_if_locked(rfi.assessment)
+    if locked:
+        return locked
     note = (request.POST.get('closing_note', '') or '').strip()
     if rfi.status not in DocumentRequest.OPEN_STATES:
         messages.info(request, 'هذا الطلب مغلق بالفعل.')
@@ -553,6 +599,9 @@ def close_rfi(request, rfi_id):
 def cancel_rfi(request, rfi_id):
     """Auditor cancels an RFI."""
     rfi = _auditor_rfi_or_404(request, rfi_id)
+    locked = _reject_if_locked(rfi.assessment)
+    if locked:
+        return locked
     rfi.status = 'cancelled'
     rfi.closed_at = timezone.now()
     rfi.save(update_fields=['status', 'closed_at'])
@@ -567,6 +616,9 @@ def cancel_rfi(request, rfi_id):
 def reopen_rfi(request, rfi_id):
     """Auditor reopens a closed/cancelled RFI (asks for further clarification)."""
     rfi = _auditor_rfi_or_404(request, rfi_id)
+    locked = _reject_if_locked(rfi.assessment)
+    if locked:
+        return locked
     # State-machine guard: only a closed/cancelled RFI can be reopened.
     if rfi.status not in ('closed', 'cancelled'):
         messages.info(request, 'هذا الطلب مفتوح بالفعل.')
@@ -604,6 +656,9 @@ def company_rfi_respond(request, rfi_id):
     if not company:
         return render(request, 'dashboard/no_company.html')
     rfi = get_object_or_404(DocumentRequest, id=rfi_id, company_control__company=company)
+    locked = _reject_if_locked(rfi.assessment)
+    if locked:
+        return locked
     text = (request.POST.get('response_text', '') or '').strip()
     attachment = request.FILES.get('attachment')
     # Validate the optional attachment with the SAME guard used for evidence uploads
@@ -679,51 +734,68 @@ def submit_report(request, assessment_id):
     GET now 405s. The inner request.method guard is kept as belt-and-braces.
     """
     if request.method == 'POST':
-        assessment = _assigned_assessment_or_404(request, assessment_id)
-        # State-machine guard: 'completed' is a terminal state — never re-issue over it.
-        if assessment.status == 'completed':
-            messages.info(request, 'التقرير الداخلي لهذا التقييم مُصدَر بالفعل.')
+        # Authorize (assigned auditor + live engagement) on an unlocked read first.
+        _assigned_assessment_or_404(request, assessment_id)
+        # Validate the verdict against the report's own choices — never store an arbitrary value.
+        verdict = request.POST.get('verdict', 'fail')
+        if verdict not in dict(AuditReport._meta.get_field('verdict').choices):
+            messages.error(request, 'قيمة الحكم غير صالحة.')
             return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
-        # Readiness guard: cannot finalize while RFIs are still open (hard block); warn
-        # (but allow) when no internal verdict has been recorded yet.
-        open_rfi = DocumentRequest.objects.filter(
-            assessment=assessment, status__in=DocumentRequest.OPEN_STATES).count()
-        if open_rfi:
-            messages.error(request, 'لا يمكن إصدار التقرير الداخلي النهائي قبل إغلاق طلبات '
-                                    'الاستكمال المفتوحة (%d طلب مفتوح).' % open_rfi)
+        try:
+            with transaction.atomic():
+                # Lock the row so concurrent submits (double-POST, browser/proxy/Celery retry)
+                # serialize: the loser sees 'completed' after the winner commits. Re-check the
+                # terminal state AFTER acquiring the lock (race-safe issue-once).
+                assessment = (Assessment.objects.select_for_update()
+                              .get(pk=assessment_id, assigned_auditor=request.user))
+                if assessment.status == 'completed':
+                    messages.info(request, 'التقرير الداخلي لهذا التقييم مُصدَر بالفعل.')
+                    return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
+                # Readiness guard: cannot finalize while RFIs are still open (hard block); warn
+                # (but allow) when no internal verdict has been recorded yet.
+                open_rfi = DocumentRequest.objects.filter(
+                    assessment=assessment, status__in=DocumentRequest.OPEN_STATES).count()
+                if open_rfi:
+                    messages.error(request, 'لا يمكن إصدار التقرير الداخلي النهائي قبل إغلاق طلبات '
+                                            'الاستكمال المفتوحة (%d طلب مفتوح).' % open_rfi)
+                    return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
+                reviewed = AuditorControlVerdict.objects.filter(
+                    assessment=assessment, status__in=AuditorControlVerdict.REVIEWED_STATES).count()
+                total_controls = CompanyControl.objects.filter(company=assessment.company).count()
+                if reviewed == 0:
+                    messages.warning(request, 'تنبيه: لا توجد أحكام داخلية مسجّلة على الضوابط بعد. '
+                                              'هذا تقرير داخلي مبدئي.')
+                elif total_controls and reviewed < total_controls:
+                    messages.warning(request, 'تنبيه: لم تُراجع كل الضوابط بعد — هذا تقرير مراجعة '
+                                              'داخلي مبدئي وليس نهائياً.')
+                # H1 — serialize the audit-core (findings + maturity) into the report so the
+                # deliverable is a SNAPSHOT of the work at finalization, not just a verdict.
+                from .models import AuditFinding
+                from .findings_service import assessment_maturity
+                findings_payload = [{
+                    'control_id': getattr(f.company_control.control, 'control_id', ''),
+                    'severity': f.severity, 'severity_ar': f.severity_ar,
+                    'title': f.title, 'status': f.status, 'status_ar': f.status_ar,
+                    'corrective_actions': f.corrective_actions.count(),
+                } for f in (AuditFinding.objects.filter(assessment=assessment)
+                            .select_related('company_control__control')
+                            .prefetch_related('corrective_actions'))]
+                # Report write + state transition happen together, atomically. The OneToOne on
+                # AuditReport.assessment guarantees at most one report per assessment.
+                AuditReport.objects.update_or_create(
+                    assessment=assessment,
+                    defaults=dict(auditor=request.user, verdict=verdict,
+                                  executive_summary=request.POST.get('executive_summary', ''),
+                                  executive_summary_ar=request.POST.get('executive_summary_ar', ''),
+                                  findings=findings_payload,
+                                  recommendations=[assessment_maturity(assessment)]),
+                )
+                assessment.completed_at = timezone.now()
+                # Formal transition (validates auditor_review/draft -> completed; refuses illegal).
+                assessment.transition_to('completed', update_fields=['completed_at'])
+        except InvalidAssessmentTransition:
+            messages.error(request, 'لا يمكن إصدار التقرير من حالة التقييم الحالية.')
             return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
-        reviewed = AuditorControlVerdict.objects.filter(
-            assessment=assessment, status__in=AuditorControlVerdict.REVIEWED_STATES).count()
-        total_controls = CompanyControl.objects.filter(company=assessment.company).count()
-        if reviewed == 0:
-            messages.warning(request, 'تنبيه: لا توجد أحكام داخلية مسجّلة على الضوابط بعد. '
-                                      'هذا تقرير داخلي مبدئي.')
-        elif total_controls and reviewed < total_controls:
-            messages.warning(request, 'تنبيه: لم تُراجع كل الضوابط بعد — هذا تقرير مراجعة '
-                                      'داخلي مبدئي وليس نهائياً.')
-        # H1 — serialize the audit-core (findings + maturity) into the report so the
-        # deliverable reflects the actual work, not just an overall verdict.
-        from .models import AuditFinding
-        from .findings_service import assessment_maturity
-        findings_payload = [{
-            'control_id': getattr(f.company_control.control, 'control_id', ''),
-            'severity': f.severity, 'severity_ar': f.severity_ar,
-            'title': f.title, 'status': f.status, 'status_ar': f.status_ar,
-            'corrective_actions': f.corrective_actions.count(),
-        } for f in (AuditFinding.objects.filter(assessment=assessment)
-                    .select_related('company_control__control')
-                    .prefetch_related('corrective_actions'))]
-        AuditReport.objects.update_or_create(
-            assessment=assessment,
-            defaults=dict(auditor=request.user, verdict=request.POST.get('verdict', 'fail'),
-                          executive_summary=request.POST.get('executive_summary', ''),
-                          executive_summary_ar=request.POST.get('executive_summary_ar', ''),
-                          findings=findings_payload,
-                          recommendations=[assessment_maturity(assessment)]),
-        )
-        assessment.status = 'completed'
-        assessment.completed_at = timezone.now()
-        assessment.save(update_fields=['status', 'completed_at'])
         messages.success(request, 'تم حفظ تقرير المراجعة الداخلي. هذه مراجعة داخلية ولا '
                                   'تمثل شهادة امتثال رسمية أو اعتماداً من أي جهة.')
         return redirect('auditor_portal:dashboard')

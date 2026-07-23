@@ -6,6 +6,10 @@ from core.models import Company, User
 from core.storage import private_media_storage  # P0-01: private evidence storage
 
 
+class InvalidAssessmentTransition(Exception):
+    """Raised when an Assessment is asked to make a transition its state machine forbids (P0-02)."""
+
+
 class Framework(models.Model):
     """Compliance framework (NCA ECC, Aramco SACS-002, SABIC CyberTrust)."""
     code = models.CharField(max_length=50, unique=True)
@@ -211,6 +215,18 @@ class Assessment(models.Model):
         ('expired', 'Expired'),
     ]
 
+    # P0-02 — formal lifecycle. Terminal states are frozen: no re-open, no further edits, no
+    # re-issue. Forward transitions only; a finalized ('completed') review is immutable.
+    TERMINAL_STATES = frozenset({'completed', 'expired'})
+    ALLOWED_TRANSITIONS = {
+        'draft': frozenset({'in_progress', 'ai_complete', 'auditor_review', 'completed', 'expired'}),
+        'in_progress': frozenset({'ai_complete', 'auditor_review', 'completed', 'expired'}),
+        'ai_complete': frozenset({'auditor_review', 'completed', 'expired'}),
+        'auditor_review': frozenset({'completed', 'expired'}),
+        'completed': frozenset(),   # terminal — never re-opened or re-issued
+        'expired': frozenset(),     # terminal
+    }
+
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='assessments')
     assessment_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
@@ -241,6 +257,31 @@ class Assessment(models.Model):
 
     def __str__(self):
         return f"{self.company.name} - {self.assessment_type} ({self.status})"
+
+    # ---- P0-02 formal state machine ----
+    @property
+    def is_locked(self):
+        """A finalized/terminal assessment is frozen — it accepts no further audit edits
+        (verdicts, findings, CAPA, notes, RFI) and its internal report cannot be re-issued."""
+        return self.status in self.TERMINAL_STATES
+
+    def can_transition_to(self, new_status):
+        return new_status in self.ALLOWED_TRANSITIONS.get(self.status, frozenset())
+
+    def transition_to(self, new_status, *, save=True, update_fields=None):
+        """Move to `new_status`, refusing any illegal transition (raises InvalidAssessmentTransition).
+        Callers that finalize should hold a DB lock (select_for_update) to stay race-safe."""
+        if new_status == self.status:
+            return
+        if not self.can_transition_to(new_status):
+            raise InvalidAssessmentTransition(
+                f"Illegal assessment transition: {self.status!r} -> {new_status!r}")
+        self.status = new_status
+        if save:
+            fields = list(update_fields) if update_fields else ['status']
+            if 'status' not in fields:
+                fields.append('status')
+            self.save(update_fields=fields)
 
 
 class ControlMapping(models.Model):
