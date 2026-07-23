@@ -35,4 +35,5 @@ urlpatterns = [
     # Company-side RFI (company users)
     path('company/rfi/', views.company_rfi_list, name='company_rfi_list'),
     path('company/rfi/<int:rfi_id>/respond/', views.company_rfi_respond, name='company_rfi_respond'),
+    path('rfi-response/<int:response_id>/attachment/', views.download_rfi_attachment, name='download_rfi_attachment'),
 ]

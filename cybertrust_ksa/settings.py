@@ -174,6 +174,15 @@ if AWS_STORAGE_BUCKET_NAME and not TESTING:
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# P0-01: sensitive uploads (evidence files, RFI attachments) are stored PRIVATELY — on S3
+# they use signed/expiring URLs (above); on local disk they live OUTSIDE MEDIA_ROOT, in
+# PRIVATE_MEDIA_ROOT, so the /media/ handler (dev static() or any reverse proxy) can never
+# reach them. They are served ONLY through authenticated, tenant-scoped download views.
+PRIVATE_MEDIA_ROOT = Path(os.getenv('PRIVATE_MEDIA_ROOT') or (BASE_DIR / 'private_media'))
+# Optional nginx internal prefix for X-Accel-Redirect handoff in production. Empty (default)
+# = stream through Django FileResponse. This deployment ships no reverse proxy, so it is off.
+PRIVATE_MEDIA_XACCEL_PREFIX = os.getenv('PRIVATE_MEDIA_XACCEL_PREFIX', '').strip()
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',

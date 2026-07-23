@@ -17,6 +17,7 @@ db.sqlite3
 *.sqlite3
 staticfiles/
 media/
+private_media/
 *.log
 
 # OS / editor

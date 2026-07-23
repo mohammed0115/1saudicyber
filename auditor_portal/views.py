@@ -637,6 +637,35 @@ def company_rfi_respond(request, rfi_id):
 
 
 @login_required
+def download_rfi_attachment(request, response_id):
+    """P0-01: authenticated, tenant-scoped download of an RFI response attachment.
+
+    RFI attachments are stored privately (never a public /media/ URL). Access is limited to the
+    owning company, a platform admin, or an auditor with a LIVE accepted assignment to that
+    company (mirrors the evidence-download / de-provisioning boundary). An unknown or foreign id
+    returns a safe 404 — it never reveals the attachment exists or leaks the stored path.
+    """
+    from core.files import serve_authorized_file
+    resp = (CompanyRFIResponse.objects
+            .select_related('request__company_control__company')
+            .filter(id=response_id).first())
+    if resp is None or not resp.attachment:
+        raise Http404()
+    company = resp.request.company_control.company
+    user = request.user
+    allowed = (user.is_staff or user.is_superuser
+               or getattr(user, 'company_id', None) == company.id)
+    if not allowed:
+        from auditors.services import has_accepted_assignment
+        allowed = has_accepted_assignment(user, company)
+    if not allowed:
+        raise Http404()
+    return serve_authorized_file(
+        resp.attachment,
+        download_name=resp.attachment.name.rsplit('/', 1)[-1])
+
+
+@login_required
 @auditor_required
 @require_POST
 def submit_report(request, assessment_id):

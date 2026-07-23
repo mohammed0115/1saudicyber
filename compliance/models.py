@@ -3,6 +3,7 @@ Compliance Models - Frameworks, Controls, Evidence, Assessments
 """
 from django.db import models
 from core.models import Company, User
+from core.storage import private_media_storage  # P0-01: private evidence storage
 
 
 class Framework(models.Model):
@@ -166,7 +167,7 @@ class Evidence(models.Model):
 
     company_control = models.ForeignKey(CompanyControl, on_delete=models.CASCADE, related_name='evidences')
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    file = models.FileField(upload_to='evidence/%Y/%m/')
+    file = models.FileField(upload_to='evidence/%Y/%m/', storage=private_media_storage)
     original_filename = models.CharField(max_length=255)
     file_type = models.CharField(max_length=20)
     file_size = models.IntegerField(default=0)
@@ -732,7 +733,7 @@ class EvidenceSubmission(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='evidence_submissions')
     checklist_item = models.ForeignKey(
         EvidenceChecklistItem, on_delete=models.CASCADE, related_name='submissions')
-    uploaded_file = models.FileField(upload_to='evidence_v2/%Y/%m/')
+    uploaded_file = models.FileField(upload_to='evidence_v2/%Y/%m/', storage=private_media_storage)
     original_filename = models.CharField(max_length=255)
     file_type = models.CharField(max_length=20)
     file_size = models.PositiveIntegerField(default=0)

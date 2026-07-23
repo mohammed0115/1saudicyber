@@ -46,6 +46,9 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      # P0-01: private evidence/RFI files live here, OUTSIDE /app/media, so they are never
+      # web-servable. No route or proxy exposes /app/private_media; only authorized views read it.
+      - private_media_volume:/app/private_media
     ports:
       - "${WEB_PORT:-8000}:8000"
     healthcheck:
@@ -69,6 +72,7 @@ services:
         condition: service_healthy
     volumes:
       - media_volume:/app/media
+      - private_media_volume:/app/private_media
 
   # DD-fix: scheduled jobs (score recalc, monthly reports, reminders) actually run.
   beat:
@@ -87,4 +91,5 @@ volumes:
   postgres_data:
   static_volume:
   media_volume:
+  private_media_volume:
   redis_data:

@@ -264,7 +264,7 @@
           <div class="mt-2 bg-gov-gray-50 border border-gov-gray-100 rounded-lg p-2 text-sm">
             <p class="text-gov-gray-800">رد الشركة: {{ resp.response_text }}</p>
             <p class="text-xs text-gov-gray-400 mt-0.5">{{ resp.created_at|date:"Y-m-d H:i" }}</p>
-            {% if resp.attachment %}<a href="{{ resp.attachment.url }}" target="_blank" class="inline-flex items-center gap-1 mt-1 text-xs text-gov-green-700 font-medium hover:underline"><i class="fas fa-paperclip"></i> مستند مرفق</a>{% endif %}
+            {% if resp.attachment %}<a href="{% url 'auditor_portal:download_rfi_attachment' resp.id %}" class="inline-flex items-center gap-1 mt-1 text-xs text-gov-green-700 font-medium hover:underline"><i class="fas fa-paperclip"></i> مستند مرفق</a>{% endif %}
           </div>
           {% endfor %}
           {% if req.closing_note %}<p class="text-xs text-gov-gray-500 mt-2">ملاحظة الإغلاق: {{ req.closing_note }}</p>{% endif %}

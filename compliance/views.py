@@ -1017,9 +1017,10 @@ def download_evidence_file(request, submission_id):
     404 (never reveals existence). In production /media/evidence* should be served internal-only
     (e.g. nginx X-Accel-Redirect); this view is the sole authorized in-app entry point.
     """
-    from django.http import FileResponse, Http404
+    from django.http import Http404
     from .models import EvidenceSubmission
     from .auditor_verdict import can_view_submission_review
+    from core.files import serve_authorized_file
     sub = EvidenceSubmission.objects.filter(id=submission_id).first()
     if sub is None or not can_view_submission_review(request.user, sub) or not sub.uploaded_file:
         raise Http404()
@@ -1029,13 +1030,11 @@ def download_evidence_file(request, submission_id):
                'gif': 'image/gif', 'pdf': 'application/pdf'}
     ext = (sub.file_type or '').lower()
     inline = request.GET.get('inline') == '1' and ext in _INLINE
-    resp = FileResponse(
-        sub.uploaded_file.open('rb'), as_attachment=not inline,
-        filename=sub.original_filename or sub.uploaded_file.name.rsplit('/', 1)[-1])
-    if inline:
-        resp['Content-Type'] = _INLINE[ext]
-        resp['X-Content-Type-Options'] = 'nosniff'
-    return resp
+    return serve_authorized_file(
+        sub.uploaded_file, as_attachment=not inline,
+        download_name=sub.original_filename or sub.uploaded_file.name.rsplit('/', 1)[-1],
+        content_type=_INLINE[ext] if inline else None,
+        extra_headers={'X-Content-Type-Options': 'nosniff'} if inline else None)
 
 
 # ============================================================

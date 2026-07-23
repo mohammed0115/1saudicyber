@@ -3,6 +3,7 @@ Auditor Portal Models - Audit sessions, notes, findings
 """
 from django.db import models
 from core.models import Company, User
+from core.storage import private_media_storage  # P0-01: private attachment storage
 
 
 class AuditorNote(models.Model):
@@ -70,7 +71,9 @@ class CompanyRFIResponse(models.Model):
     linked_evidence = models.ForeignKey('compliance.Evidence', on_delete=models.SET_NULL,
                                         null=True, blank=True, related_name='rfi_responses')
     # Optional file the company attaches directly to its RFI response.
-    attachment = models.FileField(upload_to='rfi_responses/%Y/%m/', null=True, blank=True)
+    # P0-01: private storage — never served via /media/; downloaded only through an authorized view.
+    attachment = models.FileField(upload_to='rfi_responses/%Y/%m/', null=True, blank=True,
+                                  storage=private_media_storage)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

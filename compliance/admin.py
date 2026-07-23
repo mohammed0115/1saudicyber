@@ -102,6 +102,9 @@ class CompanyControlAdmin(admin.ModelAdmin):
 class EvidenceAdmin(admin.ModelAdmin):
     list_display = ['company_control', 'original_filename', 'ai_verdict', 'uploaded_at']
     list_filter = ['ai_verdict']
+    # P0-01: the file uses private storage (no public .url) — keep it out of the admin form
+    # so the widget never tries to render a link; download only via the authorized view.
+    exclude = ['file']
 
 
 @admin.register(ControlMapping)
@@ -208,6 +211,8 @@ class EvidenceSubmissionAdmin(admin.ModelAdmin):
     search_fields = ['original_filename', 'company__name',
                      'checklist_item__evidence_requirement__control__control_id']
     readonly_fields = ['uploaded_at', 'file_hash', 'file_size', 'created_at', 'updated_at']
+    # P0-01: private storage (no public .url) — exclude from the admin form (see EvidenceAdmin).
+    exclude = ['uploaded_file']
 
 
 # ---- Phase 3F: advisory evidence analysis ----

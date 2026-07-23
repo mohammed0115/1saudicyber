@@ -48,7 +48,7 @@
           </div>
           <p class="text-sm text-gov-gray-700 mt-0.5">{{ resp.response_text }}</p>
           {% if resp.attachment %}
-          <a href="{{ resp.attachment.url }}" target="_blank" class="inline-flex items-center gap-1 mt-1 text-xs text-gov-green-700 font-medium hover:underline">
+          <a href="{% url 'auditor_portal:download_rfi_attachment' resp.id %}" class="inline-flex items-center gap-1 mt-1 text-xs text-gov-green-700 font-medium hover:underline">
             <i class="fas fa-paperclip"></i> مستند مرفق
           </a>
           {% endif %}
