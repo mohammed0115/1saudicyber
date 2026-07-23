@@ -4528,8 +4528,12 @@ class ApplicabilityUITests(TestCase):
     def test_no_compliance_or_verdict_or_cert_wording(self):
         self._login(target_nca=True)
         body = self.client.get(reverse('compliance:applicability_preview')).content.decode()
+        # Check page CONTENT only. The shared site footer's line "متوافقة مع معايير الهيئة…"
+        # legitimately contains the substring "متوافق" (compliant-WITH-standards marketing) and
+        # is not a per-control compliance verdict — it must not trip this leak check.
+        content = body.split('<footer', 1)[0]
         for bad in ('متوافق', 'غير متوافق', 'Noncompliance', 'تم إصدار شهادة', 'قرار نهائي', '334', 'CyberTrust KSA'):
-            self.assertNotIn(bad, body)
+            self.assertNotIn(bad, content)
 
     def test_dashboard_card_present(self):
         self._login(target_nca=True)
@@ -4737,9 +4741,11 @@ class EvidenceExtractionUITests(TestCase):
         save_extraction_for_submission(sub)
         self.client.force_login(_journey_user(c))
         body = self.client.get(reverse('compliance:evidence_extraction', args=[sub.id])).content.decode()
+        # Page content only — the shared footer's "متوافقة مع معايير…" contains "متوافق" benignly.
+        content = body.split('<footer', 1)[0]
         for bad in ('متوافق', 'غير متوافق', 'قرار نهائي', 'الدليل كافٍ', 'الدليل غير كافٍ'):
-            self.assertNotIn(bad, body)
-        self.assertNotIn('/media/evidence_v2/', body)  # raw stored path not exposed
+            self.assertNotIn(bad, content)
+        self.assertNotIn('/media/evidence_v2/', body)  # raw stored path not exposed (full body)
 
     def test_english_mode_does_not_break(self):
         c, item, sub = _company_with_submission_file()

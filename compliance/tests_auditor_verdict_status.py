@@ -96,8 +96,8 @@ class VerdictSubmissionStatusTests(TestCase):
         self.client.force_login(_journey_user(c, email='co_list@x.com'))
         body = self.client.get(
             reverse('compliance:evidence_submission_list', args=[item.id])).content.decode()
-        self.assertIn('Evidence accepted', body)          # file lifecycle badge
-        self.assertIn('Compliant', body)                  # separate compliance-verdict badge
+        self.assertIn('دليل مقبول', body)                  # file lifecycle badge (localized)
+        self.assertIn('الامتثال: متوافق', body)            # separate compliance-verdict badge (localized)
         self.assertIn('مقبول', body)
         self.assertNotIn('Pending auditor review', body)
         # Regression: the evidence_status component must not leak its developer comment
@@ -113,8 +113,8 @@ class VerdictSubmissionStatusTests(TestCase):
         self.client.force_login(_journey_user(c, email='co_nc@x.com'))
         body = self.client.get(
             reverse('compliance:evidence_submission_list', args=[item.id])).content.decode()
-        self.assertIn('Evidence accepted', body)          # file accepted
-        self.assertIn('Non-compliant', body)              # but control is NOT compliant
+        self.assertIn('دليل مقبول', body)                  # file accepted (localized)
+        self.assertIn('الامتثال: غير متوافق', body)        # but control is NOT compliant (localized)
         self.assertNotIn('Rejected', body)
 
 

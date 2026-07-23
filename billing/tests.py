@@ -807,7 +807,7 @@ class MoyasarCheckoutFlowTests(TestCase):
         self._login(c, 'mflow7@x.com')
         self.client.post(reverse('billing:select_plan'), {'plan_code': 'basic'})
         body = self.client.get(reverse('billing:home')).content.decode()
-        self.assertIn('Pay with Moyasar Sandbox', body)
+        self.assertIn('ادفع عبر Moyasar (تجريبي)', body)   # localized pay button (was English)
 
 
 @override_settings(PAYMENT_PROVIDER='moyasar', MOYASAR_MODE='sandbox',
@@ -1685,7 +1685,7 @@ class FeatureBillingCrmUiTests(TestCase):
         self.assertIn('ميزات خطتك', body)
         self.assertIn('evidence_upload', body)
         self.assertIn('حدود الاستخدام', body)
-        self.assertIn('PDF exports', body)
+        self.assertIn('تصدير PDF', body)              # localized limit label (was 'PDF exports')
 
     def test_billing_links_to_select_plan(self):
         c = _company(); _activate(c, _feat_plan())
