@@ -143,6 +143,20 @@ class ReportImmutableError(Exception):
     """Raised on any attempt to modify or delete an already-issued AuditReport (P0-02)."""
 
 
+class AuditReportQuerySet(models.QuerySet):
+    """Application-level immutability backstop: bulk update()/delete() on issued reports are
+    refused so a caller cannot bypass the model save()/delete() guards via a QuerySet. (This
+    does not, and need not, stop a DBA acting directly on the database.)"""
+    def update(self, **kwargs):
+        raise ReportImmutableError('Issued audit reports cannot be bulk-updated.')
+
+    def delete(self):
+        raise ReportImmutableError('Issued audit reports cannot be bulk-deleted.')
+
+    def _raw_delete(self, using):  # used by cascade collector — allow it (whole-assessment delete)
+        return super()._raw_delete(using)
+
+
 class AuditReport(models.Model):
     """Final INTERNAL audit report — WRITE-ONCE. One per assessment (OneToOne). Once issued it
     is immutable: save() refuses content changes and delete() is blocked (see below). It carries
@@ -162,22 +176,33 @@ class AuditReport(models.Model):
     findings = models.JSONField(default=list)
     recommendations = models.JSONField(default=list)
     # P0-02 integrity envelope.
-    evidence_snapshot = models.JSONField(default=list)          # [{submission_id, filename, file_hash, version}]
+    company_id_at_issue = models.PositiveIntegerField(null=True, blank=True)  # company identity, frozen
+    scope_snapshot = models.JSONField(default=list)             # [{company_control_id, control_code, framework, applicability, verdict, verdict_at}]
+    summary = models.JSONField(default=dict)                    # {scope_count, reviewed_count, compliant_count, ...}
+    evidence_snapshot = models.JSONField(default=list)          # [{submission_id, filename, sha256, version, size}]
     assessment_status_at_issue = models.CharField(max_length=20, blank=True)
     snapshot_version = models.PositiveSmallIntegerField(default=SNAPSHOT_VERSION)
     content_hash = models.CharField(max_length=64, blank=True)  # sha256 of the issued content
     submitted_at = models.DateTimeField(auto_now_add=True)
 
+    objects = AuditReportQuerySet.as_manager()
+
     class Meta:
         db_table = 'audit_reports'
 
     def compute_content_hash(self):
+        """Canonical sha256 over the decision-bearing content + integrity envelope. JSON is
+        serialized with sort_keys=True (key order never affects the hash) and a fixed UTF-8
+        encoding; only the stable issue markers are included (issued_by + assessment_status_at_issue
+        + snapshot_version), NOT the DB-assigned timestamp, so the hash is reproducible on verify."""
         import hashlib
         import json
         payload = json.dumps({
-            'assessment': self.assessment_id, 'auditor': self.auditor_id, 'verdict': self.verdict,
+            'assessment': self.assessment_id, 'company': self.company_id_at_issue,
+            'issued_by': self.auditor_id, 'verdict': self.verdict,
             'executive_summary': self.executive_summary, 'executive_summary_ar': self.executive_summary_ar,
             'findings': self.findings, 'recommendations': self.recommendations,
+            'scope_snapshot': self.scope_snapshot, 'summary': self.summary,
             'evidence_snapshot': self.evidence_snapshot,
             'assessment_status_at_issue': self.assessment_status_at_issue,
             'snapshot_version': self.snapshot_version,

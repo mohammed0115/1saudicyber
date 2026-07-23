@@ -12,6 +12,17 @@ from auditor_portal.models import (AuditReport, AuditorControlVerdict, AuditorNo
                                    DocumentRequest, AuditFinding)
 
 
+def _review_scope(assessment, auditor, status='compliant'):
+    """Give every in-scope CompanyControl a FINAL verdict so completion is allowed (P0-02
+    completeness). No-op for a company with no controls."""
+    from django.utils import timezone
+    from compliance.models import CompanyControl
+    for cc in CompanyControl.objects.filter(company=assessment.company):
+        AuditorControlVerdict.objects.update_or_create(
+            assessment=assessment, company_control=cc,
+            defaults=dict(auditor=auditor, status=status, reviewed_at=timezone.now()))
+
+
 class AssessmentStateMachineTests(TestCase):
     def test_terminal_states_are_locked_and_have_no_transitions(self):
         a = Assessment(status='completed')
@@ -58,6 +69,7 @@ class SubmitReportIntegrityTests(TestCase):
         self.client.get(reverse('auditor_portal:dashboard'))     # materialise the assessment
         a = Assessment.objects.get(assigned_auditor=aud)
         cc = _company_control(c, ctl)
+        _review_scope(a, aud)                                    # complete the scope
         return c, ctl, aud, a, cc
 
     def test_submit_completes_and_creates_exactly_one_report(self):
@@ -118,8 +130,9 @@ class EditAfterCloseLockTests(TestCase):
         self.rfi = DocumentRequest.objects.create(
             assessment=self.a, company_control=self.cc, auditor=self.aud,
             description='x', status='closed')
-        # finalize
-        self.client.post(reverse('auditor_portal:submit_report', args=[self.a.id]), {'verdict': 'pass'})
+        # complete the scope, then finalize ('fail' is consistent with an open major_nc finding)
+        _review_scope(self.a, self.aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[self.a.id]), {'verdict': 'fail'})
         self.a.refresh_from_db()
         assert self.a.status == 'completed'
 
@@ -296,6 +309,7 @@ class EvidenceSnapshotTests(TestCase):
         self.client.force_login(aud)
         self.client.get(reverse('auditor_portal:dashboard'))
         a = Assessment.objects.get(assigned_auditor=aud)
+        _review_scope(a, aud)
         self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
         rep = AuditReport.objects.get(assessment=a)
         snap_ids = {e['submission_id'] for e in rep.evidence_snapshot}
@@ -365,6 +379,7 @@ class LockedUiTests(TestCase):
         body = self.client.get(reverse('auditor_portal:review_control', args=[a.id, cc.id])).content.decode()
         self.assertIn(reverse('auditor_portal:save_verdict', args=[a.id, cc.id]), body)
         # finalize, then the edit forms are hidden and a locked banner is shown
+        _review_scope(a, aud)
         self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
         body2 = self.client.get(reverse('auditor_portal:review_control', args=[a.id, cc.id])).content.decode()
         self.assertNotIn(reverse('auditor_portal:save_verdict', args=[a.id, cc.id]), body2)
@@ -384,3 +399,240 @@ class SubmitIdempotencyTests(TestCase):
         for _ in range(3):
             self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
         self.assertEqual(AuditReport.objects.filter(assessment=a).count(), 1)
+
+
+def _n_company_controls(company, n, start=100):
+    """Create n distinct CompanyControls for `company` (each a fresh catalogue Control)."""
+    from compliance.models import Framework, Domain, Control, CompanyControl
+    fw, _ = Framework.objects.get_or_create(code='NCA_ECC', defaults={'name': 'NCA'})
+    dom, _ = Domain.objects.get_or_create(framework=fw, name='Gov', defaults={'code': 'GOV'})
+    ccs = []
+    for i in range(n):
+        ctl = Control.objects.create(framework=fw, domain=dom,
+                                     control_id=f'NCA-{start + i}', title='T', description='d')
+        ccs.append(CompanyControl.objects.create(company=company, control=ctl))
+    return ccs
+
+
+class CompletenessTests(TestCase):
+    """No final verdict may be issued while any in-scope control lacks a FINAL verdict."""
+
+    def _assessment(self, email, n_controls):
+        c, _ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email=email)
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        ccs = _n_company_controls(c, n_controls)
+        return c, aud, a, ccs
+
+    def _verdict(self, a, cc, aud, status='compliant'):
+        from django.utils import timezone
+        AuditorControlVerdict.objects.create(assessment=a, company_control=cc, auditor=aud,
+                                             status=status, reviewed_at=timezone.now())
+
+    def test_pass_rejected_when_most_controls_unreviewed(self):
+        c, aud, a, ccs = self._assessment('cmpl_many@x.com', 5)   # representative of "99 of 100 missing"
+        self._verdict(a, ccs[0], aud)                             # review only 1 of 5
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')
+        self.assertFalse(AuditReport.objects.filter(assessment=a).exists())
+
+    def test_pass_succeeds_when_all_reviewed(self):
+        c, aud, a, ccs = self._assessment('cmpl_all@x.com', 5)
+        for cc in ccs:
+            self._verdict(a, cc, aud)                             # review all 5
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db()
+        self.assertEqual(a.status, 'completed')
+        rep = AuditReport.objects.get(assessment=a)
+        self.assertEqual(rep.summary['scope_count'], 5)
+        self.assertEqual(rep.summary['reviewed_count'], 5)
+        self.assertEqual(rep.summary['missing_count'], 0)
+
+    def test_conditional_pass_rejected_when_incomplete(self):
+        c, aud, a, ccs = self._assessment('cmpl_cond@x.com', 3)
+        self._verdict(a, ccs[0], aud)                             # 1 of 3
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'conditional_pass'})
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')
+
+    def test_fail_rejected_when_incomplete(self):
+        c, aud, a, ccs = self._assessment('cmpl_fail@x.com', 3)
+        self._verdict(a, ccs[0], aud, status='non_compliant')    # 1 of 3, even a decisive one
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'fail'})
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')               # completeness applies to fail too
+
+    def test_needs_more_evidence_does_not_count_as_final(self):
+        c, aud, a, ccs = self._assessment('cmpl_nme@x.com', 1)
+        self._verdict(a, ccs[0], aud, status='needs_more_evidence')
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')               # 'needs_more_evidence' is not final
+
+
+class ScopeSnapshotTests(TestCase):
+    def test_scope_snapshot_frozen_and_independent_of_live_data(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='scope_aud@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        cc = _company_control(c, ctl)
+        _review_scope(a, aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        rep = AuditReport.objects.get(assessment=a)
+        self.assertEqual(len(rep.scope_snapshot), 1)
+        self.assertEqual(rep.scope_snapshot[0]['company_control_id'], cc.id)
+        self.assertEqual(rep.scope_snapshot[0]['verdict'], 'compliant')
+        before = list(rep.scope_snapshot)
+        # Adding a NEW company control afterwards must NOT change the frozen scope snapshot.
+        _n_company_controls(c, 1, start=500)
+        rep.refresh_from_db()
+        self.assertEqual(rep.scope_snapshot, before)
+        self.assertTrue(rep.verify_integrity())
+
+
+class CanonicalHashTests(TestCase):
+    def _report(self, email='hash@x.com'):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email=email)
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        _company_control(c, ctl); _review_scope(a, aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        return AuditReport.objects.get(assessment=a)
+
+    def test_hash_is_canonical_and_deterministic(self):
+        rep = self._report('hash_det@x.com')
+        self.assertTrue(rep.content_hash)
+        self.assertEqual(rep.content_hash, rep.compute_content_hash())   # matches stored
+        self.assertEqual(rep.compute_content_hash(), rep.compute_content_hash())  # deterministic
+
+    def test_hash_detects_verdict_tamper(self):
+        rep = self._report('hash_v@x.com')
+        rep.verdict = 'fail'
+        self.assertFalse(rep.verify_integrity())
+
+    def test_hash_detects_evidence_and_scope_tamper(self):
+        rep = self._report('hash_es@x.com')
+        rep.evidence_snapshot = [{'submission_id': 999, 'sha256': 'x'}]
+        self.assertFalse(rep.verify_integrity())
+        rep.refresh_from_db()
+        rep.scope_snapshot = [{'company_control_id': 999, 'verdict': 'non_compliant'}]
+        self.assertFalse(rep.verify_integrity())
+
+
+class ReportQuerySetImmutabilityTests(TestCase):
+    def _report(self, email='qs@x.com'):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email=email)
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        return a, AuditReport.objects.get(assessment=a)
+
+    def test_queryset_update_is_refused(self):
+        from auditor_portal.models import ReportImmutableError
+        a, rep = self._report('qs_upd@x.com')
+        with self.assertRaises(ReportImmutableError):
+            AuditReport.objects.filter(pk=rep.pk).update(verdict='fail')
+        rep.refresh_from_db()
+        self.assertEqual(rep.verdict, 'pass')
+
+    def test_queryset_delete_is_refused(self):
+        from auditor_portal.models import ReportImmutableError
+        a, rep = self._report('qs_del@x.com')
+        with self.assertRaises(ReportImmutableError):
+            AuditReport.objects.filter(pk=rep.pk).delete()
+        self.assertTrue(AuditReport.objects.filter(pk=rep.pk).exists())
+
+
+class AssessmentDeletionPolicyTests(TestCase):
+    def test_completed_assessment_with_report_cannot_be_deleted(self):
+        from auditor_portal.models import ReportImmutableError
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='del_aud@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        with self.assertRaises(ReportImmutableError):
+            a.delete()
+        self.assertTrue(Assessment.objects.filter(pk=a.pk).exists())
+
+    def test_incomplete_assessment_can_be_deleted(self):
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='del_ok@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)   # auditor_review, no report
+        a.delete()
+        self.assertFalse(Assessment.objects.filter(pk=a.pk).exists())
+
+
+class VerdictUniquenessTests(TestCase):
+    def test_one_current_verdict_per_assessment_and_control(self):
+        from django.db import IntegrityError, transaction
+        c, ctl = _company_with_control()
+        aud = _assigned_auditor_user(c, email='uniq_aud@x.com')
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        cc = _company_control(c, ctl)
+        AuditorControlVerdict.objects.create(assessment=a, company_control=cc, auditor=aud, status='compliant')
+        with self.assertRaises(IntegrityError):        # unique_together (assessment, company_control)
+            with transaction.atomic():
+                AuditorControlVerdict.objects.create(assessment=a, company_control=cc, auditor=aud, status='non_compliant')
+
+    def test_verdict_from_other_assessment_not_counted(self):
+        # A verdict on assessment A's control must not satisfy assessment B's completeness.
+        from auditor_portal.lifecycle import assess_completion
+        cA, ctlA = _company_with_control()
+        audA = _assigned_auditor_user(cA, email='uniqA@x.com')
+        self.client.force_login(audA); self.client.get(reverse('auditor_portal:dashboard'))
+        aA = Assessment.objects.get(assigned_auditor=audA)
+        ccA = _company_control(cA, ctlA)
+        AuditorControlVerdict.objects.create(assessment=aA, company_control=ccA, auditor=audA, status='compliant')
+        # A DIFFERENT assessment/company: its own control has no verdict from aA's assessment.
+        cB = _company(cr_number='8181818181')
+        ccB = _n_company_controls(cB, 1, start=700)[0]
+        aB = Assessment.objects.create(company=cB, assessment_type='formal_audit', status='auditor_review')
+        census = assess_completion(aB)
+        self.assertEqual(census['scope_count'], 1)
+        self.assertEqual(census['reviewed_count'], 0)   # aA's verdict does not leak into B
+
+
+class EvidenceHashFailClosedTests(TestCase):
+    def _setup_with_evidence(self, email):
+        from compliance.tests import _company_with_submission_file
+        c, item, sub = _company_with_submission_file(filename='ev.txt', content=b'evidence-bytes',
+                                                     file_type='txt')
+        aud = _assigned_auditor_user(c, email=email)
+        self.client.force_login(aud)
+        self.client.get(reverse('auditor_portal:dashboard'))
+        a = Assessment.objects.get(assigned_auditor=aud)
+        _review_scope(a, aud)
+        return c, item, sub, aud, a
+
+    def test_hash_is_computed_from_actual_bytes(self):
+        import hashlib
+        c, item, sub, aud, a = self._setup_with_evidence('evh_ok@x.com')
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        rep = AuditReport.objects.get(assessment=a)
+        entry = next(e for e in rep.evidence_snapshot if e['submission_id'] == sub.id)
+        self.assertEqual(entry['sha256'], hashlib.sha256(b'evidence-bytes').hexdigest())
+
+    def test_missing_evidence_file_rolls_back_the_whole_issuance(self):
+        import os
+        c, item, sub, aud, a = self._setup_with_evidence('evh_miss@x.com')
+        # Remove the underlying file so hashing fails -> full rollback.
+        os.remove(sub.uploaded_file.path)
+        self.client.post(reverse('auditor_portal:submit_report', args=[a.id]), {'verdict': 'pass'})
+        a.refresh_from_db()
+        self.assertNotEqual(a.status, 'completed')                 # no completion
+        self.assertFalse(AuditReport.objects.filter(assessment=a).exists())  # no partial report

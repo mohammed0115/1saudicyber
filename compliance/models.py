@@ -271,6 +271,20 @@ class Assessment(models.Model):
     def can_transition_to(self, new_status):
         return new_status in self.ALLOWED_TRANSITIONS.get(self.status, frozenset())
 
+    def delete(self, *args, **kwargs):
+        """P0-02: a finalized assessment that has issued its internal report cannot be
+        hard-deleted via ordinary application code (that would make the report vanish and could
+        be abused to 're-issue'). A DBA can still act directly on the database if truly needed."""
+        from django.apps import apps
+        AuditReport = apps.get_model('auditor_portal', 'AuditReport')
+        # An issued report can only exist post-completion, so its existence — checked in the DB,
+        # not from a possibly-stale in-memory status — is the invariant that blocks deletion.
+        if AuditReport.objects.filter(assessment=self).exists():
+            from auditor_portal.models import ReportImmutableError
+            raise ReportImmutableError(
+                'A completed assessment with an issued report cannot be deleted.')
+        return super().delete(*args, **kwargs)
+
     def transition_to(self, new_status, *, save=True, update_fields=None):
         """Move to `new_status`, refusing any illegal transition (raises InvalidAssessmentTransition).
         Same-state transitions are REJECTED too (no silent no-op) — a status is never in its own

@@ -742,7 +742,8 @@ def submit_report(request, assessment_id):
         from django.db import IntegrityError
         from .models import AuditFinding, ReportImmutableError
         from .findings_service import assessment_maturity
-        from .lifecycle import validate_ready_for_completion, build_evidence_snapshot, CompletionError
+        from .lifecycle import (validate_ready_for_completion, build_scope_snapshot,
+                                compute_evidence_snapshot, CompletionError, EvidenceUnavailable)
         # Authorize (assigned auditor + live engagement) on an unlocked read first.
         _assigned_assessment_or_404(request, assessment_id)
         # A missing verdict is NOT silently defaulted — the validator rejects an empty value.
@@ -750,24 +751,14 @@ def submit_report(request, assessment_id):
         try:
             with transaction.atomic():
                 # Lock the row so concurrent submits (double-POST, browser/proxy/Celery retry)
-                # serialize: the loser fails the preconditions after the winner commits. All
-                # completion checks (state, live+active auditor, no open RFI, not already issued,
-                # valid+consistent verdict) run AFTER acquiring the lock — race-safe issue-once.
+                # serialize: the loser fails the preconditions after the winner commits. Every
+                # completion check runs AFTER acquiring the lock — race-safe issue-once.
                 assessment = (Assessment.objects.select_for_update()
                               .get(pk=assessment_id, assigned_auditor=request.user))
-                validate_ready_for_completion(assessment, request.user, verdict)
-                # Non-blocking advisory: a report with no/partial verdicts is a preliminary one.
-                reviewed = AuditorControlVerdict.objects.filter(
-                    assessment=assessment, status__in=AuditorControlVerdict.REVIEWED_STATES).count()
-                total_controls = CompanyControl.objects.filter(company=assessment.company).count()
-                if reviewed == 0:
-                    messages.warning(request, 'تنبيه: لا توجد أحكام داخلية مسجّلة على الضوابط بعد. '
-                                              'هذا تقرير داخلي مبدئي.')
-                elif total_controls and reviewed < total_controls:
-                    messages.warning(request, 'تنبيه: لم تُراجع كل الضوابط بعد — هذا تقرير مراجعة '
-                                              'داخلي مبدئي وليس نهائياً.')
-                # SNAPSHOT of the work at finalization: findings + maturity + the evidence versions
-                # reviewed. Frozen into the write-once report; later live changes never alter it.
+                # Fail-closed gate: legal state, live+active assigned auditor, not already issued,
+                # no open RFI, valid+consistent verdict, and EVERY in-scope control finally reviewed.
+                census = validate_ready_for_completion(assessment, request.user, verdict)
+                # Findings snapshot (frozen into the write-once report).
                 findings_payload = [{
                     'control_id': getattr(f.company_control.control, 'control_id', ''),
                     'severity': f.severity, 'severity_ar': f.severity_ar,
@@ -776,21 +767,33 @@ def submit_report(request, assessment_id):
                 } for f in (AuditFinding.objects.filter(assessment=assessment)
                             .select_related('company_control__control')
                             .prefetch_related('corrective_actions'))]
-                # Write-once create (validator already guaranteed no report exists). The OneToOne
-                # unique constraint is the DB backstop against a concurrent second insert.
+                summary = {k: census[k] for k in (
+                    'scope_count', 'reviewed_count', 'missing_count', 'compliant_count',
+                    'non_compliant_count', 'not_applicable_count', 'open_findings_count',
+                    'open_rfi_count')}
+                # Evidence hashing is fail-closed: an unreadable/missing file raises inside this
+                # atomic block => NO report, NO 'completed', full rollback.
+                evidence_snapshot = compute_evidence_snapshot(assessment.company)
+                # Write-once create (validator guaranteed no report exists; OneToOne is the DB backstop).
                 AuditReport.objects.create(
                     assessment=assessment, auditor=request.user, verdict=verdict,
                     executive_summary=request.POST.get('executive_summary', ''),
                     executive_summary_ar=request.POST.get('executive_summary_ar', ''),
                     findings=findings_payload,
                     recommendations=[assessment_maturity(assessment)],
-                    evidence_snapshot=build_evidence_snapshot(assessment.company),
+                    company_id_at_issue=assessment.company_id,
+                    scope_snapshot=build_scope_snapshot(census),
+                    summary=summary,
+                    evidence_snapshot=evidence_snapshot,
                     assessment_status_at_issue='completed')
                 assessment.completed_at = timezone.now()
                 # Formal transition (only auditor_review -> completed is legal; refuses illegal).
                 assessment.transition_to('completed', update_fields=['completed_at'])
         except CompletionError as exc:
             messages.error(request, exc.message_ar)
+            return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
+        except EvidenceUnavailable as exc:
+            messages.error(request, exc.args[0] if exc.args else 'تعذّرت قراءة أحد ملفات الأدلة.')
             return redirect('auditor_portal:review_assessment', assessment_id=assessment_id)
         except (InvalidAssessmentTransition, IntegrityError, ReportImmutableError):
             # Lost a concurrency race (or an illegal state) — the report is already issued.
