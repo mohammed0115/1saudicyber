@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import User, Company
@@ -48,3 +48,32 @@ class CompanyAdmin(admin.ModelAdmin):
     # is NO official certification process — so it must not be hand-editable to 'certified' via
     # the admin. Read-only here until a real accreditation workflow exists.
     readonly_fields = ['status', 'created_at', 'updated_at', 'classification_date']
+
+    # P0-02: never let the admin cascade an issued audit report away by deleting a company.
+    # The model-level Company.delete()/CompanyQuerySet.delete() guards are the hard backstop;
+    # these give the admin a clean, informative experience instead of an error page.
+    @staticmethod
+    def _has_issued_report(company):
+        from core.models import _company_has_issued_report
+        return company is not None and _company_has_issued_report([company.pk])
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and self._has_issued_report(obj):
+            return False   # hides the single-object delete button for protected companies
+        return super().has_delete_permission(request, obj)
+
+    def delete_model(self, request, obj):
+        if self._has_issued_report(obj):
+            self.message_user(request, 'لا يمكن حذف شركة تملك تقرير تدقيق نهائيًا صادرًا — يجب أرشفتها.',
+                              level=messages.ERROR)
+            return
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        from core.models import _company_has_issued_report
+        protected = [c.pk for c in queryset if _company_has_issued_report([c.pk])]
+        if protected:
+            self.message_user(request, 'تم إلغاء الحذف: %d شركة تملك تقارير تدقيق نهائية صادرة يجب '
+                              'الاحتفاظ بها.' % len(protected), level=messages.ERROR)
+            return
+        super().delete_queryset(request, queryset)

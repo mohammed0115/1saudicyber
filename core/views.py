@@ -442,9 +442,17 @@ def delete_company_data(request):
         if not company or confirm != 'DELETE':
             messages.error(request, 'اكتب DELETE للتأكيد.')
             return render(request, 'core/delete_company.html', {'company': company})
-        name = company.name
+        # P0-02: a company with a final audit record (issued report) must be retained — deleting
+        # it would cascade the immutable report away. Refuse BEFORE logging out / deleting.
+        from core.models import CompanyDeletionProtected
+        try:
+            name = company.name
+            company.delete()  # cascades to controls, evidence, scores, alerts, users
+        except CompanyDeletionProtected:
+            messages.error(request, 'لا يمكن حذف الشركة لوجود تقرير تدقيق نهائي صادر يجب الاحتفاظ به. '
+                                    'يرجى التواصل مع الدعم للأرشفة بدلًا من الحذف.')
+            return render(request, 'core/delete_company.html', {'company': company})
         logout(request)
-        company.delete()  # cascades to controls, evidence, scores, alerts, users
         messages.success(request, f'تم حذف جميع بيانات «{name}» نهائيًا.')
         return redirect('core:landing')
     return render(request, 'core/delete_company.html', {'company': company})

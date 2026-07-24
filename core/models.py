@@ -70,6 +70,30 @@ class User(AbstractUser):
         return decrypt_secret(self.mfa_secret)
 
 
+class CompanyDeletionProtected(Exception):
+    """Raised when application code tries to hard-delete a Company that owns a final audit
+    record (an issued AuditReport) — those records must be retained, not silently cascaded away."""
+
+
+def _company_has_issued_report(company_pks):
+    """True if any of the given companies owns an issued AuditReport (via its assessments)."""
+    from django.apps import apps
+    AuditReport = apps.get_model('auditor_portal', 'AuditReport')
+    return AuditReport.objects.filter(assessment__company__in=list(company_pks)).exists()
+
+
+class CompanyQuerySet(models.QuerySet):
+    """P0-02: block bulk/QuerySet deletion (and Django admin bulk delete, which routes through
+    delete_queryset -> QuerySet.delete) when ANY company in the set owns an issued report. This
+    is the backstop the per-instance Company.delete() cannot provide, since QuerySet.delete()
+    and the cascade collector bypass the model method."""
+    def delete(self):
+        if _company_has_issued_report(self.values_list('pk', flat=True)):
+            raise CompanyDeletionProtected(
+                'Cannot delete a company that owns an issued audit report. Archive it instead.')
+        return super().delete()
+
+
 class Company(models.Model):
     """Registered company seeking compliance certification."""
     SECTOR_CHOICES = [
@@ -143,12 +167,24 @@ class Company(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = CompanyQuerySet.as_manager()
+
     class Meta:
         db_table = 'companies'
         verbose_name_plural = 'Companies'
 
     def __str__(self):
         return f"{self.name} ({self.cr_number})"
+
+    def delete(self, *args, **kwargs):
+        """P0-02: an ordinary application delete (self-service PDPL view, admin single delete)
+        is refused when this company owns an issued audit report — deleting it would cascade the
+        final report away. Retain/archive instead. (A DBA acting directly on the DB is out of
+        scope; every application path is covered by this + CompanyQuerySet.delete().)"""
+        if _company_has_issued_report([self.pk]):
+            raise CompanyDeletionProtected(
+                'Cannot delete a company that owns an issued audit report. Archive it instead.')
+        return super().delete(*args, **kwargs)
 
     @property
     def country_display(self):
