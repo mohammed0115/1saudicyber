@@ -25,16 +25,14 @@ class VerdictError(Exception):
 
 
 def _is_assigned_auditor(user, company):
-    """True if user is an ACTIVE auditor with an ACCEPTED assignment to the company."""
-    from auditors.services import get_auditor_profile
-    from auditors.models import AuditorAssignment
-    profile = get_auditor_profile(user)
-    # is_active_auditor is a @property — a pending/suspended auditor evaluates False here
-    # (the old naked-method reference was always truthy = a silent auth bypass).
-    if profile is None or not profile.is_active_auditor:
-        return False
-    return AuditorAssignment.objects.filter(
-        company=company, auditor=profile, status='accepted').exists()
+    """True if user is a fully-live (ACTIVE profile + ACTIVE user) auditor with an ACCEPTED
+    assignment to the company.
+
+    P0-03: delegates to the single auditor-eligibility policy so evidence-review access uses
+    the exact same fail-closed de-provisioning boundary as the portal, messaging and RFI paths.
+    """
+    from auditors.services import is_auditor_eligible_for_company
+    return is_auditor_eligible_for_company(user, company)
 
 
 def can_submit_final_verdict(user, submission):

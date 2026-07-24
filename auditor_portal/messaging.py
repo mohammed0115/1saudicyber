@@ -15,14 +15,11 @@ def can_access_thread(user, company):
         return True
     if getattr(user, 'company_id', None) == company.id:
         return True
-    # Assigned auditor (accepted engagement) only.
-    from auditors.services import get_auditor_profile
-    from auditors.models import AuditorAssignment
-    profile = get_auditor_profile(user)
-    if profile is None:
-        return False
-    return AuditorAssignment.objects.filter(
-        company=company, auditor=profile, status='accepted').exists()
+    # Assigned auditor: must be a fully-live (ACTIVE profile + ACTIVE user) auditor with an
+    # accepted assignment — P0-03 routes this through the single de-provisioning policy so a
+    # suspended/rejected auditor can no longer read or post in the company's private thread.
+    from auditors.services import is_auditor_eligible_for_company
+    return is_auditor_eligible_for_company(user, company)
 
 
 def sender_role_label(user):

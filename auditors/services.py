@@ -83,22 +83,42 @@ def auditor_can_view_company_context(assignment):
             and assignment.status == 'accepted')
 
 
-def has_accepted_assignment(user, company):
-    """P0-01: True iff `user` (as an auditor) holds a LIVE accepted assignment to `company`.
+def is_auditor_eligible_for_company(user, company):
+    """P0-03 — THE SINGLE SOURCE OF TRUTH for auditor access to a company's private data.
 
-    This is the de-provisioning boundary for the auditor portal: access to a company's
-    assessment/controls/evidence must end the moment the assignment is cancelled or rejected,
-    not merely when the AuditorProfile is globally deactivated. Mirrors the messaging boundary
-    (auditor_can_view_company_context / messaging.can_access_thread), which already required a
-    live accepted assignment.
+    Fail-closed de-provisioning boundary, re-evaluated from the DB on EVERY call (so no stale
+    session or leftover row can keep a de-provisioned auditor in). An auditor may act on
+    `company` ONLY when EVERY link in the chain is live:
+      * the user is authenticated AND user.is_active   (login not revoked),
+      * an AuditorProfile exists AND profile.status == 'active'
+        (NOT pending_review / suspended / inactive),
+      * a live 'accepted' AuditorAssignment ties that auditor to THIS company.
+    A break in ANY link — suspended/rejected profile, cancelled/rejected assignment, or a
+    disabled user account — denies access immediately.
+
+    P0-03 tightened this from the old "accepted assignment alone" boundary (P0-01), which
+    stopped a de-assigned auditor but NOT a suspended/rejected one whose 'accepted' row lingered.
     """
     if company is None:
         return False
+    if not getattr(user, 'is_authenticated', False) or not getattr(user, 'is_active', False):
+        return False
     profile = get_auditor_profile(user)
-    if profile is None:
+    if profile is None or not profile.is_active_auditor:
         return False
     return AuditorAssignment.objects.filter(
         auditor=profile, company=company, status='accepted').exists()
+
+
+def has_accepted_assignment(user, company):
+    """P0-01/P0-03 de-provisioning boundary for the auditor portal — a thin, backward-compatible
+    alias over is_auditor_eligible_for_company (the single eligibility policy).
+
+    Requires an ACTIVE profile + ACTIVE user + a live 'accepted' assignment. Access to a
+    company's assessment/controls/evidence/RFI/messages ends the moment ANY of those stops
+    holding — de-assignment, profile suspension/rejection, or login revocation.
+    """
+    return is_auditor_eligible_for_company(user, company)
 
 
 def respond_to_assignment(assignment, action, note='', responder=None):
@@ -106,6 +126,10 @@ def respond_to_assignment(assignment, action, note='', responder=None):
     (ok, error_ar). Idempotent-safe: only a 'requested' assignment can be responded to."""
     if assignment is None or assignment.status != 'requested' or action not in ('accept', 'reject'):
         return False, 'لا يمكن تنفيذ هذا الإجراء على الطلب في حالته الحالية.'
+    # P0-03: a de-provisioned (non-active) auditor may not accept/act on an assignment, even if a
+    # stale 'requested' row survived a suspension. Belt-and-braces with the view + revocation.
+    if not assignment.auditor.is_active_auditor:
+        return False, 'حساب المدقّق غير نشط ولا يمكنه اتخاذ إجراء على الطلب.'
     if action == 'reject' and not (note or '').strip():
         return False, 'سبب الرفض مطلوب.'
     assignment.status = 'accepted' if action == 'accept' else 'rejected'
