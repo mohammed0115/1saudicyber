@@ -907,3 +907,11 @@ msgstr "It supports human decisions and does not replace them."
 
 msgid "يساعد الذكاء الاصطناعي فرق الامتثال والمدقّقين على العمل بأسرع، مع بقاء القرار النهائي للإنسان."
 msgstr "AI helps compliance teams and auditors work faster, while the final decision stays with a human."
+
+# --- P0-UIUX-01 refinement polish ---
+
+msgid "231 ضابطًا عبر أطر NCA"
+msgstr "231 controls across the NCA frameworks"
+
+msgid "منها 108 في إطار ECC"
+msgstr "including 108 in the ECC framework"

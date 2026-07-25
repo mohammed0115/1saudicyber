@@ -161,7 +161,7 @@
       <div>
         <div class="lp-card" style="padding:1.5rem;box-shadow:0 8px 26px rgba(31,45,40,.06);">
           <div class="flex items-center justify-between mb-4">
-            <h2 style="font-size:1rem;">{% trans "الجاهزية العامة" %}</h2>
+            <h2 style="font-size:1rem;">{% trans "مؤشّر الجاهزية" %}</h2>
             <span class="inline-flex items-center gap-1.5 text-xs font-semibold" style="background:var(--soft);color:var(--brand);padding:.3rem .7rem;border-radius:999px;">
               <i class="fas fa-flask text-[.7rem]" aria-hidden="true"></i>{% trans "مؤشرات توضيحية" %}
             </span>
@@ -225,7 +225,10 @@
         <div class="lp-iconbox flex items-center justify-center mb-4" style="width:44px;height:44px;"><i class="fas fa-landmark" aria-hidden="true"></i></div>
         <h3 class="mb-2">NCA ECC</h3>
         <p class="lp-body text-sm mb-4 flex-1">{% trans "الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني، للجهات الحكومية والبنى التحتية الحسّاسة." %}</p>
-        <div class="text-sm font-semibold lp-brand" style="border-top:1px solid var(--border);padding-top:.75rem;">{% trans "108 ضابطًا في ECC — و231 ضابطًا عبر أطر NCA" %}</div>
+        <div style="border-top:1px solid var(--border);padding-top:.75rem;">
+          <span class="text-sm font-semibold lp-brand">{% trans "231 ضابطًا عبر أطر NCA" %}</span>
+          <span class="lp-muted text-xs block mt-0.5">{% trans "منها 108 في إطار ECC" %}</span>
+        </div>
       </div>
       <div class="lp-card p-6 flex flex-col">
         <div class="lp-iconbox flex items-center justify-center mb-4" style="width:44px;height:44px;"><i class="fas fa-oil-well" aria-hidden="true"></i></div>
@@ -368,33 +371,37 @@
       <p class="lp-eyebrow mb-2">{% trans "كيف تعمل" %}</p>
       <h2>{% trans "مسار الامتثال في خمس خطوات" %}</h2>
     </div>
-    <ol class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      <li class="lp-card p-5">
-        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">1</div>
-        <h3 class="mb-1" style="font-size:.98rem;">{% trans "عرِّف مؤسستك" %}</h3>
-        <p class="lp-body text-sm">{% trans "أدخل بيانات المؤسسة وسياق الامتثال." %}</p>
-      </li>
-      <li class="lp-card p-5">
-        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">2</div>
-        <h3 class="mb-1" style="font-size:.98rem;">{% trans "حدّد الأطر والنطاق" %}</h3>
-        <p class="lp-body text-sm">{% trans "تحديد الأطر والمتطلبات المنطبقة على مؤسستك." %}</p>
-      </li>
-      <li class="lp-card p-5">
-        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">3</div>
-        <h3 class="mb-1" style="font-size:.98rem;">{% trans "قيّم الضوابط وارفع الأدلة" %}</h3>
-        <p class="lp-body text-sm">{% trans "تقييم وضع الجاهزية وربط الأدلة بالضوابط." %}</p>
-      </li>
-      <li class="lp-card p-5">
-        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">4</div>
-        <h3 class="mb-1" style="font-size:.98rem;">{% trans "حلّل الفجوات وعالِجها" %}</h3>
-        <p class="lp-body text-sm">{% trans "تحليل الفجوات وترتيب أولويات المعالجة ومتابعتها." %}</p>
-      </li>
-      <li class="lp-card p-5">
-        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">5</div>
-        <h3 class="mb-1" style="font-size:.98rem;">{% trans "مراجعة المدقّق" %}</h3>
-        <p class="lp-body text-sm">{% trans "القرار النهائي للمدقّق، مع جاهزية للمراقبة المستمرة." %}</p>
-      </li>
-    </ol>
+    <div class="relative">
+      {# connecting track behind the step nodes (desktop) — conveys sequence, not isolated boxes #}
+      <div class="hidden lg:block absolute top-5 start-[10%] end-[10%] h-px" style="background:var(--border);" aria-hidden="true"></div>
+      <ol class="relative grid sm:grid-cols-2 lg:grid-cols-5 gap-x-5 gap-y-9">
+        <li class="text-center">
+          <div class="inline-flex items-center justify-center rounded-full font-bold mb-3" style="width:40px;height:40px;background:var(--surface);color:var(--brand);border:1px solid var(--border);">1</div>
+          <h3 class="mb-1" style="font-size:.98rem;">{% trans "عرِّف مؤسستك" %}</h3>
+          <p class="lp-body text-sm">{% trans "أدخل بيانات المؤسسة وسياق الامتثال." %}</p>
+        </li>
+        <li class="text-center">
+          <div class="inline-flex items-center justify-center rounded-full font-bold mb-3" style="width:40px;height:40px;background:var(--surface);color:var(--brand);border:1px solid var(--border);">2</div>
+          <h3 class="mb-1" style="font-size:.98rem;">{% trans "حدّد الأطر والنطاق" %}</h3>
+          <p class="lp-body text-sm">{% trans "تحديد الأطر والمتطلبات المنطبقة على مؤسستك." %}</p>
+        </li>
+        <li class="text-center">
+          <div class="inline-flex items-center justify-center rounded-full font-bold mb-3" style="width:40px;height:40px;background:var(--surface);color:var(--brand);border:1px solid var(--border);">3</div>
+          <h3 class="mb-1" style="font-size:.98rem;">{% trans "قيّم الضوابط وارفع الأدلة" %}</h3>
+          <p class="lp-body text-sm">{% trans "تقييم وضع الجاهزية وربط الأدلة بالضوابط." %}</p>
+        </li>
+        <li class="text-center">
+          <div class="inline-flex items-center justify-center rounded-full font-bold mb-3" style="width:40px;height:40px;background:var(--surface);color:var(--brand);border:1px solid var(--border);">4</div>
+          <h3 class="mb-1" style="font-size:.98rem;">{% trans "حلّل الفجوات وعالِجها" %}</h3>
+          <p class="lp-body text-sm">{% trans "تحليل الفجوات وترتيب أولويات المعالجة ومتابعتها." %}</p>
+        </li>
+        <li class="text-center">
+          <div class="inline-flex items-center justify-center rounded-full font-bold mb-3" style="width:40px;height:40px;background:var(--brand);color:#fff;border:1px solid var(--brand);">5</div>
+          <h3 class="mb-1" style="font-size:.98rem;">{% trans "مراجعة المدقّق" %}</h3>
+          <p class="lp-body text-sm">{% trans "القرار النهائي للمدقّق، مع جاهزية للمراقبة المستمرة." %}</p>
+        </li>
+      </ol>
+    </div>
   </div>
 </section>
 
