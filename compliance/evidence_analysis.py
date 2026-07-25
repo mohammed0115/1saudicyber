@@ -145,12 +145,23 @@ def extract_text_from_submission(submission):
 
 
 def _run_ai(control, requirement, text, related_context=''):
-    """Call the AI provider for an advisory analysis. Returns (result_dict, error, model, provider)."""
-    api_key = getattr(settings, 'OPENAI_API_KEY', '') or ''
-    if not api_key:
-        return None, 'AI provider not configured (no OPENAI_API_KEY)', '', ''
+    """Call the AI provider for an advisory analysis. Returns (result_dict, error, model, provider).
+
+    P0-04 — FAIL-CLOSED on data residency: the CENTRAL policy (external_ai_allowed), not mere API
+    key presence, decides. When external AI is not allowed, this returns a safe 'not allowed'
+    result WITHOUT building a client, constructing a prompt, or sending any tenant evidence text —
+    the caller then records a needs-human-review analysis (never a compliance decision).
+    """
+    from ai_engine.services import (external_ai_allowed, ai_enabled, get_openai_client,
+                                     ExternalAINotAllowed)
+    if not external_ai_allowed():
+        # Distinguish the two fail-closed reasons (mirrors ai_engine.ai_advisory_state) so the
+        # recorded message is accurate: a missing key is reported as such; otherwise the residency
+        # policy is the blocker. Either way NO client is built and NO evidence text is sent.
+        if not ai_enabled():
+            return None, 'AI provider not configured (no OPENAI_API_KEY)', '', ''
+        return None, 'external AI disabled by data-residency policy', '', ''
     try:
-        from ai_engine.services import get_openai_client
         client = get_openai_client()
         model = getattr(settings, 'OPENAI_MODEL', 'gpt-4o')
         related_block = (f"\nOTHER EVIDENCE ALREADY ANALYZED FOR THIS CONTROL (cross-reference against "
@@ -168,6 +179,9 @@ def _run_ai(control, requirement, text, related_context=''):
                       {'role': 'user', 'content': user}])
         data = json.loads(resp.choices[0].message.content)
         return data, '', model, 'openai'
+    except ExternalAINotAllowed:
+        # Defense-in-depth: the provider-boundary tripwire fired (residency flipped/forgotten guard).
+        return None, 'external AI disabled by data-residency policy', '', ''
     except Exception as exc:
         return None, f'AI error: {type(exc).__name__}', '', 'openai'
 

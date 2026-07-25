@@ -82,8 +82,11 @@ class Command(BaseCommand):
             raise CommandError('Refusing to run without --yes-external (this sends PUBLIC regulatory control text to OpenAI). '
                                'Re-run with --yes-external to proceed.')
 
+        # PUBLIC regulatory control text only (documented above): explicitly declares the
+        # public-reference exemption at the provider boundary. Still requires a configured key;
+        # it does NOT bypass the tenant residency gate for any customer content.
         from ai_engine.services import get_openai_client
-        client = get_openai_client()
+        client = get_openai_client(allow_public_reference=True)
         model = opts['model']
         bsize = opts['batch_size']
         done = 0

@@ -42,8 +42,34 @@ def ai_advisory_state():
     return True, 'التحليل الاستشاري مُفعّل (استشاري فقط، ليس قرارًا نهائيًا).'
 
 
-def get_openai_client():
-    """Initialize OpenAI client with a bounded timeout and limited retries."""
+class ExternalAINotAllowed(RuntimeError):
+    """The data-residency policy forbids constructing/using the external-AI client.
+
+    Central provider-boundary tripwire (P0-04): raised by get_openai_client() so a caller that
+    forgets its own residency guard cannot silently egress tenant data — it fails LOUD and safe.
+    """
+
+
+def get_openai_client(*, allow_public_reference=False):
+    """Construct the external OpenAI client — FAIL-CLOSED at the provider boundary (P0-04).
+
+    This is the single choke point for external-AI egress. By default it refuses to build the
+    client unless external_ai_allowed() (residency == 'external' AND a configured key), so no
+    tenant evidence/company text can leave the Kingdom just because a key exists or a caller
+    forgot its guard — the caller gets a loud ExternalAINotAllowed instead of a silent send.
+
+    allow_public_reference=True is the ONE documented exception: the translate_controls_ar
+    command sends PUBLIC regulatory control text (NCA/Aramco/SABIC standards — not tenant/company
+    data), so it is exempt from the tenant residency gate but STILL requires a configured key.
+    Nothing that handles tenant/company content may set this.
+    """
+    if allow_public_reference:
+        if not ai_enabled():
+            raise ExternalAINotAllowed('No API key configured for external AI.')
+    elif not external_ai_allowed():
+        raise ExternalAINotAllowed(
+            'External AI is disabled by the data-residency policy '
+            '(AI_DATA_RESIDENCY_MODE is not "external", or no API key).')
     return OpenAI(api_key=settings.OPENAI_API_KEY, timeout=30.0, max_retries=2)
 
 
