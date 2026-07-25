@@ -629,3 +629,281 @@ msgstr "Don't have an account?"
 
 msgid "آخر تحديث:"
 msgstr "Last updated:"
+
+# --- P0-UIUX-01 landing localization (closure) ---
+
+msgid "108 ضابطًا في ECC — و231 ضابطًا عبر أطر NCA"
+msgstr "108 ECC controls — 231 controls across the NCA frameworks"
+
+msgid "1SaudiCyber منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها."
+msgstr "1SaudiCyber is an independent platform. Regulatory framework names are shown to indicate coverage scope only, and do not imply official endorsement by, or partnership with, any regulator."
+
+msgid "417 ضابطًا رسميًا مهيكلًا عبر أطر NCA وAramco وSABIC"
+msgstr "417 official framework controls structured across the NCA, Aramco and SABIC frameworks"
+
+msgid "أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص. لا تُصدر المنصّة اعتمادًا رسميًا."
+msgstr "A tool to help organize compliance; the final decision stays with the auditor or the qualified compliance team. The platform does not issue any formal accreditation."
+
+msgid "أدخل بيانات المؤسسة وسياق الامتثال."
+msgstr "Enter your organization details and compliance context."
+
+msgid "أدلة قيد المراجعة"
+msgstr "Evidence under review"
+
+msgid "إدارة الضوابط"
+msgstr "Control management"
+
+msgid "إنهاء وصول المدقّق فور تعليقه أو رفضه."
+msgstr "An auditor's access ends the moment they are suspended or rejected."
+
+msgid "ابدأ بتنظيم ضوابطك وأدلّتك وإعداد جاهزيتك للمراجعة."
+msgstr "Start organizing your controls and evidence and preparing your readiness for review."
+
+msgid "الأمان"
+msgstr "Security"
+
+msgid "الأمان أولًا"
+msgstr "Security first"
+
+msgid "الإشارة إلى فجوات محتملة تحتاج تحقّقًا"
+msgstr "Flagging potential gaps that need verification"
+
+msgid "الامتثال لا يجب أن يعيش في جداول بيانات ورسائل ومجلدات أدلة متفرّقة"
+msgstr "Compliance shouldn't live across spreadsheets, emails and scattered evidence folders"
+
+msgid "التدقيق"
+msgstr "Audit"
+
+msgid "التقييم"
+msgstr "Assessment"
+
+msgid "الجاهزية العامة"
+msgstr "Overall readiness"
+
+msgid "الحساب"
+msgstr "Account"
+
+msgid "الحفاظ على الوضوح مع تغيّر وضع الجاهزية عبر الوقت."
+msgstr "Maintain clarity as your readiness changes over time."
+
+msgid "الخصوصية"
+msgstr "Privacy"
+
+msgid "الذكاء الاصطناعي"
+msgstr "Artificial intelligence"
+
+msgid "الربط يوضّح التكافؤ بين الضوابط؛ والقرار في كفاية الأدلة لكل ضابط يبقى للمراجع المختص."
+msgstr "Mapping shows how controls are equivalent; the decision on whether the evidence is sufficient for each control stays with the qualified reviewer."
+
+msgid "الشركة"
+msgstr "Company"
+
+msgid "الشركة والقانوني"
+msgstr "Company and legal"
+
+msgid "الشروط"
+msgstr "Terms"
+
+msgid "الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني، للجهات الحكومية والبنى التحتية الحسّاسة."
+msgstr "The National Cybersecurity Authority's Essential Cybersecurity Controls (ECC), for government entities and critical national infrastructure."
+
+msgid "الفجوات والمعالجة"
+msgstr "Gaps and remediation"
+
+msgid "القدرات"
+msgstr "Capabilities"
+
+msgid "القدرات الأساسية"
+msgstr "Core capabilities"
+
+msgid "القرار النهائي للمدقّق، مع جاهزية للمراقبة المستمرة."
+msgstr "The final decision rests with the auditor, with readiness for continuous monitoring."
+
+msgid "المراقبة المستمرة"
+msgstr "Continuous monitoring"
+
+msgid "المشكلة"
+msgstr "The problem"
+
+msgid "المعالجة"
+msgstr "Remediation"
+
+msgid "المنتج"
+msgstr "Product"
+
+msgid "بيانات كل مؤسسة معزولة عن غيرها."
+msgstr "Each organization's data is isolated from every other."
+
+msgid "تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف المؤسسة فعليًا قبل التدقيق. تجمع 1SaudiCyber هذه الدورة في مسار واحد متّصل."
+msgstr "Controls, evidence and findings are spread across different teams and tools, making it hard to know where the organization really stands before an audit. 1SaudiCyber brings this cycle together into one connected path."
+
+msgid "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC."
+msgstr "1SaudiCyber brings the compliance cycle into one place: assess readiness, manage controls, organize evidence, analyze gaps, track remediation and prepare for audit — across the NCA, Aramco and SABIC frameworks."
+
+msgid "تجهيز الضوابط والأدلة والملاحظات لمسار مراجعة المدقّق."
+msgstr "Prepare controls, evidence and findings for the auditor review path."
+
+msgid "تحديد الأطر والمتطلبات المنطبقة على مؤسستك."
+msgstr "Identify the frameworks and requirements applicable to your organization."
+
+msgid "تحديد الفجوات وترتيب أولويات الملاحظات ومتابعة خطط المعالجة."
+msgstr "Identify gaps, prioritize findings and track remediation plans."
+
+msgid "تحديد المتطلبات المنطبقة وقياس وضع الجاهزية الحالي للمؤسسة."
+msgstr "Identify applicable requirements and measure the organization's current readiness."
+
+msgid "تحليل استشاري للأدلة المرفوعة"
+msgstr "Advisory analysis of uploaded evidence"
+
+msgid "تحليل الفجوات وترتيب أولويات المعالجة ومتابعتها."
+msgstr "Analyze gaps, prioritize remediation and track it."
+
+msgid "تحليل مدعوم بالذكاء الاصطناعي — مساعِد، لا قرار"
+msgstr "AI-assisted analysis — an assistant, not a decision"
+
+msgid "تخزين خاص للأدلة"
+msgstr "Private evidence storage"
+
+msgid "تخطَّ إلى المحتوى"
+msgstr "Skip to content"
+
+msgid "تسجيل الإجراءات الحسّاسة للمراجعة."
+msgstr "Sensitive actions are logged for review."
+
+msgid "تطوير"
+msgstr "Developed by"
+
+msgid "تغطية مهيكلة لضوابط الأطر المنشورة في السوق السعودي، من مساحة عمل واحدة."
+msgstr "Structured coverage of the published framework controls used in the Saudi market, from a single workspace."
+
+msgid "تقييم وضع الجاهزية وربط الأدلة بالضوابط."
+msgstr "Assess readiness and link evidence to controls."
+
+msgid "تُربط الضوابط المتكافئة بين NCA وAramco وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار."
+msgstr "Equivalent controls are mapped across NCA, Aramco and SABIC, so overlapping requirements appear in one place and duplicated work is reduced when covering more than one framework."
+
+msgid "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية"
+msgstr "Cybersecurity compliance readiness, simplified for Saudi organizations"
+
+msgid "جميع الحقوق محفوظة."
+msgstr "All rights reserved."
+
+msgid "حدود واضحة"
+msgstr "Clear limits"
+
+msgid "حدّد الأطر والنطاق"
+msgstr "Define frameworks and scope"
+
+msgid "حلّل الفجوات وعالِجها"
+msgstr "Analyze and remediate gaps"
+
+msgid "ربط الأطر"
+msgstr "Framework mapping"
+
+msgid "رفع الأدلة وتنظيمها ومراجعتها وربطها بالضوابط ذات العلاقة."
+msgstr "Upload, organize, review and link evidence to the relevant controls."
+
+msgid "روابط الصفحة"
+msgstr "Page links"
+
+msgid "سجلّ تدقيق"
+msgstr "Audit log"
+
+msgid "شاهد كيف تعمل"
+msgstr "See how it works"
+
+msgid "شرح الملاحظات واقتراح خطوات تالية"
+msgstr "Explaining findings and suggesting next steps"
+
+msgid "صلاحيات حسب الدور"
+msgstr "Role-based access"
+
+msgid "ضابط"
+msgstr "Control"
+
+msgid "ضابط متكافئ"
+msgstr "Equivalent control"
+
+msgid "ضوابط وصول وحماية للبيانات مطبّقة في المنصّة."
+msgstr "Access controls and data protection applied across the platform."
+
+msgid "طبقة تحقّق إضافية عند تسجيل الدخول."
+msgstr "An extra verification layer at sign-in."
+
+msgid "عرِّف مؤسستك"
+msgstr "Define your organization"
+
+msgid "عزل بيانات المؤسسات"
+msgstr "Organization data isolation"
+
+msgid "عن المنصّة"
+msgstr "About"
+
+msgid "فتح القائمة"
+msgstr "Open menu"
+
+msgid "فجوات حرجة"
+msgstr "Critical gaps"
+
+msgid "قائمة الجوال"
+msgstr "Mobile menu"
+
+msgid "قيّم الضوابط وارفع الأدلة"
+msgstr "Assess controls and upload evidence"
+
+msgid "كل ما تحتاجه لإدارة الامتثال في مكان واحد"
+msgstr "Everything you need to manage compliance in one place"
+
+msgid "كيف تعمل"
+msgstr "How it works"
+
+msgid "لا يضمن الامتثال ولا يُغني عن مراجعة المدقّق المختص."
+msgstr "It does not guarantee compliance and is no substitute for review by a qualified auditor."
+
+msgid "لا يمثّل موافقة أو اعتمادًا من أي جهة تنظيمية."
+msgstr "It does not represent approval or accreditation by any regulator."
+
+msgid "مؤشرات توضيحية"
+msgstr "Illustrative figures"
+
+msgid "مبنية للسوق السعودي"
+msgstr "Built for the Saudi market"
+
+msgid "مبنية مع مراعاة الأمان"
+msgstr "Built with security in mind"
+
+msgid "متابعة الضوابط عبر الأطر المطبّقة من مساحة عمل واحدة موحّدة."
+msgstr "Track controls across the applicable frameworks from a single unified workspace."
+
+msgid "متطلبات متداخلة، مربوطة عبر الأطر"
+msgstr "Overlapping requirements, mapped across frameworks"
+
+msgid "مصادقة ثنائية (MFA)"
+msgstr "Two-factor authentication (MFA)"
+
+msgid "معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة، للموردين ومزوّدي الخدمات."
+msgstr "Saudi Aramco's third-party cybersecurity standard (SACS-002), for suppliers and service providers."
+
+msgid "ملفات الأدلة تُخدَم عبر تنزيل مُصرّح فقط."
+msgstr "Evidence files are served through authorized download only."
+
+msgid "منصّة جاهزية الامتثال السيبراني"
+msgstr "Cybersecurity compliance readiness platform"
+
+msgid "منصّة جاهزية الامتثال السيبراني للسوق السعودي"
+msgstr "Cybersecurity compliance readiness platform for the Saudi market"
+
+msgid "نزع صلاحية المدقّق"
+msgstr "Auditor de-provisioning"
+
+msgid "وصول مقيّد بحسب دور المستخدم."
+msgstr "Access restricted by the user's role."
+
+msgid "يخضع لسياسة سيادة البيانات: لا تُرسل بيانات العميل خارجيًا إلا عند التفعيل الصريح."
+msgstr "Subject to the data-sovereignty policy: customer data is not sent externally unless explicitly enabled."
+
+msgid "يدعم قرار الإنسان ولا يحلّ محلّه."
+msgstr "It supports human decisions and does not replace them."
+
+msgid "يساعد الذكاء الاصطناعي فرق الامتثال والمدقّقين على العمل بأسرع، مع بقاء القرار النهائي للإنسان."
+msgstr "AI helps compliance teams and auditors work faster, while the final decision stays with a human."
