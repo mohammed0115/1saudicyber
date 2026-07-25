@@ -3,467 +3,499 @@
 {% block title %}1SaudiCyber — {% trans "منصّة جاهزية الامتثال السيبراني للسوق السعودي" %}{% endblock %}
 
 {% block extra_head %}
+<meta name="description" content="{% trans 'منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات، وإعداد تقارير الجاهزية وفق أطر NCA وAramco وSABIC.' %}">
 <style>
-    /* Landing-only polish. Honors the site design system (gov-green / gov-gray / semantics). */
-    @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
-    .lp-section { scroll-margin-top: 5rem; }
-    .lp-hero-grid { background-image:
-        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
-        background-size: 44px 44px; }
-    .lp-mobile-menu > summary { list-style: none; }
-    .lp-mobile-menu > summary::-webkit-details-marker { display: none; }
-    .lp-card { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
-    @media (prefers-reduced-motion: no-preference) { .lp-card:hover { transform: translateY(-3px); } }
-    .lp-eyebrow { letter-spacing: .08em; }
+  /* ============================================================
+     P0-UIUX-01 — Light, calm enterprise/GRC landing (management direction).
+     Green is a brand accent, not a dark dominant surface. Scoped to .lp.
+     ============================================================ */
+  .lp{
+    --brand:#176B55; --brand-h:#125845; --brand-soft:#2E8B6F;
+    --bg:#F8FAF9; --surface:#FFFFFF; --neutral:#F4F7F5; --soft:#EDF5F1; --soft2:#F5F9F7;
+    --cta:#E8F3EE; --footer:#EEF4F1;
+    --text:#1F2D28; --text2:#46534C; --muted:#5C6A63; --border:#DDE6E2;
+    --ok:#2E8B6F; --warn:#A96C24; --crit:#A64F45; --info:#2B6C86;
+    color:var(--text); background:var(--bg);
+    font-family:'Inter','Noto Sans Arabic',sans-serif;
+  }
+  @media (prefers-reduced-motion: no-preference){ html{ scroll-behavior:smooth; } }
+  .lp-container{ max-width:1200px; margin-inline:auto; padding-inline:1.25rem; }
+  .lp-section{ scroll-margin-top:5rem; }
+  /* surfaces */
+  .lp-s-white{ background:var(--surface); }
+  .lp-s-neutral{ background:var(--neutral); }
+  .lp-s-soft{ background:var(--soft); }
+  .lp-s-cta{ background:var(--cta); }
+  .lp-s-footer{ background:var(--footer); }
+  .lp-hero{ background:linear-gradient(160deg,var(--soft2) 0%,var(--soft) 100%); }
+  /* type scale (few, clear levels) */
+  .lp-eyebrow{ color:var(--brand); font-weight:700; font-size:.78rem; letter-spacing:.07em; }
+  .lp h1{ font-weight:800; font-size:clamp(2rem,4.6vw,3.15rem); line-height:1.16; color:var(--text); }
+  .lp h2{ font-weight:800; font-size:clamp(1.5rem,3vw,2rem); line-height:1.25; color:var(--text); }
+  .lp h3{ font-weight:700; font-size:1.05rem; color:var(--text); }
+  .lp .lp-lead{ font-size:1.075rem; color:var(--text2); line-height:1.7; }
+  .lp .lp-body{ color:var(--text2); line-height:1.65; }
+  .lp .lp-muted{ color:var(--muted); }
+  .lp .lp-brand{ color:var(--brand); }
+  /* comfortable Arabic line-height */
+  :lang(ar) .lp h1{ line-height:1.4; }
+  :lang(ar) .lp h2{ line-height:1.45; }
+  :lang(ar) .lp .lp-lead, :lang(ar) .lp .lp-body{ line-height:1.9; }
+  /* buttons */
+  .lp-btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; min-height:46px;
+    padding:.65rem 1.5rem; border-radius:10px; font-weight:600; font-size:.95rem;
+    transition:background-color .15s ease,color .15s ease,border-color .15s ease,box-shadow .15s ease; }
+  .lp-btn-primary{ background:var(--brand); color:#fff; }
+  .lp-btn-primary:hover{ background:var(--brand-h); }
+  .lp-btn-secondary{ background:transparent; color:var(--text); border:1px solid var(--border); }
+  .lp-btn-secondary:hover{ border-color:var(--brand); color:var(--brand); }
+  /* cards & surfaces */
+  .lp-card{ background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    transition:border-color .15s ease, box-shadow .15s ease; }
+  .lp-card:hover{ border-color:#C7DAD1; box-shadow:0 6px 20px rgba(23,107,85,.06); }
+  .lp-chip{ background:var(--surface); border:1px solid var(--border); border-radius:9px; }
+  .lp-iconbox{ background:var(--soft); color:var(--brand); border-radius:11px; }
+  /* links */
+  .lp-navlink{ color:var(--text2); font-weight:500; }
+  .lp-navlink:hover{ color:var(--brand); }
+  .lp-flink{ color:var(--text2); }
+  .lp-flink:hover{ color:var(--brand); text-decoration:underline; }
+  /* focus — always visible */
+  .lp a:focus-visible, .lp button:focus-visible, .lp summary:focus-visible, .lp [role="button"]:focus-visible{
+    outline:2px solid var(--brand); outline-offset:2px; border-radius:6px; }
+  /* mobile disclosure */
+  .lp-mobile-menu > summary{ list-style:none; }
+  .lp-mobile-menu > summary::-webkit-details-marker{ display:none; }
+  /* very faint hero texture (barely visible, no SOC feel) */
+  .lp-hero-tint{ background:radial-gradient(58% 52% at 85% 0%, rgba(23,107,85,.06), transparent 70%); }
 </style>
 {% endblock %}
 
 {% block body %}
-<div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" class="bg-white text-gov-gray-900">
+<div class="lp" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
 
-<a href="#lp-main" class="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:m-3 focus:rounded-lg focus:bg-gov-green-800 focus:px-4 focus:py-2 focus:text-white">
-    {% trans "تخطَّ إلى المحتوى" %}
+<a href="#lp-main" class="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:m-3 focus:rounded-lg" style="background:var(--brand);color:#fff;padding:.5rem 1rem;">
+  {% trans "تخطَّ إلى المحتوى" %}
 </a>
 
-<!-- ============================ Header ============================ -->
-<header class="sticky top-0 z-50 bg-gov-green-900/95 backdrop-blur border-b border-gov-green-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16 gap-4">
-            <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="1SaudiCyber">
-                <i class="fas fa-shield-halved text-white text-2xl" aria-hidden="true"></i>
-                <span class="text-white font-bold text-xl">1SaudiCyber</span>
-            </a>
+<!-- ============================ Header (light) ============================ -->
+<header class="sticky top-0 z-50 lp-s-white" style="border-bottom:1px solid var(--border);">
+  <div class="lp-container">
+    <div class="flex items-center justify-between gap-4" style="height:64px;">
+      <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="1SaudiCyber">
+        <i class="fas fa-shield-halved lp-brand text-2xl" aria-hidden="true"></i>
+        <span class="font-bold text-xl" style="color:var(--text);">1SaudiCyber</span>
+      </a>
 
-            <nav class="hidden lg:flex items-center gap-1" aria-label="{% trans 'روابط الصفحة' %}">
-                <a href="#capabilities" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium">{% trans "المنتج" %}</a>
-                <a href="#frameworks" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium">{% trans "الأطر" %}</a>
-                <a href="#how-it-works" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium">{% trans "كيف تعمل" %}</a>
-                <a href="#security" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium">{% trans "الأمان" %}</a>
-                <a href="#about" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium">{% trans "عن المنصّة" %}</a>
+      <nav class="hidden lg:flex items-center gap-1" aria-label="{% trans 'روابط الصفحة' %}">
+        <a href="#capabilities" class="lp-navlink px-3 py-2 rounded-md text-sm">{% trans "المنتج" %}</a>
+        <a href="#frameworks" class="lp-navlink px-3 py-2 rounded-md text-sm">{% trans "الأطر" %}</a>
+        <a href="#how-it-works" class="lp-navlink px-3 py-2 rounded-md text-sm">{% trans "كيف تعمل" %}</a>
+        <a href="#security" class="lp-navlink px-3 py-2 rounded-md text-sm">{% trans "الأمان" %}</a>
+        <a href="#about" class="lp-navlink px-3 py-2 rounded-md text-sm">{% trans "عن المنصّة" %}</a>
+      </nav>
+
+      <div class="flex items-center gap-3 shrink-0">
+        {# Exactly one language switcher per page — styled for the light header. #}
+        <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1 text-xs">
+          {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}font-bold{% endif %}" style="color:{% if LANGUAGE_CODE == 'ar' %}var(--brand){% else %}var(--muted){% endif %};">العربية</button>
+          <span style="color:var(--border);">|</span>
+          <button type="submit" name="language" value="en" class="px-1 {% if LANGUAGE_CODE != 'ar' %}font-bold{% endif %}" style="color:{% if LANGUAGE_CODE != 'ar' %}var(--brand){% else %}var(--muted){% endif %};">English</button>
+        </form>
+        <span class="hidden lg:block" style="width:1px;height:20px;background:var(--border);" aria-hidden="true"></span>
+        <a href="{% url 'core:login' %}" class="hidden lg:inline lp-navlink text-sm">{% trans "تسجيل الدخول" %}</a>
+        <a href="{% url 'core:get_started' %}" class="hidden lg:inline-flex lp-btn lp-btn-primary" style="min-height:40px;padding:.45rem 1.1rem;font-size:.9rem;">{% trans "ابدأ الآن" %}</a>
+
+        <details class="lp-mobile-menu lg:hidden relative">
+          <summary class="cursor-pointer p-2 -me-2" role="button" aria-label="{% trans 'فتح القائمة' %}" style="color:var(--text);">
+            <i class="fas fa-bars text-xl" aria-hidden="true"></i>
+          </summary>
+          <div class="absolute end-0 mt-3 lp-card" style="width:min(20rem,calc(100vw - 2rem));box-shadow:0 12px 34px rgba(31,45,40,.12);padding:.6rem;">
+            <nav class="flex flex-col" aria-label="{% trans 'قائمة الجوال' %}">
+              <a href="#capabilities" class="lp-navlink px-3 py-2.5 rounded-lg text-sm">{% trans "المنتج" %}</a>
+              <a href="#frameworks" class="lp-navlink px-3 py-2.5 rounded-lg text-sm">{% trans "الأطر" %}</a>
+              <a href="#how-it-works" class="lp-navlink px-3 py-2.5 rounded-lg text-sm">{% trans "كيف تعمل" %}</a>
+              <a href="#security" class="lp-navlink px-3 py-2.5 rounded-lg text-sm">{% trans "الأمان" %}</a>
+              <a href="#about" class="lp-navlink px-3 py-2.5 rounded-lg text-sm">{% trans "عن المنصّة" %}</a>
             </nav>
-
-            <div class="flex items-center gap-3 sm:gap-4 shrink-0">
-                {# Exactly ONE language switcher per page (kept always-visible for mobile + desktop). #}
-                {% include "components/language_switcher.html" %}
-                <span class="hidden lg:block w-px h-5 bg-gov-green-700" aria-hidden="true"></span>
-                <a href="{% url 'core:login' %}" class="hidden lg:inline text-gov-green-100 hover:text-white text-sm font-medium">{% trans "تسجيل الدخول" %}</a>
-                <a href="{% url 'core:get_started' %}" class="hidden lg:inline-flex bg-white text-gov-green-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gov-green-50 shadow-sm">{% trans "ابدأ الآن" %}</a>
-
-                <!-- Mobile menu (native disclosure — keyboard + screen-reader accessible, no framework) -->
-                <details class="lp-mobile-menu lg:hidden relative">
-                    <summary class="text-white cursor-pointer p-2 -me-2" role="button" aria-label="{% trans 'فتح القائمة' %}">
-                        <i class="fas fa-bars text-xl" aria-hidden="true"></i>
-                    </summary>
-                    <div class="absolute end-0 mt-3 w-[min(20rem,calc(100vw-2rem))] bg-gov-green-900 border border-gov-green-800 rounded-xl shadow-2xl p-3 z-50">
-                        <nav class="flex flex-col" aria-label="{% trans 'قائمة الجوال' %}">
-                            <a href="#capabilities" class="text-gov-green-100 hover:text-white hover:bg-gov-green-800 px-3 py-2.5 rounded-lg text-sm">{% trans "المنتج" %}</a>
-                            <a href="#frameworks" class="text-gov-green-100 hover:text-white hover:bg-gov-green-800 px-3 py-2.5 rounded-lg text-sm">{% trans "الأطر" %}</a>
-                            <a href="#how-it-works" class="text-gov-green-100 hover:text-white hover:bg-gov-green-800 px-3 py-2.5 rounded-lg text-sm">{% trans "كيف تعمل" %}</a>
-                            <a href="#security" class="text-gov-green-100 hover:text-white hover:bg-gov-green-800 px-3 py-2.5 rounded-lg text-sm">{% trans "الأمان" %}</a>
-                            <a href="#about" class="text-gov-green-100 hover:text-white hover:bg-gov-green-800 px-3 py-2.5 rounded-lg text-sm">{% trans "عن المنصّة" %}</a>
-                        </nav>
-                        <div class="border-t border-gov-green-800 my-2"></div>
-                        <a href="{% url 'core:login' %}" class="block text-gov-green-100 hover:text-white hover:bg-gov-green-800 px-3 py-2.5 rounded-lg text-sm">{% trans "تسجيل الدخول" %}</a>
-                        <a href="{% url 'core:get_started' %}" class="block text-center bg-white text-gov-green-900 px-3 py-2.5 rounded-lg text-sm font-semibold mt-1 hover:bg-gov-green-50">{% trans "ابدأ الآن" %}</a>
-                    </div>
-                </details>
-            </div>
-        </div>
+            <div style="border-top:1px solid var(--border);margin:.5rem 0;"></div>
+            <a href="{% url 'core:login' %}" class="lp-navlink block px-3 py-2.5 rounded-lg text-sm">{% trans "تسجيل الدخول" %}</a>
+            <a href="{% url 'core:get_started' %}" class="lp-btn lp-btn-primary w-full mt-1">{% trans "ابدأ الآن" %}</a>
+          </div>
+        </details>
+      </div>
     </div>
+  </div>
 </header>
 
 <main id="lp-main">
 
-<!-- ============================ Hero ============================ -->
-<section class="gradient-gov relative overflow-hidden">
-    <div class="lp-hero-grid absolute inset-0" aria-hidden="true"></div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-                <span class="inline-flex items-center gap-2 bg-gov-green-800/60 border border-gov-green-700 rounded-full px-3 py-1.5 mb-6">
-                    <span class="w-2 h-2 rounded-full bg-gov-ok motion-safe:animate-pulse" aria-hidden="true"></span>
-                    <span class="text-gov-green-100 text-xs font-medium lp-eyebrow">{% trans "منصّة جاهزية الامتثال السيبراني" %}</span>
-                </span>
-                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight mb-5 text-balance">
-                    {% trans "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية" %}
-                </h1>
-                <p class="text-gov-green-100/90 text-lg leading-relaxed mb-8 max-w-xl">
-                    {% trans "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC." %}
-                </p>
-                <div class="flex flex-wrap gap-3">
-                    <a href="{% url 'core:get_started' %}" class="inline-flex items-center gap-2 bg-white text-gov-green-900 px-7 py-3.5 rounded-lg font-bold hover:bg-gov-green-50 shadow-lg">
-                        {% trans "ابدأ تقييم الامتثال" %}
-                        <i class="fas fa-arrow-left text-sm rtl:block ltr:hidden" aria-hidden="true"></i>
-                        <i class="fas fa-arrow-right text-sm ltr:block rtl:hidden" aria-hidden="true"></i>
-                    </a>
-                    <a href="#how-it-works" class="inline-flex items-center gap-2 border border-gov-green-400 text-gov-green-50 px-7 py-3.5 rounded-lg font-semibold hover:bg-gov-green-800/60">
-                        {% trans "شاهد كيف تعمل" %}
-                    </a>
-                </div>
-                <p class="text-gov-green-200/80 text-sm mt-6 max-w-xl">
-                    <i class="fas fa-circle-info me-1" aria-hidden="true"></i>
-                    {% trans "أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص. لا تُصدر المنصّة اعتمادًا رسميًا." %}
-                </p>
-            </div>
-
-            <!-- Product-oriented readiness preview (sample data) -->
-            <div class="lg:ps-6">
-                <div class="glass-card rounded-2xl p-6 shadow-2xl">
-                    <div class="flex items-center justify-between mb-5">
-                        <h2 class="font-bold text-gov-green-900 text-base">{% trans "مؤشّر الجاهزية" %}</h2>
-                        <span class="bg-gov-gray-100 text-gov-gray-600 px-2.5 py-1 rounded-full text-xs font-medium">{% trans "مؤشرات توضيحية" %}</span>
-                    </div>
-                    <div class="flex items-end gap-3 mb-5">
-                        <div class="text-4xl font-bold text-gov-green-900">86%</div>
-                        <div class="text-sm text-gov-gray-600 pb-1.5">{% trans "الجاهزية العامة" %}</div>
-                    </div>
-                    <div class="h-2 w-full rounded-full bg-gov-gray-200 mb-6 overflow-hidden">
-                        <div class="h-full rounded-full bg-gov-ok" style="width:86%"></div>
-                    </div>
-                    <div class="space-y-3">
-                        {% comment %}illustrative framework rows — mixed semantic states, not all green{% endcomment %}
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gov-gray-700">NCA ECC</span>
-                            <span class="flex items-center gap-2"><span class="w-24 h-1.5 rounded-full bg-gov-gray-200 overflow-hidden"><span class="block h-full bg-gov-ok" style="width:87%"></span></span><span class="font-semibold text-gov-gray-800 tabular-nums">87%</span></span>
-                        </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gov-gray-700">Aramco SACS-002</span>
-                            <span class="flex items-center gap-2"><span class="w-24 h-1.5 rounded-full bg-gov-gray-200 overflow-hidden"><span class="block h-full bg-gov-warn" style="width:71%"></span></span><span class="font-semibold text-gov-gray-800 tabular-nums">71%</span></span>
-                        </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gov-gray-700">SABIC CyberTrust</span>
-                            <span class="flex items-center gap-2"><span class="w-24 h-1.5 rounded-full bg-gov-gray-200 overflow-hidden"><span class="block h-full bg-gov-ok" style="width:79%"></span></span><span class="font-semibold text-gov-gray-800 tabular-nums">79%</span></span>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mt-6">
-                        <div class="rounded-xl bg-gov-crit/10 border border-gov-crit/20 p-3">
-                            <div class="text-lg font-bold text-gov-crit tabular-nums">4</div>
-                            <div class="text-xs text-gov-gray-600">{% trans "فجوات حرجة" %}</div>
-                        </div>
-                        <div class="rounded-xl bg-gov-warn/10 border border-gov-warn/20 p-3">
-                            <div class="text-lg font-bold text-gov-warn tabular-nums">12</div>
-                            <div class="text-xs text-gov-gray-600">{% trans "أدلة قيد المراجعة" %}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- ============================ Hero (soft green) ============================ -->
+<section class="lp-hero relative overflow-hidden">
+  <div class="lp-hero-tint absolute inset-0" aria-hidden="true"></div>
+  <div class="lp-container relative" style="padding-top:3.5rem;padding-bottom:3.5rem;">
+    <div class="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+      <div>
+        <span class="inline-flex items-center gap-2 lp-chip" style="padding:.4rem .8rem;border-radius:999px;">
+          <span class="inline-block w-1.5 h-1.5 rounded-full" style="background:var(--brand-soft);" aria-hidden="true"></span>
+          <span class="lp-eyebrow" style="letter-spacing:.04em;">{% trans "منصّة جاهزية الامتثال السيبراني" %}</span>
+        </span>
+        <h1 class="mt-5 mb-4" style="text-wrap:balance;">{% trans "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية" %}</h1>
+        <p class="lp-lead mb-7" style="max-width:60ch;">{% trans "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC." %}</p>
+        <div class="flex flex-wrap gap-3">
+          <a href="{% url 'core:get_started' %}" class="lp-btn lp-btn-primary">
+            {% trans "ابدأ الآن" %}
+            <i class="fas fa-arrow-left text-sm rtl:inline ltr:hidden" aria-hidden="true"></i>
+            <i class="fas fa-arrow-right text-sm ltr:inline rtl:hidden" aria-hidden="true"></i>
+          </a>
+          <a href="#how-it-works" class="lp-btn lp-btn-secondary">{% trans "شاهد كيف تعمل" %}</a>
         </div>
-    </div>
-</section>
-
-<!-- ============================ Framework trust ============================ -->
-<section id="frameworks" class="lp-section py-16 lg:py-20 bg-white border-b border-gov-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <p class="text-gov-green-700 font-semibold text-sm lp-eyebrow mb-2">{% trans "مبنية للسوق السعودي" %}</p>
-            <h2 class="text-2xl lg:text-3xl font-bold text-gov-green-900 mb-3">{% trans "الأطر المدعومة" %}</h2>
-            <p class="text-gov-gray-600 max-w-2xl mx-auto">{% trans "تغطية مهيكلة لضوابط الأطر المنشورة في السوق السعودي، من مساحة عمل واحدة." %}</p>
-        </div>
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="lp-card border border-gov-gray-200 rounded-2xl p-7 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-12 h-12 rounded-xl bg-gov-green-100 flex items-center justify-center mb-5"><i class="fas fa-landmark text-gov-green-800 text-xl" aria-hidden="true"></i></div>
-                <h3 class="text-lg font-bold text-gov-green-900 mb-2">NCA ECC</h3>
-                <p class="text-gov-gray-600 text-sm mb-4">{% trans "الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني، للجهات الحكومية والبنى التحتية الحسّاسة." %}</p>
-                <div class="text-sm font-medium text-gov-green-700">{% trans "108 ضابطًا في ECC — و231 ضابطًا عبر أطر NCA" %}</div>
-            </div>
-            <div class="lp-card border border-gov-gray-200 rounded-2xl p-7 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-12 h-12 rounded-xl bg-gov-green-100 flex items-center justify-center mb-5"><i class="fas fa-oil-well text-gov-green-800 text-xl" aria-hidden="true"></i></div>
-                <h3 class="text-lg font-bold text-gov-green-900 mb-2">Aramco SACS-002</h3>
-                <p class="text-gov-gray-600 text-sm mb-4">{% trans "معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة، للموردين ومزوّدي الخدمات." %}</p>
-                <div class="text-sm font-medium text-gov-green-700">{% trans "92 ضابطًا" %}</div>
-            </div>
-            <div class="lp-card border border-gov-gray-200 rounded-2xl p-7 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-12 h-12 rounded-xl bg-gov-green-100 flex items-center justify-center mb-5"><i class="fas fa-industry text-gov-green-800 text-xl" aria-hidden="true"></i></div>
-                <h3 class="text-lg font-bold text-gov-green-900 mb-2">SABIC CyberTrust</h3>
-                <p class="text-gov-gray-600 text-sm mb-4">{% trans "معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات." %}</p>
-                <div class="text-sm font-medium text-gov-green-700">{% trans "94 ضابطًا" %}</div>
-            </div>
-        </div>
-        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-x-3 gap-y-2 text-center">
-            <span class="inline-flex items-center gap-2 text-gov-green-900 font-semibold">
-                <i class="fas fa-layer-group text-gov-green-600" aria-hidden="true"></i>
-                {% trans "417 ضابطًا رسميًا مهيكلًا عبر أطر NCA وAramco وSABIC" %}
-            </span>
-        </div>
-        <p class="text-center text-gov-gray-500 text-xs mt-4 max-w-3xl mx-auto">
-            {% trans "1SaudiCyber منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها." %}
+        <p class="lp-muted mt-6 text-sm" style="max-width:58ch;">
+          <i class="fas fa-circle-info me-1" aria-hidden="true"></i>
+          {% trans "أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص. لا تُصدر المنصّة اعتمادًا رسميًا." %}
         </p>
+      </div>
+
+      <!-- Readiness preview (white, illustrative) -->
+      <div>
+        <div class="lp-card" style="padding:1.5rem;box-shadow:0 8px 26px rgba(31,45,40,.06);">
+          <div class="flex items-center justify-between mb-4">
+            <h2 style="font-size:1rem;">{% trans "الجاهزية العامة" %}</h2>
+            <span class="inline-flex items-center gap-1.5 text-xs font-semibold" style="background:var(--soft);color:var(--brand);padding:.3rem .7rem;border-radius:999px;">
+              <i class="fas fa-flask text-[.7rem]" aria-hidden="true"></i>{% trans "مؤشرات توضيحية" %}
+            </span>
+          </div>
+          <div class="flex items-end gap-3 mb-3">
+            <div class="font-bold" style="font-size:2.4rem;color:var(--text);line-height:1;">86%</div>
+            <div class="lp-muted text-sm pb-1">{% trans "الجاهزية العامة" %}</div>
+          </div>
+          <div class="w-full rounded-full overflow-hidden mb-5" style="height:8px;background:var(--neutral);">
+            <div class="h-full rounded-full" style="width:86%;background:var(--ok);"></div>
+          </div>
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between text-sm">
+              <span class="lp-body">NCA ECC</span>
+              <span class="flex items-center gap-2">
+                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" style="width:87%;background:var(--ok);"></span></span>
+                <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">87%</span>
+              </span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <span class="lp-body">Aramco SACS-002</span>
+              <span class="flex items-center gap-2">
+                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" style="width:71%;background:var(--warn);"></span></span>
+                <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">71%</span>
+              </span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <span class="lp-body">SABIC CyberTrust</span>
+              <span class="flex items-center gap-2">
+                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" style="width:79%;background:var(--ok);"></span></span>
+                <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">79%</span>
+              </span>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mt-5">
+            <div class="rounded-xl p-3" style="background:var(--soft2);border:1px solid var(--border);">
+              <div class="font-bold tabular-nums" style="color:var(--crit);font-size:1.1rem;">4</div>
+              <div class="lp-muted text-xs">{% trans "فجوات حرجة" %}</div>
+            </div>
+            <div class="rounded-xl p-3" style="background:var(--soft2);border:1px solid var(--border);">
+              <div class="font-bold tabular-nums" style="color:var(--warn);font-size:1.1rem;">12</div>
+              <div class="lp-muted text-xs">{% trans "أدلة قيد المراجعة" %}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </section>
 
-<!-- ============================ Problem → Solution (About) ============================ -->
-<section id="about" class="lp-section py-16 lg:py-20 bg-gov-gray-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mb-10">
-            <p class="text-gov-green-700 font-semibold text-sm lp-eyebrow mb-2">{% trans "المشكلة" %}</p>
-            <h2 class="text-2xl lg:text-3xl font-bold text-gov-green-900 mb-4">{% trans "الامتثال لا يجب أن يعيش في جداول بيانات ورسائل ومجلدات أدلة متفرّقة" %}</h2>
-            <p class="text-gov-gray-600 text-lg">{% trans "تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف المؤسسة فعليًا قبل التدقيق. تجمع 1SaudiCyber هذه الدورة في مسار واحد متّصل." %}</p>
-        </div>
-        <ol class="flex flex-wrap items-center gap-x-2 gap-y-3">
-            {% comment %}explicit chips + direction-aware chevrons for clean RTL/LTR{% endcomment %}
-            <li class="inline-flex items-center rounded-lg bg-white border border-gov-gray-200 px-3.5 py-2 text-sm font-medium text-gov-green-900 shadow-sm">{% trans "التقييم" %}</li>
-            <li aria-hidden="true" class="text-gov-gray-400"><i class="fas fa-chevron-left rtl:block ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
-            <li class="inline-flex items-center rounded-lg bg-white border border-gov-gray-200 px-3.5 py-2 text-sm font-medium text-gov-green-900 shadow-sm">{% trans "الضوابط" %}</li>
-            <li aria-hidden="true" class="text-gov-gray-400"><i class="fas fa-chevron-left rtl:block ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
-            <li class="inline-flex items-center rounded-lg bg-white border border-gov-gray-200 px-3.5 py-2 text-sm font-medium text-gov-green-900 shadow-sm">{% trans "الأدلة" %}</li>
-            <li aria-hidden="true" class="text-gov-gray-400"><i class="fas fa-chevron-left rtl:block ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
-            <li class="inline-flex items-center rounded-lg bg-white border border-gov-gray-200 px-3.5 py-2 text-sm font-medium text-gov-green-900 shadow-sm">{% trans "تحليل الفجوات" %}</li>
-            <li aria-hidden="true" class="text-gov-gray-400"><i class="fas fa-chevron-left rtl:block ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
-            <li class="inline-flex items-center rounded-lg bg-white border border-gov-gray-200 px-3.5 py-2 text-sm font-medium text-gov-green-900 shadow-sm">{% trans "المعالجة" %}</li>
-            <li aria-hidden="true" class="text-gov-gray-400"><i class="fas fa-chevron-left rtl:block ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
-            <li class="inline-flex items-center rounded-lg bg-white border border-gov-gray-200 px-3.5 py-2 text-sm font-medium text-gov-green-900 shadow-sm">{% trans "التدقيق" %}</li>
-            <li aria-hidden="true" class="text-gov-gray-400"><i class="fas fa-chevron-left rtl:block ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
-            <li class="inline-flex items-center rounded-lg bg-gov-green-800 text-white px-3.5 py-2 text-sm font-medium shadow-sm">{% trans "المراقبة المستمرة" %}</li>
-        </ol>
+<!-- ============================ Framework trust (white) ============================ -->
+<section id="frameworks" class="lp-section lp-s-white" style="padding-block:4rem;border-bottom:1px solid var(--border);">
+  <div class="lp-container">
+    <div class="text-center mb-10">
+      <p class="lp-eyebrow mb-2">{% trans "مبنية للسوق السعودي" %}</p>
+      <h2 class="mb-3">{% trans "الأطر المدعومة" %}</h2>
+      <p class="lp-body mx-auto" style="max-width:60ch;">{% trans "تغطية مهيكلة لضوابط الأطر المنشورة في السوق السعودي، من مساحة عمل واحدة." %}</p>
     </div>
+    <div class="grid md:grid-cols-3 gap-5 items-stretch">
+      <div class="lp-card p-6 flex flex-col">
+        <div class="lp-iconbox flex items-center justify-center mb-4" style="width:44px;height:44px;"><i class="fas fa-landmark" aria-hidden="true"></i></div>
+        <h3 class="mb-2">NCA ECC</h3>
+        <p class="lp-body text-sm mb-4 flex-1">{% trans "الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني، للجهات الحكومية والبنى التحتية الحسّاسة." %}</p>
+        <div class="text-sm font-semibold lp-brand" style="border-top:1px solid var(--border);padding-top:.75rem;">{% trans "108 ضابطًا في ECC — و231 ضابطًا عبر أطر NCA" %}</div>
+      </div>
+      <div class="lp-card p-6 flex flex-col">
+        <div class="lp-iconbox flex items-center justify-center mb-4" style="width:44px;height:44px;"><i class="fas fa-oil-well" aria-hidden="true"></i></div>
+        <h3 class="mb-2">Aramco SACS-002</h3>
+        <p class="lp-body text-sm mb-4 flex-1">{% trans "معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة، للموردين ومزوّدي الخدمات." %}</p>
+        <div class="text-sm font-semibold lp-brand" style="border-top:1px solid var(--border);padding-top:.75rem;">{% trans "92 ضابطًا" %}</div>
+      </div>
+      <div class="lp-card p-6 flex flex-col">
+        <div class="lp-iconbox flex items-center justify-center mb-4" style="width:44px;height:44px;"><i class="fas fa-industry" aria-hidden="true"></i></div>
+        <h3 class="mb-2">SABIC CyberTrust</h3>
+        <p class="lp-body text-sm mb-4 flex-1">{% trans "معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات." %}</p>
+        <div class="text-sm font-semibold lp-brand" style="border-top:1px solid var(--border);padding-top:.75rem;">{% trans "94 ضابطًا" %}</div>
+      </div>
+    </div>
+    <p class="text-center font-semibold mt-7 flex items-center justify-center gap-2" style="color:var(--text);">
+      <i class="fas fa-layer-group lp-brand" aria-hidden="true"></i>
+      {% trans "417 ضابطًا رسميًا مهيكلًا عبر أطر NCA وAramco وSABIC" %}
+    </p>
+    <p class="text-center lp-muted text-xs mt-3 mx-auto" style="max-width:70ch;">{% trans "1SaudiCyber منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها." %}</p>
+  </div>
 </section>
 
-<!-- ============================ Capabilities ============================ -->
-<section id="capabilities" class="lp-section py-16 lg:py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <p class="text-gov-green-700 font-semibold text-sm lp-eyebrow mb-2">{% trans "القدرات الأساسية" %}</p>
-            <h2 class="text-2xl lg:text-3xl font-bold text-gov-green-900 mb-3">{% trans "كل ما تحتاجه لإدارة الامتثال في مكان واحد" %}</h2>
-        </div>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% comment %}icon, title, desc — real capabilities only{% endcomment %}
-            <div class="lp-card rounded-2xl border border-gov-gray-200 p-6 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-11 h-11 rounded-lg bg-gov-green-100 flex items-center justify-center mb-4"><i class="fas fa-clipboard-check text-gov-green-800" aria-hidden="true"></i></div>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "التقييم" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "تحديد المتطلبات المنطبقة وقياس وضع الجاهزية الحالي للمؤسسة." %}</p>
-            </div>
-            <div class="lp-card rounded-2xl border border-gov-gray-200 p-6 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-11 h-11 rounded-lg bg-gov-green-100 flex items-center justify-center mb-4"><i class="fas fa-list-check text-gov-green-800" aria-hidden="true"></i></div>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "إدارة الضوابط" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "متابعة الضوابط عبر الأطر المطبّقة من مساحة عمل واحدة موحّدة." %}</p>
-            </div>
-            <div class="lp-card rounded-2xl border border-gov-gray-200 p-6 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-11 h-11 rounded-lg bg-gov-green-100 flex items-center justify-center mb-4"><i class="fas fa-folder-open text-gov-green-800" aria-hidden="true"></i></div>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "الأدلة" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "رفع الأدلة وتنظيمها ومراجعتها وربطها بالضوابط ذات العلاقة." %}</p>
-            </div>
-            <div class="lp-card rounded-2xl border border-gov-gray-200 p-6 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-11 h-11 rounded-lg bg-gov-green-100 flex items-center justify-center mb-4"><i class="fas fa-magnifying-glass-chart text-gov-green-800" aria-hidden="true"></i></div>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "الفجوات والمعالجة" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "تحديد الفجوات وترتيب أولويات الملاحظات ومتابعة خطط المعالجة." %}</p>
-            </div>
-            <div class="lp-card rounded-2xl border border-gov-gray-200 p-6 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-11 h-11 rounded-lg bg-gov-green-100 flex items-center justify-center mb-4"><i class="fas fa-user-shield text-gov-green-800" aria-hidden="true"></i></div>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "التدقيق" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "تجهيز الضوابط والأدلة والملاحظات لمسار مراجعة المدقّق." %}</p>
-            </div>
-            <div class="lp-card rounded-2xl border border-gov-gray-200 p-6 hover:shadow-lg hover:border-gov-green-200">
-                <div class="w-11 h-11 rounded-lg bg-gov-green-100 flex items-center justify-center mb-4"><i class="fas fa-wave-square text-gov-green-800" aria-hidden="true"></i></div>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "المراقبة" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "الحفاظ على الوضوح مع تغيّر وضع الجاهزية عبر الوقت." %}</p>
-            </div>
-        </div>
+<!-- ============================ Problem → Solution (neutral) ============================ -->
+<section id="about" class="lp-section lp-s-neutral" style="padding-block:4rem;">
+  <div class="lp-container">
+    <div style="max-width:62ch;" class="mb-9">
+      <p class="lp-eyebrow mb-2">{% trans "المشكلة" %}</p>
+      <h2 class="mb-4">{% trans "الامتثال لا يجب أن يعيش في جداول بيانات ورسائل ومجلدات أدلة متفرّقة" %}</h2>
+      <p class="lp-lead">{% trans "تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف المؤسسة فعليًا قبل التدقيق. تجمع 1SaudiCyber هذه الدورة في مسار واحد متّصل." %}</p>
     </div>
+    <ol class="flex flex-wrap items-center gap-x-2 gap-y-3">
+      <li class="lp-chip inline-flex items-center px-3.5 py-2 text-sm font-medium" style="color:var(--text);">{% trans "التقييم" %}</li>
+      <li aria-hidden="true" class="lp-muted"><i class="fas fa-chevron-left rtl:inline ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
+      <li class="lp-chip inline-flex items-center px-3.5 py-2 text-sm font-medium" style="color:var(--text);">{% trans "الضوابط" %}</li>
+      <li aria-hidden="true" class="lp-muted"><i class="fas fa-chevron-left rtl:inline ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
+      <li class="lp-chip inline-flex items-center px-3.5 py-2 text-sm font-medium" style="color:var(--text);">{% trans "الأدلة" %}</li>
+      <li aria-hidden="true" class="lp-muted"><i class="fas fa-chevron-left rtl:inline ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
+      <li class="lp-chip inline-flex items-center px-3.5 py-2 text-sm font-medium" style="color:var(--text);">{% trans "تحليل الفجوات" %}</li>
+      <li aria-hidden="true" class="lp-muted"><i class="fas fa-chevron-left rtl:inline ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
+      <li class="lp-chip inline-flex items-center px-3.5 py-2 text-sm font-medium" style="color:var(--text);">{% trans "المعالجة" %}</li>
+      <li aria-hidden="true" class="lp-muted"><i class="fas fa-chevron-left rtl:inline ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
+      <li class="lp-chip inline-flex items-center px-3.5 py-2 text-sm font-medium" style="color:var(--text);">{% trans "التدقيق" %}</li>
+      <li aria-hidden="true" class="lp-muted"><i class="fas fa-chevron-left rtl:inline ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></li>
+      <li class="inline-flex items-center px-3.5 py-2 text-sm font-semibold" style="background:var(--brand);color:#fff;border-radius:9px;">{% trans "المراقبة المستمرة" %}</li>
+    </ol>
+  </div>
 </section>
 
-<!-- ============================ Cross-framework mapping ============================ -->
-<section class="py-16 lg:py-20 bg-gov-green-900 text-white">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-10 items-center">
-        <div>
-            <p class="text-gov-green-300 font-semibold text-sm lp-eyebrow mb-2">{% trans "ربط الأطر" %}</p>
-            <h2 class="text-2xl lg:text-3xl font-bold mb-4">{% trans "متطلبات متداخلة، مربوطة عبر الأطر" %}</h2>
-            <p class="text-gov-green-100/90 mb-4">{% trans "تُربط الضوابط المتكافئة بين NCA وAramco وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار." %}</p>
-            <p class="text-gov-green-200/80 text-sm">{% trans "الربط يوضّح التكافؤ بين الضوابط؛ والقرار في كفاية الأدلة لكل ضابط يبقى للمراجع المختص." %}</p>
-        </div>
-        <div class="bg-gov-green-800/50 border border-gov-green-700 rounded-2xl p-6">
-            <div class="flex flex-col gap-3">
-                <div class="rounded-xl bg-white/95 text-gov-green-900 px-4 py-3 font-semibold text-sm">NCA ECC — {% trans "ضابط" %} 1-1</div>
-                <div class="flex justify-center text-gov-green-300" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="rounded-xl bg-gov-green-700/60 border border-gov-green-600 px-4 py-3 text-sm">Aramco SACS-002<div class="text-gov-green-200 text-xs mt-0.5">{% trans "ضابط متكافئ" %}</div></div>
-                    <div class="rounded-xl bg-gov-green-700/60 border border-gov-green-600 px-4 py-3 text-sm">SABIC CyberTrust<div class="text-gov-green-200 text-xs mt-0.5">{% trans "ضابط متكافئ" %}</div></div>
-                </div>
-            </div>
-        </div>
+<!-- ============================ Capabilities (white, light feature grid) ============================ -->
+<section id="capabilities" class="lp-section lp-s-white" style="padding-block:4rem;">
+  <div class="lp-container">
+    <div class="text-center mb-10">
+      <p class="lp-eyebrow mb-2">{% trans "القدرات الأساسية" %}</p>
+      <h2>{% trans "كل ما تحتاجه لإدارة الامتثال في مكان واحد" %}</h2>
     </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
+      <div class="flex gap-4">
+        <div class="lp-iconbox flex items-center justify-center shrink-0" style="width:42px;height:42px;"><i class="fas fa-clipboard-check" aria-hidden="true"></i></div>
+        <div><h3 class="mb-1">{% trans "التقييم" %}</h3><p class="lp-body text-sm">{% trans "تحديد المتطلبات المنطبقة وقياس وضع الجاهزية الحالي للمؤسسة." %}</p></div>
+      </div>
+      <div class="flex gap-4">
+        <div class="lp-iconbox flex items-center justify-center shrink-0" style="width:42px;height:42px;"><i class="fas fa-list-check" aria-hidden="true"></i></div>
+        <div><h3 class="mb-1">{% trans "إدارة الضوابط" %}</h3><p class="lp-body text-sm">{% trans "متابعة الضوابط عبر الأطر المطبّقة من مساحة عمل واحدة موحّدة." %}</p></div>
+      </div>
+      <div class="flex gap-4">
+        <div class="lp-iconbox flex items-center justify-center shrink-0" style="width:42px;height:42px;"><i class="fas fa-folder-open" aria-hidden="true"></i></div>
+        <div><h3 class="mb-1">{% trans "الأدلة" %}</h3><p class="lp-body text-sm">{% trans "رفع الأدلة وتنظيمها ومراجعتها وربطها بالضوابط ذات العلاقة." %}</p></div>
+      </div>
+      <div class="flex gap-4">
+        <div class="lp-iconbox flex items-center justify-center shrink-0" style="width:42px;height:42px;"><i class="fas fa-magnifying-glass-chart" aria-hidden="true"></i></div>
+        <div><h3 class="mb-1">{% trans "الفجوات والمعالجة" %}</h3><p class="lp-body text-sm">{% trans "تحديد الفجوات وترتيب أولويات الملاحظات ومتابعة خطط المعالجة." %}</p></div>
+      </div>
+      <div class="flex gap-4">
+        <div class="lp-iconbox flex items-center justify-center shrink-0" style="width:42px;height:42px;"><i class="fas fa-user-shield" aria-hidden="true"></i></div>
+        <div><h3 class="mb-1">{% trans "التدقيق" %}</h3><p class="lp-body text-sm">{% trans "تجهيز الضوابط والأدلة والملاحظات لمسار مراجعة المدقّق." %}</p></div>
+      </div>
+      <div class="flex gap-4">
+        <div class="lp-iconbox flex items-center justify-center shrink-0" style="width:42px;height:42px;"><i class="fas fa-wave-square" aria-hidden="true"></i></div>
+        <div><h3 class="mb-1">{% trans "المراقبة" %}</h3><p class="lp-body text-sm">{% trans "الحفاظ على الوضوح مع تغيّر وضع الجاهزية عبر الوقت." %}</p></div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- ============================ AI (advisory) ============================ -->
-<section class="py-16 lg:py-20 bg-white">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid lg:grid-cols-2 gap-10">
-            <div>
-                <p class="text-gov-green-700 font-semibold text-sm lp-eyebrow mb-2">{% trans "الذكاء الاصطناعي" %}</p>
-                <h2 class="text-2xl lg:text-3xl font-bold text-gov-green-900 mb-4">{% trans "تحليل مدعوم بالذكاء الاصطناعي — مساعِد، لا قرار" %}</h2>
-                <p class="text-gov-gray-600 mb-6">{% trans "يساعد الذكاء الاصطناعي فرق الامتثال والمدقّقين على العمل بأسرع، مع بقاء القرار النهائي للإنسان." %}</p>
-                <ul class="space-y-2.5">
-                    <li class="flex items-start gap-2.5 text-sm text-gov-gray-700"><i class="fas fa-check text-gov-ok mt-1" aria-hidden="true"></i>{% trans "تحليل استشاري للأدلة المرفوعة" %}</li>
-                    <li class="flex items-start gap-2.5 text-sm text-gov-gray-700"><i class="fas fa-check text-gov-ok mt-1" aria-hidden="true"></i>{% trans "الإشارة إلى فجوات محتملة تحتاج تحقّقًا" %}</li>
-                    <li class="flex items-start gap-2.5 text-sm text-gov-gray-700"><i class="fas fa-check text-gov-ok mt-1" aria-hidden="true"></i>{% trans "شرح الملاحظات واقتراح خطوات تالية" %}</li>
-                </ul>
-            </div>
-            <div class="rounded-2xl bg-gov-gray-50 border border-gov-gray-200 p-6">
-                <h3 class="font-bold text-gov-green-900 mb-4 flex items-center gap-2"><i class="fas fa-circle-info text-gov-green-700" aria-hidden="true"></i>{% trans "حدود واضحة" %}</h3>
-                <ul class="space-y-3 text-sm text-gov-gray-700">
-                    <li class="flex items-start gap-2.5"><i class="fas fa-user-check text-gov-green-700 mt-0.5" aria-hidden="true"></i>{% trans "يدعم قرار الإنسان ولا يحلّ محلّه." %}</li>
-                    <li class="flex items-start gap-2.5"><i class="fas fa-landmark-flag text-gov-green-700 mt-0.5" aria-hidden="true"></i>{% trans "لا يمثّل موافقة أو اعتمادًا من أي جهة تنظيمية." %}</li>
-                    <li class="flex items-start gap-2.5"><i class="fas fa-scale-balanced text-gov-green-700 mt-0.5" aria-hidden="true"></i>{% trans "لا يضمن الامتثال ولا يُغني عن مراجعة المدقّق المختص." %}</li>
-                    <li class="flex items-start gap-2.5"><i class="fas fa-shield-halved text-gov-green-700 mt-0.5" aria-hidden="true"></i>{% trans "يخضع لسياسة سيادة البيانات: لا تُرسل بيانات العميل خارجيًا إلا عند التفعيل الصريح." %}</li>
-                </ul>
-            </div>
-        </div>
+<!-- ============================ Cross-framework mapping (soft green, diagram) ============================ -->
+<section class="lp-section lp-s-soft" style="padding-block:4rem;">
+  <div class="lp-container grid lg:grid-cols-2 gap-10 items-center">
+    <div>
+      <p class="lp-eyebrow mb-2">{% trans "ربط الأطر" %}</p>
+      <h2 class="mb-4">{% trans "متطلبات متداخلة، مربوطة عبر الأطر" %}</h2>
+      <p class="lp-body mb-4">{% trans "تُربط الضوابط المتكافئة بين NCA وAramco وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار." %}</p>
+      <p class="lp-muted text-sm">{% trans "الربط يوضّح التكافؤ بين الضوابط؛ والقرار في كفاية الأدلة لكل ضابط يبقى للمراجع المختص." %}</p>
     </div>
+    <div class="lp-card p-6">
+      <div class="flex flex-col items-stretch gap-3">
+        <div class="rounded-xl px-4 py-3 text-sm font-semibold text-center" style="background:var(--brand);color:#fff;">NCA ECC — {% trans "ضابط" %} 1-1</div>
+        <div class="flex justify-center lp-muted" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
+        <div class="rounded-xl px-4 py-2.5 text-sm text-center font-medium" style="background:var(--soft);color:var(--text);border:1px solid var(--border);">{% trans "الأدلة" %}</div>
+        <div class="flex justify-center lp-muted" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-xl px-3 py-3 text-sm text-center" style="background:var(--surface);border:1px solid var(--border);color:var(--text);">Aramco SACS-002<div class="lp-muted text-xs mt-0.5">{% trans "ضابط متكافئ" %}</div></div>
+          <div class="rounded-xl px-3 py-3 text-sm text-center" style="background:var(--surface);border:1px solid var(--border);color:var(--text);">SABIC CyberTrust<div class="lp-muted text-xs mt-0.5">{% trans "ضابط متكافئ" %}</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- ============================ How it works ============================ -->
-<section id="how-it-works" class="lp-section py-16 lg:py-20 bg-gov-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <p class="text-gov-green-700 font-semibold text-sm lp-eyebrow mb-2">{% trans "كيف تعمل" %}</p>
-            <h2 class="text-2xl lg:text-3xl font-bold text-gov-green-900">{% trans "مسار الامتثال في خمس خطوات" %}</h2>
-        </div>
-        <ol class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <li class="relative rounded-2xl bg-white border border-gov-gray-200 p-6">
-                <span class="absolute top-4 end-5 text-4xl font-bold text-gov-gray-100 tabular-nums" aria-hidden="true">1</span>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "عرِّف مؤسستك" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "أدخل بيانات المؤسسة وسياق الامتثال." %}</p>
-            </li>
-            <li class="relative rounded-2xl bg-white border border-gov-gray-200 p-6">
-                <span class="absolute top-4 end-5 text-4xl font-bold text-gov-gray-100 tabular-nums" aria-hidden="true">2</span>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "حدّد الأطر والنطاق" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "تحديد الأطر والمتطلبات المنطبقة على مؤسستك." %}</p>
-            </li>
-            <li class="relative rounded-2xl bg-white border border-gov-gray-200 p-6">
-                <span class="absolute top-4 end-5 text-4xl font-bold text-gov-gray-100 tabular-nums" aria-hidden="true">3</span>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "قيّم الضوابط وارفع الأدلة" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "تقييم وضع الجاهزية وربط الأدلة بالضوابط." %}</p>
-            </li>
-            <li class="relative rounded-2xl bg-white border border-gov-gray-200 p-6">
-                <span class="absolute top-4 end-5 text-4xl font-bold text-gov-gray-100 tabular-nums" aria-hidden="true">4</span>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "حلّل الفجوات وعالِجها" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "تحليل الفجوات وترتيب أولويات المعالجة ومتابعتها." %}</p>
-            </li>
-            <li class="relative rounded-2xl bg-white border border-gov-gray-200 p-6 sm:col-span-2 lg:col-span-1">
-                <span class="absolute top-4 end-5 text-4xl font-bold text-gov-gray-100 tabular-nums" aria-hidden="true">5</span>
-                <h3 class="font-bold text-gov-green-900 mb-1.5">{% trans "مراجعة المدقّق" %}</h3>
-                <p class="text-sm text-gov-gray-600">{% trans "القرار النهائي للمدقّق، مع جاهزية للمراقبة المستمرة." %}</p>
-            </li>
-        </ol>
+<!-- ============================ AI (white, calm flow) ============================ -->
+<section class="lp-section lp-s-white" style="padding-block:4rem;">
+  <div class="lp-container grid lg:grid-cols-2 gap-10">
+    <div>
+      <p class="lp-eyebrow mb-2">{% trans "الذكاء الاصطناعي" %}</p>
+      <h2 class="mb-4">{% trans "تحليل مدعوم بالذكاء الاصطناعي — مساعِد، لا قرار" %}</h2>
+      <p class="lp-body mb-6">{% trans "يساعد الذكاء الاصطناعي فرق الامتثال والمدقّقين على العمل بأسرع، مع بقاء القرار النهائي للإنسان." %}</p>
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-2 mb-6">
+        <span class="lp-chip inline-flex items-center px-3 py-1.5 text-sm font-medium" style="color:var(--text);"><i class="fas fa-magnifying-glass-chart me-2 lp-brand" aria-hidden="true"></i>{% trans "تحليل استشاري للأدلة المرفوعة" %}</span>
+        <span class="lp-muted" aria-hidden="true"><i class="fas fa-chevron-left rtl:inline ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></span>
+        <span class="lp-chip inline-flex items-center px-3 py-1.5 text-sm font-medium" style="color:var(--text);"><i class="fas fa-lightbulb me-2 lp-brand" aria-hidden="true"></i>{% trans "شرح الملاحظات واقتراح خطوات تالية" %}</span>
+        <span class="lp-muted" aria-hidden="true"><i class="fas fa-chevron-left rtl:inline ltr:hidden text-xs"></i><i class="fas fa-chevron-right ltr:inline rtl:hidden text-xs"></i></span>
+        <span class="inline-flex items-center px-3 py-1.5 text-sm font-semibold" style="background:var(--brand);color:#fff;border-radius:9px;"><i class="fas fa-user-check me-2" aria-hidden="true"></i>{% trans "مراجعة المدقّق" %}</span>
+      </div>
     </div>
+    <div class="lp-card p-6" style="background:var(--neutral);">
+      <h3 class="mb-4 flex items-center gap-2"><i class="fas fa-circle-info lp-brand" aria-hidden="true"></i>{% trans "حدود واضحة" %}</h3>
+      <ul class="space-y-3 text-sm lp-body">
+        <li class="flex items-start gap-2.5"><i class="fas fa-user-check lp-brand mt-0.5" aria-hidden="true"></i>{% trans "يدعم قرار الإنسان ولا يحلّ محلّه." %}</li>
+        <li class="flex items-start gap-2.5"><i class="fas fa-landmark-flag lp-brand mt-0.5" aria-hidden="true"></i>{% trans "لا يمثّل موافقة أو اعتمادًا من أي جهة تنظيمية." %}</li>
+        <li class="flex items-start gap-2.5"><i class="fas fa-scale-balanced lp-brand mt-0.5" aria-hidden="true"></i>{% trans "لا يضمن الامتثال ولا يُغني عن مراجعة المدقّق المختص." %}</li>
+        <li class="flex items-start gap-2.5"><i class="fas fa-shield-halved lp-brand mt-0.5" aria-hidden="true"></i>{% trans "يخضع لسياسة سيادة البيانات: لا تُرسل بيانات العميل خارجيًا إلا عند التفعيل الصريح." %}</li>
+      </ul>
+    </div>
+  </div>
 </section>
 
-<!-- ============================ Security & Trust ============================ -->
-<section id="security" class="lp-section py-16 lg:py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <p class="text-gov-green-700 font-semibold text-sm lp-eyebrow mb-2">{% trans "الأمان أولًا" %}</p>
-            <h2 class="text-2xl lg:text-3xl font-bold text-gov-green-900 mb-3">{% trans "مبنية مع مراعاة الأمان" %}</h2>
-            <p class="text-gov-gray-600 max-w-2xl mx-auto">{% trans "ضوابط وصول وحماية للبيانات مطبّقة في المنصّة." %}</p>
-        </div>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div class="flex items-start gap-3.5 rounded-xl border border-gov-gray-200 p-5">
-                <i class="fas fa-key text-gov-green-700 text-lg mt-0.5" aria-hidden="true"></i>
-                <div><h3 class="font-semibold text-gov-green-900 text-sm mb-1">{% trans "مصادقة ثنائية (MFA)" %}</h3><p class="text-xs text-gov-gray-600">{% trans "طبقة تحقّق إضافية عند تسجيل الدخول." %}</p></div>
-            </div>
-            <div class="flex items-start gap-3.5 rounded-xl border border-gov-gray-200 p-5">
-                <i class="fas fa-users-gear text-gov-green-700 text-lg mt-0.5" aria-hidden="true"></i>
-                <div><h3 class="font-semibold text-gov-green-900 text-sm mb-1">{% trans "صلاحيات حسب الدور" %}</h3><p class="text-xs text-gov-gray-600">{% trans "وصول مقيّد بحسب دور المستخدم." %}</p></div>
-            </div>
-            <div class="flex items-start gap-3.5 rounded-xl border border-gov-gray-200 p-5">
-                <i class="fas fa-building-shield text-gov-green-700 text-lg mt-0.5" aria-hidden="true"></i>
-                <div><h3 class="font-semibold text-gov-green-900 text-sm mb-1">{% trans "عزل بيانات المؤسسات" %}</h3><p class="text-xs text-gov-gray-600">{% trans "بيانات كل مؤسسة معزولة عن غيرها." %}</p></div>
-            </div>
-            <div class="flex items-start gap-3.5 rounded-xl border border-gov-gray-200 p-5">
-                <i class="fas fa-clipboard-list text-gov-green-700 text-lg mt-0.5" aria-hidden="true"></i>
-                <div><h3 class="font-semibold text-gov-green-900 text-sm mb-1">{% trans "سجلّ تدقيق" %}</h3><p class="text-xs text-gov-gray-600">{% trans "تسجيل الإجراءات الحسّاسة للمراجعة." %}</p></div>
-            </div>
-            <div class="flex items-start gap-3.5 rounded-xl border border-gov-gray-200 p-5">
-                <i class="fas fa-file-shield text-gov-green-700 text-lg mt-0.5" aria-hidden="true"></i>
-                <div><h3 class="font-semibold text-gov-green-900 text-sm mb-1">{% trans "تخزين خاص للأدلة" %}</h3><p class="text-xs text-gov-gray-600">{% trans "ملفات الأدلة تُخدَم عبر تنزيل مُصرّح فقط." %}</p></div>
-            </div>
-            <div class="flex items-start gap-3.5 rounded-xl border border-gov-gray-200 p-5">
-                <i class="fas fa-user-lock text-gov-green-700 text-lg mt-0.5" aria-hidden="true"></i>
-                <div><h3 class="font-semibold text-gov-green-900 text-sm mb-1">{% trans "نزع صلاحية المدقّق" %}</h3><p class="text-xs text-gov-gray-600">{% trans "إنهاء وصول المدقّق فور تعليقه أو رفضه." %}</p></div>
-            </div>
-        </div>
+<!-- ============================ How it works (neutral, connected process) ============================ -->
+<section id="how-it-works" class="lp-section lp-s-neutral" style="padding-block:4rem;">
+  <div class="lp-container">
+    <div class="text-center mb-10">
+      <p class="lp-eyebrow mb-2">{% trans "كيف تعمل" %}</p>
+      <h2>{% trans "مسار الامتثال في خمس خطوات" %}</h2>
     </div>
+    <ol class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <li class="lp-card p-5">
+        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">1</div>
+        <h3 class="mb-1" style="font-size:.98rem;">{% trans "عرِّف مؤسستك" %}</h3>
+        <p class="lp-body text-sm">{% trans "أدخل بيانات المؤسسة وسياق الامتثال." %}</p>
+      </li>
+      <li class="lp-card p-5">
+        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">2</div>
+        <h3 class="mb-1" style="font-size:.98rem;">{% trans "حدّد الأطر والنطاق" %}</h3>
+        <p class="lp-body text-sm">{% trans "تحديد الأطر والمتطلبات المنطبقة على مؤسستك." %}</p>
+      </li>
+      <li class="lp-card p-5">
+        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">3</div>
+        <h3 class="mb-1" style="font-size:.98rem;">{% trans "قيّم الضوابط وارفع الأدلة" %}</h3>
+        <p class="lp-body text-sm">{% trans "تقييم وضع الجاهزية وربط الأدلة بالضوابط." %}</p>
+      </li>
+      <li class="lp-card p-5">
+        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">4</div>
+        <h3 class="mb-1" style="font-size:.98rem;">{% trans "حلّل الفجوات وعالِجها" %}</h3>
+        <p class="lp-body text-sm">{% trans "تحليل الفجوات وترتيب أولويات المعالجة ومتابعتها." %}</p>
+      </li>
+      <li class="lp-card p-5">
+        <div class="flex items-center justify-center rounded-full font-bold mb-3" style="width:32px;height:32px;background:var(--soft);color:var(--brand);">5</div>
+        <h3 class="mb-1" style="font-size:.98rem;">{% trans "مراجعة المدقّق" %}</h3>
+        <p class="lp-body text-sm">{% trans "القرار النهائي للمدقّق، مع جاهزية للمراقبة المستمرة." %}</p>
+      </li>
+    </ol>
+  </div>
 </section>
 
-<!-- ============================ Final CTA ============================ -->
-<section class="gradient-gov py-16 lg:py-20">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-2xl lg:text-3xl font-bold text-white mb-4 text-balance">{% trans "جاهزون لرفع جاهزية الامتثال؟" %}</h2>
-        <p class="text-gov-green-100/90 mb-8">{% trans "ابدأ بتنظيم ضوابطك وأدلّتك وإعداد جاهزيتك للمراجعة." %}</p>
-        <div class="flex flex-wrap gap-3 justify-center">
-            <a href="{% url 'core:get_started' %}" class="bg-white text-gov-green-900 px-8 py-3.5 rounded-lg font-bold hover:bg-gov-green-50 shadow-lg">{% trans "سجّل شركتك" %}</a>
-            <a href="{% url 'core:login' %}" class="border border-gov-green-400 text-gov-green-50 px-8 py-3.5 rounded-lg font-semibold hover:bg-gov-green-800/60">{% trans "تسجيل الدخول" %}</a>
-        </div>
+<!-- ============================ Security & Trust (white, compact rows) ============================ -->
+<section id="security" class="lp-section lp-s-white" style="padding-block:4rem;">
+  <div class="lp-container">
+    <div class="text-center mb-10">
+      <p class="lp-eyebrow mb-2">{% trans "الأمان أولًا" %}</p>
+      <h2 class="mb-3">{% trans "مبنية مع مراعاة الأمان" %}</h2>
+      <p class="lp-body mx-auto" style="max-width:58ch;">{% trans "ضوابط وصول وحماية للبيانات مطبّقة في المنصّة." %}</p>
     </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6" style="max-width:1000px;margin-inline:auto;">
+      <div class="flex items-start gap-3"><i class="fas fa-key lp-brand mt-0.5" aria-hidden="true"></i><div><h3 style="font-size:.95rem;" class="mb-0.5">{% trans "مصادقة ثنائية (MFA)" %}</h3><p class="lp-muted text-xs">{% trans "طبقة تحقّق إضافية عند تسجيل الدخول." %}</p></div></div>
+      <div class="flex items-start gap-3"><i class="fas fa-users-gear lp-brand mt-0.5" aria-hidden="true"></i><div><h3 style="font-size:.95rem;" class="mb-0.5">{% trans "صلاحيات حسب الدور" %}</h3><p class="lp-muted text-xs">{% trans "وصول مقيّد بحسب دور المستخدم." %}</p></div></div>
+      <div class="flex items-start gap-3"><i class="fas fa-building-shield lp-brand mt-0.5" aria-hidden="true"></i><div><h3 style="font-size:.95rem;" class="mb-0.5">{% trans "عزل بيانات المؤسسات" %}</h3><p class="lp-muted text-xs">{% trans "بيانات كل مؤسسة معزولة عن غيرها." %}</p></div></div>
+      <div class="flex items-start gap-3"><i class="fas fa-clipboard-list lp-brand mt-0.5" aria-hidden="true"></i><div><h3 style="font-size:.95rem;" class="mb-0.5">{% trans "سجلّ تدقيق" %}</h3><p class="lp-muted text-xs">{% trans "تسجيل الإجراءات الحسّاسة للمراجعة." %}</p></div></div>
+      <div class="flex items-start gap-3"><i class="fas fa-file-shield lp-brand mt-0.5" aria-hidden="true"></i><div><h3 style="font-size:.95rem;" class="mb-0.5">{% trans "تخزين خاص للأدلة" %}</h3><p class="lp-muted text-xs">{% trans "ملفات الأدلة تُخدَم عبر تنزيل مُصرّح فقط." %}</p></div></div>
+      <div class="flex items-start gap-3"><i class="fas fa-user-lock lp-brand mt-0.5" aria-hidden="true"></i><div><h3 style="font-size:.95rem;" class="mb-0.5">{% trans "نزع صلاحية المدقّق" %}</h3><p class="lp-muted text-xs">{% trans "إنهاء وصول المدقّق فور تعليقه أو رفضه." %}</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ Final CTA (soft green band) ============================ -->
+<section class="lp-section lp-s-cta" style="padding-block:4rem;">
+  <div class="lp-container text-center" style="max-width:760px;">
+    <h2 class="mb-3" style="text-wrap:balance;">{% trans "جاهزون لرفع جاهزية الامتثال؟" %}</h2>
+    <p class="lp-body mb-7">{% trans "ابدأ بتنظيم ضوابطك وأدلّتك وإعداد جاهزيتك للمراجعة." %}</p>
+    <div class="flex flex-wrap gap-3 justify-center">
+      <a href="{% url 'core:get_started' %}" class="lp-btn lp-btn-primary">{% trans "ابدأ الآن" %}</a>
+      <a href="{% url 'core:login' %}" class="lp-btn lp-btn-secondary" style="background:var(--surface);">{% trans "تسجيل الدخول" %}</a>
+    </div>
+  </div>
 </section>
 
 </main>
 
-<!-- ============================ Footer ============================ -->
-<footer class="bg-gov-green-950 text-gov-green-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            <div>
-                <div class="flex items-center gap-2 mb-3">
-                    <i class="fas fa-shield-halved text-white text-xl" aria-hidden="true"></i>
-                    <span class="text-white font-bold text-lg">1SaudiCyber</span>
-                </div>
-                <p class="text-sm text-gov-green-300">{% trans "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية." %}</p>
-                <p class="text-xs text-gov-green-500 mt-3">1saudicyber.com</p>
-            </div>
-            <nav aria-label="{% trans 'المنتج' %}">
-                <h3 class="text-white font-semibold text-sm mb-3">{% trans "المنتج" %}</h3>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="#capabilities" class="hover:text-white">{% trans "القدرات" %}</a></li>
-                    <li><a href="#frameworks" class="hover:text-white">{% trans "الأطر" %}</a></li>
-                    <li><a href="#security" class="hover:text-white">{% trans "الأمان" %}</a></li>
-                </ul>
-            </nav>
-            <nav aria-label="{% trans 'الشركة والقانوني' %}">
-                <h3 class="text-white font-semibold text-sm mb-3">{% trans "الشركة" %}</h3>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="#about" class="hover:text-white">{% trans "عن المنصّة" %}</a></li>
-                    <li><a href="{% url 'core:privacy' %}" class="hover:text-white">{% trans "سياسة الخصوصية" %}</a></li>
-                    <li><a href="{% url 'core:terms' %}" class="hover:text-white">{% trans "شروط الاستخدام" %}</a></li>
-                </ul>
-            </nav>
-            <nav aria-label="{% trans 'الحساب' %}">
-                <h3 class="text-white font-semibold text-sm mb-3">{% trans "الحساب" %}</h3>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="{% url 'core:login' %}" class="hover:text-white">{% trans "تسجيل الدخول" %}</a></li>
-                    <li><a href="{% url 'core:get_started' %}" class="hover:text-white">{% trans "ابدأ الآن" %}</a></li>
-                </ul>
-            </nav>
+<!-- ============================ Footer (light) ============================ -->
+<footer class="lp-s-footer" style="border-top:1px solid var(--border);">
+  <div class="lp-container" style="padding-block:3rem;">
+    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fas fa-shield-halved lp-brand text-xl" aria-hidden="true"></i>
+          <span class="font-bold text-lg" style="color:var(--text);">1SaudiCyber</span>
         </div>
-        <div class="border-t border-gov-green-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-            <p class="text-gov-green-300 text-center sm:text-start">
-                {% if LANGUAGE_CODE == 'ar' %}
-                    © {% now "Y" %} 1SaudiCyber. {% trans "جميع الحقوق محفوظة." %} {% trans "تطوير" %}
-                    <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="text-gov-green-100 underline hover:text-white">شركة احصل الحل</a>.
-                {% else %}
-                    © {% now "Y" %} 1SaudiCyber. All rights reserved. Developed by
-                    <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="text-gov-green-100 underline hover:text-white">Get Solution</a>.
-                {% endif %}
-            </p>
-            <p class="text-gov-green-400 text-xs">
-                <a href="{% url 'core:privacy' %}" class="hover:text-white">{% trans "الخصوصية" %}</a>
-                <span class="mx-2" aria-hidden="true">·</span>
-                <a href="{% url 'core:terms' %}" class="hover:text-white">{% trans "الشروط" %}</a>
-            </p>
-        </div>
+        <p class="lp-body text-sm">{% trans "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية." %}</p>
+        <p class="lp-muted text-xs mt-3">1saudicyber.com</p>
+      </div>
+      <nav aria-label="{% trans 'المنتج' %}">
+        <h3 class="text-sm mb-3" style="color:var(--text);">{% trans "المنتج" %}</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#capabilities" class="lp-flink">{% trans "القدرات" %}</a></li>
+          <li><a href="#frameworks" class="lp-flink">{% trans "الأطر" %}</a></li>
+          <li><a href="#security" class="lp-flink">{% trans "الأمان" %}</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="{% trans 'الشركة والقانوني' %}">
+        <h3 class="text-sm mb-3" style="color:var(--text);">{% trans "الشركة" %}</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#about" class="lp-flink">{% trans "عن المنصّة" %}</a></li>
+          <li><a href="{% url 'core:privacy' %}" class="lp-flink">{% trans "سياسة الخصوصية" %}</a></li>
+          <li><a href="{% url 'core:terms' %}" class="lp-flink">{% trans "شروط الاستخدام" %}</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="{% trans 'الحساب' %}">
+        <h3 class="text-sm mb-3" style="color:var(--text);">{% trans "الحساب" %}</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="{% url 'core:login' %}" class="lp-flink">{% trans "تسجيل الدخول" %}</a></li>
+          <li><a href="{% url 'core:get_started' %}" class="lp-flink">{% trans "ابدأ الآن" %}</a></li>
+        </ul>
+      </nav>
     </div>
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm" style="border-top:1px solid var(--border);margin-top:2.5rem;padding-top:1.5rem;">
+      <p class="lp-body text-center sm:text-start">
+        {% if LANGUAGE_CODE == 'ar' %}
+          © {% now "Y" %} 1SaudiCyber. {% trans "جميع الحقوق محفوظة." %} {% trans "تطوير" %}
+          <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="lp-brand font-semibold" style="text-decoration:underline;">شركة احصل الحل</a>.
+        {% else %}
+          © {% now "Y" %} 1SaudiCyber. All rights reserved. Developed by
+          <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="lp-brand font-semibold" style="text-decoration:underline;">Get Solution</a>.
+        {% endif %}
+      </p>
+      <p class="lp-muted text-xs">
+        <a href="{% url 'core:privacy' %}" class="lp-flink">{% trans "الخصوصية" %}</a>
+        <span class="mx-2" aria-hidden="true">·</span>
+        <a href="{% url 'core:terms' %}" class="lp-flink">{% trans "الشروط" %}</a>
+      </p>
+    </div>
+  </div>
 </footer>
 
 </div>
 
 <script>
-    // Progressive enhancement: close the mobile disclosure menu after choosing a link.
-    (function () {
-        var menu = document.querySelector('.lp-mobile-menu');
-        if (!menu) return;
-        menu.querySelectorAll('a').forEach(function (a) {
-            a.addEventListener('click', function () { menu.removeAttribute('open'); });
-        });
-    })();
+  // Progressive enhancement: close the mobile disclosure menu after choosing a link.
+  (function () {
+    var menu = document.querySelector('.lp-mobile-menu');
+    if (!menu) return;
+    menu.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () { menu.removeAttribute('open'); });
+    });
+  })();
 </script>
 {% endblock %}

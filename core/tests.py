@@ -1664,7 +1664,7 @@ class Phase8D2FixACriticalBlockerTests(TestCase):
         self.assertIn('lang="en"', body)
         self.assertIn('dir="ltr"', body)
         self.assertNotIn('dir="rtl"', body)   # consistent: no leftover rtl in english mode
-        self.assertIn('Start your compliance assessment', body)  # key string translated
+        self.assertIn('Get started', body)  # key CTA translated (unified primary CTA)
 
     def test_landing_switch_returns_to_landing_and_persists(self):
         r = self.client.post(reverse('set_language'), {'language': 'en', 'next': reverse('core:landing')})
@@ -1692,7 +1692,7 @@ class Phase8D2FixBLandingTranslationTests(TestCase):
         'The compliance journey in five steps',
         'Gap analysis',
         'Auditor review',
-        'Register your company',
+        'Get started',   # P0-UIUX-01: primary CTA unified to "Get started" (was "Register your company")
         'Ready to raise your compliance readiness?',
     ]
     AR_HEADINGS = [
