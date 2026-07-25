@@ -68,6 +68,30 @@
   .lp-mobile-menu > summary::-webkit-details-marker{ display:none; }
   /* very faint hero texture (barely visible, no SOC feel) */
   .lp-hero-tint{ background:radial-gradient(58% 52% at 85% 0%, rgba(23,107,85,.06), transparent 70%); }
+
+  /* ===================== Motion (restrained, meaning-first) =====================
+     Progressive enhancement: motion styles apply ONLY when JS has added `.lp-js`
+     (so with JS disabled the content is fully visible), AND only when the user has
+     not requested reduced motion. Nothing here ever hides content permanently. */
+  .lp-header{ transition:box-shadow .25s ease, border-color .25s ease; }
+  .lp-header.is-scrolled{ box-shadow:0 4px 18px rgba(31,45,40,.06); }
+  .lp-btn .fa-arrow-left, .lp-btn .fa-arrow-right{ transition:transform .15s ease; }
+  .lp-btn-primary:hover .fa-arrow-left{ transform:translateX(-3px); }
+  .lp-btn-primary:hover .fa-arrow-right{ transform:translateX(3px); }
+  @media (prefers-reduced-motion: no-preference){
+    /* section scroll-reveal (once) */
+    .lp-js [data-reveal]{ opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease; }
+    .lp-js [data-reveal].is-in{ opacity:1; transform:none; }
+    /* hero entrance stagger (on load) */
+    .lp-js [data-hero]{ opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease; }
+    .lp-js [data-hero].is-in{ opacity:1; transform:none; }
+    .lp-js [data-hero="2"]{ transition-delay:.08s } .lp-js [data-hero="3"]{ transition-delay:.16s }
+    .lp-js [data-hero="4"]{ transition-delay:.24s } .lp-js [data-hero="5"]{ transition-delay:.32s }
+    .lp-js [data-hero="6"]{ transition-delay:.14s }
+    /* readiness bars fill 0 -> illustrative value, once */
+    .lp-js [data-bar]{ width:0; transition:width 1s cubic-bezier(.4,0,.2,1) .15s; }
+    .lp-js [data-bar].is-in{ width:var(--w); }
+  }
 </style>
 {% endblock %}
 
@@ -79,7 +103,7 @@
 </a>
 
 <!-- ============================ Header (light) ============================ -->
-<header class="sticky top-0 z-50 lp-s-white" style="border-bottom:1px solid var(--border);">
+<header class="lp-header sticky top-0 z-50 lp-s-white" style="border-bottom:1px solid var(--border);">
   <div class="lp-container">
     <div class="flex items-center justify-between gap-4" style="height:64px;">
       <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="1SaudiCyber">
@@ -96,7 +120,6 @@
       </nav>
 
       <div class="flex items-center gap-3 shrink-0">
-        {# Exactly one language switcher per page — styled for the light header. #}
         <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1 text-xs">
           {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
           <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}font-bold{% endif %}" style="color:{% if LANGUAGE_CODE == 'ar' %}var(--brand){% else %}var(--muted){% endif %};">العربية</button>
@@ -137,13 +160,13 @@
   <div class="lp-container relative" style="padding-top:3.5rem;padding-bottom:3.5rem;">
     <div class="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
       <div>
-        <span class="inline-flex items-center gap-2 lp-chip" style="padding:.4rem .8rem;border-radius:999px;">
+        <span data-hero="1" class="inline-flex items-center gap-2 lp-chip" style="padding:.4rem .8rem;border-radius:999px;">
           <span class="inline-block w-1.5 h-1.5 rounded-full" style="background:var(--brand-soft);" aria-hidden="true"></span>
           <span class="lp-eyebrow" style="letter-spacing:.04em;">{% trans "منصّة جاهزية الامتثال السيبراني" %}</span>
         </span>
-        <h1 class="mt-5 mb-4" style="text-wrap:balance;">{% trans "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية" %}</h1>
-        <p class="lp-lead mb-7" style="max-width:60ch;">{% trans "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC." %}</p>
-        <div class="flex flex-wrap gap-3">
+        <h1 data-hero="2" class="mt-5 mb-4" style="text-wrap:balance;">{% trans "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية" %}</h1>
+        <p data-hero="3" class="lp-lead mb-7" style="max-width:60ch;">{% trans "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC." %}</p>
+        <div data-hero="4" class="flex flex-wrap gap-3">
           <a href="{% url 'core:get_started' %}" class="lp-btn lp-btn-primary">
             {% trans "ابدأ الآن" %}
             <i class="fas fa-arrow-left text-sm rtl:inline ltr:hidden" aria-hidden="true"></i>
@@ -151,14 +174,14 @@
           </a>
           <a href="#how-it-works" class="lp-btn lp-btn-secondary">{% trans "شاهد كيف تعمل" %}</a>
         </div>
-        <p class="lp-muted mt-6 text-sm" style="max-width:58ch;">
+        <p data-hero="5" class="lp-muted mt-6 text-sm" style="max-width:58ch;">
           <i class="fas fa-circle-info me-1" aria-hidden="true"></i>
           {% trans "أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص. لا تُصدر المنصّة اعتمادًا رسميًا." %}
         </p>
       </div>
 
       <!-- Readiness preview (white, illustrative) -->
-      <div>
+      <div data-hero="6">
         <div class="lp-card" style="padding:1.5rem;box-shadow:0 8px 26px rgba(31,45,40,.06);">
           <div class="flex items-center justify-between mb-4">
             <h2 style="font-size:1rem;">{% trans "مؤشّر الجاهزية" %}</h2>
@@ -171,27 +194,27 @@
             <div class="lp-muted text-sm pb-1">{% trans "الجاهزية العامة" %}</div>
           </div>
           <div class="w-full rounded-full overflow-hidden mb-5" style="height:8px;background:var(--neutral);">
-            <div class="h-full rounded-full" style="width:86%;background:var(--ok);"></div>
+            <div class="h-full rounded-full" data-bar style="--w:86%;width:var(--w);background:var(--ok);"></div>
           </div>
           <div class="space-y-2.5">
             <div class="flex items-center justify-between text-sm">
               <span class="lp-body">NCA ECC</span>
               <span class="flex items-center gap-2">
-                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" style="width:87%;background:var(--ok);"></span></span>
+                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" data-bar style="--w:87%;width:var(--w);background:var(--ok);"></span></span>
                 <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">87%</span>
               </span>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="lp-body">Aramco SACS-002</span>
               <span class="flex items-center gap-2">
-                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" style="width:71%;background:var(--warn);"></span></span>
+                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" data-bar style="--w:71%;width:var(--w);background:var(--warn);"></span></span>
                 <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">71%</span>
               </span>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="lp-body">SABIC CyberTrust</span>
               <span class="flex items-center gap-2">
-                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" style="width:79%;background:var(--ok);"></span></span>
+                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" data-bar style="--w:79%;width:var(--w);background:var(--ok);"></span></span>
                 <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">79%</span>
               </span>
             </div>
@@ -213,7 +236,7 @@
 </section>
 
 <!-- ============================ Framework trust (white) ============================ -->
-<section id="frameworks" class="lp-section lp-s-white" style="padding-block:4rem;border-bottom:1px solid var(--border);">
+<section data-reveal id="frameworks" class="lp-section lp-s-white" style="padding-block:4rem;border-bottom:1px solid var(--border);">
   <div class="lp-container">
     <div class="text-center mb-10">
       <p class="lp-eyebrow mb-2">{% trans "مبنية للسوق السعودي" %}</p>
@@ -252,7 +275,7 @@
 </section>
 
 <!-- ============================ Problem → Solution (neutral) ============================ -->
-<section id="about" class="lp-section lp-s-neutral" style="padding-block:4rem;">
+<section data-reveal id="about" class="lp-section lp-s-neutral" style="padding-block:4rem;">
   <div class="lp-container">
     <div style="max-width:62ch;" class="mb-9">
       <p class="lp-eyebrow mb-2">{% trans "المشكلة" %}</p>
@@ -278,7 +301,7 @@
 </section>
 
 <!-- ============================ Capabilities (white, light feature grid) ============================ -->
-<section id="capabilities" class="lp-section lp-s-white" style="padding-block:4rem;">
+<section data-reveal id="capabilities" class="lp-section lp-s-white" style="padding-block:4rem;">
   <div class="lp-container">
     <div class="text-center mb-10">
       <p class="lp-eyebrow mb-2">{% trans "القدرات الأساسية" %}</p>
@@ -314,7 +337,7 @@
 </section>
 
 <!-- ============================ Cross-framework mapping (soft green, diagram) ============================ -->
-<section class="lp-section lp-s-soft" style="padding-block:4rem;">
+<section data-reveal class="lp-section lp-s-soft" style="padding-block:4rem;">
   <div class="lp-container grid lg:grid-cols-2 gap-10 items-center">
     <div>
       <p class="lp-eyebrow mb-2">{% trans "ربط الأطر" %}</p>
@@ -338,7 +361,7 @@
 </section>
 
 <!-- ============================ AI (white, calm flow) ============================ -->
-<section class="lp-section lp-s-white" style="padding-block:4rem;">
+<section data-reveal class="lp-section lp-s-white" style="padding-block:4rem;">
   <div class="lp-container grid lg:grid-cols-2 gap-10">
     <div>
       <p class="lp-eyebrow mb-2">{% trans "الذكاء الاصطناعي" %}</p>
@@ -365,14 +388,13 @@
 </section>
 
 <!-- ============================ How it works (neutral, connected process) ============================ -->
-<section id="how-it-works" class="lp-section lp-s-neutral" style="padding-block:4rem;">
+<section data-reveal id="how-it-works" class="lp-section lp-s-neutral" style="padding-block:4rem;">
   <div class="lp-container">
     <div class="text-center mb-10">
       <p class="lp-eyebrow mb-2">{% trans "كيف تعمل" %}</p>
       <h2>{% trans "مسار الامتثال في خمس خطوات" %}</h2>
     </div>
     <div class="relative">
-      {# connecting track behind the step nodes (desktop) — conveys sequence, not isolated boxes #}
       <div class="hidden lg:block absolute top-5 start-[10%] end-[10%] h-px" style="background:var(--border);" aria-hidden="true"></div>
       <ol class="relative grid sm:grid-cols-2 lg:grid-cols-5 gap-x-5 gap-y-9">
         <li class="text-center">
@@ -406,7 +428,7 @@
 </section>
 
 <!-- ============================ Security & Trust (white, compact rows) ============================ -->
-<section id="security" class="lp-section lp-s-white" style="padding-block:4rem;">
+<section data-reveal id="security" class="lp-section lp-s-white" style="padding-block:4rem;">
   <div class="lp-container">
     <div class="text-center mb-10">
       <p class="lp-eyebrow mb-2">{% trans "الأمان أولًا" %}</p>
@@ -425,7 +447,7 @@
 </section>
 
 <!-- ============================ Final CTA (soft green band) ============================ -->
-<section class="lp-section lp-s-cta" style="padding-block:4rem;">
+<section data-reveal class="lp-section lp-s-cta" style="padding-block:4rem;">
   <div class="lp-container text-center" style="max-width:760px;">
     <h2 class="mb-3" style="text-wrap:balance;">{% trans "جاهزون لرفع جاهزية الامتثال؟" %}</h2>
     <p class="lp-body mb-7">{% trans "ابدأ بتنظيم ضوابطك وأدلّتك وإعداد جاهزيتك للمراجعة." %}</p>
@@ -496,13 +518,48 @@
 </div>
 
 <script>
-  // Progressive enhancement: close the mobile disclosure menu after choosing a link.
   (function () {
-    var menu = document.querySelector('.lp-mobile-menu');
-    if (!menu) return;
-    menu.querySelectorAll('a').forEach(function (a) {
-      a.addEventListener('click', function () { menu.removeAttribute('open'); });
+    var root = document.querySelector('.lp');
+    if (!root) return;
+
+    // Close the mobile disclosure menu after choosing a link.
+    var menu = root.querySelector('.lp-mobile-menu');
+    if (menu) {
+      menu.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () { menu.removeAttribute('open'); });
+      });
+    }
+
+    // Sticky header: add a subtle shadow once scrolled (no layout shift).
+    var header = root.querySelector('.lp-header');
+    if (header) {
+      var onScroll = function () { header.classList.toggle('is-scrolled', window.scrollY > 8); };
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    // Motion = progressive enhancement, and it respects reduced-motion.
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;              // leave all content visible; no animation
+    root.classList.add('lp-js');     // only now do the reveal styles take effect
+
+    // Hero entrance (staggered, on load).
+    requestAnimationFrame(function () {
+      root.querySelectorAll('[data-hero]').forEach(function (el) { el.classList.add('is-in'); });
     });
+
+    // Reveal sections + fill readiness bars once, as they enter the viewport.
+    var targets = root.querySelectorAll('[data-reveal], [data-bar]');
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+        });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+      targets.forEach(function (el) { io.observe(el); });
+    } else {
+      targets.forEach(function (el) { el.classList.add('is-in'); });
+    }
   })();
 </script>
 {% endblock %}
