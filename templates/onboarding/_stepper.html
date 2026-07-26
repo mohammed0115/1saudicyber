@@ -1,0 +1,36 @@
+{% load i18n %}
+{# Registration stepper — pass step 1-4: 1 account type, 2 create account, 3 email verify, 4 org setup. #}
+<nav class="mb-9" aria-label="{% trans 'مراحل التسجيل' %}" data-au-reveal>
+  <!-- Desktop / tablet -->
+  <ol class="hidden sm:flex items-start justify-center" style="max-width:760px;margin-inline:auto;">
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node{% if step > 1 %} is-done{% elif step == 1 %} is-active{% endif %}" aria-current="{% if step == 1 %}step{% endif %}">{% if step > 1 %}<i class="fas fa-check text-xs" aria-hidden="true"></i>{% else %}1{% endif %}</span>
+      <span class="au-step-label mt-2{% if step > 1 %} is-done{% elif step == 1 %} is-active{% endif %}">{% trans "نوع الحساب" %}</span>
+    </li>
+    <li aria-hidden="true" style="flex:1 1 auto;height:2px;margin:16px 6px 0;" class="au-step-line{% if step > 1 %} is-done{% endif %}"></li>
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node{% if step > 2 %} is-done{% elif step == 2 %} is-active{% endif %}" aria-current="{% if step == 2 %}step{% endif %}">{% if step > 2 %}<i class="fas fa-check text-xs" aria-hidden="true"></i>{% else %}2{% endif %}</span>
+      <span class="au-step-label mt-2{% if step > 2 %} is-done{% elif step == 2 %} is-active{% endif %}">{% trans "إنشاء الحساب" %}</span>
+    </li>
+    <li aria-hidden="true" style="flex:1 1 auto;height:2px;margin:16px 6px 0;" class="au-step-line{% if step > 2 %} is-done{% endif %}"></li>
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node{% if step > 3 %} is-done{% elif step == 3 %} is-active{% endif %}" aria-current="{% if step == 3 %}step{% endif %}">{% if step > 3 %}<i class="fas fa-check text-xs" aria-hidden="true"></i>{% else %}3{% endif %}</span>
+      <span class="au-step-label mt-2{% if step > 3 %} is-done{% elif step == 3 %} is-active{% endif %}">{% trans "تأكيد البريد الإلكتروني" %}</span>
+    </li>
+    <li aria-hidden="true" style="flex:1 1 auto;height:2px;margin:16px 6px 0;" class="au-step-line{% if step > 3 %} is-done{% endif %}"></li>
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node{% if step == 4 %} is-active{% endif %}" aria-current="{% if step == 4 %}step{% endif %}">4</span>
+      <span class="au-step-label mt-2{% if step == 4 %} is-active{% endif %}">{% trans "إعداد المنشأة" %}</span>
+    </li>
+  </ol>
+  <!-- Mobile: compact -->
+  <div class="sm:hidden flex items-center justify-between au-card" style="padding:.7rem 1rem;">
+    <span class="au-node is-active" style="width:30px;height:30px;font-size:.82rem;">{{ step }}</span>
+    <div class="text-end">
+      <div class="text-xs au-muted">{% blocktrans %}الخطوة {{ step }} من 4{% endblocktrans %}</div>
+      <div class="text-sm font-semibold au-brand">
+        {% if step == 1 %}{% trans "نوع الحساب" %}{% elif step == 2 %}{% trans "إنشاء الحساب" %}{% elif step == 3 %}{% trans "تأكيد البريد الإلكتروني" %}{% else %}{% trans "إعداد المنشأة" %}{% endif %}
+      </div>
+    </div>
+  </div>
+</nav>

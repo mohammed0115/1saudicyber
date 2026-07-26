@@ -915,3 +915,276 @@ msgstr "231 controls across the NCA frameworks"
 
 msgid "منها 108 في إطار ECC"
 msgstr "including 108 in the ECC framework"
+
+msgid "بيئة عرض تجريبية"
+msgstr "Demo workspace"
+
+msgid "نظرة عامة"
+msgstr "Overview"
+
+msgid "الفجوات المفتوحة"
+msgstr "Open gaps"
+
+msgid "الفجوات حسب الفئة"
+msgstr "Gaps by category"
+
+msgid "فجوة"
+msgstr "gaps"
+
+msgid "ضوابط الوصول"
+msgstr "Access controls"
+
+msgid "إدارة الأصول"
+msgstr "Asset management"
+
+msgid "استجابة الحوادث"
+msgstr "Incident response"
+
+msgid "إدارة المخاطر"
+msgstr "Risk management"
+
+msgid "أخرى"
+msgstr "Other"
+
+msgid "تقدّم الأطر"
+msgstr "Framework progress"
+
+msgid "بيانات توضيحية لأغراض العرض فقط"
+msgstr "Illustrative data, for display purposes only"
+
+msgid "حساب شركة"
+msgstr "Company account"
+
+msgid "إنشاء حساب شركة"
+msgstr "Create a company account"
+
+msgid "تسجيل شركة"
+msgstr "Register a company"
+
+msgid "سجّل شركتك في 1SaudiCyber"
+msgstr "Register your company on 1SaudiCyber"
+
+msgid "أكمل الخطوات التالية لبدء مسار الامتثال. الحقول المعلّمة بـ * مطلوبة."
+msgstr "Complete the steps below to start your compliance journey. Fields marked with * are required."
+
+msgid "يرجى تصحيح الحقول المحددة ثم المتابعة."
+msgstr "Please correct the highlighted fields and continue."
+
+msgid "بيانات المستخدم"
+msgstr "User details"
+
+msgid "بيانات الشركة"
+msgstr "Company details"
+
+msgid "أهداف الامتثال"
+msgstr "Compliance goals"
+
+msgid "اختر هدفًا واحدًا على الأقل."
+msgstr "Choose at least one goal."
+
+msgid "التالي"
+msgstr "Next"
+
+msgid "السابق"
+msgstr "Previous"
+
+msgid "إنشاء الحساب والمتابعة"
+msgstr "Create account and continue"
+
+msgid "رجوع"
+msgstr "Back"
+
+msgid "جارٍ حفظ البيانات..."
+msgstr "Saving…"
+
+msgid "لديك حساب بالفعل؟"
+msgstr "Already have an account?"
+
+msgid "إظهار كلمة المرور"
+msgstr "Show password"
+
+msgid "إخفاء كلمة المرور"
+msgstr "Hide password"
+
+msgid "توثيق البريد الإلكتروني"
+msgstr "Email verification"
+
+msgid "أدخل رمز التحقق"
+msgstr "Enter the verification code"
+
+msgid "أرسلنا رمزًا من 6 أرقام إلى"
+msgstr "We sent a 6-digit code to"
+
+msgid "رمز التحقق"
+msgstr "Verification code"
+
+msgid "تأكيد الرمز"
+msgstr "Confirm code"
+
+msgid "الرمز صالح لمدة 10 دقائق، ولديك 5 محاولات."
+msgstr "The code is valid for 10 minutes, and you have 5 attempts."
+
+msgid "لم يصلك الرمز؟"
+msgstr "Didn't receive the code?"
+
+msgid "إعادة إرسال الرمز"
+msgstr "Resend code"
+
+msgid "يمكنك طلب رمز جديد بعد 60 ثانية."
+msgstr "You can request a new code after 60 seconds."
+
+msgid "نوع الحساب"
+msgstr "Account type"
+
+msgid "إنشاء الحساب"
+msgstr "Create account"
+
+msgid "تأكيد البريد الإلكتروني"
+msgstr "Email verification"
+
+msgid "إعداد المنشأة"
+msgstr "Organization setup"
+
+msgid "مراحل التسجيل"
+msgstr "Registration steps"
+
+msgid "الخطوة %(step)s من 4"
+msgstr "Step %(step)s of 4"
+
+
+msgid "الاسم الأول"
+msgstr "First name"
+
+msgid "اسم العائلة"
+msgstr "Last name"
+
+msgid "رقم الجوال"
+msgstr "Mobile number"
+
+msgid "استخدم كلمة مرور قوية لا تقل عن 12 حرفًا، ويفضّل أن تحتوي على أحرف وأرقام ورمز خاص."
+msgstr "Use a strong password of at least 12 characters, ideally including letters, numbers and a special character."
+
+msgid "تأكيد كلمة المرور"
+msgstr "Confirm password"
+
+msgid "اسم الشركة بالعربية"
+msgstr "Company name (Arabic)"
+
+msgid "اسم الشركة بالإنجليزية"
+msgstr "Company name (English)"
+
+msgid "رقم السجل التجاري"
+msgstr "Commercial registration (CR) number"
+
+msgid "رقم السجل التجاري في السعودية يتكوّن غالبًا من 10 أرقام."
+msgstr "A Saudi commercial registration (CR) number is usually 10 digits."
+
+msgid "القطاع / نوع الجهة"
+msgstr "Sector / entity type"
+
+msgid "حجم الشركة"
+msgstr "Company size"
+
+msgid "المدينة"
+msgstr "City"
+
+msgid "الدولة"
+msgstr "Country"
+
+msgid "وصف مختصر"
+msgstr "Short description"
+
+msgid "نحتاج الامتثال لـ NCA"
+msgstr "We need NCA compliance"
+
+msgid "نحتاج الامتثال لـ Aramco"
+msgstr "We need Aramco compliance"
+
+msgid "نحتاج الامتثال لـ SABIC"
+msgstr "We need SABIC compliance"
+
+msgid "أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة 1SaudiCyber."
+msgstr "I agree to 1SaudiCyber's Terms of Use and Privacy Policy."
+
+msgid "يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب."
+msgstr "You must agree to the Terms of Use and Privacy Policy before creating an account."
+
+
+msgid "شركة / جهة طالبة امتثال"
+msgstr "Company / compliance-seeking entity"
+
+
+msgid "امتثال سيبراني أبسط لمنشأتك في السعودية"
+msgstr "Cybersecurity compliance, made simpler for your organization in Saudi Arabia"
+
+
+msgid "تحليل ذكي"
+msgstr "Smart analysis"
+
+
+msgid "مدعوم بالذكاء الاصطناعي"
+msgstr "AI-assisted"
+
+
+msgid "ربط بين الأطر"
+msgstr "Cross-framework mapping"
+
+
+msgid "وتقليل تكرار العمل"
+msgstr "Reduce duplicate work"
+
+
+msgid "أمن وموثوق"
+msgstr "Secure and trusted"
+
+
+msgid "وفق أفضل الممارسات"
+msgstr "Following best practices"
+
+
+msgid "شركة تجريبية"
+msgstr "Demo company"
+
+
+msgid "التطبيقات"
+msgstr "Applications"
+
+
+msgid "الفجوات"
+msgstr "Gaps"
+
+
+msgid "الإعدادات"
+msgstr "Settings"
+
+
+msgid "منصة الامتثال السيبراني"
+msgstr "Cybersecurity Compliance Platform"
+
+
+msgid "ابدأ رحلة الامتثال السيبراني بثقة"
+msgstr "Start your cybersecurity compliance journey with confidence"
+
+
+msgid "انضم إلى 1SaudiCyber لإدارة الامتثال السيبراني لمنشأتك بكفاءة وموثوقية وفق الأطر الوطنية المدعومة."
+msgstr "Join 1SaudiCyber to manage your organization's cybersecurity compliance efficiently and reliably, aligned with the supported national frameworks."
+
+
+msgid "إدارة متطلبات الأطر التنظيمية بسهولة"
+msgstr "Manage regulatory framework requirements with ease"
+
+
+msgid "توحيد الأدلة وتقليل تكرار العمل"
+msgstr "Unify evidence and reduce duplicate work"
+
+
+msgid "رؤى ذكية ومساعدة بالذكاء الاصطناعي"
+msgstr "Smart insights with AI assistance"
+
+
+msgid "أمن وخصوصية على مستوى المؤسسات"
+msgstr "Enterprise-grade security and privacy"
+
+
+msgid "بياناتك آمنة ومشفرة وفق أعلى المعايير"
+msgstr "Your data is secure and encrypted to the highest standards"

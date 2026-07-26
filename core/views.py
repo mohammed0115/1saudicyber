@@ -243,6 +243,16 @@ def verify_email(request, token):
 # Does NOT gate login (existing/legacy users keep working); it is a guided
 # post-registration step to confirm email ownership.
 # ============================================================
+def _mask_email(email):
+    """Partially mask an email for display (privacy): 'ab•••@example.com'."""
+    email = (email or '').strip()
+    if '@' not in email:
+        return email
+    local, domain = email.split('@', 1)
+    shown = local[:1] if len(local) <= 2 else local[:2]
+    return f"{shown}•••@{domain}"
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def verify_email_otp(request):
@@ -268,9 +278,11 @@ def verify_email_otp(request):
             'invalid': 'الرمز غير صحيح. حاول مرة أخرى.',
         }
         messages.error(request, msgs.get(reason, msgs['invalid']))
-        return render(request, 'core/verify_email_otp.html', {'email': user.email})
+        return render(request, 'core/verify_email_otp.html',
+                      {'email': user.email, 'masked_email': _mask_email(user.email)})
 
-    return render(request, 'core/verify_email_otp.html', {'email': user.email})
+    return render(request, 'core/verify_email_otp.html',
+                  {'email': user.email, 'masked_email': _mask_email(user.email)})
 
 
 @login_required

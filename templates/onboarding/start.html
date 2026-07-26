@@ -1,55 +1,44 @@
-{% extends "base.html" %}
-{% block title %}ابدأ مع 1SaudiCyber{% endblock %}
+{% extends "onboarding/auth_base.html" %}
+{% load i18n %}
+{% block title %}1SaudiCyber — {% trans "إنشاء حساب جديد" %}{% endblock %}
 
-{% block content %}
-<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#F7F9F8;">
-  <div style="max-width:920px;margin:0 auto;padding:48px 20px;">
-    <div style="text-align:center;margin-bottom:36px;">
-      <p style="color:#356a54;font-weight:600;letter-spacing:.04em;margin:0 0 8px;">منصّة الامتثال السيبراني</p>
-      <h1 style="color:#2b2c27;font-size:1.9rem;font-weight:700;margin:0 0 10px;">ابدأ رحلتك مع 1SaudiCyber</h1>
-      <p style="color:#5b5c53;font-size:1rem;margin:0;max-width:560px;margin-inline:auto;">
-        اختر نوع الحساب المناسب لك للبدء. تجربة منظّمة ورسمية تأخذك خطوة بخطوة نحو الامتثال.
-      </p>
-    </div>
+{% block auth_main %}
+  {% include "onboarding/_stepper.html" with step=1 %}
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
-      <!-- Company / entity -->
-      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:16px;padding:28px;
-                  box-shadow:0 2px 10px rgba(31,41,51,0.05);display:flex;flex-direction:column;">
-        <div style="width:46px;height:46px;border-radius:12px;background:#F4F1EA;display:flex;
-                    align-items:center;justify-content:center;margin-bottom:16px;">
-          <i class="fas fa-building" style="color:#2a5646;font-size:1.25rem;"></i>
-        </div>
-        <h2 style="color:#2b2c27;font-size:1.2rem;font-weight:700;margin:0 0 8px;">شركة / جهة طالبة امتثال</h2>
-        <p style="color:#5b5c53;font-size:.92rem;margin:0 0 20px;flex:1;">
-          سجّل شركتك وابدأ رحلة الامتثال: التصنيف، الأطر المنطبقة، خطة الضوابط، الأدلة، والتقارير.
-        </p>
-        <a href="{% url 'core:company_register' %}"
-           style="display:inline-block;text-align:center;background:#2a5646;color:#fff;font-weight:600;
-                  padding:11px 18px;border-radius:10px;text-decoration:none;">إنشاء حساب شركة</a>
-      </div>
-
-      <!-- Auditor (placeholder) -->
-      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:16px;padding:28px;
-                  box-shadow:0 2px 10px rgba(31,41,51,0.05);display:flex;flex-direction:column;">
-        <div style="width:46px;height:46px;border-radius:12px;background:#F4F1EA;display:flex;
-                    align-items:center;justify-content:center;margin-bottom:16px;">
-          <i class="fas fa-user-shield" style="color:#356a54;font-size:1.25rem;"></i>
-        </div>
-        <h2 style="color:#2b2c27;font-size:1.2rem;font-weight:700;margin:0 0 8px;">مدقّق / Auditor</h2>
-        <p style="color:#5b5c53;font-size:.92rem;margin:0 0 20px;flex:1;">
-          مسار المدقّقين قيد التهيئة. سجّل اهتمامك الآن وسنعلمك عند توفّر تدفّق المدقّق الكامل.
-        </p>
-        <a href="{% url 'core:auditor_register' %}"
-           style="display:inline-block;text-align:center;background:#FFFFFF;color:#2b2c27;font-weight:600;
-                  padding:11px 18px;border-radius:10px;text-decoration:none;border:1px solid #e3e1d9;">تعرّف على مسار المدقّق</a>
-      </div>
-    </div>
-
-    <p style="text-align:center;color:#5b5c53;font-size:.9rem;margin-top:28px;">
-      لديك حساب بالفعل؟
-      <a href="{% url 'core:login' %}" style="color:#2a5646;font-weight:600;text-decoration:none;">تسجيل الدخول</a>
-    </p>
+  <div class="text-center mb-9" data-au-reveal="2">
+    <h1 class="mb-3">{% trans "إنشاء حساب جديد" %}</h1>
+    <p class="au-lead mx-auto" style="max-width:54ch;">{% trans "اختر نوع الحساب المناسب للبدء في استخدام منصّة 1SaudiCyber." %}</p>
   </div>
-</div>
+
+  <div class="grid md:grid-cols-2 gap-5 items-stretch" style="max-width:820px;margin-inline:auto;" data-au-reveal="3">
+    <!-- Company / organization (primary) -->
+    <div class="au-choice p-7 flex flex-col text-center">
+      <div class="au-iconbox mx-auto mb-5" style="width:60px;height:60px;"><i class="fas fa-building text-2xl" aria-hidden="true"></i></div>
+      <h2 class="font-bold mb-2" style="font-size:1.2rem;color:var(--text);">{% trans "حساب شركة" %}</h2>
+      <div class="au-muted text-xs mb-2" style="letter-spacing:.01em;">{% trans "شركة / جهة طالبة امتثال" %}</div>
+      <p class="au-muted text-sm mb-6" style="flex:1;">{% trans "لإدارات الامتثال والمؤسسات لتقييم الامتثال السيبراني وإدارته وفق الأطر المدعومة." %}</p>
+      <a href="{% url 'core:company_register' %}" class="au-btn au-btn-primary au-btn-block">{% trans "إنشاء حساب شركة" %}</a>
+    </div>
+    <!-- Auditor / consultant (secondary, gold accent) -->
+    <div class="au-choice p-7 flex flex-col text-center">
+      <div class="mx-auto mb-5" style="width:60px;height:60px;border-radius:12px;background:#F6EFDA;color:var(--gold);display:flex;align-items:center;justify-content:center;"><i class="fas fa-user-shield text-2xl" aria-hidden="true"></i></div>
+      <h2 class="font-bold mb-2" style="font-size:1.2rem;color:var(--text);">{% trans "حساب مدقّق / مستشار" %}</h2>
+      <p class="au-muted text-sm mb-6" style="flex:1;">{% trans "للمدقّقين والمستشارين للتعاون مع المنشآت في مراجعة الامتثال." %}</p>
+      <a href="{% url 'core:auditor_register' %}" class="au-btn au-btn-secondary au-btn-block" style="border-color:#E4D3A2;color:var(--gold);">{% trans "متابعة كمدقّق / مستشار" %}</a>
+    </div>
+  </div>
+
+  <!-- Security reassurance -->
+  <div class="au-card flex items-center gap-3 mt-6" style="max-width:820px;margin-inline:auto;padding:1rem 1.25rem;" data-au-reveal="4">
+    <span class="au-iconbox shrink-0" style="width:40px;height:40px;"><i class="fas fa-lock text-sm" aria-hidden="true"></i></span>
+    <div>
+      <div class="text-sm font-semibold" style="color:var(--text);">{% trans "بياناتك آمنة معنا" %}</div>
+      <div class="text-xs au-muted">{% trans "نلتزم بأعلى معايير الأمان لحماية بياناتك ومعلومات منشأتك." %}</div>
+    </div>
+  </div>
+
+  <p class="text-center au-muted text-sm mt-6" data-au-reveal="4">
+    {% trans "لديك حساب بالفعل؟" %}
+    <a href="{% url 'core:login' %}" class="au-brand font-semibold" style="text-decoration:underline;">{% trans "تسجيل الدخول" %}</a>
+  </p>
 {% endblock %}

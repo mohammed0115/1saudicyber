@@ -11,6 +11,8 @@
      ============================================================ */
   .lp{
     --brand:#176B55; --brand-h:#125845; --brand-soft:#2E8B6F;
+    /* restrained warm accent (per owner: green primary + a limited gold accent) */
+    --gold:#B08423; --gold-ink:#7A5A14; --gold-soft:#F6EFDA;
     --bg:#F8FAF9; --surface:#FFFFFF; --neutral:#F4F7F5; --soft:#EDF5F1; --soft2:#F5F9F7;
     --cta:#E8F3EE; --footer:#EEF4F1;
     --text:#1F2D28; --text2:#46534C; --muted:#5C6A63; --border:#DDE6E2;
@@ -158,13 +160,13 @@
 <section class="lp-hero relative overflow-hidden">
   <div class="lp-hero-tint absolute inset-0" aria-hidden="true"></div>
   <div class="lp-container relative" style="padding-top:3.5rem;padding-bottom:3.5rem;">
-    <div class="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+    <div class="grid lg:grid-cols-[0.9fr_1.15fr] gap-10 lg:gap-12 items-center">
       <div>
         <span data-hero="1" class="inline-flex items-center gap-2 lp-chip" style="padding:.4rem .8rem;border-radius:999px;">
           <span class="inline-block w-1.5 h-1.5 rounded-full" style="background:var(--brand-soft);" aria-hidden="true"></span>
           <span class="lp-eyebrow" style="letter-spacing:.04em;">{% trans "منصّة جاهزية الامتثال السيبراني" %}</span>
         </span>
-        <h1 data-hero="2" class="mt-5 mb-4" style="text-wrap:balance;">{% trans "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية" %}</h1>
+        <h1 data-hero="2" class="mt-5 mb-4" style="text-wrap:balance;">{% trans "امتثال سيبراني أبسط لمنشأتك في السعودية" %}</h1>
         <p data-hero="3" class="lp-lead mb-7" style="max-width:60ch;">{% trans "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC." %}</p>
         <div data-hero="4" class="flex flex-wrap gap-3">
           <a href="{% url 'core:get_started' %}" class="lp-btn lp-btn-primary">
@@ -174,59 +176,140 @@
           </a>
           <a href="#how-it-works" class="lp-btn lp-btn-secondary">{% trans "شاهد كيف تعمل" %}</a>
         </div>
-        <p data-hero="5" class="lp-muted mt-6 text-sm" style="max-width:58ch;">
+        <div data-hero="5" class="flex flex-wrap gap-x-7 gap-y-3 mt-7">
+          <div class="flex items-center gap-2.5">
+            <span class="lp-iconbox flex items-center justify-center" style="width:36px;height:36px;"><i class="fas fa-wand-magic-sparkles text-sm" aria-hidden="true"></i></span>
+            <div><div class="text-sm font-semibold" style="color:var(--text);">{% trans "تحليل ذكي" %}</div><div class="lp-muted text-xs">{% trans "مدعوم بالذكاء الاصطناعي" %}</div></div>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="lp-iconbox flex items-center justify-center" style="width:36px;height:36px;"><i class="fas fa-diagram-project text-sm" aria-hidden="true"></i></span>
+            <div><div class="text-sm font-semibold" style="color:var(--text);">{% trans "ربط بين الأطر" %}</div><div class="lp-muted text-xs">{% trans "وتقليل تكرار العمل" %}</div></div>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="lp-iconbox flex items-center justify-center" style="width:36px;height:36px;"><i class="fas fa-shield-halved text-sm" aria-hidden="true"></i></span>
+            <div><div class="text-sm font-semibold" style="color:var(--text);">{% trans "أمن وموثوق" %}</div><div class="lp-muted text-xs">{% trans "وفق أفضل الممارسات" %}</div></div>
+          </div>
+        </div>
+        <p data-hero="6" class="lp-muted mt-6 text-sm" style="max-width:58ch;">
           <i class="fas fa-circle-info me-1" aria-hidden="true"></i>
           {% trans "أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص. لا تُصدر المنصّة اعتمادًا رسميًا." %}
         </p>
       </div>
 
-      <!-- Readiness preview (white, illustrative) -->
+      <!-- Product preview — illustrative dashboard mockup (clearly labelled) -->
       <div data-hero="6">
-        <div class="lp-card" style="padding:1.5rem;box-shadow:0 8px 26px rgba(31,45,40,.06);">
-          <div class="flex items-center justify-between mb-4">
-            <h2 style="font-size:1rem;">{% trans "مؤشّر الجاهزية" %}</h2>
-            <span class="inline-flex items-center gap-1.5 text-xs font-semibold" style="background:var(--soft);color:var(--brand);padding:.3rem .7rem;border-radius:999px;">
-              <i class="fas fa-flask text-[.7rem]" aria-hidden="true"></i>{% trans "مؤشرات توضيحية" %}
+        <div class="lp-card overflow-hidden" style="box-shadow:0 14px 40px rgba(31,45,40,.10);">
+          <!-- window chrome: signals a product/demo preview, not live data -->
+          <div class="flex items-center justify-between" style="padding:.7rem 1rem;background:var(--soft2);border-bottom:1px solid var(--border);">
+            <div class="flex items-center gap-1.5" aria-hidden="true">
+              <span style="width:10px;height:10px;border-radius:50%;background:#E4C6C0;"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#EAD9B0;"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#BFD8CC;"></span>
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-xs font-medium" style="color:var(--muted);">
+              <i class="fas fa-circle-nodes text-[.7rem]" aria-hidden="true"></i>{% trans "بيئة عرض تجريبية" %}
             </span>
           </div>
-          <div class="flex items-end gap-3 mb-3">
-            <div class="font-bold" style="font-size:2.4rem;color:var(--text);line-height:1;">86%</div>
-            <div class="lp-muted text-sm pb-1">{% trans "الجاهزية العامة" %}</div>
-          </div>
-          <div class="w-full rounded-full overflow-hidden mb-5" style="height:8px;background:var(--neutral);">
-            <div class="h-full rounded-full" data-bar style="--w:86%;width:var(--w);background:var(--ok);"></div>
-          </div>
-          <div class="space-y-2.5">
-            <div class="flex items-center justify-between text-sm">
-              <span class="lp-body">NCA ECC</span>
-              <span class="flex items-center gap-2">
-                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" data-bar style="--w:87%;width:var(--w);background:var(--ok);"></span></span>
-                <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">87%</span>
+          <!-- app body: sidebar rail + content (matches the reference app window) -->
+          <div class="flex" style="min-width:0;">
+            <aside class="hidden sm:block" aria-hidden="true" style="width:120px;flex:0 0 auto;background:var(--soft2);border-inline-end:1px solid var(--border);padding:.7rem .45rem;">
+              <div class="flex items-center gap-1.5 mb-3" style="padding:.1rem .3rem;">
+                <span style="width:22px;height:22px;border-radius:6px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.56rem;font-weight:800;">1S</span>
+                <span class="lp-muted" style="font-size:.6rem;">{% trans "شركة تجريبية" %}</span>
+              </div>
+              <nav style="font-size:.66rem;line-height:1;">
+                <span class="flex items-center gap-1.5" style="padding:.34rem .4rem;border-radius:7px;background:var(--soft);color:var(--brand);font-weight:600;margin-bottom:2px;"><i class="fas fa-gauge-high" style="width:13px;text-align:center;"></i>{% trans "نظرة عامة" %}</span>
+                <span class="flex items-center gap-1.5 lp-muted" style="padding:.34rem .4rem;margin-bottom:2px;"><i class="fas fa-table-cells-large" style="width:13px;text-align:center;"></i>{% trans "التطبيقات" %}</span>
+                <span class="flex items-center gap-1.5 lp-muted" style="padding:.34rem .4rem;margin-bottom:2px;"><i class="fas fa-folder-open" style="width:13px;text-align:center;"></i>{% trans "الأدلة" %}</span>
+                <span class="flex items-center gap-1.5 lp-muted" style="padding:.34rem .4rem;margin-bottom:2px;"><i class="fas fa-triangle-exclamation" style="width:13px;text-align:center;"></i>{% trans "الفجوات" %}</span>
+                <span class="flex items-center gap-1.5 lp-muted" style="padding:.34rem .4rem;margin-bottom:2px;"><i class="fas fa-screwdriver-wrench" style="width:13px;text-align:center;"></i>{% trans "المعالجة" %}</span>
+                <span class="flex items-center gap-1.5 lp-muted" style="padding:.34rem .4rem;margin-bottom:2px;"><i class="fas fa-clipboard-check" style="width:13px;text-align:center;"></i>{% trans "التدقيق" %}</span>
+                <span class="flex items-center gap-1.5 lp-muted" style="padding:.34rem .4rem;margin-bottom:2px;"><i class="fas fa-chart-line" style="width:13px;text-align:center;"></i>{% trans "المراقبة" %}</span>
+                <span class="flex items-center gap-1.5 lp-muted" style="padding:.34rem .4rem;margin-bottom:2px;"><i class="fas fa-file-lines" style="width:13px;text-align:center;"></i>{% trans "التقارير" %}</span>
+                <span class="flex items-center gap-1.5 lp-muted" style="padding:.34rem .4rem;"><i class="fas fa-gear" style="width:13px;text-align:center;"></i>{% trans "الإعدادات" %}</span>
+              </nav>
+            </aside>
+            <div style="padding:1.25rem;flex:1;min-width:0;">
+            <div class="flex items-center justify-between mb-4">
+              <h2 style="font-size:1rem;">{% trans "نظرة عامة" %}</h2>
+              <span class="inline-flex items-center gap-1.5 text-xs font-semibold" style="background:var(--gold-soft);color:var(--gold-ink);padding:.28rem .65rem;border-radius:999px;">
+                <i class="fas fa-flask text-[.7rem]" aria-hidden="true"></i>{% trans "مؤشرات توضيحية" %}
               </span>
             </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="lp-body">Aramco SACS-002</span>
-              <span class="flex items-center gap-2">
-                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" data-bar style="--w:71%;width:var(--w);background:var(--warn);"></span></span>
-                <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">71%</span>
-              </span>
+            <!-- KPI grid (illustrative) -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="rounded-xl p-3" style="background:var(--soft2);border:1px solid var(--border);">
+                <div class="lp-muted text-xs mb-1">{% trans "مؤشّر الجاهزية" %}</div>
+                <div class="flex items-end justify-between">
+                  <span class="font-bold tabular-nums" style="font-size:1.5rem;color:var(--text);line-height:1;">78%</span>
+                  <span class="inline-flex items-center gap-0.5 text-xs font-semibold" style="color:var(--ok);"><i class="fas fa-arrow-trend-up text-[.65rem]" aria-hidden="true"></i>15%</span>
+                </div>
+              </div>
+              <div class="rounded-xl p-3" style="background:var(--soft2);border:1px solid var(--border);">
+                <div class="lp-muted text-xs mb-1">{% trans "الفجوات المفتوحة" %}</div>
+                <div class="flex items-end justify-between">
+                  <span class="font-bold tabular-nums" style="font-size:1.5rem;color:var(--text);line-height:1;">23</span>
+                  <span class="inline-flex items-center gap-0.5 text-xs font-semibold lp-muted"><i class="fas fa-arrow-trend-down text-[.65rem]" aria-hidden="true"></i>8</span>
+                </div>
+              </div>
+              <div class="rounded-xl p-3" style="background:var(--soft2);border:1px solid var(--border);">
+                <div class="lp-muted text-xs mb-1">{% trans "الإجراءات المطلوبة" %}</div>
+                <div class="flex items-end justify-between">
+                  <span class="font-bold tabular-nums" style="font-size:1.5rem;color:var(--text);line-height:1;">48</span>
+                  <span class="inline-flex items-center gap-0.5 text-xs font-semibold lp-muted"><i class="fas fa-arrow-trend-down text-[.65rem]" aria-hidden="true"></i>8</span>
+                </div>
+              </div>
+              <div class="rounded-xl p-3" style="background:var(--soft2);border:1px solid var(--border);">
+                <div class="lp-muted text-xs mb-1">{% trans "الأدلة" %}</div>
+                <div class="flex items-end justify-between">
+                  <span class="font-bold tabular-nums" style="font-size:1.5rem;color:var(--text);line-height:1;">1,254</span>
+                  <span class="inline-flex items-center gap-0.5 text-xs font-semibold" style="color:var(--ok);"><i class="fas fa-arrow-trend-up text-[.65rem]" aria-hidden="true"></i>25%</span>
+                </div>
+              </div>
             </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="lp-body">SABIC CyberTrust</span>
-              <span class="flex items-center gap-2">
-                <span class="rounded-full overflow-hidden" style="width:88px;height:6px;background:var(--neutral);"><span class="block h-full" data-bar style="--w:79%;width:var(--w);background:var(--ok);"></span></span>
-                <span class="font-semibold tabular-nums" style="color:var(--text);width:34px;text-align:end;">79%</span>
-              </span>
+            <!-- donut + framework progress -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="rounded-xl p-3" style="background:var(--surface);border:1px solid var(--border);">
+                <div class="text-xs font-semibold mb-2" style="color:var(--text);">{% trans "الفجوات حسب الفئة" %}</div>
+                <div class="flex items-center gap-3">
+                  <div style="position:relative;width:96px;height:96px;flex:0 0 auto;">
+                    <div style="width:100%;height:100%;border-radius:50%;background:conic-gradient(var(--brand) 0 125deg,var(--gold) 125deg 219deg,var(--brand-soft) 219deg 280deg,#8FB9AB 280deg 327deg,#CAD7D1 327deg 360deg);"></div>
+                    <div class="flex flex-col items-center justify-center" style="position:absolute;inset:22px;background:var(--surface);border-radius:50%;">
+                      <span class="font-bold tabular-nums" style="font-size:1.15rem;color:var(--text);line-height:1;">23</span>
+                      <span class="lp-muted" style="font-size:.6rem;">{% trans "فجوة" %}</span>
+                    </div>
+                  </div>
+                  <ul class="text-xs space-y-1" style="flex:1;">
+                    <li class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span style="width:8px;height:8px;border-radius:2px;background:var(--brand);" aria-hidden="true"></span>{% trans "ضوابط الوصول" %}</span><span class="tabular-nums lp-muted">8</span></li>
+                    <li class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span style="width:8px;height:8px;border-radius:2px;background:var(--gold);" aria-hidden="true"></span>{% trans "إدارة الأصول" %}</span><span class="tabular-nums lp-muted">6</span></li>
+                    <li class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span style="width:8px;height:8px;border-radius:2px;background:var(--brand-soft);" aria-hidden="true"></span>{% trans "استجابة الحوادث" %}</span><span class="tabular-nums lp-muted">4</span></li>
+                    <li class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span style="width:8px;height:8px;border-radius:2px;background:#8FB9AB;" aria-hidden="true"></span>{% trans "إدارة المخاطر" %}</span><span class="tabular-nums lp-muted">3</span></li>
+                    <li class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span style="width:8px;height:8px;border-radius:2px;background:#CAD7D1;" aria-hidden="true"></span>{% trans "أخرى" %}</span><span class="tabular-nums lp-muted">2</span></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="rounded-xl p-3" style="background:var(--surface);border:1px solid var(--border);">
+                <div class="text-xs font-semibold mb-2.5" style="color:var(--text);">{% trans "تقدّم الأطر" %}</div>
+                <div class="space-y-2.5">
+                  <div>
+                    <div class="flex items-center justify-between text-xs mb-1"><span class="lp-body">NCA ECC</span><span class="font-semibold tabular-nums" style="color:var(--text);">81%</span></div>
+                    <div class="w-full rounded-full overflow-hidden" style="height:6px;background:var(--neutral);"><div class="h-full rounded-full" data-bar style="--w:81%;width:var(--w);background:var(--ok);"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between text-xs mb-1"><span class="lp-body">Aramco SACS-002</span><span class="font-semibold tabular-nums" style="color:var(--text);">74%</span></div>
+                    <div class="w-full rounded-full overflow-hidden" style="height:6px;background:var(--neutral);"><div class="h-full rounded-full" data-bar style="--w:74%;width:var(--w);background:var(--ok);"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between text-xs mb-1"><span class="lp-body">SABIC CyberTrust</span><span class="font-semibold tabular-nums" style="color:var(--text);">65%</span></div>
+                    <div class="w-full rounded-full overflow-hidden" style="height:6px;background:var(--neutral);"><div class="h-full rounded-full" data-bar style="--w:65%;width:var(--w);background:var(--warn);"></div></div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="grid grid-cols-2 gap-3 mt-5">
-            <div class="rounded-xl p-3" style="background:var(--soft2);border:1px solid var(--border);">
-              <div class="font-bold tabular-nums" style="color:var(--crit);font-size:1.1rem;">4</div>
-              <div class="lp-muted text-xs">{% trans "فجوات حرجة" %}</div>
-            </div>
-            <div class="rounded-xl p-3" style="background:var(--soft2);border:1px solid var(--border);">
-              <div class="font-bold tabular-nums" style="color:var(--warn);font-size:1.1rem;">12</div>
-              <div class="lp-muted text-xs">{% trans "أدلة قيد المراجعة" %}</div>
+            <!-- illustrative disclaimer (honesty) -->
+            <p class="lp-muted mt-3.5 flex items-center gap-1.5" style="font-size:.7rem;">
+              <i class="fas fa-circle-info text-[.65rem]" aria-hidden="true"></i>{% trans "بيانات توضيحية لأغراض العرض فقط" %}
+            </p>
             </div>
           </div>
         </div>

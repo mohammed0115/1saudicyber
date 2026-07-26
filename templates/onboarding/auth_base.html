@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load i18n %}
+{# Shared light registration shell for Scenario 2 (consistent with the new landing). #}
+{% block extra_head %}
+<style>
+  .au{
+    --brand:#176B55; --brand-h:#125845; --brand-soft:#2E8B6F;
+    --gold:#B8892B; --gold-ink:#7A5A14; --gold-soft:#F6EFDA; --navy:#15243D; --navy-2:#22344F;
+    --bg:#F8FAF9; --surface:#FFFFFF; --neutral:#F4F7F5; --soft:#EDF5F1; --soft2:#F5F9F7;
+    --footer:#EEF4F1;
+    --text:#1F2D28; --text2:#46534C; --muted:#5C6A63; --border:#DDE6E2;
+    --ok:#2E8B6F; --warn:#A96C24; --crit:#A64F45;
+    --field-border:#D3DAD5; --field-focus:#176B55;
+    color:var(--text); background:var(--bg); font-family:'Inter','Noto Sans Arabic',sans-serif;
+    min-height:100vh; display:flex; flex-direction:column;
+  }
+  .au-container{ max-width:1140px; margin-inline:auto; padding-inline:1.25rem; width:100%; }
+  .au h1{ font-weight:800; font-size:clamp(1.6rem,3.2vw,2.1rem); line-height:1.25; color:var(--text); }
+  :lang(ar) .au h1{ line-height:1.5; }
+  .au .au-lead{ color:var(--text2); line-height:1.7; }
+  :lang(ar) .au .au-lead{ line-height:1.9; }
+  .au .au-muted{ color:var(--muted); }
+  .au .au-brand{ color:var(--brand); }
+  /* header */
+  .au-header{ background:var(--surface); border-bottom:1px solid var(--border); }
+  .au-navlink{ color:var(--text2); font-weight:500; }
+  .au-navlink:hover{ color:var(--brand); }
+  /* buttons */
+  .au-btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; min-height:46px;
+    padding:.65rem 1.4rem; border-radius:10px; font-weight:600; font-size:.95rem; cursor:pointer;
+    transition:background-color .15s ease,color .15s ease,border-color .15s ease; }
+  .au-btn-primary{ background:var(--brand); color:#fff; border:1px solid var(--brand); }
+  .au-btn-primary:hover{ background:var(--brand-h); border-color:var(--brand-h); }
+  .au-btn-secondary{ background:var(--surface); color:var(--text); border:1px solid var(--border); }
+  .au-btn-secondary:hover{ border-color:var(--brand); color:var(--brand); }
+  .au-btn-block{ width:100%; }
+  /* cards & surfaces */
+  .au-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; }
+  .au-iconbox{ background:var(--soft); color:var(--brand); border-radius:12px; display:flex; align-items:center; justify-content:center; }
+  /* stepper */
+  .au-step-line{ background:var(--border); }
+  .au-step-line.is-done{ background:var(--brand); }
+  .au-node{ width:34px; height:34px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:.9rem; border:2px solid var(--border); background:var(--surface); color:var(--muted); }
+  .au-node.is-active{ border-color:var(--brand); background:var(--brand); color:#fff; }
+  .au-node.is-done{ border-color:var(--brand); background:var(--brand); color:#fff; }
+  .au-step-label{ font-size:.78rem; color:var(--muted); }
+  .au-step-label.is-active{ color:var(--brand); font-weight:600; }
+  .au-step-label.is-done{ color:var(--text2); }
+  /* form fields */
+  .au-field label{ display:block; font-size:.85rem; font-weight:600; color:var(--text); margin-bottom:.35rem; }
+  .au-req{ color:var(--crit); }
+  .au-input{ width:100%; min-height:46px; border:1px solid var(--field-border); border-radius:10px;
+    padding:.6rem .85rem; background:var(--surface); color:var(--text); font-size:.95rem; font-family:inherit;
+    transition:border-color .15s ease, box-shadow .15s ease; }
+  .au-input::placeholder{ color:#9aa69f; }
+  .au-input:focus, .au-input:focus-visible{ outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(23,107,85,.14); }
+  .au-input[aria-invalid="true"]{ border-color:var(--crit); box-shadow:0 0 0 3px rgba(166,79,69,.12); }
+  .au-help{ font-size:.78rem; color:var(--muted); margin-top:.3rem; }
+  .au-err{ font-size:.8rem; color:var(--crit); margin-top:.3rem; display:flex; align-items:flex-start; gap:.35rem; }
+  .au-pw-wrap{ position:relative; }
+  .au-pw-toggle{ position:absolute; inset-inline-end:.6rem; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:var(--muted); cursor:pointer; padding:.25rem; }
+  .au-pw-toggle:hover{ color:var(--brand); }
+  /* choice cards (2.1) */
+  .au-choice{ background:var(--surface); border:1px solid var(--border); border-radius:16px; transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .au-choice:hover{ border-color:#C7DAD1; box-shadow:0 8px 24px rgba(23,107,85,.06); }
+  /* focus rings everywhere */
+  .au a:focus-visible, .au button:focus-visible, .au [role="button"]:focus-visible, .au input:focus-visible, .au summary:focus-visible{
+    outline:2px solid var(--brand); outline-offset:2px; border-radius:8px; }
+  /* footer */
+  .au-footer{ background:var(--footer); border-top:1px solid var(--border); margin-top:auto; }
+  .au-flink{ color:var(--text2); } .au-flink:hover{ color:var(--brand); text-decoration:underline; }
+  /* ===== Reference-match: faint skyline, split two-panel (2.2), brand panel ===== */
+  .au-skyline{ position:fixed; inset-inline:0; bottom:0; height:190px; z-index:0; pointer-events:none; opacity:.5; }
+  .au-skyline svg{ width:100%; height:100%; display:block; }
+  .au > *{ position:relative; z-index:1; }
+  .au-split{ display:grid; grid-template-columns:1fr; border:1px solid var(--border); border-radius:22px;
+    overflow:hidden; background:var(--surface); box-shadow:0 20px 55px rgba(21,36,61,.08); }
+  @media (min-width:960px){ .au-split{ grid-template-columns:0.92fr 1.08fr; } }
+  .au-brandpanel{ position:relative; padding:2.5rem 2.1rem; display:flex; flex-direction:column;
+    background:linear-gradient(160deg,#EDF5F1 0%,#F5F9F7 55%,#F7EFDC 155%); }
+  .au-brandpanel h2{ font-weight:800; font-size:clamp(1.5rem,2.5vw,1.95rem); line-height:1.5; color:var(--navy); }
+  .au-value{ display:flex; align-items:flex-start; gap:.6rem; color:var(--text2); font-size:.94rem; }
+  .au-value i{ color:var(--brand); margin-top:.2rem; flex:0 0 auto; }
+  .au-formpanel{ padding:2rem 1.9rem; }
+  .au-shield{ width:100%; max-width:190px; margin-inline:auto; display:block; }
+  .au-phone{ display:flex; gap:.5rem; }
+  .au-prefix{ display:flex; align-items:center; gap:.3rem; padding:0 .7rem; min-height:46px; flex:0 0 auto;
+    border:1px solid var(--field-border); border-radius:10px; background:var(--neutral); color:var(--text2);
+    font-size:.9rem; white-space:nowrap; }
+  /* Motion — progressive enhancement + reduced-motion (never hides content without JS) */
+  @media (prefers-reduced-motion: no-preference){
+    .au-js [data-au-reveal]{ opacity:0; transform:translateY(12px); transition:opacity .5s ease, transform .5s ease; }
+    .au-js [data-au-reveal].is-in{ opacity:1; transform:none; }
+    .au-js [data-au-reveal="2"]{ transition-delay:.08s } .au-js [data-au-reveal="3"]{ transition-delay:.16s }
+    .au-js [data-au-reveal="4"]{ transition-delay:.24s }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="au" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
+
+  <!-- faint Saudi skyline (decorative, subtle — not dominant) -->
+  <div class="au-skyline" aria-hidden="true">
+    <svg viewBox="0 0 1440 190" preserveAspectRatio="xMidYMax slice" fill="#D7E2DC">
+      <rect x="30" y="120" width="28" height="70"/><rect x="66" y="95" width="20" height="95"/><rect x="92" y="140" width="26" height="50"/><rect x="124" y="110" width="20" height="80"/>
+      <rect x="150" y="90" width="30" height="100"/><path d="M150 90 L165 55 L180 90 Z"/>
+      <rect x="186" y="130" width="24" height="60"/><rect x="216" y="102" width="28" height="88"/><rect x="250" y="145" width="20" height="45"/><rect x="276" y="118" width="26" height="72"/>
+      <rect x="308" y="90" width="22" height="100"/><rect x="336" y="135" width="28" height="55"/><rect x="370" y="112" width="22" height="78"/><rect x="398" y="148" width="20" height="42"/>
+      <rect x="424" y="124" width="26" height="66"/><rect x="456" y="98" width="22" height="92"/><rect x="484" y="140" width="28" height="50"/><rect x="518" y="116" width="22" height="74"/>
+      <rect x="546" y="130" width="26" height="60"/><rect x="578" y="105" width="24" height="85"/><rect x="608" y="142" width="20" height="48"/><rect x="634" y="120" width="28" height="70"/>
+      <rect x="668" y="95" width="22" height="95"/><rect x="696" y="135" width="26" height="55"/><rect x="728" y="110" width="20" height="80"/><rect x="754" y="126" width="28" height="64"/>
+      <rect x="788" y="90" width="22" height="100"/><rect x="816" y="144" width="26" height="46"/><rect x="848" y="118" width="22" height="72"/><rect x="876" y="132" width="28" height="58"/>
+      <rect x="910" y="102" width="24" height="88"/><rect x="940" y="140" width="20" height="50"/><rect x="966" y="122" width="28" height="68"/><rect x="1000" y="98" width="22" height="92"/>
+      <rect x="1028" y="136" width="26" height="54"/><rect x="1060" y="114" width="20" height="76"/><rect x="1086" y="146" width="28" height="44"/><rect x="1120" y="124" width="22" height="66"/>
+      <path d="M1150 190 L1150 72 L1163 72 L1163 130 Q1182 106 1201 130 L1201 72 L1214 72 L1214 190 Z"/>
+      <rect x="1240" y="120" width="28" height="70"/><rect x="1276" y="96" width="22" height="94"/><rect x="1304" y="140" width="26" height="50"/><rect x="1336" y="112" width="20" height="78"/><rect x="1364" y="130" width="28" height="60"/><rect x="1400" y="104" width="22" height="86"/>
+    </svg>
+  </div>
+
+  <!-- ===================== Minimal header ===================== -->
+  <header class="au-header">
+    <div class="au-container">
+      <div class="flex items-center justify-between gap-4" style="height:64px;">
+        <a href="{% url 'core:landing' %}" class="flex items-center gap-2.5 shrink-0" aria-label="1SaudiCyber">
+          <svg width="32" height="36" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
+            <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#FBF6EA" stroke="var(--gold)" stroke-width="2.4"/>
+            <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="15" fill="var(--navy)">1S</text>
+          </svg>
+          <span class="flex flex-col leading-none">
+            <span class="font-bold text-lg" style="color:var(--navy);">1SaudiCyber</span>
+            <span style="font-size:.6rem;color:var(--gold-ink);margin-top:2px;">{% trans "منصة الامتثال السيبراني" %}</span>
+          </span>
+        </a>
+        <div class="flex items-center gap-3 shrink-0">
+          <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1 text-xs">
+            {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+            <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}font-bold{% endif %}" style="color:{% if LANGUAGE_CODE == 'ar' %}var(--brand){% else %}var(--muted){% endif %};">العربية</button>
+            <span style="color:var(--border);">|</span>
+            <button type="submit" name="language" value="en" class="px-1 {% if LANGUAGE_CODE != 'ar' %}font-bold{% endif %}" style="color:{% if LANGUAGE_CODE != 'ar' %}var(--brand){% else %}var(--muted){% endif %};">English</button>
+          </form>
+          <span style="width:1px;height:20px;background:var(--border);" aria-hidden="true"></span>
+          <a href="{% url 'core:login' %}" class="au-btn au-btn-secondary" style="min-height:38px;padding:.4rem 1rem;font-size:.88rem;">{% trans "تسجيل الدخول" %}</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== Page body ===================== -->
+  <main id="au-main" class="au-container" style="padding-block:2.5rem;flex:1;">
+    {% block auth_main %}{% endblock %}
+  </main>
+
+  <!-- ===================== Minimal footer ===================== -->
+  <footer class="au-footer">
+    <div class="au-container" style="padding-block:1.5rem;">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+        <p class="au-muted text-center sm:text-start">
+          {% if LANGUAGE_CODE == 'ar' %}
+            © {% now "Y" %} 1SaudiCyber. {% trans "جميع الحقوق محفوظة." %} {% trans "تطوير" %}
+            <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="au-brand font-semibold" style="text-decoration:underline;">شركة احصل الحل</a>.
+          {% else %}
+            © {% now "Y" %} 1SaudiCyber. All rights reserved. Developed by
+            <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="au-brand font-semibold" style="text-decoration:underline;">Get Solution</a>.
+          {% endif %}
+        </p>
+        <p class="au-muted text-xs">
+          <a href="{% url 'core:privacy' %}" class="au-flink">{% trans "سياسة الخصوصية" %}</a>
+          <span class="mx-2" aria-hidden="true">·</span>
+          <a href="{% url 'core:terms' %}" class="au-flink">{% trans "شروط الاستخدام" %}</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.querySelector('.au');
+    if (!root) return;
+    // Show / hide password toggles (accessible; enhancement only).
+    root.querySelectorAll('[data-pw-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.getAttribute('data-pw-toggle'));
+        if (!input) return;
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.setAttribute('aria-label', show ? btn.getAttribute('data-label-hide') : btn.getAttribute('data-label-show'));
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+        var icon = btn.querySelector('i');
+        if (icon) { icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye'; }
+      });
+    });
+    // Motion (progressive enhancement + reduced-motion).
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    root.classList.add('au-js');
+    requestAnimationFrame(function () {
+      root.querySelectorAll('[data-au-reveal]').forEach(function (el) { el.classList.add('is-in'); });
+    });
+  })();
+</script>
+{% block auth_js %}{% endblock %}
+{% endblock %}

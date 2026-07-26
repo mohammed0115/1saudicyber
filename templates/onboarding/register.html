@@ -1,151 +1,176 @@
-{% extends "base.html" %}
-{% block title %}تسجيل شركة - 1SaudiCyber{% endblock %}
+{% extends "onboarding/auth_base.html" %}
+{% load i18n %}
+{% block title %}1SaudiCyber — {% trans "تسجيل شركة" %}{% endblock %}
 
-{% block extra_head %}
+{% block extra_head %}{{ block.super }}
 <style>
-.ct-form input[type=text], .ct-form input[type=email], .ct-form input[type=password],
-.ct-form select, .ct-form textarea {
-  width:100%;box-sizing:border-box;border:1px solid #e3e1d9;border-radius:10px;
-  padding:10px 12px;font-size:.92rem;color:#2b2c27;background:#FFFFFF;font-family:inherit;
-}
-.ct-form input:focus, .ct-form select:focus, .ct-form textarea:focus{
-  outline:none;border-color:#356a54;box-shadow:0 0 0 3px rgba(31,107,99,.12);
-}
-.ct-section{border-bottom:1px solid #e3e1d9;padding-bottom:8px;margin:6px 0 18px;
-  color:#2a5646;font-weight:700;font-size:1.05rem;}
-/* Stepper */
-.ct-steps{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
-.ct-pill{display:flex;align-items:center;gap:8px;flex:1;min-width:140px;background:#FFFFFF;
-  border:1px solid #e3e1d9;border-radius:10px;padding:10px 12px;color:#5b5c53;font-size:.9rem;}
-.ct-pill .num{width:24px;height:24px;border-radius:50%;background:#F4F1EA;color:#5b5c53;
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex:0 0 24px;}
-.ct-pill.active{border-color:#2a5646;color:#2a5646;background:#EAF3EF;}
-.ct-pill.active .num{background:#2a5646;color:#fff;}
-.ct-pill.done .num{background:#356a54;color:#fff;}
-.ct-step{display:none;}
-.ct-step.active{display:block;}
-.js-off .ct-step{display:block;} /* no-JS / error fallback: show all steps */
+  /* Company registration wizard — light palette, inside the split form panel. */
+  .ct-form .au-field{ margin:0; }
+  .ct-section{ border-bottom:1px solid var(--border); padding-bottom:.5rem; margin:.15rem 0 1.15rem;
+    color:var(--brand); font-weight:700; font-size:1.02rem; }
+  .ct-steps{ display:flex; gap:.5rem; margin-bottom:1.3rem; flex-wrap:wrap; }
+  .ct-pill{ display:flex; align-items:center; gap:.45rem; flex:1; min-width:135px; background:var(--surface);
+    border:1px solid var(--border); border-radius:11px; padding:.55rem .75rem; color:var(--muted);
+    font-size:.82rem; cursor:pointer; transition:border-color .15s ease, background-color .15s ease, color .15s ease; }
+  .ct-pill .num{ width:22px; height:22px; border-radius:50%; background:var(--neutral); color:var(--muted);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.74rem; flex:0 0 22px; }
+  .ct-pill.active{ border-color:var(--brand); color:var(--brand); background:var(--soft); }
+  .ct-pill.active .num{ background:var(--brand); color:#fff; }
+  .ct-pill.done .num{ background:var(--brand); color:#fff; }
+  .ct-step{ display:none; } .ct-step.active{ display:block; }
+  .js-off .ct-step{ display:block; }
+  .ct-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; }
+  .ct-form input[type=text], .ct-form input[type=email], .ct-form input[type=password],
+  .ct-form input[type=tel], .ct-form input[type=number], .ct-form select, .ct-form textarea{
+    width:100%; box-sizing:border-box; min-height:46px; border:1px solid var(--field-border); border-radius:10px;
+    padding:.6rem .85rem; font-size:.95rem; color:var(--text); background:var(--surface); font-family:inherit;
+    transition:border-color .15s ease, box-shadow .15s ease; }
+  .ct-form textarea{ min-height:84px; }
+  .ct-form input:focus, .ct-form select:focus, .ct-form textarea:focus{
+    outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(23,107,85,.14); }
+  .ct-form .au-pw-wrap input{ padding-inline-end:2.6rem; }
+  .ct-target{ display:flex; align-items:center; gap:.55rem; background:var(--soft2); border:1px solid var(--border);
+    border-radius:10px; padding:.6rem .95rem; color:var(--text); font-size:.92rem; cursor:pointer; }
+  .ct-target:hover{ border-color:#C7DAD1; }
 </style>
 {% endblock %}
 
-{% block content %}
-<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#F7F9F8;">
-  <div style="max-width:760px;margin:0 auto;padding:40px 20px;">
-    <div style="margin-bottom:20px;">
-      <p style="color:#356a54;font-weight:600;margin:0 0 6px;">إنشاء حساب شركة</p>
-      <h1 style="color:#2b2c27;font-size:1.6rem;font-weight:700;margin:0 0 6px;">سجّل شركتك في 1SaudiCyber</h1>
-      <p style="color:#5b5c53;font-size:.95rem;margin:0;">أكمل الخطوات التالية لبدء مسار الامتثال. الحقول المعلّمة بـ * مطلوبة.</p>
+{% block auth_main %}
+  {% include "onboarding/_stepper.html" with step=2 %}
+
+  <div class="au-split" data-au-reveal="2">
+    <!-- ===== Brand panel (identity + value) ===== -->
+    <div class="au-brandpanel">
+      <h2 class="mb-4">{% trans "ابدأ رحلة الامتثال السيبراني بثقة" %}</h2>
+      <p class="au-lead mb-6">{% trans "انضم إلى 1SaudiCyber لإدارة الامتثال السيبراني لمنشأتك بكفاءة وموثوقية وفق الأطر الوطنية المدعومة." %}</p>
+      <ul class="space-y-3.5 mb-8">
+        <li class="au-value"><i class="fas fa-circle-check" aria-hidden="true"></i><span>{% trans "إدارة متطلبات الأطر التنظيمية بسهولة" %}</span></li>
+        <li class="au-value"><i class="fas fa-circle-check" aria-hidden="true"></i><span>{% trans "توحيد الأدلة وتقليل تكرار العمل" %}</span></li>
+        <li class="au-value"><i class="fas fa-circle-check" aria-hidden="true"></i><span>{% trans "رؤى ذكية ومساعدة بالذكاء الاصطناعي" %}</span></li>
+        <li class="au-value"><i class="fas fa-circle-check" aria-hidden="true"></i><span>{% trans "أمن وخصوصية على مستوى المؤسسات" %}</span></li>
+      </ul>
+      <div class="mt-auto">
+        <svg class="au-shield" viewBox="0 0 200 214" fill="none" aria-hidden="true">
+          <defs><linearGradient id="au-gsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DBB861"/><stop offset="1" stop-color="#B8892B"/></linearGradient></defs>
+          <ellipse cx="100" cy="200" rx="66" ry="9" fill="#15243D" opacity="0.06"/>
+          <path d="M100 12 L170 34 V104 C170 150 140 179 100 195 C60 179 30 150 30 104 V34 Z" fill="url(#au-gsh)"/>
+          <path d="M100 27 L157 45 V102 C157 141 132 164 100 178 C68 164 43 141 43 102 V45 Z" fill="#FBF6EA"/>
+          <text x="100" y="122" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="54" fill="#15243D">1S</text>
+        </svg>
+        <p class="text-center au-muted text-xs mt-3 flex items-center justify-center gap-1.5">
+          <i class="fas fa-lock" aria-hidden="true"></i>{% trans "بياناتك آمنة ومشفرة وفق أعلى المعايير" %}
+        </p>
+      </div>
     </div>
 
-    {% if form.non_field_errors %}
-    <div style="background:#FBEAEA;border:1px solid #E6BCBC;color:#9B2C2C;border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:.9rem;">
-      {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
-    </div>
-    {% endif %}
+    <!-- ===== Form panel ===== -->
+    <div class="au-formpanel">
+      <h1 class="mb-1" style="font-size:1.5rem;">{% trans "سجّل شركتك في 1SaudiCyber" %}</h1>
+      <p class="au-muted text-sm mb-5">{% trans "أكمل الخطوات التالية لبدء مسار الامتثال. الحقول المعلّمة بـ * مطلوبة." %}</p>
 
-    <!-- Stepper pills -->
-    <div class="ct-steps">
-      <div class="ct-pill{% if form.errors and error_step == 0 %} active{% endif %}" data-step-pill="0"><span class="num">1</span> بيانات المستخدم</div>
-      <div class="ct-pill{% if form.errors and error_step == 1 %} active{% endif %}" data-step-pill="1"><span class="num">2</span> بيانات الشركة</div>
-      <div class="ct-pill{% if form.errors and error_step == 2 %} active{% endif %}" data-step-pill="2"><span class="num">3</span> أهداف الامتثال</div>
-    </div>
-
-    {% if form.errors %}
-    <div role="alert" style="background:#FBEAEA;border:1px solid #E6BCBC;color:#9B2C2C;border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:.9rem;">
-      يرجى تصحيح الحقول المحددة ثم المتابعة.
-    </div>
-    {% endif %}
-
-    <form method="post" action="{% url 'core:company_register' %}" id="reg-form"
-          data-busy="جارٍ حفظ البيانات..." class="ct-form{% if not form.errors %} js-off{% endif %}"
-          data-active-step="{{ error_step|default:0 }}"
-          {% if form.errors %}data-has-errors="1"{% endif %}
-          style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:16px;padding:28px;
-                 box-shadow:0 2px 10px rgba(31,41,51,0.05);">
-      {% csrf_token %}
-
-      <!-- Step 1 -->
-      <section class="ct-step{% if form.errors and error_step == 0 %} active{% endif %}" data-step="0">
-        <h2 class="ct-section">بيانات المستخدم</h2>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
-          {% include "onboarding/_field.html" with field=form.first_name req=1 %}
-          {% include "onboarding/_field.html" with field=form.last_name req=1 %}
-          {% include "onboarding/_field.html" with field=form.email req=1 %}
-          {% include "onboarding/_field.html" with field=form.phone %}
-          {% include "onboarding/_field.html" with field=form.password req=1 %}
-          {% include "onboarding/_field.html" with field=form.password_confirm req=1 %}
-        </div>
-        <div style="margin-top:22px;display:flex;justify-content:flex-start;">
-          <button type="button" data-next
-                  style="background:#2a5646;color:#fff;font-weight:600;padding:11px 22px;border:none;border-radius:10px;cursor:pointer;">التالي</button>
-        </div>
-      </section>
-
-      <!-- Step 2 -->
-      <section class="ct-step{% if form.errors and error_step == 1 %} active{% endif %}" data-step="1">
-        <h2 class="ct-section">بيانات الشركة</h2>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
-          {% include "onboarding/_field.html" with field=form.company_name_ar req=1 %}
-          {% include "onboarding/_field.html" with field=form.company_name %}
-          {% include "onboarding/_field.html" with field=form.cr_number req=1 %}
-          {% include "onboarding/_field.html" with field=form.sector req=1 %}
-          {% include "onboarding/_field.html" with field=form.size req=1 %}
-          {% include "onboarding/_field.html" with field=form.city %}
-          {% include "onboarding/_field.html" with field=form.country %}
-        </div>
-        <div style="margin-top:16px;">{% include "onboarding/_field.html" with field=form.description %}</div>
-        <div style="margin-top:22px;display:flex;gap:12px;">
-          <button type="button" data-prev
-                  style="background:#FFFFFF;color:#2b2c27;font-weight:600;padding:11px 22px;border:1px solid #e3e1d9;border-radius:10px;cursor:pointer;">السابق</button>
-          <button type="button" data-next
-                  style="background:#2a5646;color:#fff;font-weight:600;padding:11px 22px;border:none;border-radius:10px;cursor:pointer;">التالي</button>
-        </div>
-      </section>
-
-      <!-- Step 3 -->
-      <section class="ct-step{% if form.errors and error_step == 2 %} active{% endif %}" data-step="2">
-        <h2 class="ct-section">أهداف الامتثال</h2>
-        <p style="color:#5b5c53;font-size:.85rem;margin:0 0 12px;">اختر هدفًا واحدًا على الأقل.</p>
-        <div style="display:flex;flex-wrap:wrap;gap:14px;">
-          <label style="display:flex;align-items:center;gap:8px;background:#F7F9F8;border:1px solid #e3e1d9;border-radius:10px;padding:10px 14px;color:#2b2c27;font-size:.92rem;">
-            {{ form.target_nca }} {{ form.target_nca.label }}</label>
-          <label style="display:flex;align-items:center;gap:8px;background:#F7F9F8;border:1px solid #e3e1d9;border-radius:10px;padding:10px 14px;color:#2b2c27;font-size:.92rem;">
-            {{ form.target_aramco }} {{ form.target_aramco.label }}</label>
-          <label style="display:flex;align-items:center;gap:8px;background:#F7F9F8;border:1px solid #e3e1d9;border-radius:10px;padding:10px 14px;color:#2b2c27;font-size:.92rem;">
-            {{ form.target_sabic }} {{ form.target_sabic.label }}</label>
-        </div>
-
-        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:20px;color:#2b2c27;font-size:.9rem;line-height:1.7;">
-          {{ form.accept_terms }} <span>{{ form.accept_terms.label }}</span>
-        </label>
-        {% if form.accept_terms.errors %}
-        <div style="color:#9B2C2C;font-size:.8rem;margin-top:4px;">{{ form.accept_terms.errors|striptags }}</div>
-        {% endif %}
-
-        <div style="margin-top:26px;display:flex;gap:12px;align-items:center;">
-          <button type="button" data-prev
-                  style="background:#FFFFFF;color:#2b2c27;font-weight:600;padding:11px 22px;border:1px solid #e3e1d9;border-radius:10px;cursor:pointer;">السابق</button>
-          <button type="submit"
-                  style="background:#2a5646;color:#fff;font-weight:600;padding:12px 24px;border:none;border-radius:10px;cursor:pointer;">
-            إنشاء الحساب والمتابعة
-          </button>
-          <a href="{% url 'core:get_started' %}" style="color:#5b5c53;text-decoration:none;font-size:.9rem;">رجوع</a>
-        </div>
-      </section>
-
-      {# On error re-render the submit stays reachable no matter which step failed. #}
-      {% if form.errors %}
-      <div style="margin-top:24px;border-top:1px solid #EEF1F0;padding-top:18px;">
-        <button type="submit"
-                style="background:#2a5646;color:#fff;font-weight:600;padding:12px 24px;border:none;border-radius:10px;cursor:pointer;">
-          إنشاء الحساب والمتابعة
-        </button>
+      {% if form.non_field_errors %}
+      <div role="alert" class="mb-4" style="background:#FBF0EF;border:1px solid #E6C4C0;color:var(--crit);border-radius:11px;padding:.85rem 1rem;font-size:.88rem;">
+        {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
       </div>
       {% endif %}
-    </form>
-  </div>
-</div>
 
+      <!-- wizard sub-step pills -->
+      <div class="ct-steps">
+        <div class="ct-pill{% if form.errors and error_step == 0 %} active{% endif %}" data-step-pill="0"><span class="num">1</span>{% trans "بيانات المستخدم" %}</div>
+        <div class="ct-pill{% if form.errors and error_step == 1 %} active{% endif %}" data-step-pill="1"><span class="num">2</span>{% trans "بيانات الشركة" %}</div>
+        <div class="ct-pill{% if form.errors and error_step == 2 %} active{% endif %}" data-step-pill="2"><span class="num">3</span>{% trans "أهداف الامتثال" %}</div>
+      </div>
+
+      {% if form.errors %}
+      <div role="alert" class="mb-4" style="background:#FBF0EF;border:1px solid #E6C4C0;color:var(--crit);border-radius:10px;padding:.7rem 1rem;font-size:.86rem;">
+        {% trans "يرجى تصحيح الحقول المحددة ثم المتابعة." %}
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'core:company_register' %}" id="reg-form"
+            data-busy="{% trans 'جارٍ حفظ البيانات...' %}"
+            class="ct-form{% if not form.errors %} js-off{% endif %}"
+            data-active-step="{{ error_step|default:0 }}"{% if form.errors %} data-has-errors="1"{% endif %}>
+        {% csrf_token %}
+
+        <!-- Step 1 — user -->
+        <section class="ct-step{% if form.errors and error_step == 0 %} active{% endif %}" data-step="0">
+          <h2 class="ct-section">{% trans "بيانات المستخدم" %}</h2>
+          <div class="ct-grid">
+            {% include "onboarding/_au_field.html" with field=form.first_name req=1 %}
+            {% include "onboarding/_au_field.html" with field=form.last_name req=1 %}
+            {% include "onboarding/_au_field.html" with field=form.email req=1 %}
+            <div class="au-field">
+              <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+              <div class="au-phone">
+                <span class="au-prefix" aria-hidden="true"><i class="fas fa-phone text-xs"></i>+966</span>
+                {{ form.phone }}
+              </div>
+              {% if form.phone.errors %}<div class="au-err"><i class="fas fa-circle-exclamation" aria-hidden="true"></i><span>{{ form.phone.errors|striptags }}</span></div>{% endif %}
+            </div>
+            {% include "onboarding/_au_pw_field.html" with field=form.password req=1 %}
+            {% include "onboarding/_au_pw_field.html" with field=form.password_confirm req=1 %}
+          </div>
+          <div class="mt-6"><button type="button" data-next class="au-btn au-btn-primary">{% trans "التالي" %}</button></div>
+        </section>
+
+        <!-- Step 2 — company -->
+        <section class="ct-step{% if form.errors and error_step == 1 %} active{% endif %}" data-step="1">
+          <h2 class="ct-section">{% trans "بيانات الشركة" %}</h2>
+          <div class="ct-grid">
+            {% include "onboarding/_au_field.html" with field=form.company_name_ar req=1 %}
+            {% include "onboarding/_au_field.html" with field=form.company_name %}
+            {% include "onboarding/_au_field.html" with field=form.cr_number req=1 %}
+            {% include "onboarding/_au_field.html" with field=form.sector req=1 %}
+            {% include "onboarding/_au_field.html" with field=form.size req=1 %}
+            {% include "onboarding/_au_field.html" with field=form.city %}
+            {% include "onboarding/_au_field.html" with field=form.country %}
+          </div>
+          <div class="mt-4">{% include "onboarding/_au_field.html" with field=form.description %}</div>
+          <div class="mt-6 flex gap-3">
+            <button type="button" data-prev class="au-btn au-btn-secondary">{% trans "السابق" %}</button>
+            <button type="button" data-next class="au-btn au-btn-primary">{% trans "التالي" %}</button>
+          </div>
+        </section>
+
+        <!-- Step 3 — compliance goals + terms -->
+        <section class="ct-step{% if form.errors and error_step == 2 %} active{% endif %}" data-step="2">
+          <h2 class="ct-section">{% trans "أهداف الامتثال" %}</h2>
+          <p class="au-muted text-sm mb-3">{% trans "اختر هدفًا واحدًا على الأقل." %}</p>
+          <div class="flex flex-wrap gap-3">
+            <label class="ct-target">{{ form.target_nca }} <span>{{ form.target_nca.label }}</span></label>
+            <label class="ct-target">{{ form.target_aramco }} <span>{{ form.target_aramco.label }}</span></label>
+            <label class="ct-target">{{ form.target_sabic }} <span>{{ form.target_sabic.label }}</span></label>
+          </div>
+          <label class="flex items-start gap-2 mt-5 text-sm" style="color:var(--text);line-height:1.7;">
+            {{ form.accept_terms }} <span>{{ form.accept_terms.label }}</span>
+          </label>
+          {% if form.accept_terms.errors %}
+          <div class="au-err mt-1"><i class="fas fa-circle-exclamation" aria-hidden="true"></i><span>{{ form.accept_terms.errors|striptags }}</span></div>
+          {% endif %}
+          <div class="mt-6 flex gap-3 items-center flex-wrap">
+            <button type="button" data-prev class="au-btn au-btn-secondary">{% trans "السابق" %}</button>
+            <button type="submit" class="au-btn au-btn-primary">{% trans "إنشاء الحساب والمتابعة" %}</button>
+          </div>
+        </section>
+
+        {# On an error re-render the submit stays reachable no matter which step failed. #}
+        {% if form.errors %}
+        <div class="mt-6" style="border-top:1px solid var(--border);padding-top:1.1rem;">
+          <button type="submit" class="au-btn au-btn-primary">{% trans "إنشاء الحساب والمتابعة" %}</button>
+        </div>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <p class="text-center au-muted text-sm mt-6">
+    {% trans "لديك حساب بالفعل؟" %}
+    <a href="{% url 'core:login' %}" class="au-brand font-semibold" style="text-decoration:underline;">{% trans "تسجيل الدخول" %}</a>
+  </p>
+{% endblock %}
+
+{% block auth_js %}
 <script>
 (function () {
   var form = document.getElementById('reg-form');
@@ -153,9 +178,7 @@
   var steps = Array.prototype.slice.call(form.querySelectorAll('.ct-step'));
   var pills = Array.prototype.slice.call(document.querySelectorAll('[data-step-pill]'));
   var hasErrors = form.getAttribute('data-has-errors') === '1';
-  form.classList.remove('js-off');      // JS available: enable stepper (single-step view)
-  // On an error re-render, land on the exact step that failed (server-computed),
-  // not a collapsed page showing every step at once.
+  form.classList.remove('js-off');
   var current = hasErrors ? parseInt(form.getAttribute('data-active-step') || '0', 10) : 0;
   function render() {
     steps.forEach(function (s, i) { s.classList.toggle('active', i === current); });

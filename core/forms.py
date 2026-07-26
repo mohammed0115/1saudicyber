@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.translation import gettext_lazy as _
 from .models import User, Company
 
 
@@ -85,38 +86,38 @@ class SelfServiceRegistrationForm(forms.Form):
     at least one compliance goal) and adds password confirmation.
     """
     # بيانات المستخدم
-    first_name = forms.CharField(max_length=30, label='الاسم الأول')
-    last_name = forms.CharField(max_length=30, label='اسم العائلة')
-    email = forms.EmailField(label='البريد الإلكتروني')
-    phone = forms.CharField(max_length=20, required=False, label='رقم الجوال')
+    first_name = forms.CharField(max_length=30, label=_('الاسم الأول'))
+    last_name = forms.CharField(max_length=30, label=_('اسم العائلة'))
+    email = forms.EmailField(label=_('البريد الإلكتروني'))
+    phone = forms.CharField(max_length=20, required=False, label=_('رقم الجوال'))
     password = forms.CharField(
-        widget=forms.PasswordInput, min_length=12, label='كلمة المرور',
-        help_text='استخدم كلمة مرور قوية لا تقل عن 12 حرفًا، ويفضّل أن تحتوي على أحرف وأرقام ورمز خاص.')
-    password_confirm = forms.CharField(widget=forms.PasswordInput, label='تأكيد كلمة المرور')
+        widget=forms.PasswordInput, min_length=12, label=_('كلمة المرور'),
+        help_text=_('استخدم كلمة مرور قوية لا تقل عن 12 حرفًا، ويفضّل أن تحتوي على أحرف وأرقام ورمز خاص.'))
+    password_confirm = forms.CharField(widget=forms.PasswordInput, label=_('تأكيد كلمة المرور'))
 
     # بيانات الشركة
-    company_name_ar = forms.CharField(max_length=255, label='اسم الشركة بالعربية')
-    company_name = forms.CharField(max_length=255, required=False, label='اسم الشركة بالإنجليزية')
+    company_name_ar = forms.CharField(max_length=255, label=_('اسم الشركة بالعربية'))
+    company_name = forms.CharField(max_length=255, required=False, label=_('اسم الشركة بالإنجليزية'))
     cr_number = forms.CharField(
-        max_length=20, label='رقم السجل التجاري',
-        help_text='رقم السجل التجاري في السعودية يتكوّن غالبًا من 10 أرقام.')
-    sector = forms.ChoiceField(choices=SECTOR_CHOICES_AR, label='القطاع / نوع الجهة')
-    size = forms.ChoiceField(choices=SIZE_CHOICES_AR, label='حجم الشركة')
-    city = forms.CharField(max_length=100, required=False, label='المدينة')
-    country = forms.CharField(max_length=100, required=False, initial='SA', label='الدولة')
+        max_length=20, label=_('رقم السجل التجاري'),
+        help_text=_('رقم السجل التجاري في السعودية يتكوّن غالبًا من 10 أرقام.'))
+    sector = forms.ChoiceField(choices=SECTOR_CHOICES_AR, label=_('القطاع / نوع الجهة'))
+    size = forms.ChoiceField(choices=SIZE_CHOICES_AR, label=_('حجم الشركة'))
+    city = forms.CharField(max_length=100, required=False, label=_('المدينة'))
+    country = forms.CharField(max_length=100, required=False, initial='SA', label=_('الدولة'))
     description = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False,
-                                 label='وصف مختصر')
+                                 label=_('وصف مختصر'))
 
     # أهداف الامتثال
-    target_nca = forms.BooleanField(required=False, label='نحتاج الامتثال لـ NCA')
-    target_aramco = forms.BooleanField(required=False, label='نحتاج الامتثال لـ Aramco')
-    target_sabic = forms.BooleanField(required=False, label='نحتاج الامتثال لـ SABIC')
+    target_nca = forms.BooleanField(required=False, label=_('نحتاج الامتثال لـ NCA'))
+    target_aramco = forms.BooleanField(required=False, label=_('نحتاج الامتثال لـ Aramco'))
+    target_sabic = forms.BooleanField(required=False, label=_('نحتاج الامتثال لـ SABIC'))
 
     # Phase 8C — trust: explicit terms/privacy acceptance (form-only, not stored).
     accept_terms = forms.BooleanField(
         required=True,
-        label='أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة 1SaudiCyber.',
-        error_messages={'required': 'يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب.'})
+        label=_('أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة 1SaudiCyber.'),
+        error_messages={'required': _('يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب.')})
 
     def clean_cr_number(self):
         cr = (self.cleaned_data.get('cr_number') or '').strip()
