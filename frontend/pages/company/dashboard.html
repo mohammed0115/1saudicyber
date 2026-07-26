@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>لوحة التحكم — 1SaudiCyber</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="../../assets/js/app.js"></script>
+  <style>
+    .donut-ring{width:120px;height:120px;border-radius:50%;background:conic-gradient(#0c6b55 0 35%,#c69b5a 35% 55%,#2e6d8e 55% 74%,#8b9d98 74% 87%,#c6d1cc 87%);display:grid;place-items:center;position:relative;}
+    .donut-ring::after{content:"";position:absolute;width:76px;height:76px;border-radius:50%;background:#fff}
+    .donut-ring strong{position:relative;z-index:1;font-size:1.1rem;font-weight:700}
+  </style>
+</head>
+<body class="font-arabic text-sc-ink bg-sc-soft min-h-screen" x-data="companyDash">
+
+<!-- ── Top bar ─────────────────────────────────────────────────── -->
+<header class="bg-white border-b border-sc-line sticky top-0 z-40">
+  <div class="flex items-center justify-between px-5 h-14">
+    <div class="flex items-center gap-3">
+      <!-- Mobile sidebar toggle -->
+      <button class="lg:hidden p-1.5 rounded-lg hover:bg-sc-soft">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <a href="../../index.html" class="flex items-center gap-2">
+        <img src="../../assets/images/logo.png" alt="1SaudiCyber" class="h-8 w-auto">
+      </a>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Notifications -->
+      <button class="relative p-2 rounded-lg hover:bg-sc-soft text-sc-muted">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg>
+        <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-sc-red"></span>
+      </button>
+      <!-- User -->
+      <div class="flex items-center gap-2 border border-sc-line rounded-lg px-3 py-1.5 cursor-pointer hover:bg-sc-soft">
+        <div class="w-7 h-7 rounded-full bg-sc-green text-white flex items-center justify-center text-xs font-bold">AH</div>
+        <div class="text-right hidden sm:block">
+          <p class="text-xs font-semibold leading-tight">أحمد العتيبي</p>
+          <p class="text-[10px] text-sc-muted">شركة الحلول الرقمية</p>
+        </div>
+        <svg class="w-3 h-3 text-sc-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="flex">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <aside class="hidden lg:flex flex-col w-56 bg-white border-l border-sc-line min-h-[calc(100vh-56px)] sticky top-14 shrink-0">
+    <div class="p-4 border-b border-sc-line">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-sc-green/10 text-sc-green flex items-center justify-center text-xs">◈</div>
+        <div>
+          <p class="text-xs font-bold leading-tight">شركة الحلول الرقمية</p>
+          <p class="text-[10px] text-sc-muted">حساب منشأة</p>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto">
+      <template x-for="s in sections" :key="s.id">
+        <button @click="navigate(s.id)"
+          class="sidebar-link w-full"
+          :class="activeSection === s.id ? 'active' : ''"
+          x-text="s.label">
+        </button>
+      </template>
+    </nav>
+    <div class="p-3 border-t border-sc-line">
+      <a href="../../index.html" class="sidebar-link w-full text-sc-red hover:bg-red-50 hover:text-sc-red">
+        تسجيل الخروج
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main content ────────────────────────────────────────── -->
+  <main class="flex-1 p-6 min-w-0">
+
+    <!-- OVERVIEW -->
+    <div x-show="activeSection === 'overview'">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-xl font-bold">نظرة عامة</h1>
+          <p class="text-sm text-sc-muted">مرحبًا أحمد — إليك ملخص حالة الامتثال لمنشأتك</p>
+        </div>
+        <div class="flex gap-3">
+          <button class="btn btn-ghost btn-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>
+            تصدير التقرير
+          </button>
+          <button class="btn btn-primary btn-sm">+ إضافة دليل</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <template x-for="k in kpis" :key="k.label">
+          <div class="kpi-card">
+            <p class="text-xs text-sc-muted mb-1" x-text="k.label"></p>
+            <p class="text-2xl font-bold mb-1" x-text="k.value"></p>
+            <span class="text-xs font-semibold" :class="k.up ? 'text-green-600' : 'text-sc-red'" x-text="k.trend"></span>
+          </div>
+        </template>
+      </div>
+
+      <!-- Frameworks + Gaps -->
+      <div class="grid lg:grid-cols-[1.3fr_1fr] gap-5 mb-5">
+        <!-- Framework progress -->
+        <div class="card p-5">
+          <h3 class="font-bold text-sm mb-4">تقدم الأطر التنظيمية</h3>
+          <div class="space-y-4">
+            <template x-for="f in frameworks" :key="f.name">
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="font-semibold" x-text="f.name"></span>
+                  <span class="font-bold text-sc-green" x-text="f.pct + '%'"></span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="`width:${f.pct}%`"></div>
+                </div>
+              </div>
+            </template>
+          </div>
+          <a href="#" @click.prevent="navigate('controls')" class="text-xs text-sc-green font-semibold mt-4 block hover:underline">عرض جميع الأطر ←</a>
+        </div>
+
+        <!-- Gaps donut -->
+        <div class="card p-5">
+          <h3 class="font-bold text-sm mb-4">الفجوات حسب الفئة</h3>
+          <div class="flex items-center gap-5">
+            <div class="donut-ring shrink-0"><strong>23</strong></div>
+            <div class="flex-1 space-y-2">
+              <div class="flex justify-between text-xs"><span>ضبط الوصول</span><span class="font-bold">8</span></div>
+              <div class="flex justify-between text-xs"><span>إدارة الأصول</span><span class="font-bold">6</span></div>
+              <div class="flex justify-between text-xs"><span>استجابة الحوادث</span><span class="font-bold">4</span></div>
+              <div class="flex justify-between text-xs"><span>إدارة المخاطر</span><span class="font-bold">3</span></div>
+              <div class="flex justify-between text-xs"><span>أخرى</span><span class="font-bold">2</span></div>
+            </div>
+          </div>
+          <a href="#" @click.prevent="navigate('gaps')" class="text-xs text-sc-green font-semibold mt-4 block hover:underline">عرض جميع الفجوات ←</a>
+        </div>
+      </div>
+
+      <!-- Recent activity + RFI alerts -->
+      <div class="grid lg:grid-cols-2 gap-5">
+        <div class="card p-5">
+          <h3 class="font-bold text-sm mb-4">آخر النشاطات</h3>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center shrink-0 mt-0.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold">تم رفع دليل جديد</p>
+                <p class="text-xs text-sc-muted">ECC-4-1 أمن الشبكات — منذ ساعتين</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-sc-gold/10 text-sc-gold flex items-center justify-center shrink-0 mt-0.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold">طلب معلومات جديد (RFI)</p>
+                <p class="text-xs text-sc-muted">ECC-3-1 ضبط الوصول — منذ 3 ساعات</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center shrink-0 mt-0.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold">حكم المدقق: مقبول</p>
+                <p class="text-xs text-sc-muted">ECC-2-2 تصنيف المعلومات — أمس</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Open RFIs -->
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-sm">طلبات المعلومات المفتوحة (RFI)</h3>
+            <span class="badge-gold">1 مفتوح</span>
+          </div>
+          <div class="border border-sc-gold/30 bg-sc-gold/5 rounded-xl p-4">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <p class="text-sm font-bold">RFI-001</p>
+                <p class="text-xs text-sc-muted">ECC-3-1 ضبط الوصول</p>
+              </div>
+              <span class="badge-gold">مفتوح</span>
+            </div>
+            <p class="text-xs text-sc-muted mb-3">يرجى تقديم سجل مراجعة الصلاحيات لآخر ربع سنة مع توقيع المسؤول.</p>
+            <a href="rfi.html" class="btn btn-primary btn-sm w-full text-center">الرد على الطلب</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div x-show="activeSection === 'controls'" x-data="controlsList">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold">الضوابط</h1>
+        <div class="flex gap-3">
+          <div class="relative">
+            <input x-model="search" type="text" placeholder="بحث..." class="field w-56 pl-9 text-sm">
+            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-sc-muted" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+          <select x-model="filter" class="field w-36 text-sm">
+            <option value="all">الكل</option>
+            <option value="complete">مكتمل</option>
+            <option value="partial">جزئي</option>
+            <option value="gap">فجوة</option>
+          </select>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-sc-soft border-b border-sc-line">
+            <tr>
+              <th class="text-right px-4 py-3 font-semibold text-xs text-sc-muted">رقم الضابط</th>
+              <th class="text-right px-4 py-3 font-semibold text-xs text-sc-muted">اسم الضابط</th>
+              <th class="text-right px-4 py-3 font-semibold text-xs text-sc-muted">الإطار</th>
+              <th class="text-right px-4 py-3 font-semibold text-xs text-sc-muted">الحالة</th>
+              <th class="text-right px-4 py-3 font-semibold text-xs text-sc-muted">الأدلة</th>
+              <th class="text-right px-4 py-3 font-semibold text-xs text-sc-muted">إجراء</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-sc-line">
+            <template x-for="c in filtered" :key="c.id">
+              <tr class="hover:bg-sc-soft/50 transition">
+                <td class="px-4 py-3 font-mono text-xs text-sc-muted" x-text="c.id"></td>
+                <td class="px-4 py-3 font-semibold" x-text="c.name"></td>
+                <td class="px-4 py-3 text-xs text-sc-muted" x-text="c.framework"></td>
+                <td class="px-4 py-3">
+                  <span :class="statusClass(c.status)" x-text="statusLabel(c.status)"></span>
+                </td>
+                <td class="px-4 py-3 text-center text-xs" x-text="c.evidence"></td>
+                <td class="px-4 py-3">
+                  <a href="evidence.html" class="text-xs text-sc-green font-semibold hover:underline">عرض</a>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EVIDENCE -->
+    <div x-show="activeSection === 'evidence'" x-data="evidenceUpload">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold">إدارة الأدلة</h1>
+        <button class="btn btn-primary btn-sm">+ رفع دليل جديد</button>
+      </div>
+      <!-- Upload zone -->
+      <div class="card p-6 mb-5"
+        @dragover.prevent="dragging=true"
+        @dragleave="dragging=false"
+        @drop.prevent="handleDrop($event)">
+        <div class="border-2 border-dashed rounded-xl p-10 text-center transition"
+          :class="dragging ? 'border-sc-green bg-sc-green/5' : 'border-sc-line'">
+          <svg class="w-12 h-12 mx-auto mb-3 text-sc-muted" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M7 16a4 4 0 0 1-.88-7.903A5 5 0 1 1 15.9 6L16 6a5 5 0 0 1 1 9.9M15 13l-3-3m0 0-3 3m3-3v12"/></svg>
+          <p class="font-bold mb-1">اسحب الملفات هنا أو</p>
+          <label class="btn btn-ghost btn-sm cursor-pointer">
+            <input type="file" class="hidden" multiple @change="addFiles(Array.from($event.target.files))">
+            اختر من جهازك
+          </label>
+          <p class="text-xs text-sc-muted mt-2">PDF, DOCX, PNG, JPG — الحد الأقصى 50 ميغابايت</p>
+        </div>
+      </div>
+
+      <!-- Files list -->
+      <div class="card p-5 mb-5" x-show="files.length > 0">
+        <h3 class="font-bold text-sm mb-3">الملفات المرفوعة</h3>
+        <div class="space-y-2">
+          <template x-for="(f, i) in files" :key="i">
+            <div class="flex items-center justify-between border border-sc-line rounded-lg px-4 py-2.5">
+              <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-sc-muted" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/></svg>
+                <span class="text-sm" x-text="f.name"></span>
+              </div>
+              <span class="badge-green">جاهز</span>
+            </div>
+          </template>
+        </div>
+        <button @click="analyze" :disabled="analyzing" class="btn btn-primary btn-md w-full mt-4 flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" :class="analyzing ? 'animate-spin' : ''" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <span x-text="analyzing ? 'جارٍ التحليل...' : 'تحليل بالذكاء الاصطناعي'"></span>
+        </button>
+      </div>
+
+      <!-- AI result -->
+      <div class="card p-5 border-sc-green/30 bg-sc-green/3" x-show="aiResult">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-sm">نتيجة تحليل الذكاء الاصطناعي</h3>
+          <div class="flex items-center gap-2">
+            <span class="text-2xl font-extrabold text-sc-green" x-text="aiResult?.score + '%'"></span>
+            <span class="text-xs text-sc-muted">درجة التوافق</span>
+          </div>
+        </div>
+        <p class="text-sm text-sc-muted mb-3" x-text="aiResult?.summary"></p>
+        <div>
+          <p class="text-xs font-bold mb-2">التوصيات:</p>
+          <template x-for="r in aiResult?.recommendations || []" :key="r">
+            <div class="flex items-center gap-2 text-xs mb-1.5">
+              <span class="w-4 h-4 rounded-full bg-sc-gold/20 text-sc-gold flex items-center justify-center text-[10px] shrink-0">!</span>
+              <span x-text="r"></span>
+            </div>
+          </template>
+        </div>
+        <p class="text-[11px] text-sc-muted mt-3 border-t border-sc-line pt-3">⚠️ هذا التحليل استشاري فقط — القرار النهائي للمدقق البشري المعتمد.</p>
+      </div>
+    </div>
+
+    <!-- GAPS -->
+    <div x-show="activeSection === 'gaps'">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold">تحليل الفجوات</h1>
+        <button class="btn btn-primary btn-sm">+ إضافة خطة معالجة</button>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-4 mb-5">
+        <div class="kpi-card border-sc-red/20">
+          <p class="text-xs text-sc-muted mb-1">فجوات حرجة</p>
+          <p class="text-2xl font-bold text-sc-red">8</p>
+        </div>
+        <div class="kpi-card border-sc-gold/20">
+          <p class="text-xs text-sc-muted mb-1">فجوات متوسطة</p>
+          <p class="text-2xl font-bold text-sc-gold">11</p>
+        </div>
+        <div class="kpi-card">
+          <p class="text-xs text-sc-muted mb-1">فجوات منخفضة</p>
+          <p class="text-2xl font-bold">4</p>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-sc-soft border-b border-sc-line">
+            <tr>
+              <th class="text-right px-4 py-3 text-xs font-semibold text-sc-muted">الضابط</th>
+              <th class="text-right px-4 py-3 text-xs font-semibold text-sc-muted">الفجوة</th>
+              <th class="text-right px-4 py-3 text-xs font-semibold text-sc-muted">الأولوية</th>
+              <th class="text-right px-4 py-3 text-xs font-semibold text-sc-muted">المسؤول</th>
+              <th class="text-right px-4 py-3 text-xs font-semibold text-sc-muted">الموعد</th>
+              <th class="text-right px-4 py-3 text-xs font-semibold text-sc-muted">الحالة</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-sc-line">
+            <tr class="hover:bg-sc-soft/50">
+              <td class="px-4 py-3 text-xs font-mono text-sc-muted">ECC-3-1</td>
+              <td class="px-4 py-3 text-sm">غياب سياسة ضبط الوصول الموثقة</td>
+              <td class="px-4 py-3"><span class="badge-red">حرجة</span></td>
+              <td class="px-4 py-3 text-xs">محمد السالم</td>
+              <td class="px-4 py-3 text-xs">2026-08-15</td>
+              <td class="px-4 py-3"><span class="badge-gold">قيد التنفيذ</span></td>
+            </tr>
+            <tr class="hover:bg-sc-soft/50">
+              <td class="px-4 py-3 text-xs font-mono text-sc-muted">ECC-5-1</td>
+              <td class="px-4 py-3 text-sm">عدم وجود خطة استجابة للحوادث محدّثة</td>
+              <td class="px-4 py-3"><span class="badge-red">حرجة</span></td>
+              <td class="px-4 py-3 text-xs">سارة العمري</td>
+              <td class="px-4 py-3 text-xs">2026-09-01</td>
+              <td class="px-4 py-3"><span class="badge-gold">مخطط</span></td>
+            </tr>
+            <tr class="hover:bg-sc-soft/50">
+              <td class="px-4 py-3 text-xs font-mono text-sc-muted">ECC-2-1</td>
+              <td class="px-4 py-3 text-sm">قائمة الأصول غير مكتملة</td>
+              <td class="px-4 py-3"><span class="badge-gold">متوسطة</span></td>
+              <td class="px-4 py-3 text-xs">فهد الحربي</td>
+              <td class="px-4 py-3 text-xs">2026-08-30</td>
+              <td class="px-4 py-3"><span class="badge-green">مكتمل</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RISKS -->
+    <div x-show="activeSection === 'risks'">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold">إدارة المخاطر</h1>
+        <button class="btn btn-primary btn-sm">+ تسجيل مخاطرة جديدة</button>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+        <div class="kpi-card border-sc-red/20"><p class="text-xs text-sc-muted mb-1">مخاطر عالية</p><p class="text-2xl font-bold text-sc-red">5</p></div>
+        <div class="kpi-card border-sc-gold/20"><p class="text-xs text-sc-muted mb-1">مخاطر متوسطة</p><p class="text-2xl font-bold text-sc-gold">9</p></div>
+        <div class="kpi-card"><p class="text-xs text-sc-muted mb-1">مخاطر منخفضة</p><p class="text-2xl font-bold">7</p></div>
+        <div class="kpi-card border-sc-green/20"><p class="text-xs text-sc-muted mb-1">مخاطر مُعالجة</p><p class="text-2xl font-bold text-sc-green">12</p></div>
+      </div>
+      <div class="card p-5">
+        <h3 class="font-bold text-sm mb-4">سجل المخاطر</h3>
+        <div class="space-y-3">
+          <div class="flex items-start gap-4 border border-sc-red/20 bg-sc-red/3 rounded-xl p-4">
+            <div class="w-10 h-10 rounded-xl bg-sc-red/10 text-sc-red flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-bold text-sm">خطر اختراق بيانات العملاء</p>
+                <span class="badge-red">عالي</span>
+              </div>
+              <p class="text-xs text-sc-muted">غياب ضوابط ضبط الوصول يزيد من احتمالية الوصول غير المصرح به لبيانات العملاء.</p>
+              <p class="text-xs text-sc-muted mt-1">المسؤول: محمد السالم | الموعد: 2026-08-15</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 border border-sc-gold/20 bg-sc-gold/3 rounded-xl p-4">
+            <div class="w-10 h-10 rounded-xl bg-sc-gold/10 text-sc-gold flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-bold text-sm">خطر عدم الاستمرارية في الأعمال</p>
+                <span class="badge-gold">متوسط</span>
+              </div>
+              <p class="text-xs text-sc-muted">عدم وجود خطة استمرارية أعمال محدّثة يعرض العمليات للخطر عند حدوث حوادث.</p>
+              <p class="text-xs text-sc-muted mt-1">المسؤول: سارة العمري | الموعد: 2026-09-01</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div x-show="activeSection === 'reports'">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold">تقرير الجاهزية</h1>
+        <button class="btn btn-primary btn-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>
+          تصدير PDF
+        </button>
+      </div>
+      <div class="bg-sc-gold/5 border border-sc-gold/30 rounded-xl p-4 mb-5 flex items-start gap-3">
+        <svg class="w-5 h-5 text-sc-gold shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+        <p class="text-sm text-sc-muted">هذا التقرير يعكس مستوى الجاهزية الحالي ولا يُعدّ شهادة امتثال رسمية أو اعتمادًا حكوميًا.</p>
+      </div>
+      <div class="grid sm:grid-cols-3 gap-4 mb-5">
+        <div class="kpi-card text-center">
+          <p class="text-xs text-sc-muted mb-2">مؤشر الجاهزية الكلي</p>
+          <p class="text-4xl font-extrabold text-sc-green">78%</p>
+          <div class="progress-bar mt-3"><div class="progress-fill" style="width:78%"></div></div>
+        </div>
+        <div class="kpi-card text-center">
+          <p class="text-xs text-sc-muted mb-2">الضوابط المكتملة</p>
+          <p class="text-4xl font-extrabold">33<span class="text-xl text-sc-muted">/42</span></p>
+        </div>
+        <div class="kpi-card text-center">
+          <p class="text-xs text-sc-muted mb-2">حالة المراجعة</p>
+          <p class="text-lg font-bold text-sc-gold mt-2">قيد المراجعة</p>
+          <p class="text-xs text-sc-muted mt-1">م. سعد العتيبي</p>
+        </div>
+      </div>
+      <div class="card p-5">
+        <h3 class="font-bold text-sm mb-4">تفاصيل الجاهزية حسب الإطار</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between text-sm mb-1.5">
+              <span class="font-semibold">NCA ECC</span>
+              <span class="font-bold text-sc-green">81%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:81%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1.5">
+              <span class="font-semibold">Aramco SACS-002</span>
+              <span class="font-bold text-sc-green">74%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:74%"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1.5">
+              <span class="font-semibold">SABIC</span>
+              <span class="font-bold text-sc-gold">65%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill bg-sc-gold" style="width:65%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Default sections placeholder -->
+    <div x-show="!['overview','controls','evidence','gaps','risks','reports'].includes(activeSection)">
+      <div class="text-center py-20 text-sc-muted">
+        <svg class="w-16 h-16 mx-auto mb-4 text-sc-line" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+        <p class="font-semibold mb-1" x-text="sections.find(s=>s.id===activeSection)?.label"></p>
+        <p class="text-sm">هذا القسم جاهز للربط بالباكند</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

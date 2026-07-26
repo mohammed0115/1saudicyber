@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>نطاق الامتثال والتصنيف — 1SaudiCyber</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="../../assets/js/app.js"></script>
+</head>
+<body class="font-arabic text-sc-ink bg-sc-soft min-h-screen flex flex-col">
+
+<!-- Topbar -->
+<header class="bg-white border-b border-sc-line">
+  <div class="max-w-[1420px] mx-auto px-8 h-16 flex items-center justify-between">
+    <a href="../../index.html" class="flex items-center gap-2">
+      <img src="../../assets/images/logo.png" alt="1SaudiCyber" class="h-9 w-auto">
+    </a>
+    <div class="flex items-center gap-2 border border-sc-line rounded-lg px-3 py-1.5">
+      <div class="w-7 h-7 rounded-full bg-sc-green text-white flex items-center justify-center text-xs font-bold">AH</div>
+      <div class="text-right hidden sm:block">
+        <p class="text-xs font-semibold leading-tight">أحمد العتيبي</p>
+        <p class="text-[10px] text-sc-muted">مسؤول المنشأة</p>
+      </div>
+      <svg class="w-3 h-3 text-sc-muted" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+  </div>
+</header>
+
+<!-- Top stepper -->
+<div class="bg-white border-b border-sc-line py-4">
+  <div class="max-w-3xl mx-auto px-6">
+    <div class="flex items-center justify-center">
+      <div class="flex flex-col items-center">
+        <div class="step-dot step-dot-done"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
+        <span class="text-[11px] text-sc-muted mt-1">نوع الحساب</span>
+      </div>
+      <div class="flex-1 h-px bg-sc-green mx-2 mb-4"></div>
+      <div class="flex flex-col items-center">
+        <div class="step-dot step-dot-done"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
+        <span class="text-[11px] text-sc-muted mt-1">إنشاء الحساب</span>
+      </div>
+      <div class="flex-1 h-px bg-sc-green mx-2 mb-4"></div>
+      <div class="flex flex-col items-center">
+        <div class="step-dot step-dot-done"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
+        <span class="text-[11px] text-sc-muted mt-1">إعداد المنشأة</span>
+      </div>
+      <div class="flex-1 h-px bg-sc-green mx-2 mb-4"></div>
+      <div class="flex flex-col items-center">
+        <div class="step-dot step-dot-active">4</div>
+        <span class="text-[11px] font-bold text-sc-green mt-1">نطاق الامتثال والتصنيف</span>
+      </div>
+      <div class="flex-1 h-px bg-sc-line mx-2 mb-4"></div>
+      <div class="flex flex-col items-center">
+        <div class="step-dot step-dot-pending">5</div>
+        <span class="text-[11px] text-sc-muted mt-1">اكتمال الإعداد</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<main class="flex-1 py-8 px-4" x-data="scopeWizard">
+  <div class="max-w-5xl mx-auto">
+
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold mb-1">نطاق الامتثال والتصنيف</h1>
+      <p class="text-sc-muted text-sm">نحتاج إلى بعض المعلومات عن منشأتك لتحديد الأطر التنظيمية والمتطلبات المنطبقة عليك.</p>
+    </div>
+
+    <div class="grid lg:grid-cols-[280px_1fr] gap-6">
+
+      <!-- Left sidebar -->
+      <aside class="space-y-4">
+        <!-- Progress -->
+        <div class="card p-5">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-bold">تقدم الإعداد</span>
+            <span class="text-sm font-bold text-sc-green" x-text="progress + '%'"></span>
+          </div>
+          <div class="progress-bar mb-4">
+            <div class="progress-fill" :style="`width:${progress}%`"></div>
+          </div>
+
+          <!-- Phase 1 -->
+          <div class="mb-3">
+            <p class="text-xs font-bold text-sc-muted mb-2">1. إعداد الحساب</p>
+            <div class="space-y-1.5 pr-3">
+              <div class="flex items-center gap-2 text-xs text-sc-green">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                نوع الحساب
+              </div>
+              <div class="flex items-center gap-2 text-xs text-sc-green">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                إنشاء الحساب
+              </div>
+              <div class="flex items-center gap-2 text-xs text-sc-green">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                تأكيد البريد الإلكتروني
+              </div>
+            </div>
+          </div>
+
+          <!-- Phase 2 -->
+          <div class="mb-3">
+            <p class="text-xs font-bold text-sc-muted mb-2">2. إعداد المنشأة</p>
+            <div class="space-y-1.5 pr-3">
+              <div class="flex items-center gap-2 text-xs text-sc-green">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                بيانات المنشأة الأساسية
+              </div>
+            </div>
+          </div>
+
+          <!-- Phase 3: current -->
+          <div class="mb-3">
+            <p class="text-xs font-bold text-sc-green mb-2">3. نطاق الامتثال والتصنيف</p>
+            <div class="space-y-1.5 pr-3">
+              <template x-for="(sub, i) in [
+                {label:'4.1 مقدمة', done: step > 1},
+                {label:'4.2 طبيعة المنشأة ونشاطها', done: step > 2},
+                {label:'4.3 علاقات وجهات تنظيمية', done: step > 3},
+                {label:'4.4 النطاق والبيئة التقنية', done: step > 4},
+                {label:'4.5 نتيجة النطاق والأطر المنطبقة', done: step > 5},
+                {label:'4.6 مراجعة وتأكيد النتيجة', done: step > 6},
+              ]" :key="i">
+                <div class="flex items-center gap-2 text-xs"
+                  :class="step === i+1 ? 'text-sc-green font-bold' : (sub.done ? 'text-sc-green' : 'text-sc-muted')">
+                  <div class="w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0"
+                    :class="sub.done ? 'bg-sc-green border-sc-green' : (step === i+1 ? 'border-sc-green bg-sc-green' : 'border-sc-line')">
+                    <svg x-show="sub.done || step === i+1" class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <span x-text="sub.label"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Phase 4 -->
+          <div class="opacity-40">
+            <p class="text-xs font-bold text-sc-muted mb-1">إكمال الإعداد</p>
+            <p class="text-xs text-sc-muted pr-3">لم يبدأ بعد</p>
+          </div>
+        </div>
+
+        <!-- Support -->
+        <div class="card p-4 flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-sc-green/10 text-sc-green flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM3 20a6 6 0 0 1 12 0v1H3v-1z"/></svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold mb-1">تحتاج مساعدة؟</p>
+            <p class="text-xs text-sc-muted mb-2">فريق الدعم جاهز لمساعدتك</p>
+            <button class="btn btn-ghost btn-sm text-xs">تواصل مع الدعم</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Wizard content -->
+      <div class="card p-6">
+
+        <!-- Step header -->
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div class="flex items-center gap-3 mb-1">
+              <h2 class="font-bold text-lg" x-text="['4.1 مقدمة','4.2 طبيعة المنشأة ونشاطها','4.3 علاقات وجهات تنظيمية','4.4 النطاق والبيئة التقنية','4.5 نتيجة النطاق والأطر المنطبقة','4.6 مراجعة وتأكيد النتيجة'][step-1]"></h2>
+            </div>
+            <p class="text-xs text-sc-muted">الخطوة <span x-text="step"></span> من <span x-text="totalSteps"></span></p>
+            <div class="progress-bar w-48 mt-2">
+              <div class="progress-fill" :style="`width:${(step/totalSteps)*100}%`"></div>
+            </div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-sc-green/10 text-sc-green flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+        </div>
+
+        <!-- Step 1: Introduction -->
+        <div x-show="step === 1" class="space-y-5">
+          <div class="bg-sc-green/5 border border-sc-green/20 rounded-xl p-5 flex items-start gap-4">
+            <div class="w-14 h-14 rounded-xl bg-sc-green/10 text-sc-green flex items-center justify-center shrink-0">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/></svg>
+            </div>
+            <div>
+              <h3 class="font-bold mb-2">مرحبًا بك في مرحلة تحديد نطاق الامتثال والتصنيف</h3>
+              <p class="text-sm text-sc-muted leading-relaxed">لتمكيننا من تحديد الأطر التنظيمية والضوابط الأكثر ملاءمة لمنشأتك، سنقوم بسؤالك عن طبيعة عملك، علاقتك بالجهات التنظيمية، والعملاء، والخدمات والتقنيات التي تستخدمها.</p>
+            </div>
+          </div>
+
+          <div>
+            <button class="flex items-center gap-2 text-sm font-semibold text-sc-ink mb-3">
+              <svg class="w-4 h-4 text-sc-muted" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+              لماذا نحتاج هذه المعلومات؟
+            </button>
+            <div class="grid sm:grid-cols-4 gap-4">
+              <div class="text-center p-4 bg-sc-soft rounded-xl">
+                <div class="w-10 h-10 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center mx-auto mb-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <p class="text-xs font-bold">تحديد الأطر المناسبة</p>
+                <p class="text-[11px] text-sc-muted mt-1">تحدد الأطر التنظيمية لمتطلبات الامتثال التي تنطبق على منشأتك.</p>
+              </div>
+              <div class="text-center p-4 bg-sc-soft rounded-xl">
+                <div class="w-10 h-10 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center mx-auto mb-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 1 0 0 4m0-4a2 2 0 1 1 0 4m-6 8a2 2 0 1 0 0-4m0 4a2 2 0 1 1 0-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 1 0 0-4m0 4a2 2 0 1 1 0-4m0 4v2m0-6V4"/></svg>
+                </div>
+                <p class="text-xs font-bold">تركيز الجهود</p>
+                <p class="text-[11px] text-sc-muted mt-1">تركز على المتطلبات ذات الأولوية وتتجنب المتطلبات غير المنطبقة.</p>
+              </div>
+              <div class="text-center p-4 bg-sc-soft rounded-xl">
+                <div class="w-10 h-10 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center mx-auto mb-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg>
+                </div>
+                <p class="text-xs font-bold">توفير الوقت والجهد</p>
+                <p class="text-[11px] text-sc-muted mt-1">توفر لك خارطة طريق واضحة لرحلة الامتثال الخاصة بك.</p>
+              </div>
+              <div class="text-center p-4 bg-sc-soft rounded-xl">
+                <div class="w-10 h-10 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center mx-auto mb-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <p class="text-xs font-bold">تحسين الجاهزية</p>
+                <p class="text-[11px] text-sc-muted mt-1">تساعدك على رفع مستوى جاهزيتك السيبرانية بشكل أكثر فعالية.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Privacy note -->
+          <div class="flex items-start gap-4 border border-sc-line rounded-xl p-4">
+            <div class="w-10 h-10 rounded-xl bg-sc-green/10 text-sc-green flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
+            </div>
+            <div>
+              <p class="font-bold text-sm mb-1">خصوصية وأمان البيانات</p>
+              <p class="text-xs text-sc-muted leading-relaxed">جميع البيانات التي تقدمها يتم التعامل معها بسرية تامة واستخدامها فقط لأغراض تحديد نطاق الامتثال والتصنيف. نلتزم رمًا بأعلى معايير حماية البيانات وأمن المعلومات.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Organization type & activities -->
+        <div x-show="step === 2" class="space-y-6">
+          <div class="border border-sc-line rounded-xl p-5">
+            <p class="font-bold mb-3">س 1. ما نوع الكيان الذي يصف منشأتك؟ <span class="text-sc-red">*</span></p>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="opt in ['شركة خاصة','شركة حكومية','جهة شبه حكومية','منظمة غير ربحية','أخرى']" :key="opt">
+                <button @click="entityType = opt"
+                  class="option-chip"
+                  :class="entityType === opt ? 'selected' : ''"
+                  x-text="opt">
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <div class="border border-sc-line rounded-xl p-5">
+            <p class="font-bold mb-3">س 2. ما القطاع الرئيسي الذي تنتمي إليه منشأتك؟ <span class="text-sc-red">*</span></p>
+            <div class="relative">
+              <select x-model="sector" class="field appearance-none pl-8">
+                <option value="">اختر القطاع الرئيسي</option>
+                <option>تقنية المعلومات والاتصالات</option>
+                <option>الطاقة والمرافق</option>
+                <option>النفط والغاز والبتروكيماويات</option>
+                <option>الخدمات المالية</option>
+                <option>الرعاية الصحية</option>
+                <option>التعليم</option>
+                <option>التصنيع</option>
+                <option>التجارة الإلكترونية والتجزئة</option>
+                <option>النقل والخدمات اللوجستية</option>
+                <option>أخرى</option>
+              </select>
+              <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-sc-muted pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+
+          <div class="border border-sc-line rounded-xl p-5">
+            <p class="font-bold mb-3">س 3. ما الأنشطة أو الخدمات الرئيسية التي تقدمها منشأتك؟ <span class="text-sc-red">*</span></p>
+            <p class="text-xs text-sc-muted mb-3">يمكنك اختيار أكثر من خيار</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <template x-for="a in activityOptions" :key="a">
+                <label class="flex items-center gap-2 cursor-pointer border border-sc-line rounded-lg px-3 py-2 hover:border-sc-green/40 transition"
+                  :class="activities.includes(a) ? 'border-sc-green bg-sc-green/5' : ''">
+                  <input type="checkbox" :checked="activities.includes(a)" @change="toggleActivity(a)" class="w-3.5 h-3.5 text-sc-green rounded">
+                  <span class="text-xs" x-text="a"></span>
+                </label>
+              </template>
+            </div>
+          </div>
+
+          <div class="border border-sc-line rounded-xl p-5">
+            <p class="font-bold mb-3">س 4. ما حجم منشأتك تقريبًا من حيث عدد الموظفين؟ <span class="text-sc-red">*</span></p>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="s in sizeOptions" :key="s">
+                <button @click="size = s"
+                  class="option-chip"
+                  :class="size === s ? 'selected' : ''"
+                  x-text="s">
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Regulatory relationships -->
+        <div x-show="step === 3" class="space-y-6">
+          <div class="grid sm:grid-cols-2 gap-4 mb-4">
+            <div class="bg-sc-soft rounded-xl p-4">
+              <p class="text-xs font-bold mb-2 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-sc-muted" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+                توضيح
+              </p>
+              <p class="text-xs text-sc-muted">تشمل الجهات التنظيمية الجهات الحكومية والهيئات الرسمية المحلية.</p>
+              <p class="text-xs text-sc-muted mt-2">ستساعدنا هذه المعلومات في:</p>
+              <ul class="text-xs text-sc-muted mt-1 space-y-0.5 pr-3">
+                <li class="flex items-center gap-1"><svg class="w-3 h-3 text-sc-green" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> تحديد الأطر التنظيمية المناسبة</li>
+                <li class="flex items-center gap-1"><svg class="w-3 h-3 text-sc-green" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> معرفة المتطلبات التعاقدية</li>
+                <li class="flex items-center gap-1"><svg class="w-3 h-3 text-sc-green" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> تقييم مستوى تطبيق الضوابط</li>
+                <li class="flex items-center gap-1"><svg class="w-3 h-3 text-sc-green" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> توجيهك للخطوات الصحيحة</li>
+              </ul>
+            </div>
+            <div class="bg-sc-soft rounded-xl p-4">
+              <p class="text-xs font-bold mb-2 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-sc-muted" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+                أمثلة لعلاقات تعاقدية
+              </p>
+              <ul class="text-xs text-sc-muted space-y-1 pr-3">
+                <li>• عقد مع أرامكو أو سابك</li>
+                <li>• مقاول لجهة حكومية</li>
+                <li>• استخدام خدمات سحابية من مزود عالمي</li>
+                <li>• شراكات مع شركات كبرى</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="border border-sc-line rounded-xl p-5">
+            <p class="font-bold mb-3">س 1. هل تتعامل منشأتك مع جهات حكومية أو تخضع لأي جهة تنظيمية؟ <span class="text-sc-red">*</span></p>
+            <div class="flex gap-3">
+              <template x-for="opt in ['نعم','لا','غير متأكد']" :key="opt">
+                <button class="option-chip flex-1 justify-center"
+                  :class="opt === 'نعم' ? 'selected' : ''"
+                  x-text="opt">
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <div class="border border-sc-line rounded-xl p-5">
+            <p class="font-bold mb-3">س 2. اختر الجهات التنظيمية التي تتعامل معها أو تخضع لإشرافها <span class="text-sc-red">*</span></p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <template x-for="r in regulatoryOptions" :key="r">
+                <label class="flex items-center gap-2 cursor-pointer border border-sc-line rounded-lg px-3 py-2 hover:border-sc-green/40 transition"
+                  :class="regulatoryBodies.includes(r) ? 'border-sc-green bg-sc-green/5' : ''">
+                  <input type="checkbox" :checked="regulatoryBodies.includes(r)" @change="toggleRegulatory(r)" class="w-3.5 h-3.5 text-sc-green rounded">
+                  <span class="text-xs" x-text="r"></span>
+                </label>
+              </template>
+            </div>
+          </div>
+
+          <div class="border border-sc-line rounded-xl p-5">
+            <p class="font-bold mb-3">س 3. هل لدى منشأتك علاقات تعاقدية مع شركات أو كيانات تفرض متطلبات أمن سيبراني محددة؟ <span class="text-sc-red">*</span></p>
+            <p class="text-xs text-sc-muted mb-3">مثل: أرامكو، سابك، عملاء كبار، موردين استراتيجيين، منصات سحابية...</p>
+            <div class="flex gap-3">
+              <template x-for="opt in ['نعم','لا','غير متأكد']" :key="opt">
+                <button class="option-chip flex-1 justify-center"
+                  :class="hasContractual && opt === 'نعم' ? 'selected' : ''"
+                  @click="hasContractual = opt === 'نعم'"
+                  x-text="opt">
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Steps 4-6: placeholder -->
+        <div x-show="step >= 4 && step <= 5" class="text-center py-12 text-sc-muted">
+          <svg class="w-16 h-16 mx-auto mb-4 text-sc-line" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+          <p class="font-semibold mb-1" x-text="['','','','4.4 النطاق والبيئة التقنية','4.5 نتيجة النطاق والأطر المنطبقة',''][step-1]"></p>
+          <p class="text-sm">محتوى هذه الخطوة جاهز للربط بالباكند</p>
+        </div>
+
+        <!-- Step 6: Results -->
+        <div x-show="step === 6" class="space-y-5">
+          <div class="bg-sc-green/5 border border-sc-green/20 rounded-xl p-5">
+            <h3 class="font-bold mb-3">الأطر التنظيمية المقترحة لمنشأتك</h3>
+            <div class="space-y-3">
+              <template x-for="fw in suggestedFrameworks" :key="fw">
+                <div class="flex items-center justify-between bg-white border border-sc-line rounded-lg p-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-sc-green/10 text-sc-green flex items-center justify-center text-xs font-bold">✓</div>
+                    <span class="font-semibold text-sm" x-text="fw"></span>
+                  </div>
+                  <span class="badge-green">موصى به</span>
+                </div>
+              </template>
+            </div>
+          </div>
+          <div class="card p-5 border-sc-gold/30">
+            <p class="text-sm text-sc-muted">بعد اعتماد الإدارة لنطاق الامتثال، ستبدأ رحلة الضوابط والأدلة تلقائيًا.</p>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-between mt-8 pt-5 border-t border-sc-line">
+          <button @click="prev" x-show="step > 1" class="btn btn-ghost btn-md flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+            السابق
+          </button>
+          <div class="flex gap-3 mr-auto">
+            <button x-show="step < totalSteps" class="btn btn-ghost btn-md flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-3.5L5 21V5z"/></svg>
+              حفظ كمسودة
+            </button>
+            <button @click="next" x-show="step < totalSteps" class="btn btn-primary btn-md flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+              التالي
+            </button>
+            <a x-show="step === totalSteps" href="../company/dashboard.html" class="btn btn-primary btn-md flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+              إكمال الإعداد والانتقال للوحة التحكم
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="border-t border-sc-line bg-white py-4 mt-4">
+  <div class="max-w-[1420px] mx-auto px-8 flex flex-wrap justify-between items-center gap-4 text-xs text-sc-muted">
+    <div class="flex gap-5">
+      <a href="#" class="hover:text-sc-green">سياسة الخصوصية</a>
+      <a href="#" class="hover:text-sc-green">شروط الاستخدام</a>
+      <a href="#" class="hover:text-sc-green">الدعم</a>
+    </div>
+    <span>© 2026 1SaudiCyber — <a href="https://gscompany.sa" class="text-sc-green hover:underline">gscompany.sa</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

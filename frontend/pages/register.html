@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>إنشاء حساب جديد — 1SaudiCyber</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="../assets/js/app.js"></script>
+</head>
+<body class="font-arabic text-sc-ink bg-sc-soft min-h-screen flex flex-col">
+
+<!-- Topbar -->
+<header class="bg-white border-b border-sc-line">
+  <div class="max-w-[1420px] mx-auto px-8 h-16 flex items-center justify-between">
+    <a href="../index.html" class="flex items-center gap-2">
+      <img src="../assets/images/logo.png" alt="1SaudiCyber" class="h-9 w-auto">
+    </a>
+    <div class="flex items-center gap-3">
+      <button class="flex items-center gap-1 text-sm text-sc-muted border border-sc-line rounded-lg px-3 py-1.5 hover:bg-sc-soft transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        العربية
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <a href="login.html" class="btn btn-ghost btn-sm">تسجيل الدخول</a>
+    </div>
+  </div>
+</header>
+
+<!-- Stepper -->
+<div class="bg-white border-b border-sc-line py-5">
+  <div class="max-w-2xl mx-auto px-6">
+    <div class="flex items-center justify-center gap-0">
+      <!-- Step 1 active -->
+      <div class="flex flex-col items-center">
+        <div class="step-dot step-dot-active">1</div>
+        <span class="text-xs font-bold text-sc-green mt-1.5">نوع الحساب</span>
+      </div>
+      <div class="flex-1 h-px bg-sc-line mx-3 mb-5"></div>
+      <!-- Step 2 -->
+      <div class="flex flex-col items-center">
+        <div class="step-dot step-dot-pending">2</div>
+        <span class="text-xs text-sc-muted mt-1.5">إنشاء الحساب</span>
+      </div>
+      <div class="flex-1 h-px bg-sc-line mx-3 mb-5"></div>
+      <!-- Step 3 -->
+      <div class="flex flex-col items-center">
+        <div class="step-dot step-dot-pending">3</div>
+        <span class="text-xs text-sc-muted mt-1.5">تأكيد البريد الإلكتروني</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<main class="flex-1 py-12 px-4" x-data="accountType">
+
+  <!-- Skyline decorations -->
+  <div class="fixed bottom-0 left-0 w-48 opacity-20 pointer-events-none">
+    <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="60" width="20" height="60" fill="#0c6b55" rx="1"/>
+      <rect x="35" y="40" width="15" height="80" fill="#0c6b55" rx="1"/>
+      <rect x="55" y="20" width="25" height="100" fill="#0c6b55" rx="1"/>
+      <rect x="85" y="50" width="18" height="70" fill="#0c6b55" rx="1"/>
+      <rect x="108" y="35" width="22" height="85" fill="#0c6b55" rx="1"/>
+      <rect x="135" y="55" width="16" height="65" fill="#0c6b55" rx="1"/>
+      <rect x="156" y="45" width="20" height="75" fill="#0c6b55" rx="1"/>
+    </svg>
+  </div>
+  <div class="fixed bottom-0 right-0 w-48 opacity-20 pointer-events-none scale-x-[-1]">
+    <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="60" width="20" height="60" fill="#0c6b55" rx="1"/>
+      <rect x="35" y="40" width="15" height="80" fill="#0c6b55" rx="1"/>
+      <rect x="55" y="20" width="25" height="100" fill="#0c6b55" rx="1"/>
+      <rect x="85" y="50" width="18" height="70" fill="#0c6b55" rx="1"/>
+    </svg>
+  </div>
+
+  <div class="max-w-2xl mx-auto relative z-10">
+    <div class="text-center mb-10">
+      <h1 class="text-3xl font-bold mb-2">إنشاء حساب جديد</h1>
+      <p class="text-sc-muted">اختر نوع الحساب المناسب للبدء في استخدام منصة 1SaudiCyber</p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-5 mb-8">
+      <!-- Company account -->
+      <button @click="select('company')"
+        class="card p-8 text-center cursor-pointer transition-all duration-200 hover:shadow-card-hover"
+        :class="selected === 'company' ? 'border-sc-green ring-2 ring-sc-green/20' : ''">
+        <div class="w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center"
+          :class="selected === 'company' ? 'bg-sc-green/10' : 'bg-sc-soft'">
+          <svg class="w-10 h-10" :class="selected === 'company' ? 'text-sc-green' : 'text-sc-muted'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">حساب منشأة</h3>
+        <p class="text-sm text-sc-muted leading-relaxed">لإدارات الامتثال والمؤسسات لتقييم وإدارة الامتثال السيبراني</p>
+        <div class="mt-6 btn btn-primary w-full py-3" :class="selected === 'company' ? '' : 'opacity-80'">
+          إنشاء حساب منشأة
+        </div>
+      </button>
+
+      <!-- Individual/Auditor account -->
+      <button @click="select('auditor')"
+        class="card p-8 text-center cursor-pointer transition-all duration-200 hover:shadow-card-hover"
+        :class="selected === 'auditor' ? 'border-sc-gold ring-2 ring-sc-gold/20' : ''">
+        <div class="w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center"
+          :class="selected === 'auditor' ? 'bg-sc-gold/10' : 'bg-sc-soft'">
+          <svg class="w-10 h-10" :class="selected === 'auditor' ? 'text-sc-gold' : 'text-sc-muted'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">حساب فردي</h3>
+        <p class="text-sm text-sc-muted leading-relaxed">للمستشارين والمدققين والأفراد للتعاون مع المنشآت</p>
+        <div class="mt-6 btn w-full py-3 border border-sc-gold text-sc-gold hover:bg-sc-gold/5"
+          :class="selected === 'auditor' ? 'bg-sc-gold/5' : ''">
+          إنشاء حساب فردي
+        </div>
+      </button>
+    </div>
+
+    <!-- Security note -->
+    <div class="card p-4 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-sc-green/10 text-sc-green flex items-center justify-center shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      </div>
+      <div>
+        <p class="font-bold text-sm">بياناتك آمنة معنا</p>
+        <p class="text-xs text-sc-muted">نلتزم بأعلى معايير الأمان لحماية بياناتك ومعلومات منشأتك</p>
+      </div>
+    </div>
+
+    <!-- Proceed button -->
+    <div class="mt-6 text-center" x-show="selected">
+      <button @click="proceed" class="btn btn-primary btn-lg px-16">
+        متابعة
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    </div>
+
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="border-t border-sc-line bg-white py-4">
+  <div class="max-w-[1420px] mx-auto px-8 flex flex-wrap justify-between items-center gap-4 text-xs text-sc-muted">
+    <div class="flex items-center gap-2">
+      <img src="../assets/images/logo.png" alt="" class="h-6 w-auto opacity-70">
+      <span>منصة الامتثال السيبراني</span>
+    </div>
+    <div class="flex gap-5">
+      <a href="#" class="hover:text-sc-green transition">سياسة الخصوصية</a>
+      <a href="#" class="hover:text-sc-green transition">شروط الاستخدام</a>
+      <a href="#" class="hover:text-sc-green transition">الدعم</a>
+      <a href="#" class="hover:text-sc-green transition">الموارد</a>
+      <a href="#" class="hover:text-sc-green transition">عن المنصة</a>
+      <a href="#" class="hover:text-sc-green transition">الشروط والأحكام</a>
+    </div>
+    <span>© 2026 1SaudiCyber. تطوير شركة احصل الحل — <a href="https://gscompany.sa" class="text-sc-green hover:underline">gscompany.sa</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

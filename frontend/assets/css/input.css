@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  }
+
+  body {
+    @apply text-sc-ink bg-white;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.7;
+  }
+
+  a { @apply no-underline; }
+}
+
+@layer components {
+
+  /* ── Buttons ─────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-bold border transition-all duration-200 cursor-pointer;
+  }
+  .btn-primary {
+    @apply bg-sc-green text-white border-sc-green hover:bg-sc-green2 hover:-translate-y-px;
+  }
+  .btn-outline {
+    @apply bg-white text-sc-ink border-sc-gold;
+  }
+  .btn-outline:hover { background-color: #fffaf1; }
+  .btn-ghost {
+    @apply bg-transparent text-sc-green border-sc-line hover:bg-sc-soft;
+  }
+  .btn-sm  { @apply px-4 py-2 text-sm; }
+  .btn-md  { @apply px-6 py-3 text-sm; }
+  .btn-lg  { @apply px-8 py-4 text-base min-h-[52px]; }
+
+  /* ── Form inputs ─────────────────────────────── */
+  .field {
+    @apply w-full rounded-lg border border-sc-line bg-white px-4 py-3 text-sm text-sc-ink placeholder-sc-muted
+           focus:outline-none focus:ring-2 focus:ring-sc-green/30 focus:border-sc-green transition;
+  }
+  .field-label {
+    @apply block text-sm font-semibold text-sc-ink mb-1.5;
+  }
+
+  /* ── Cards ───────────────────────────────────── */
+  .card {
+    @apply bg-white rounded-xl border border-sc-line shadow-card;
+  }
+  .card-lg {
+    @apply bg-white rounded-2xl border border-sc-line shadow-card-lg;
+  }
+
+  /* ── Stepper ─────────────────────────────────── */
+  .step-dot {
+    @apply w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all duration-300;
+  }
+  .step-dot-done {
+    @apply bg-sc-green border-sc-green text-white;
+  }
+  .step-dot-active {
+    @apply bg-sc-green border-sc-green text-white;
+  }
+  .step-dot-pending {
+    @apply bg-white border-sc-line text-sc-muted;
+  }
+
+  /* ── Progress bar ────────────────────────────── */
+  .progress-bar {
+    @apply h-1.5 rounded-full bg-sc-line overflow-hidden;
+  }
+  .progress-fill {
+    @apply h-full rounded-full bg-sc-green transition-all duration-500;
+  }
+
+  /* ── Badge ───────────────────────────────────── */
+  .badge-green {
+    @apply inline-flex items-center gap-1 rounded-full bg-sc-green/10 text-sc-green text-xs font-semibold px-2.5 py-0.5;
+  }
+  .badge-gold {
+    @apply inline-flex items-center gap-1 rounded-full bg-sc-gold/10 text-sc-gold text-xs font-semibold px-2.5 py-0.5;
+  }
+  .badge-red {
+    @apply inline-flex items-center gap-1 rounded-full bg-sc-red/10 text-sc-red text-xs font-semibold px-2.5 py-0.5;
+  }
+
+  /* ── Sidebar nav item ────────────────────────── */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sc-muted hover:bg-sc-soft hover:text-sc-ink transition cursor-pointer;
+  }
+  .sidebar-link.active {
+    @apply bg-[#f3efe8] text-[#765e37] font-semibold;
+  }
+
+  /* ── KPI card ────────────────────────────────── */
+  .kpi-card {
+    @apply card p-4;
+  }
+
+  /* ── Option chip (selectable) ────────────────── */
+  .option-chip {
+    @apply flex items-center gap-2 border border-sc-line rounded-lg px-4 py-2.5 text-sm cursor-pointer
+           hover:border-sc-green/50 hover:bg-sc-soft transition;
+  }
+  .option-chip.selected {
+    @apply border-sc-green bg-sc-green/5 text-sc-green font-semibold;
+  }
+}
+
+@layer utilities {
+  .gold-50 { background-color: #fffaf1; }
+  .text-balance { text-wrap: balance; }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #dfe7e3 transparent;
+  }
+}

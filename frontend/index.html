@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>1SaudiCyber — منصة الامتثال السيبراني</title>
+  <meta name="description" content="منصة سعودية لإدارة الامتثال السيبراني للمنشآت وفق الأطر التنظيمية الوطنية والدولية.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="assets/js/app.js"></script>
+  <style>
+    .sc-enter{opacity:0;transform:translateY(18px);transition:.65s ease}
+    .sc-enter.sc-show{opacity:1;transform:none}
+    .delay-1{transition-delay:.1s}.delay-2{transition-delay:.2s}.delay-3{transition-delay:.3s}
+    .donut-ring{
+      width:110px;height:110px;border-radius:50%;
+      background:conic-gradient(#0c6b55 0 35%,#c69b5a 35% 55%,#2e6d8e 55% 74%,#8b9d98 74% 87%,#c6d1cc 87%);
+      display:grid;place-items:center;position:relative;
+    }
+    .donut-ring::after{content:"";position:absolute;width:70px;height:70px;border-radius:50%;background:#fff}
+    .donut-ring strong{position:relative;z-index:1;font-size:1rem;font-weight:700}
+    .city-bg{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 200'%3E%3Crect x='0' y='80' width='40' height='120' fill='%23e8f0ec' rx='2'/%3E%3Crect x='50' y='60' width='30' height='140' fill='%23dce8e2' rx='2'/%3E%3Crect x='90' y='40' width='50' height='160' fill='%23e8f0ec' rx='2'/%3E%3Crect x='150' y='70' width='35' height='130' fill='%23dce8e2' rx='2'/%3E%3Crect x='195' y='50' width='45' height='150' fill='%23e8f0ec' rx='2'/%3E%3Crect x='250' y='30' width='30' height='170' fill='%23dce8e2' rx='2'/%3E%3Crect x='290' y='55' width='40' height='145' fill='%23e8f0ec' rx='2'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:bottom left;background-size:auto 180px;
+    }
+  </style>
+</head>
+<body class="font-arabic text-sc-ink bg-white" x-data>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TOPBAR
+═══════════════════════════════════════════════════════════════ -->
+<header data-topbar x-data="topbar" class="sticky top-0 z-50 bg-white border-b border-sc-line transition-shadow duration-300" :class="scrolled ? 'shadow-card' : ''">
+  <div class="max-w-[1420px] mx-auto px-9 h-[88px] flex items-center justify-between gap-8">
+
+    <!-- Brand -->
+    <a href="index.html" class="flex items-center gap-3 shrink-0">
+      <img src="assets/images/logo.png" alt="1SaudiCyber" class="h-10 w-auto">
+    </a>
+
+    <!-- Nav links (desktop) -->
+    <nav class="hidden lg:flex items-center gap-10 text-sm font-semibold">
+      <a href="#product"     class="hover:text-sc-green transition">المنتج</a>
+      <a href="#frameworks"  class="hover:text-sc-green transition">الأطر التنظيمية</a>
+      <a href="#how"         class="hover:text-sc-green transition">كيف يعمل</a>
+      <a href="#trust"       class="hover:text-sc-green transition">الأمان والثقة</a>
+      <a href="#about"       class="hover:text-sc-green transition">عن المنصة</a>
+    </nav>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+      <button class="hidden sm:flex items-center gap-1 text-sm text-sc-ink border border-sc-line rounded-lg px-3 py-2 hover:bg-sc-soft transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        العربية
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <a href="pages/login.html" class="btn btn-ghost btn-sm hidden sm:inline-flex">تسجيل الدخول</a>
+      <a href="pages/register.html" class="btn btn-primary btn-sm">ابدأ الآن</a>
+      <!-- Mobile menu toggle -->
+      <button class="lg:hidden p-2" @click="mobileOpen = !mobileOpen">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path x-show="!mobileOpen" d="M4 6h16M4 12h16M4 18h16"/>
+          <path x-show="mobileOpen"  d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile nav -->
+  <div x-show="mobileOpen" x-transition class="lg:hidden border-t border-sc-line bg-white px-6 py-4 flex flex-col gap-4 text-sm font-semibold">
+    <a href="#product"    @click="mobileOpen=false" class="hover:text-sc-green">المنتج</a>
+    <a href="#frameworks" @click="mobileOpen=false" class="hover:text-sc-green">الأطر التنظيمية</a>
+    <a href="#how"        @click="mobileOpen=false" class="hover:text-sc-green">كيف يعمل</a>
+    <a href="#trust"      @click="mobileOpen=false" class="hover:text-sc-green">الأمان والثقة</a>
+    <a href="pages/login.html"    class="btn btn-ghost btn-sm w-full text-center">تسجيل الدخول</a>
+    <a href="pages/register.html" class="btn btn-primary btn-sm w-full text-center">ابدأ الآن</a>
+  </div>
+</header>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════════════════════ -->
+<section id="product" class="pt-12 pb-8 bg-gradient-to-b from-white to-sc-soft/40">
+  <div class="max-w-[1420px] mx-auto px-9">
+    <div class="grid lg:grid-cols-[1fr_1.1fr] gap-16 items-center">
+
+      <!-- Copy -->
+      <div class="sc-enter order-2 lg:order-1">
+        <div class="inline-flex items-center gap-2 bg-sc-green/8 text-sc-green text-xs font-bold px-3 py-1.5 rounded-full mb-5 border border-sc-green/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-sc-green animate-pulse"></span>
+          منصة الامتثال السيبراني الأولى في المملكة
+        </div>
+        <h1 class="text-[clamp(2.6rem,4.5vw,4.8rem)] font-extrabold leading-[1.15] tracking-tight mb-6">
+          امتثال سيبراني أبسط<br>لمنشأتك في السعودية
+        </h1>
+        <p class="text-lg text-sc-muted max-w-xl mb-8 leading-relaxed">
+          قيّم وحسّن امتثالك لمتطلبات الأطر التنظيمية، وأدر الأدلة والفجوات والإجراءات التصحيحية في منصة واحدة ذكية وموثوقة.
+        </p>
+        <div class="flex flex-wrap gap-4 mb-10">
+          <a href="pages/register.html" class="btn btn-primary btn-lg">ابدأ الآن</a>
+          <a href="#how" class="btn btn-outline btn-lg flex items-center gap-2">
+            اعرف كيف تعمل
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          </a>
+        </div>
+        <!-- Feature pills -->
+        <div class="flex flex-wrap gap-5">
+          <div class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-full border border-sc-line bg-sc-soft flex items-center justify-center text-sc-green">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            </span>
+            <div><p class="text-xs font-bold">تحليل ذكي</p><p class="text-[11px] text-sc-muted">دعم مساعد لاتخاذ القرار</p></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-full border border-sc-line bg-sc-soft flex items-center justify-center text-sc-green">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/></svg>
+            </span>
+            <div><p class="text-xs font-bold">ربط بين الأطر</p><p class="text-[11px] text-sc-muted">وتقليل التكرار</p></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-full border border-sc-line bg-sc-soft flex items-center justify-center text-sc-green">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </span>
+            <div><p class="text-xs font-bold">أمن موثوق</p><p class="text-[11px] text-sc-muted">وفق أفضل الممارسات</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard mockup -->
+      <div class="sc-enter delay-1 order-1 lg:order-2" x-data="heroDash">
+        <div class="card-lg overflow-hidden shadow-card-lg">
+          <div class="grid grid-cols-[148px_1fr]">
+            <!-- Sidebar -->
+            <aside class="border-l border-sc-line bg-white p-3">
+              <div class="flex items-center gap-2 mb-3 px-2">
+                <span class="w-6 h-6 rounded bg-sc-green/10 text-sc-green flex items-center justify-center text-xs">◈</span>
+                <span class="text-[11px] font-bold">شركة تجريبية</span>
+              </div>
+              <template x-for="s in ['نظرة عامة','التقييمات','الضوابط','الأدلة','الفجوات','المعالجة','التدقيق','المراقبة','التقارير','الإعدادات']" :key="s">
+                <button @click="activeNav = s"
+                  class="w-full text-right px-2.5 py-2 rounded-md text-[11px] mb-0.5 transition"
+                  :class="activeNav === s ? 'bg-[#f3efe8] text-[#765e37] font-semibold' : 'text-sc-muted hover:bg-sc-soft'"
+                  x-text="s"></button>
+              </template>
+            </aside>
+            <!-- Content -->
+            <section class="p-4 min-h-[480px]">
+              <h3 class="text-sm font-bold mb-3">نظرة عامة</h3>
+              <!-- KPIs -->
+              <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="border border-sc-line rounded-lg p-2.5">
+                  <p class="text-[10px] text-sc-muted">الأدلة</p>
+                  <p class="text-lg font-bold my-0.5">1,254</p>
+                  <p class="text-[10px] text-green-600">↑ 15%</p>
+                </div>
+                <div class="border border-sc-line rounded-lg p-2.5">
+                  <p class="text-[10px] text-sc-muted">الإجراءات</p>
+                  <p class="text-lg font-bold my-0.5">48</p>
+                  <p class="text-[10px] text-sc-red">↓ 8</p>
+                </div>
+                <div class="border border-sc-line rounded-lg p-2.5">
+                  <p class="text-[10px] text-sc-muted">الفجوات</p>
+                  <p class="text-lg font-bold my-0.5">23</p>
+                  <p class="text-[10px] text-sc-red">↓ 5</p>
+                </div>
+                <div class="border border-sc-line rounded-lg p-2.5">
+                  <p class="text-[10px] text-sc-muted">الجاهزية</p>
+                  <p class="text-lg font-bold my-0.5">78%</p>
+                  <p class="text-[10px] text-green-600">↑ 12%</p>
+                </div>
+              </div>
+              <!-- Progress + Donut -->
+              <div class="grid grid-cols-[1.1fr_.9fr] gap-3">
+                <div>
+                  <p class="text-[10px] font-bold mb-2">تقدم الأطر</p>
+                  <template x-for="f in frameworks" :key="f.name">
+                    <div class="mb-2">
+                      <div class="flex justify-between text-[9px] mb-0.5">
+                        <span x-text="f.name"></span><span x-text="f.pct+'%'"></span>
+                      </div>
+                      <div class="h-1.5 bg-sc-line rounded-full overflow-hidden">
+                        <div class="h-full bg-sc-green rounded-full" :style="`width:${f.pct}%`"></div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+                <div class="flex flex-col items-center">
+                  <p class="text-[10px] font-bold mb-2 self-start">الفجوات</p>
+                  <div class="donut-ring"><strong>23</strong></div>
+                  <div class="mt-2 w-full">
+                    <template x-for="g in gaps" :key="g.label">
+                      <div class="flex justify-between text-[9px] mb-0.5">
+                        <span x-text="g.label"></span><span class="font-bold" x-text="g.count"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <p class="text-[10px] text-sc-muted mt-2 text-left">بيانات توضيحية لأغراض العرض فقط</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FRAMEWORKS
+═══════════════════════════════════════════════════════════════ -->
+<section id="frameworks" class="py-12 border-y border-sc-line bg-white">
+  <div class="max-w-[1420px] mx-auto px-9">
+    <h2 class="text-center text-xl font-bold mb-8">ندعم الأطر التنظيمية الرئيسية في المملكة</h2>
+    <div class="grid sm:grid-cols-3 gap-8">
+      <article class="flex items-center gap-4 sm:border-l border-sc-line sm:pl-8">
+        <div class="w-16 h-12 flex items-center justify-center text-[#147292] font-extrabold text-lg bg-[#e8f4f8] rounded-lg shrink-0">NCA</div>
+        <div>
+          <p class="font-bold text-sm">الهيئة الوطنية للأمن السيبراني</p>
+          <p class="text-[11px] text-sc-muted">الضوابط الأساسية للأمن السيبراني</p>
+        </div>
+      </article>
+      <article class="flex items-center gap-4 sm:border-l border-sc-line sm:pl-8">
+        <div class="w-16 h-12 flex items-center justify-center text-[#2b7c59] font-extrabold text-lg bg-[#e6f4ee] rounded-lg shrink-0">A</div>
+        <div>
+          <p class="font-bold text-sm">أرامكو — SACS-002</p>
+          <p class="text-[11px] text-sc-muted">معيار أمان الموردين</p>
+        </div>
+      </article>
+      <article class="flex items-center gap-4">
+        <div class="w-16 h-12 flex items-center justify-center text-[#c88a28] font-extrabold text-sm bg-[#fdf4e3] rounded-lg shrink-0">SABIC</div>
+        <div>
+          <p class="font-bold text-sm">متطلبات سابك</p>
+          <p class="text-[11px] text-sc-muted">إطار الأمن السيبراني</p>
+        </div>
+      </article>
+    </div>
+    <div class="text-center mt-6">
+      <a href="#frameworks" class="text-sc-green text-sm font-semibold hover:underline">عرض جميع الأطر المدعومة ←</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CHALLENGE vs SOLUTION
+═══════════════════════════════════════════════════════════════ -->
+<section id="about" class="py-16 bg-sc-soft border-b border-sc-line">
+  <div class="max-w-[1420px] mx-auto px-9">
+    <div class="grid lg:grid-cols-3 gap-12 items-center">
+
+      <!-- Challenge -->
+      <div class="sc-enter">
+        <h2 class="text-xl font-bold mb-5">التحدي الحالي</h2>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3 text-sm text-[#334c49]">
+            <span class="w-5 h-5 rounded border border-sc-gold/40 flex items-center justify-center text-sc-gold text-xs mt-0.5 shrink-0">▢</span>
+            بيانات متناثرة في ملفات وجداول متعددة
+          </li>
+          <li class="flex items-start gap-3 text-sm text-[#334c49]">
+            <span class="w-5 h-5 rounded border border-sc-gold/40 flex items-center justify-center text-sc-gold text-xs mt-0.5 shrink-0">⌘</span>
+            تكرار الجهد بين الأطر التنظيمية
+          </li>
+          <li class="flex items-start gap-3 text-sm text-[#334c49]">
+            <span class="w-5 h-5 rounded border border-sc-gold/40 flex items-center justify-center text-sc-gold text-xs mt-0.5 shrink-0">△</span>
+            صعوبة تتبع الفجوات والإجراءات
+          </li>
+          <li class="flex items-start gap-3 text-sm text-[#334c49]">
+            <span class="w-5 h-5 rounded border border-sc-gold/40 flex items-center justify-center text-sc-gold text-xs mt-0.5 shrink-0">◷</span>
+            وقت طويل لإعداد تقارير التدقيق
+          </li>
+          <li class="flex items-start gap-3 text-sm text-[#334c49]">
+            <span class="w-5 h-5 rounded border border-sc-gold/40 flex items-center justify-center text-sc-gold text-xs mt-0.5 shrink-0">◉</span>
+            رؤية محدودة للوضع الحالي
+          </li>
+        </ul>
+      </div>
+
+      <!-- Illustration -->
+      <div class="sc-enter delay-1 flex justify-center">
+        <div class="relative w-56 h-56">
+          <div class="absolute inset-0 rounded-2xl border-2 border-sc-line bg-white flex flex-col overflow-hidden shadow-card">
+            <div class="h-6 bg-sc-soft border-b border-sc-line flex items-center px-3 gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-sc-line"></span>
+              <span class="w-2 h-2 rounded-full bg-sc-line"></span>
+              <span class="w-2 h-2 rounded-full bg-sc-line"></span>
+            </div>
+            <div class="p-4 flex-1 space-y-2">
+              <div class="h-2 w-3/4 bg-sc-line rounded"></div>
+              <div class="h-2 w-1/2 bg-sc-line rounded"></div>
+              <div class="h-2 w-2/3 bg-sc-line rounded"></div>
+              <div class="flex gap-2 mt-3">
+                <div class="w-10 h-10 rounded-full border-4 border-sc-line"></div>
+                <div class="w-10 h-10 rounded-full border-4 border-sc-line"></div>
+                <div class="w-10 h-10 rounded-full border-4 border-sc-line"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Shield overlay -->
+          <div class="absolute -bottom-3 -left-3 w-14 h-14 bg-sc-green rounded-xl flex items-center justify-center shadow-lg">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solution -->
+      <div class="sc-enter delay-2">
+        <h2 class="text-xl font-bold mb-3">الحل مع 1SaudiCyber</h2>
+        <p class="text-sm text-sc-muted mb-5">منصة موحدة تربط متطلبات الامتثال بالأدلة والفجوات والإجراءات وتمنح فرقك رؤية واضحة للعمل.</p>
+        <ul class="space-y-2.5">
+          <li class="flex items-center gap-2.5 text-sm">
+            <span class="w-5 h-5 rounded-full bg-sc-green flex items-center justify-center text-white text-[10px] shrink-0">✓</span>
+            توحيد البيانات والأدلة في منصة واحدة
+          </li>
+          <li class="flex items-center gap-2.5 text-sm">
+            <span class="w-5 h-5 rounded-full bg-sc-green flex items-center justify-center text-white text-[10px] shrink-0">✓</span>
+            ربط ذكي بين المتطلبات عبر الأطر
+          </li>
+          <li class="flex items-center gap-2.5 text-sm">
+            <span class="w-5 h-5 rounded-full bg-sc-green flex items-center justify-center text-white text-[10px] shrink-0">✓</span>
+            تتبع الفجوات والإجراءات التصحيحية
+          </li>
+          <li class="flex items-center gap-2.5 text-sm">
+            <span class="w-5 h-5 rounded-full bg-sc-green flex items-center justify-center text-white text-[10px] shrink-0">✓</span>
+            تقارير جاهزة للمراجعة
+          </li>
+          <li class="flex items-center gap-2.5 text-sm">
+            <span class="w-5 h-5 rounded-full bg-sc-green flex items-center justify-center text-white text-[10px] shrink-0">✓</span>
+            مراقبة مستمرة وتحسين متواصل
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FEATURES
+═══════════════════════════════════════════════════════════════ -->
+<section class="py-16 bg-white">
+  <div class="max-w-[1420px] mx-auto px-9">
+    <h2 class="text-center text-xl font-bold mb-10">مميزات المنصة</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <article class="card p-5 text-center sc-enter hover:shadow-card-hover transition-shadow">
+        <span class="w-10 h-10 rounded-xl border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/></svg>
+        </span>
+        <p class="text-xs font-bold">التقييم</p>
+        <p class="text-[10px] text-sc-muted mt-1">تقييم الضوابط وتحديد مستوى الجاهزية</p>
+      </article>
+      <article class="card p-5 text-center sc-enter delay-1 hover:shadow-card-hover transition-shadow">
+        <span class="w-10 h-10 rounded-xl border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </span>
+        <p class="text-xs font-bold">إدارة الضوابط</p>
+        <p class="text-[10px] text-sc-muted mt-1">تنظيم المتطلبات وربطها بالأنشطة</p>
+      </article>
+      <article class="card p-5 text-center sc-enter delay-2 hover:shadow-card-hover transition-shadow">
+        <span class="w-10 h-10 rounded-xl border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+        </span>
+        <p class="text-xs font-bold">إدارة الأدلة</p>
+        <p class="text-[10px] text-sc-muted mt-1">جمع الأدلة وربطها بالضوابط</p>
+      </article>
+      <article class="card p-5 text-center sc-enter hover:shadow-card-hover transition-shadow">
+        <span class="w-10 h-10 rounded-xl border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </span>
+        <p class="text-xs font-bold">الفجوات والمعالجة</p>
+        <p class="text-[10px] text-sc-muted mt-1">تحديد الفجوات ومتابعة خطط المعالجة</p>
+      </article>
+      <article class="card p-5 text-center sc-enter delay-1 hover:shadow-card-hover transition-shadow">
+        <span class="w-10 h-10 rounded-xl border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/></svg>
+        </span>
+        <p class="text-xs font-bold">التدقيق والتقارير</p>
+        <p class="text-[10px] text-sc-muted mt-1">تقارير جاهزية ومراجعة منظمة</p>
+      </article>
+      <article class="card p-5 text-center sc-enter delay-2 hover:shadow-card-hover transition-shadow">
+        <span class="w-10 h-10 rounded-xl border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/></svg>
+        </span>
+        <p class="text-xs font-bold">المراقبة والتحسين</p>
+        <p class="text-[10px] text-sc-muted mt-1">متابعة مستمرة لتحسين مستوى الامتثال</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     AI SECTION
+═══════════════════════════════════════════════════════════════ -->
+<section class="py-16 bg-sc-soft border-y border-sc-line">
+  <div class="max-w-[1420px] mx-auto px-9">
+    <div class="grid lg:grid-cols-[.7fr_1.5fr] gap-12 items-center">
+      <div class="sc-enter">
+        <h2 class="text-xl font-bold mb-3">ذكاء اصطناعي يساعدك على اتخاذ القرار</h2>
+        <p class="text-sm text-sc-muted mb-4">الذكاء الاصطناعي لتسريع العمل وليس لاستبدال الخبرة البشرية، مع ضمان الحوكمة والشفافية.</p>
+        <a href="#" class="text-sc-green text-sm font-semibold hover:underline">اعرف المزيد عن الذكاء الاصطناعي ←</a>
+      </div>
+      <div class="sc-enter delay-1 grid grid-cols-4 gap-3 items-center">
+        <div class="text-center">
+          <span class="w-11 h-11 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center mx-auto mb-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/></svg>
+          </span>
+          <p class="text-xs font-bold">تحليل البيانات</p>
+          <p class="text-[10px] text-sc-muted">اكتشاف الأنماط والفجوات</p>
+        </div>
+        <div class="text-sc-muted text-xl text-center">←</div>
+        <div class="text-center">
+          <span class="w-11 h-11 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center mx-auto mb-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          </span>
+          <p class="text-xs font-bold">توصيات ذكية</p>
+          <p class="text-[10px] text-sc-muted">إجراءات وتحسينات مقترحة</p>
+        </div>
+        <div class="text-sc-muted text-xl text-center hidden">←</div>
+        <div class="text-center col-span-2 lg:col-span-1">
+          <span class="w-11 h-11 rounded-full bg-sc-green/10 text-sc-green flex items-center justify-center mx-auto mb-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z"/></svg>
+          </span>
+          <p class="text-xs font-bold">مراجعة بشرية</p>
+          <p class="text-[10px] text-sc-muted">تقييم واعتماد التوصيات</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HOW IT WORKS
+═══════════════════════════════════════════════════════════════ -->
+<section id="how" class="py-16 bg-white">
+  <div class="max-w-[1420px] mx-auto px-9">
+    <h2 class="text-center text-xl font-bold mb-12">كيف تعمل</h2>
+    <div class="relative grid grid-cols-1 sm:grid-cols-5 gap-6">
+      <!-- connector line -->
+      <div class="hidden sm:block absolute top-5 right-[10%] left-[10%] h-px bg-sc-line"></div>
+      <template x-for="(step, i) in [
+        {n:'1', title:'تعريف المنشأة',       desc:'أضف بيانات منشأتك وفريق الامتثال'},
+        {n:'2', title:'تحديد نطاق الامتثال', desc:'اختر الأطر وحدد النطاق المطلوب'},
+        {n:'3', title:'تقييم الضوابط',       desc:'قيّم وضع كل ضابط وحدد مستوى النضج'},
+        {n:'4', title:'إضافة الأدلة',        desc:'ارفع واربط الأدلة الداعمة بكل متطلب'},
+        {n:'5', title:'المعالجة والمراقبة',  desc:'أغلق الفجوات وراقب التحسين بشكل مستمر'},
+      ]" :key="i">
+        <div class="text-center relative z-10 sc-enter" :class="`delay-${i}`">
+          <div class="w-10 h-10 rounded-full border-2 border-sc-gold bg-white flex items-center justify-center text-sm font-bold text-[#7b5a29] mx-auto mb-3" x-text="step.n"></div>
+          <p class="text-sm font-bold mb-1" x-text="step.title"></p>
+          <p class="text-[11px] text-sc-muted" x-text="step.desc"></p>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TRUST / CTA
+═══════════════════════════════════════════════════════════════ -->
+<section id="trust" class="py-12 city-bg bg-sc-soft">
+  <div class="max-w-[1420px] mx-auto px-9">
+    <div class="bg-gradient-to-l from-sc-soft2 via-white to-sc-soft2 border border-sc-line rounded-2xl p-8 grid lg:grid-cols-[1.4fr_1fr] gap-10 items-center">
+      <!-- Security icons -->
+      <div class="grid grid-cols-3 sm:grid-cols-5 gap-4">
+        <div class="text-center">
+          <span class="w-11 h-11 rounded-full bg-white border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-2 shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/></svg>
+          </span>
+          <p class="text-[10px] font-semibold">مصادقة متعددة</p>
+        </div>
+        <div class="text-center">
+          <span class="w-11 h-11 rounded-full bg-white border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-2 shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6 3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM7 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
+          </span>
+          <p class="text-[10px] font-semibold">صلاحيات الأدوار</p>
+        </div>
+        <div class="text-center">
+          <span class="w-11 h-11 rounded-full bg-white border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-2 shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2m14 0V9a2 2 0 0 0-2-2M5 11V9a2 2 0 0 1 2-2m0 0V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2M7 7h10"/></svg>
+          </span>
+          <p class="text-[10px] font-semibold">عزل آمن</p>
+        </div>
+        <div class="text-center">
+          <span class="w-11 h-11 rounded-full bg-white border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-2 shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M8 11V7a4 4 0 0 1 8 0m-4 3v6m-4 0h8a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2z"/></svg>
+          </span>
+          <p class="text-[10px] font-semibold">نقل مشفر</p>
+        </div>
+        <div class="text-center">
+          <span class="w-11 h-11 rounded-full bg-white border border-sc-line text-sc-green flex items-center justify-center mx-auto mb-2 shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </span>
+          <p class="text-[10px] font-semibold">تشفير البيانات</p>
+        </div>
+      </div>
+      <!-- CTA copy -->
+      <div>
+        <h2 class="text-2xl font-bold mb-2">جاهز لتبسيط رحلة الامتثال السيبراني؟</h2>
+        <p class="text-sm text-sc-muted mb-5">ابدأ اليوم وكن دائمًا جاهزًا للامتثال والتدقيق.</p>
+        <div class="flex flex-wrap gap-3">
+          <a href="pages/register.html" class="btn btn-primary btn-lg">ابدأ الآن</a>
+          <a href="#how" class="btn btn-outline btn-lg">احجز عرضًا تجريبيًا</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════════════════ -->
+<footer class="border-t border-sc-line bg-white pt-10 pb-5">
+  <div class="max-w-[1420px] mx-auto px-9">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 mb-8">
+      <!-- Brand -->
+      <div class="col-span-2 sm:col-span-3 lg:col-span-1">
+        <a href="index.html" class="flex items-center gap-2 mb-3">
+          <img src="assets/images/logo.png" alt="1SaudiCyber" class="h-9 w-auto">
+        </a>
+        <p class="text-xs text-sc-muted max-w-[220px] leading-relaxed">منصة سعودية لمساعدة المنشآت على تحقيق الامتثال السيبراني بكفاءة ووضوح.</p>
+        <div class="flex gap-3 mt-4">
+          <a href="#" class="w-8 h-8 rounded-lg border border-sc-line flex items-center justify-center text-sc-muted hover:text-sc-green hover:border-sc-green transition">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+          </a>
+          <a href="#" class="w-8 h-8 rounded-lg border border-sc-line flex items-center justify-center text-sc-muted hover:text-sc-green hover:border-sc-green transition">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg>
+          </a>
+          <a href="#" class="w-8 h-8 rounded-lg border border-sc-line flex items-center justify-center text-sc-muted hover:text-sc-green hover:border-sc-green transition">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>
+          </a>
+        </div>
+      </div>
+      <!-- Links -->
+      <div class="flex flex-col gap-2">
+        <p class="text-xs font-bold mb-1">المنتج</p>
+        <a href="#product"    class="text-xs text-sc-muted hover:text-sc-green transition">التقييمات</a>
+        <a href="#"           class="text-xs text-sc-muted hover:text-sc-green transition">الضوابط</a>
+        <a href="#"           class="text-xs text-sc-muted hover:text-sc-green transition">الأدلة</a>
+        <a href="#"           class="text-xs text-sc-muted hover:text-sc-green transition">الفجوات</a>
+        <a href="#"           class="text-xs text-sc-muted hover:text-sc-green transition">التقارير</a>
+      </div>
+      <div class="flex flex-col gap-2">
+        <p class="text-xs font-bold mb-1">الأطر التنظيمية</p>
+        <a href="#frameworks" class="text-xs text-sc-muted hover:text-sc-green transition">الهيئة الوطنية للأمن السيبراني</a>
+        <a href="#frameworks" class="text-xs text-sc-muted hover:text-sc-green transition">أرامكو SACS-002</a>
+        <a href="#frameworks" class="text-xs text-sc-muted hover:text-sc-green transition">متطلبات سابك</a>
+      </div>
+      <div class="flex flex-col gap-2">
+        <p class="text-xs font-bold mb-1">الموارد</p>
+        <a href="#" class="text-xs text-sc-muted hover:text-sc-green transition">الدليل</a>
+        <a href="#" class="text-xs text-sc-muted hover:text-sc-green transition">الأسئلة الشائعة</a>
+        <a href="#" class="text-xs text-sc-muted hover:text-sc-green transition">المدونة</a>
+      </div>
+      <div class="flex flex-col gap-2">
+        <p class="text-xs font-bold mb-1">تطوير بواسطة</p>
+        <a href="https://gscompany.sa/" target="_blank" class="text-xs text-sc-green font-semibold hover:underline">شركة احصل الحل<br><span class="text-sc-muted font-normal">gscompany.sa</span></a>
+      </div>
+    </div>
+    <div class="border-t border-sc-line pt-4 text-center text-[11px] text-sc-muted">
+      © 2026 1SaudiCyber. جميع الحقوق محفوظة. تطوير شركة احصل الحل.
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
