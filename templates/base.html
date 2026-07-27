@@ -1,64 +1,45 @@
-{% load i18n %}<!DOCTYPE html>
+{% load i18n static %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'ar' }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}1SaudiCyber{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        /* Calm "Sakinah" palette — muted pine (was vivid/clashing greens). */
-                        'gov-green': {
-                            50: '#eff4f1',
-                            100: '#e1ece7',
-                            200: '#c4d9d0',
-                            300: '#9ec2b3',
-                            400: '#6fa48f',
-                            500: '#4c8a72',
-                            600: '#3d7961',
-                            700: '#356a54',
-                            800: '#2a5646',
-                            900: '#1f4135',
-                            950: '#12271f',
-                        },
-                        /* Warm greige neutrals (was cold blue-grays). */
-                        'gov-gray': {
-                            50: '#f6f5f1',
-                            100: '#efede7',
-                            200: '#e3e1d9',
-                            300: '#cfcdc3',
-                            400: '#a8a79c',
-                            500: '#797a70',
-                            600: '#5b5c53',
-                            700: '#42433c',
-                            800: '#2b2c27',
-                            900: '#1a1b17',
-                        },
-                        /* Muted semantics + sand accent, separate from the brand hue. */
-                        'gov-sand': '#b49a6a',
-                        'gov-ok': '#4e9c7f',
-                        'gov-warn': '#c08a3e',
-                        'gov-crit': '#b4675c',
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'Noto Sans Arabic', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', 'Noto Sans Arabic', sans-serif; }
+        /* ── Calm, government-grade shell tokens (aligned with the onboarding shell). ── */
+        :root{
+            --brand:#176B55; --brand-h:#125845; --brand-soft:#2E8B6F;
+            --gold:#B0821F; --gold-ink:#7A5A14; --navy:#15243D;
+            --bg:#F6F8F7; --surface:#FFFFFF; --soft:#EDF5F1; --soft2:#F5F9F7; --footer:#EEF4F1;
+            --text:#1F2D28; --text2:#46534C; --muted:#5C6A63; --border:#DDE6E2;
+        }
+        body { font-family: 'Inter', 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif; background: var(--bg); color: var(--text); }
         .gradient-gov { background: linear-gradient(135deg, #2a5646 0%, #1f4135 50%, #12271f 100%); }
         .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-        .score-ring { background: conic-gradient(#3b7a66 var(--score), #e3e1d9 var(--score)); }
+        .score-ring { background: conic-gradient(#176B55 var(--score), #e3e1d9 var(--score)); }
+
+        /* ── Calm light app header ── */
+        .app-nav{ background:var(--surface); border-bottom:1px solid var(--border); }
+        .app-brand-name{ color:var(--navy); }
+        .app-navlink{ color:var(--text2); font-weight:500; }
+        .app-navlink:hover{ color:var(--brand); background:var(--soft); }
+        .app-navlink.is-active{ color:var(--brand); background:var(--soft); font-weight:600; }
+        .app-dropdown{ background:var(--surface); border:1px solid var(--border); box-shadow:0 12px 30px rgba(20,50,40,.10); }
+        .app-dropdown a{ color:var(--text2); }
+        .app-dropdown a:hover{ color:var(--brand); background:var(--soft); }
+        .app-bt{ border-color:var(--border); }
+        .app-lang{ color:var(--muted); } .app-lang:hover{ color:var(--brand); }
+        .app-lang.is-active{ color:var(--brand); font-weight:700; }
+        .app-muted{ color:var(--muted); } .app-muted:hover{ color:var(--brand); }
+        .app-avatar{ width:34px;height:34px;flex:0 0 auto;border-radius:50%;background:var(--soft);color:var(--brand);
+            display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;border:1px solid #CFE3DA; }
+        .app-footer{ background:var(--footer); border-top:1px solid var(--border); color:var(--text2); }
+        .app-footer a{ color:var(--text2); } .app-footer a:hover{ color:var(--brand); }
+        .app-fbrand{ color:var(--brand); }
 
         /* ── Site-wide form polish (Sakinah). Bare inputs get this baseline; Tailwind
            utility classes still override per-element, so styled inputs are untouched. ── */
@@ -72,64 +53,67 @@
         select:focus-visible, textarea:focus-visible,
         input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,
         select:focus, textarea:focus {
-            outline: none; border-color: #3b7a66; box-shadow: 0 0 0 3px rgba(59,122,102,.15);
+            outline: none; border-color: #176B55; box-shadow: 0 0 0 3px rgba(23,107,85,.15);
         }
         input::placeholder, textarea::placeholder { color: #a8a79c; }
         /* Buttons & links: smooth, accessible focus ring everywhere. */
         button, a, [role="button"], summary { transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease; }
         a:focus-visible, button:focus-visible, [role="button"]:focus-visible, summary:focus-visible {
-            outline: 2px solid #3b7a66; outline-offset: 2px; border-radius: 6px;
+            outline: 2px solid #176B55; outline-offset: 2px; border-radius: 6px;
         }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gov-gray-50 min-h-screen overflow-x-hidden">
+<body class="min-h-screen overflow-x-hidden">
     {% block body %}
     <!-- Navigation -->
     {% if user.is_authenticated %}
-    <nav class="bg-gov-green-800 shadow-lg">
+    <nav class="app-nav sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 gap-3">
-                <a href="{% url 'dashboard:main' %}" class="flex items-center gap-2 shrink-0">
-                    <i class="fas fa-shield-halved text-white text-2xl"></i>
-                    <span class="text-white font-bold text-lg sm:text-xl">1SaudiCyber</span>
+                <a href="{% url 'dashboard:main' %}" class="flex items-center gap-2 shrink-0" aria-label="1SaudiCyber">
+                    <svg width="30" height="34" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
+                        <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#FBF6EA" stroke="var(--gold)" stroke-width="2.4"/>
+                        <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="15" fill="var(--navy)">1S</text>
+                    </svg>
+                    <span class="app-brand-name font-bold text-lg sm:text-xl">1SaudiCyber</span>
                 </a>
 
                 <div class="hidden md:flex items-center gap-1 flex-1 min-w-0 flex-wrap">
                     {% if user.is_staff or user.is_superuser %}
-                    <a href="{% url 'platform_admin:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "Get Solution CRM" %}</a>
-                    <a href="{% url 'platform_admin:companies_list' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الشركات" %}</a>
-                    <a href="{% url 'platform_admin:auditor_list' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المدققون" %}</a>
+                    <a href="{% url 'platform_admin:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "Get Solution CRM" %}</a>
+                    <a href="{% url 'platform_admin:companies_list' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الشركات" %}</a>
+                    <a href="{% url 'platform_admin:auditor_list' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المدققون" %}</a>
                     {% elif user.role == 'auditor' %}
-                    <a href="{% url 'auditors:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة المدقق" %}</a>
-                    <a href="{% url 'auditor_portal:review_queue' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "طابور المراجعة" %}</a>
-                    <a href="{% url 'auditor_portal:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مساحة مراجعة الأدلة" %}</a>
-                    <a href="{% url 'auditors:onboarding' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الملف الشخصي" %}</a>
+                    <a href="{% url 'auditors:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة المدقق" %}</a>
+                    <a href="{% url 'auditor_portal:review_queue' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "طابور المراجعة" %}</a>
+                    <a href="{% url 'auditor_portal:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مساحة مراجعة الأدلة" %}</a>
+                    <a href="{% url 'auditors:onboarding' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الملف الشخصي" %}</a>
                     {% else %}
-                    <a href="{% url 'dashboard:main' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة التحكم" %}</a>
-                    <a href="{% url 'compliance:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مسار الامتثال" %}</a>
-                    <a href="{% url 'compliance:applicability_review' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأطر" %}</a>
-                    <a href="{% url 'compliance:evidence_checklist' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأدلة" %}</a>
-                    <a href="{% url 'compliance:reports_index' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "التقارير" %}</a>
-                    <a href="{% url 'monitoring:overview' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المراقبة" %}</a>
+                    <a href="{% url 'dashboard:main' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة التحكم" %}</a>
+                    <a href="{% url 'compliance:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مسار الامتثال" %}</a>
+                    <a href="{% url 'compliance:applicability_review' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأطر" %}</a>
+                    <a href="{% url 'compliance:evidence_checklist' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأدلة" %}</a>
+                    <a href="{% url 'compliance:reports_index' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "التقارير" %}</a>
+                    <a href="{% url 'monitoring:overview' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المراقبة" %}</a>
                     <details class="relative">
-                        <summary class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer list-none">{% trans "المزيد" %} <i class="fas fa-chevron-down text-xs"></i></summary>
-                        <div class="absolute end-0 mt-2 w-56 bg-gov-green-800 rounded-lg shadow-xl p-2 z-50">
-                            <a href="{% url 'compliance:controls_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
-                            <a href="{% url 'compliance:control_plan' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
-                            <a href="{% url 'compliance:gap_dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
-                            <a href="{% url 'risk:list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
-                            <div class="border-t border-gov-green-700 my-1"></div>
-                            <a href="{% url 'compliance:auditor_review_status' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "حالة مراجعة المدقّق" %}</a>
-                            <a href="{% url 'auditor_portal:company_findings' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "ملاحظات التدقيق" %}</a>
-                            <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
-                            {% if user.company_id %}<a href="{% url 'auditor_portal:message_thread' user.company_id %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراسلة" %}</a>{% endif %}
-                            <a href="{% url 'compliance:auditor_review_queue' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراجعة" %}</a>
-                            <div class="border-t border-gov-green-700 my-1"></div>
-                            <a href="{% url 'billing:home' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
-                            {% if user.role == 'company_admin' %}<a href="{% url 'core:team' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "فريق العمل" %}</a>{% endif %}
-                            <a href="{% url 'core:settings' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الإعدادات" %}</a>
+                        <summary class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer list-none">{% trans "المزيد" %} <i class="fas fa-chevron-down text-xs"></i></summary>
+                        <div class="app-dropdown absolute end-0 mt-2 w-56 rounded-lg p-2 z-50">
+                            <a href="{% url 'compliance:controls_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
+                            <a href="{% url 'compliance:control_plan' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
+                            <a href="{% url 'compliance:gap_dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
+                            <a href="{% url 'risk:list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
+                            <div class="border-t app-bt my-1"></div>
+                            <a href="{% url 'compliance:auditor_review_status' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "حالة مراجعة المدقّق" %}</a>
+                            <a href="{% url 'auditor_portal:company_findings' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "ملاحظات التدقيق" %}</a>
+                            <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
+                            {% if user.company_id %}<a href="{% url 'auditor_portal:message_thread' user.company_id %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراسلة" %}</a>{% endif %}
+                            <a href="{% url 'compliance:auditor_review_queue' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراجعة" %}</a>
+                            <div class="border-t app-bt my-1"></div>
+                            <a href="{% url 'billing:home' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
+                            {% if user.role == 'company_admin' %}<a href="{% url 'core:team' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "فريق العمل" %}</a>{% endif %}
+                            <a href="{% url 'core:settings' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الإعدادات" %}</a>
                         </div>
                     </details>
                     {% endif %}
@@ -139,48 +123,51 @@
                 <div class="flex items-center gap-3 shrink-0">
                     <form action="{% url 'set_language' %}" method="post" class="hidden sm:flex items-center gap-1 text-xs">
                         {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
-                        <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">العربية</button>
-                        <span class="text-gov-green-400">|</span>
-                        <button type="submit" name="language" value="en" class="px-1 {% if LANGUAGE_CODE != 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">English</button>
+                        <button type="submit" name="language" value="ar" class="app-lang px-1 {% if LANGUAGE_CODE == 'ar' %}is-active{% endif %}">العربية</button>
+                        <span style="color:var(--border);">|</span>
+                        <button type="submit" name="language" value="en" class="app-lang px-1 {% if LANGUAGE_CODE != 'ar' %}is-active{% endif %}">English</button>
                     </form>
-                    <a href="{% url 'core:notifications_inbox' %}" class="relative text-gov-green-100 hover:text-white px-1" title="{% trans 'الإشعارات' %}" aria-label="{% trans 'الإشعارات' %}{% if nav_unread %} ({{ nav_unread }} غير مقروء){% endif %}">
+                    <a href="{% url 'core:notifications_inbox' %}" class="app-muted relative px-1" title="{% trans 'الإشعارات' %}" aria-label="{% trans 'الإشعارات' %}{% if nav_unread %} ({{ nav_unread }} غير مقروء){% endif %}">
                         <i class="fas fa-bell text-lg" aria-hidden="true"></i>
                         {% if nav_unread %}<span class="absolute -top-1 -end-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[0.6rem] font-bold flex items-center justify-center">{{ nav_unread }}</span>{% endif %}
                     </a>
-                    <span class="hidden sm:inline text-gov-green-200 text-sm truncate max-w-[140px]">{{ user.get_full_name|default:user.username }}</span>
-                    <a href="{% url 'core:logout' %}" class="text-gov-green-200 hover:text-white text-sm whitespace-nowrap"><i class="fas fa-sign-out-alt"></i> {% trans "تسجيل الخروج" %}</a>
+                    <div class="hidden sm:flex items-center gap-2 min-w-0">
+                        <span class="app-avatar" aria-hidden="true">{{ user.get_full_name|default:user.username|slice:":1"|upper }}</span>
+                        <span class="truncate max-w-[140px] text-sm" style="color:var(--text2);">{{ user.get_full_name|default:user.username }}</span>
+                    </div>
+                    <a href="{% url 'core:logout' %}" class="app-muted text-sm whitespace-nowrap" title="{% trans 'تسجيل الخروج' %}"><i class="fas fa-arrow-right-from-bracket"></i> <span class="hidden lg:inline">{% trans "تسجيل الخروج" %}</span></a>
                     <details class="md:hidden relative">
-                        <summary class="text-white cursor-pointer list-none px-1" role="button" aria-label="{% trans 'القائمة' %}"><i class="fas fa-bars text-lg" aria-hidden="true"></i></summary>
-                        <div class="absolute end-0 mt-2 w-56 bg-gov-green-800 rounded-lg shadow-xl p-2 z-50">
+                        <summary class="cursor-pointer list-none px-1" role="button" aria-label="{% trans 'القائمة' %}" style="color:var(--navy);"><i class="fas fa-bars text-lg" aria-hidden="true"></i></summary>
+                        <div class="app-dropdown absolute end-0 mt-2 w-56 rounded-lg p-2 z-50">
                             {% if user.is_staff or user.is_superuser %}
-                            <a href="{% url 'platform_admin:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "Get Solution CRM" %}</a>
-                            <a href="{% url 'platform_admin:companies_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الشركات" %}</a>
-                            <a href="{% url 'platform_admin:auditor_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المدققون" %}</a>
+                            <a href="{% url 'platform_admin:dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "Get Solution CRM" %}</a>
+                            <a href="{% url 'platform_admin:companies_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الشركات" %}</a>
+                            <a href="{% url 'platform_admin:auditor_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المدققون" %}</a>
                             {% elif user.role == 'auditor' %}
-                            <a href="{% url 'auditors:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "لوحة المدقق" %}</a>
-                            <a href="{% url 'auditor_portal:review_queue' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "طابور المراجعة" %}</a>
-                            <a href="{% url 'auditor_portal:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "مساحة مراجعة الأدلة" %}</a>
-                            <a href="{% url 'auditors:onboarding' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الملف الشخصي" %}</a>
+                            <a href="{% url 'auditors:dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "لوحة المدقق" %}</a>
+                            <a href="{% url 'auditor_portal:review_queue' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "طابور المراجعة" %}</a>
+                            <a href="{% url 'auditor_portal:dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "مساحة مراجعة الأدلة" %}</a>
+                            <a href="{% url 'auditors:onboarding' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الملف الشخصي" %}</a>
                             {% else %}
-                            <a href="{% url 'dashboard:main' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "لوحة التحكم" %}</a>
-                            <a href="{% url 'compliance:dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "مسار الامتثال" %}</a>
-                            <a href="{% url 'compliance:intake' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "التصنيف" %}</a>
-                            <a href="{% url 'compliance:applicability_review' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الأطر" %}</a>
-                            <a href="{% url 'compliance:control_plan' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
-                            <a href="{% url 'compliance:evidence_checklist' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الأدلة" %}</a>
-                            <a href="{% url 'compliance:gap_dashboard' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
-                            <a href="{% url 'risk:list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
-                            <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
-                            <a href="{% url 'compliance:reports_index' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "التقارير" %}</a>
-                            <a href="{% url 'monitoring:overview' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "المراقبة" %}</a>
-                            <a href="{% url 'compliance:controls_list' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
-                            <a href="{% url 'billing:home' %}" class="block text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
+                            <a href="{% url 'dashboard:main' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "لوحة التحكم" %}</a>
+                            <a href="{% url 'compliance:dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "مسار الامتثال" %}</a>
+                            <a href="{% url 'compliance:intake' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "التصنيف" %}</a>
+                            <a href="{% url 'compliance:applicability_review' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الأطر" %}</a>
+                            <a href="{% url 'compliance:control_plan' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
+                            <a href="{% url 'compliance:evidence_checklist' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الأدلة" %}</a>
+                            <a href="{% url 'compliance:gap_dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
+                            <a href="{% url 'risk:list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
+                            <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
+                            <a href="{% url 'compliance:reports_index' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "التقارير" %}</a>
+                            <a href="{% url 'monitoring:overview' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراقبة" %}</a>
+                            <a href="{% url 'compliance:controls_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
+                            <a href="{% url 'billing:home' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
                             {% endif %}
-                            <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-2 px-3 py-2 border-t border-gov-green-700 mt-1">
+                            <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-2 px-3 py-2 border-t app-bt mt-1">
                                 {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
-                                <button type="submit" name="language" value="ar" class="text-sm {% if LANGUAGE_CODE == 'ar' %}text-white font-bold{% else %}text-gov-green-100{% endif %}">العربية</button>
-                                <span class="text-gov-green-400">|</span>
-                                <button type="submit" name="language" value="en" class="text-sm {% if LANGUAGE_CODE != 'ar' %}text-white font-bold{% else %}text-gov-green-100{% endif %}">English</button>
+                                <button type="submit" name="language" value="ar" class="app-lang text-sm {% if LANGUAGE_CODE == 'ar' %}is-active{% endif %}">العربية</button>
+                                <span style="color:var(--border);">|</span>
+                                <button type="submit" name="language" value="en" class="app-lang text-sm {% if LANGUAGE_CODE != 'ar' %}is-active{% endif %}">English</button>
                             </form>
                         </div>
                     </details>
@@ -190,16 +177,19 @@
     </nav>
     {% else %}
     <!-- Public (anonymous) header: brand + language switcher -->
-    <nav class="bg-gov-green-800 shadow-lg">
+    <nav class="app-nav">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-14 gap-3">
-                <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0">
-                    <i class="fas fa-shield-halved text-white text-xl"></i>
-                    <span class="text-white font-bold text-lg">1SaudiCyber</span>
+                <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="1SaudiCyber">
+                    <svg width="28" height="32" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
+                        <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#FBF6EA" stroke="var(--gold)" stroke-width="2.4"/>
+                        <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="15" fill="var(--navy)">1S</text>
+                    </svg>
+                    <span class="app-brand-name font-bold text-lg">1SaudiCyber</span>
                 </a>
                 <div class="flex items-center gap-3">
                     {% include "components/language_switcher.html" %}
-                    <a href="{% url 'core:login' %}" class="text-gov-green-200 hover:text-white text-sm">{% trans "تسجيل الدخول" %}</a>
+                    <a href="{% url 'core:login' %}" class="app-muted text-sm">{% trans "تسجيل الدخول" %}</a>
                 </div>
             </div>
         </div>
@@ -225,13 +215,19 @@
 
     {% if user.is_authenticated %}
     <!-- Footer -->
-    <footer class="bg-gov-green-950 text-gov-green-200 py-6 mt-12">
+    <footer class="app-footer py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-            <p>&copy; {% now "Y" %} 1SaudiCyber (1saudicyber.com) — منصّة امتثال الأمن السيبراني المدعومة بالذكاء الاصطناعي.</p>
-            <p class="mt-1"><a href="{% url 'core:privacy' %}" class="hover:text-white">{% trans "سياسة الخصوصية" %}</a>
-               <span class="mx-2 text-gov-green-600">|</span>
-               <a href="{% url 'core:terms' %}" class="hover:text-white">{% trans "شروط الاستخدام" %}</a></p>
-            <p class="mt-1 text-gov-green-400" dir="rtl">متوافقة مع معايير الهيئة الوطنية للأمن السيبراني (NCA ECC) وأرامكو (SACS-002) وسابك (CyberTrust).</p>
+            <p>&copy; {% now "Y" %} 1SaudiCyber (1saudicyber.com) — {% trans "منصّة امتثال الأمن السيبراني المدعومة بالذكاء الاصطناعي." %}
+               {% if LANGUAGE_CODE == 'ar' %}
+                 {% trans "تطوير" %} <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="app-fbrand font-semibold" style="text-decoration:underline;">شركة احصل الحل</a>.
+               {% else %}
+                 {% trans "Developed by" %} <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="app-fbrand font-semibold" style="text-decoration:underline;">Get Solution</a>.
+               {% endif %}
+            </p>
+            <p class="mt-1"><a href="{% url 'core:privacy' %}">{% trans "سياسة الخصوصية" %}</a>
+               <span class="mx-2" style="color:var(--border);">|</span>
+               <a href="{% url 'core:terms' %}">{% trans "شروط الاستخدام" %}</a></p>
+            <p class="mt-1 app-muted" dir="rtl">متوافقة مع معايير الهيئة الوطنية للأمن السيبراني (NCA ECC) وأرامكو (SACS-002) وسابك (CyberTrust).</p>
         </div>
     </footer>
     {% endif %}
@@ -244,7 +240,7 @@
         <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:28px 36px;
                     box-shadow:0 8px 30px rgba(31,41,51,0.12);text-align:center;min-width:240px;">
             <div style="margin:0 auto 14px;width:38px;height:38px;border-radius:50%;
-                        border:3px solid #e3e1d9;border-top-color:#2a5646;animation:ct-spin 0.9s linear infinite;"></div>
+                        border:3px solid #e3e1d9;border-top-color:#176B55;animation:ct-spin 0.9s linear infinite;"></div>
             <p id="ct-busy-msg" style="color:#2b2c27;font-size:0.95rem;margin:0;">جارٍ المعالجة...</p>
             <p style="color:#5b5c53;font-size:0.8rem;margin:6px 0 0;">يرجى الانتظار، قد تستغرق هذه الخطوة لحظات.</p>
         </div>
