@@ -20,6 +20,9 @@ media/
 private_media/
 *.log
 
+# Node / Tailwind build toolchain
+node_modules/
+
 # OS / editor
 .DS_Store
 Enterprise_Test_Dataset/
