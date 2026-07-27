@@ -3,12 +3,14 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
+from drf_spectacular.types import OpenApiTypes
 
 from core.models import Company, User
 from compliance.models import Control, CompanyControl, Evidence
@@ -28,6 +30,8 @@ def _require_company(request):
     return getattr(request.user, 'company', None)
 
 
+@extend_schema(summary="تسجيل شركة جديدة + مستخدم مسؤول", request=RegisterSerializer,
+               responses={201: OpenApiTypes.OBJECT})
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
@@ -57,6 +61,9 @@ def register(request):
     }, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(summary="ضوابط الشركة (مع حالة التقييم)",
+               parameters=[OpenApiParameter('framework', str, description='رمز الإطار للتصفية (مثل NCA-ECC).')],
+               responses=CompanyControlSerializer(many=True))
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def controls(request):
@@ -71,6 +78,7 @@ def controls(request):
     return Response(CompanyControlSerializer(qs, many=True).data)
 
 
+@extend_schema(summary="تفاصيل ضابط رسمي", responses=ControlSerializer)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def control_detail(request, control_id):
@@ -81,6 +89,7 @@ def control_detail(request, control_id):
     return Response(ControlSerializer(control).data)
 
 
+@extend_schema(summary="تصنيف الشركة (استشاري)", request=None, responses=OpenApiTypes.OBJECT)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def classify(request):
@@ -102,6 +111,10 @@ def classify(request):
     return Response(result)
 
 
+@extend_schema(summary="رفع دليل لضابط", request=inline_serializer(
+                   'EvidenceUploadRequest',
+                   {'control_id': serializers.IntegerField(), 'evidence_file': serializers.FileField()}),
+               responses={201: OpenApiTypes.OBJECT})
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
@@ -157,6 +170,7 @@ def evidence_upload(request):
                     status=status.HTTP_201_CREATED)
 
 
+@extend_schema(summary="تشغيل تحليل دليل", request=None, responses=OpenApiTypes.OBJECT)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def evidence_analyze(request, evidence_id):
@@ -173,6 +187,7 @@ def evidence_analyze(request, evidence_id):
     return Response(result)
 
 
+@extend_schema(summary="أحدث تحليل فجوات لكل إطار", responses=GapAnalysisSerializer(many=True))
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def gap_analysis(request):
@@ -189,6 +204,7 @@ def gap_analysis(request):
     return Response(GapAnalysisSerializer(rows, many=True).data)
 
 
+@extend_schema(summary="لوحة تنفيذية (شركة + تنبيهات + نقاط)", responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard_executive(request):
@@ -204,6 +220,7 @@ def dashboard_executive(request):
     })
 
 
+@extend_schema(summary="توزيع حالة الضوابط", responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard_compliance(request):
@@ -218,6 +235,7 @@ def dashboard_compliance(request):
                      'total_controls': qs.count()})
 
 
+@extend_schema(summary="سلسلة نقاط الامتثال (آخر 90)", responses=ComplianceScoreSerializer(many=True))
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def monitoring_scores(request):
@@ -228,6 +246,7 @@ def monitoring_scores(request):
     return Response(ComplianceScoreSerializer(qs, many=True).data)
 
 
+@extend_schema(summary="تنبيهات المراقبة (آخر 100)", responses=AlertSerializer(many=True))
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def monitoring_alerts(request):
@@ -238,6 +257,7 @@ def monitoring_alerts(request):
     return Response(AlertSerializer(qs, many=True).data)
 
 
+@extend_schema(summary="تكليفات المدقّق", responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def auditor_assignments(request):

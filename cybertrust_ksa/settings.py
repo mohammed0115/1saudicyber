@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     'corsheaders',
     'django_filters',
     'core',
@@ -206,6 +207,17 @@ REST_FRAMEWORK = {
     # DD-fix: paginate list endpoints (was unbounded — a 417-control company returned all).
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 25,
+    # Auto-generated OpenAPI schema (drf-spectacular) for /api/v1/docs.
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# OpenAPI / Swagger docs (drf-spectacular). Schema served at /api/v1/schema/,
+# Swagger UI at /api/v1/docs/, ReDoc at /api/v1/redoc/.
+SPECTACULAR_SETTINGS = {
+    'TITLE': '1SaudiCyber API',
+    'DESCRIPTION': 'CyberTrust KSA — نظام إدارة الامتثال السيبراني. REST API (SRS Appendix D).',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 from datetime import timedelta
