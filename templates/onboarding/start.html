@@ -2,42 +2,55 @@
 {% load i18n %}
 {% block title %}1SaudiCyber — {% trans "إنشاء حساب جديد" %}{% endblock %}
 
+{% block extra_head %}{{ block.super }}
+<style>
+  /* 2.1 Account-type choice — سيناريو language: two calm cards + skyline shell. */
+  .au-choice{ display:flex; flex-direction:column; }
+  .au-choice .ic{ width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:1.75rem;margin:0 auto 20px }
+  .au-choice.org .ic{ background:var(--soft); color:var(--brand) }
+  .au-choice.ind .ic{ background:var(--gold-soft); color:var(--gold-ink) }
+  .au-choice h2{ font-size:1.35rem;font-weight:700;color:var(--text);margin-bottom:10px;text-align:center }
+  .au-choice p{ color:var(--text2);font-size:.94rem;line-height:1.85;flex:1;margin-bottom:22px;text-align:center }
+  .au-btn-gold{ background:var(--surface);color:var(--gold-ink);border:1px solid #E7D6A8 }
+  .au-btn-gold:hover{ background:var(--gold-soft);border-color:#E7D6A8 }
+</style>
+{% endblock %}
+
 {% block auth_main %}
   {% include "onboarding/_stepper.html" with step=1 %}
 
   <div class="text-center mb-9" data-au-reveal="2">
     <h1 class="mb-3">{% trans "إنشاء حساب جديد" %}</h1>
-    <p class="au-lead mx-auto" style="max-width:54ch;">{% trans "اختر نوع الحساب المناسب للبدء في استخدام منصّة 1SaudiCyber." %}</p>
+    <p class="au-lead mx-auto" style="max-width:52ch;">{% trans "اختر نوع الحساب المناسب للبدء في استخدام منصّة 1SaudiCyber." %}</p>
   </div>
 
   <div class="grid md:grid-cols-2 gap-5 items-stretch" style="max-width:820px;margin-inline:auto;" data-au-reveal="3">
-    <!-- Company / organization (primary) -->
-    <div class="au-choice p-7 flex flex-col text-center">
-      <div class="au-iconbox mx-auto mb-5" style="width:60px;height:60px;"><i class="fas fa-building text-2xl" aria-hidden="true"></i></div>
-      <h2 class="font-bold mb-2" style="font-size:1.2rem;color:var(--text);">{% trans "حساب شركة" %}</h2>
-      <div class="au-muted text-xs mb-2" style="letter-spacing:.01em;">{% trans "شركة / جهة طالبة امتثال" %}</div>
-      <p class="au-muted text-sm mb-6" style="flex:1;">{% trans "لإدارات الامتثال والمؤسسات لتقييم الامتثال السيبراني وإدارته وفق الأطر المدعومة." %}</p>
-      <a href="{% url 'core:company_register' %}" class="au-btn au-btn-primary au-btn-block">{% trans "إنشاء حساب شركة" %}</a>
+    <!-- Organization (primary) -->
+    <div class="au-choice org p-8">
+      <div class="ic"><i class="fas fa-building" aria-hidden="true"></i></div>
+      <h2>{% trans "حساب منشأة" %}</h2>
+      <p>{% trans "لإدارات الامتثال والمؤسسات لتقييم الامتثال السيبراني وإدارته وفق الأطر المدعومة." %}</p>
+      <a href="{% url 'core:company_register' %}" class="au-btn au-btn-primary au-btn-block">{% trans "إنشاء حساب منشأة" %}</a>
     </div>
-    <!-- Auditor / consultant (secondary, gold accent) -->
-    <div class="au-choice p-7 flex flex-col text-center">
-      <div class="mx-auto mb-5" style="width:60px;height:60px;border-radius:12px;background:#F6EFDA;color:var(--gold);display:flex;align-items:center;justify-content:center;"><i class="fas fa-user-shield text-2xl" aria-hidden="true"></i></div>
-      <h2 class="font-bold mb-2" style="font-size:1.2rem;color:var(--text);">{% trans "حساب مدقّق / مستشار" %}</h2>
-      <p class="au-muted text-sm mb-6" style="flex:1;">{% trans "للمدقّقين والمستشارين للتعاون مع المنشآت في مراجعة الامتثال." %}</p>
-      <a href="{% url 'core:auditor_register' %}" class="au-btn au-btn-secondary au-btn-block" style="border-color:#E4D3A2;color:var(--gold);">{% trans "متابعة كمدقّق / مستشار" %}</a>
+    <!-- Individual / auditor (secondary, gold) -->
+    <div class="au-choice ind p-8">
+      <div class="ic"><i class="fas fa-user-shield" aria-hidden="true"></i></div>
+      <h2>{% trans "حساب فردي" %}</h2>
+      <p>{% trans "للمدقّقين والمستشارين والأفراد للتعاون مع المنشآت في مراجعة الامتثال." %}</p>
+      <a href="{% url 'auditors:register' %}" class="au-btn au-btn-gold au-btn-block">{% trans "إنشاء حساب فردي" %}</a>
     </div>
   </div>
 
-  <!-- Security reassurance -->
-  <div class="au-card flex items-center gap-3 mt-6" style="max-width:820px;margin-inline:auto;padding:1rem 1.25rem;" data-au-reveal="4">
-    <span class="au-iconbox shrink-0" style="width:40px;height:40px;"><i class="fas fa-lock text-sm" aria-hidden="true"></i></span>
+  <!-- security reassurance -->
+  <div class="au-card flex items-center gap-4 mt-5" style="max-width:820px;margin-inline:auto;padding:1.1rem 1.4rem;" data-au-reveal="4">
+    <span class="au-iconbox shrink-0" style="width:46px;height:46px;"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
     <div>
       <div class="text-sm font-semibold" style="color:var(--text);">{% trans "بياناتك آمنة معنا" %}</div>
       <div class="text-xs au-muted">{% trans "نلتزم بأعلى معايير الأمان لحماية بياناتك ومعلومات منشأتك." %}</div>
     </div>
   </div>
 
-  <p class="text-center au-muted text-sm mt-6" data-au-reveal="4">
+  <p class="text-center au-muted text-sm mt-7" data-au-reveal="4">
     {% trans "لديك حساب بالفعل؟" %}
     <a href="{% url 'core:login' %}" class="au-brand font-semibold" style="text-decoration:underline;">{% trans "تسجيل الدخول" %}</a>
   </p>

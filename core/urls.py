@@ -28,6 +28,7 @@ urlpatterns = [
     # token route so 'resend' is never captured as a verification token).
     path('verify-email/', views.verify_email_otp, name='verify_email_otp'),
     path('verify-email/resend/', views.resend_email_otp, name='resend_email_otp'),
+    path('registration-complete/', views.registration_complete, name='registration_complete'),
 
     # Email verification (FR-002.8) — legacy one-time link
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),

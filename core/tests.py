@@ -497,7 +497,7 @@ class Phase4ARegistrationOnboardingTests(TestCase):
         resp = self.client.get(reverse('core:get_started'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, reverse('core:company_register'))
-        self.assertContains(resp, 'شركة / جهة طالبة امتثال')
+        self.assertContains(resp, 'حساب منشأة')
 
     def test_registration_page_renders(self):
         resp = self.client.get(reverse('core:company_register'))
@@ -594,7 +594,7 @@ class Phase4AFixALocalizationTests(TestCase):
 
     def test_get_started_contains_company_arabic_cta(self):
         resp = self.client.get(reverse('core:get_started'))
-        self.assertContains(resp, 'إنشاء حساب شركة')
+        self.assertContains(resp, 'إنشاء حساب منشأة')
 
     def test_company_registration_contains_arabic_labels(self):
         resp = self.client.get(reverse('core:company_register'))

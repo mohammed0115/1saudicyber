@@ -1,0 +1,52 @@
+{% load i18n %}
+{# Setup progress sidebar (Scenario 8/9). Pass `active`: 'classification' or 'result'. Real backend phases only. #}
+<aside class="su-side" data-au-reveal="2">
+  <div class="au-card" style="padding:20px 20px 22px;">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold" style="font-size:.98rem;color:var(--navy);">{% trans "تقدّم الإعداد" %}</h2>
+      <span class="su-pct">{% if active == 'result' %}100%{% else %}67%{% endif %}</span>
+    </div>
+    <div class="su-bar mb-6"><span style="width:{% if active == 'result' %}100%{% else %}67%{% endif %};"></span></div>
+
+    <div class="su-phase">
+      <div class="su-phase-h"><span class="su-badge is-done"><i class="fas fa-check"></i></span><b>{% trans "١. إعداد الحساب" %}</b></div>
+      <ul>
+        <li class="is-done"><i class="fas fa-circle-check"></i>{% trans "نوع الحساب" %}</li>
+        <li class="is-done"><i class="fas fa-circle-check"></i>{% trans "إنشاء الحساب" %}</li>
+        <li class="is-done"><i class="fas fa-circle-check"></i>{% trans "تأكيد البريد الإلكتروني" %}</li>
+      </ul>
+    </div>
+
+    <div class="su-phase">
+      <div class="su-phase-h"><span class="su-badge is-done"><i class="fas fa-check"></i></span><b>{% trans "٢. إعداد المنشأة" %}</b></div>
+      <ul>
+        <li class="is-done"><i class="fas fa-circle-check"></i>{% trans "بيانات المنشأة الأساسية" %}</li>
+      </ul>
+    </div>
+
+    <div class="su-phase">
+      <div class="su-phase-h">
+        <span class="su-badge {% if active == 'result' %}is-done{% else %}is-active{% endif %}">{% if active == 'result' %}<i class="fas fa-check"></i>{% else %}٣{% endif %}</span>
+        <b>{% trans "٣. نطاق الامتثال والتصنيف" %}</b>
+      </div>
+      <ul>
+        <li class="{% if active == 'result' %}is-done{% else %}is-active{% endif %}"><i class="fas fa-{% if active == 'result' %}circle-check{% else %}circle-dot{% endif %}"></i>{% trans "ملف التصنيف" %}</li>
+        <li class="{% if active == 'result' %}is-active{% else %}is-todo{% endif %}"><i class="fas fa-circle{% if active == 'result' %}-dot{% endif %}"></i>{% trans "نتيجة النطاق والأطر المنطبقة" %}</li>
+      </ul>
+    </div>
+
+    <div class="su-phase" style="margin-bottom:0;">
+      <div class="su-phase-h"><span class="su-badge is-todo"><i class="fas fa-flag-checkered"></i></span><b class="au-muted">{% trans "إكمال الإعداد" %}</b></div>
+    </div>
+  </div>
+
+  <div class="au-card mt-4" style="padding:18px 20px;">
+    <div class="flex items-start gap-3">
+      <span class="au-iconbox" style="width:38px;height:38px;flex:0 0 auto;"><i class="fas fa-headset"></i></span>
+      <div>
+        <div class="font-semibold" style="font-size:.9rem;color:var(--navy);">{% trans "تحتاج مساعدة؟" %}</div>
+        <p class="au-muted" style="font-size:.78rem;line-height:1.7;margin-top:2px;">{% trans "فريق الدعم جاهز لمساعدتك في إعداد ملف الامتثال." %}</p>
+      </div>
+    </div>
+  </div>
+</aside>

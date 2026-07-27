@@ -270,6 +270,9 @@ def verify_email_otp(request):
         ok, reason = otp.verify_otp(user, request.POST.get('code', ''))
         if ok:
             messages.success(request, 'تم توثيق بريدك الإلكتروني بنجاح.')
+            # Company users see a brief completion screen (2.4) before onboarding.
+            if getattr(user, 'company_id', None):
+                return redirect('core:registration_complete')
             return redirect(dest)
         msgs = {
             'no_otp': 'لا يوجد رمز نشِط. اطلب رمزًا جديدًا.',
@@ -283,6 +286,13 @@ def verify_email_otp(request):
 
     return render(request, 'core/verify_email_otp.html',
                   {'email': user.email, 'masked_email': _mask_email(user.email)})
+
+
+@login_required
+def registration_complete(request):
+    """2.4 — brief post-verification confirmation for a company account, then onboarding."""
+    company = getattr(request.user, 'company', None)
+    return render(request, 'onboarding/registration_complete.html', {'company': company})
 
 
 @login_required

@@ -1,0 +1,22 @@
+{% load i18n %}
+{# One bound intake field: checkbox → card, select/textarea → labelled control. data-field kept for supplier JS. #}
+{% if field.field.widget.input_type == 'checkbox' %}
+<div data-field="{{ field.name }}">
+  <label class="su-check">
+    <span class="su-check-box">{{ field }}</span>
+    <span class="su-check-body">
+      <span class="su-check-label">{{ field.label }}</span>
+      {% if field.help_text %}<span class="su-check-help">{{ field.help_text }}</span>{% endif %}
+      {% if field.errors %}<span class="su-check-err">{{ field.errors|striptags }}</span>{% endif %}
+    </span>
+    <span class="su-tick" aria-hidden="true"><i class="fas fa-circle-check"></i></span>
+  </label>
+</div>
+{% else %}
+<div class="su-select-wrap" data-field="{{ field.name }}">
+  <label for="{{ field.id_for_label }}" class="su-select-label">{{ field.label }}</label>
+  {% if field.help_text %}<span class="su-check-help" style="display:block;margin-bottom:.5rem;">{{ field.help_text }}</span>{% endif %}
+  {{ field }}
+  {% if field.errors %}<span class="su-check-err">{{ field.errors|striptags }}</span>{% endif %}
+</div>
+{% endif %}
