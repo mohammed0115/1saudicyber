@@ -1,200 +1,208 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}الأطر المنطبقة - 1SaudiCyber{% endblock %}
 
+{% block extra_head %}{{ block.super }}
+<style>
+  .ar{ max-width:980px; margin-inline:auto; }
+  .ar-head .ic{ width:50px;height:50px;flex:0 0 auto;border-radius:13px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.2rem }
+  .ar-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden }
+  .ar-card-h{ padding:13px 18px; background:var(--soft2); border-bottom:1px solid var(--border); font-weight:700; color:var(--navy); font-size:.95rem }
+  .ar-hero{ display:flex; align-items:center; gap:18px; background:linear-gradient(160deg,var(--soft) 0%,var(--soft2) 60%,#F7EFDC 170%);
+    border:1px solid var(--border); border-radius:16px; padding:20px 24px }
+  .ar-hero .sh{ width:56px;height:56px;flex:0 0 auto;border-radius:14px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:1.4rem;box-shadow:0 8px 20px rgba(23,107,85,.2) }
+  .ar-hero b{ font-size:1.6rem;color:var(--navy);line-height:1 }
+  .ar-scroll{ overflow-x:auto }
+  .ar-tbl{ width:100%; font-size:.85rem; border-collapse:collapse }
+  .ar-scroll .ar-tbl{ min-width:560px }
+  .ar-tbl thead th{ text-align:right; padding:11px 16px; color:var(--muted); font-weight:600; background:var(--soft2); border-bottom:1px solid var(--border) }
+  .ar-tbl tbody td{ padding:12px 16px; border-top:1px solid var(--border); color:var(--text2); vertical-align:top }
+  .ar-tbl tbody tr:first-child td{ border-top:none }
+  .ar-fw{ font-weight:600; color:var(--text) }
+  .ar-fw small{ display:block; font-weight:400; color:var(--muted); font-size:.72rem; margin-top:2px }
+  .ar-badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:.72rem; font-weight:600; white-space:nowrap }
+  .ar-ok{ background:var(--soft); color:var(--brand); border:1px solid #CFE3DA }
+  .ar-warn{ background:#FBF3E4; color:#A96C24; border:1px solid #EBD9B8 }
+  .ar-crit{ background:#FBF0EF; color:#A64F45; border:1px solid #E6C4C0 }
+  .ar-neutral{ background:#F1F4F2; color:var(--muted); border:1px solid var(--border) }
+  .ar-link{ color:var(--brand); font-weight:600 } .ar-link:hover{ text-decoration:underline }
+  .ar-btn{ display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.2rem; border-radius:10px; font-weight:600; font-size:.9rem; cursor:pointer; border:1px solid transparent }
+  .ar-btn-primary{ background:var(--brand); color:#fff } .ar-btn-primary:hover{ background:var(--brand-h) }
+  .ar-note{ border-radius:12px; padding:14px 18px; font-size:.88rem; line-height:1.7 }
+  .ar-note-warn{ background:#FBF3E4; border:1px solid #EBD9B8; color:#8A5A1E }
+  .ar-actrow{ background:var(--surface); border:1px solid #CFE3DA; border-radius:14px; padding:16px 20px;
+    display:flex; flex-direction:column; gap:12px }
+  @media(min-width:640px){ .ar-actrow{ flex-direction:row; align-items:center; justify-content:space-between } }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-6">
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-gov-green-800">مراجعة الأطر المنطبقة</h1>
-            <p class="text-gov-gray-600">قرارات حتمية مبنية على إجابات التصنيف — مع سبب كل قرار.</p>
+<div class="ar space-y-6">
+    <div class="ar-head flex items-start justify-between gap-4">
+        <div class="flex items-start gap-3">
+            <span class="ic"><i class="fas fa-layer-group" aria-hidden="true"></i></span>
+            <div>
+                <h1 class="text-2xl font-bold" style="color:var(--navy);">مراجعة الأطر المنطبقة</h1>
+                <p style="color:var(--muted);" class="text-sm mt-1">قرارات حتمية مبنية على إجابات التصنيف — مع سبب كل قرار.</p>
+            </div>
         </div>
-        <a href="{% url 'compliance:intake' %}" class="text-gov-green-700 hover:underline text-sm">تعديل التصنيف</a>
+        <a href="{% url 'compliance:intake' %}" class="ar-link text-sm whitespace-nowrap"><i class="fas fa-pen-to-square text-xs"></i> تعديل التصنيف</a>
     </div>
 
     {% include "components/current_step_card.html" with guide=guide %}
 
     {% if not has_profile %}
-        <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4">
+        <div class="ar-note ar-note-warn">
             لم تُكمل بيانات التصنيف بعد.
-            <a href="{% url 'compliance:intake' %}" class="underline font-medium">ابدأ التصنيف الآن</a>.
+            <a href="{% url 'compliance:intake' %}" class="underline font-semibold">ابدأ التصنيف الآن</a>.
+        </div>
+    {% elif results %}
+        <div class="ar-hero">
+            <span class="sh"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
+            <div>
+                <b>{{ results|length }}</b>
+                <span class="block text-sm mt-1" style="color:var(--text2);">إطار منطبق على منشأتك بناءً على تصنيفك</span>
+            </div>
         </div>
     {% endif %}
 
-    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="bg-gov-green-50 text-gov-green-800">
-                <tr>
-                    <th class="text-right px-4 py-3">الإطار</th>
-                    <th class="text-right px-4 py-3">القرار</th>
-                    <th class="text-right px-4 py-3">السبب</th>
-                    <th class="text-right px-4 py-3">الثقة</th>
-                </tr>
+    <!-- applicable frameworks -->
+    <div class="ar-card">
+        <div class="ar-scroll"><table class="ar-tbl">
+            <thead>
+                <tr><th>الإطار</th><th>القرار</th><th>السبب</th><th>الثقة</th></tr>
             </thead>
-            <tbody class="divide-y divide-gov-gray-100">
+            <tbody>
                 {% for r in results %}
                 <tr>
-                    <td class="px-4 py-3 font-medium text-gov-gray-800">
-                        {{ r.framework_version.display_name_ar }}<br>
-                        <span class="text-xs text-gov-gray-500">{{ r.framework_version.display_name_en }} · {{ r.framework_version.code }}</span>
+                    <td class="ar-fw">{{ r.framework_version.display_name_ar }}<small>{{ r.framework_version.display_name_en }} · {{ r.framework_version.code }}</small></td>
+                    <td>
+                        {% if r.decision == 'applicable' %}<span class="ar-badge ar-ok">منطبق</span>
+                        {% elif r.decision == 'needs_review' %}<span class="ar-badge ar-warn">يحتاج مراجعة</span>
+                        {% elif r.decision == 'manually_overridden' %}<span class="ar-badge ar-neutral">تعديل يدوي</span>
+                        {% else %}<span class="ar-badge ar-neutral">غير منطبق</span>{% endif %}
                     </td>
-                    <td class="px-4 py-3">
-                        {% if r.decision == 'applicable' %}
-                            <span class="inline-block px-2 py-1 rounded bg-gov-green-100 text-gov-green-800 text-xs">منطبق</span>
-                        {% elif r.decision == 'needs_review' %}
-                            <span class="inline-block px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs">يحتاج مراجعة</span>
-                        {% elif r.decision == 'manually_overridden' %}
-                            <span class="inline-block px-2 py-1 rounded bg-gov-gray-200 text-gov-gray-700 text-xs">تعديل يدوي</span>
-                        {% else %}
-                            <span class="inline-block px-2 py-1 rounded bg-gov-gray-100 text-gov-gray-600 text-xs">غير منطبق</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-3 text-gov-gray-600">{{ r.reason }}</td>
-                    <td class="px-4 py-3 text-gov-gray-500">{% widthratio r.confidence 1 100 %}%</td>
+                    <td>{{ r.reason }}</td>
+                    <td style="color:var(--muted);white-space:nowrap;">{% widthratio r.confidence 1 100 %}%</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="px-5 py-6 text-gov-gray-600 text-right leading-7">
+                <tr><td colspan="4" style="padding:22px 18px;color:var(--text2);line-height:1.8;">
                     {% if has_profile %}
                         لم يتم توليد توصية كافية من هذه الإجابات وحدها.
                         أضف معلومات إضافية مثل القطاع، حجم المنشأة، طبيعة البيانات،
                         أو علاقات الجهات الحساسة (أرامكو/سابك) للحصول على توصية أدق.
-                        <a href="{% url 'compliance:intake' %}" class="underline font-medium text-gov-green-700">تحديث بيانات التصنيف</a>.
-                        <span class="block text-xs text-gov-gray-400 mt-1">هذا التحليل استشاري ولا يُعد قرار امتثال نهائيًا أو شهادة.</span>
+                        <a href="{% url 'compliance:intake' %}" class="underline font-semibold ar-link">تحديث بيانات التصنيف</a>.
+                        <span class="block text-xs mt-1" style="color:var(--muted);">هذا التحليل استشاري ولا يُعد قرار امتثال نهائيًا أو شهادة.</span>
                     {% else %}
                         لا توجد نتائج بعد.
-                        <a href="{% url 'compliance:intake' %}" class="underline font-medium text-gov-green-700">أكمل التصنيف أولاً</a>.
+                        <a href="{% url 'compliance:intake' %}" class="underline font-semibold ar-link">أكمل التصنيف أولاً</a>.
                     {% endif %}
                 </td></tr>
                 {% endfor %}
 
                 {% for fv in unavailable %}
-                <tr class="bg-gov-gray-50">
-                    <td class="px-4 py-3 font-medium text-gov-gray-500">
-                        {{ fv.display_name_ar }}<br><span class="text-xs">{{ fv.code }}</span>
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="inline-block px-2 py-1 rounded bg-gov-gray-200 text-gov-gray-600 text-xs">غير متاح</span>
-                    </td>
-                    <td class="px-4 py-3 text-gov-gray-500" colspan="3">
-                        الضوابط الرسمية لهذا الإطار لم تُستورد بعد، ولن يُدرَج ضمن التقييم أو خطة الضوابط الحالية حتى تُستورد ضوابطه.
-                    </td>
+                <tr style="background:var(--soft2);">
+                    <td class="ar-fw" style="color:var(--muted);">{{ fv.display_name_ar }}<small>{{ fv.code }}</small></td>
+                    <td><span class="ar-badge ar-neutral">غير متاح</span></td>
+                    <td colspan="2" style="color:var(--muted);">الضوابط الرسمية لهذا الإطار لم تُستورد بعد، ولن يُدرَج ضمن التقييم أو خطة الضوابط الحالية حتى تُستورد ضوابطه.</td>
                 </tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table></div>
     </div>
 
     {% if not_applicable_results %}
-    {% comment %}
-    Non-applicable frameworks are collapsed by default: the company sees applicable/proposed
-    frameworks first, and can expand this for full transparency of the deterministic decision.
-    {% endcomment %}
-    <details class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
-        <summary class="px-4 py-3 bg-gov-gray-50 text-gov-gray-700 font-medium cursor-pointer select-none">
+    {# Non-applicable frameworks collapsed by default: applicable first, full transparency on expand. #}
+    <details class="ar-card">
+        <summary class="ar-card-h cursor-pointer select-none" style="color:var(--text2);">
             الأطر غير المنطبقة ({{ not_applicable_results|length }})
-            <span class="text-xs text-gov-gray-500 font-normal">— اضغط للعرض</span>
+            <span class="text-xs font-normal" style="color:var(--muted);">— اضغط للعرض</span>
         </summary>
-        <table class="w-full text-sm">
-            <thead class="text-gov-gray-600">
-                <tr>
-                    <th class="text-right px-4 py-2">الإطار</th>
-                    <th class="text-right px-4 py-2">القرار</th>
-                    <th class="text-right px-4 py-2">السبب</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gov-gray-100">
+        <div class="ar-scroll"><table class="ar-tbl">
+            <thead><tr><th>الإطار</th><th>القرار</th><th>السبب</th></tr></thead>
+            <tbody>
                 {% for r in not_applicable_results %}
                 <tr>
-                    <td class="px-4 py-3 font-medium text-gov-gray-600">
-                        {{ r.framework_version.display_name_ar }}<br>
-                        <span class="text-xs text-gov-gray-400">{{ r.framework_version.display_name_en }} · {{ r.framework_version.code }}</span>
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="inline-block px-2 py-1 rounded bg-gov-gray-100 text-gov-gray-600 text-xs">غير منطبق</span>
-                    </td>
-                    <td class="px-4 py-3 text-gov-gray-500">{{ r.reason }}</td>
+                    <td class="ar-fw" style="color:var(--text2);">{{ r.framework_version.display_name_ar }}<small>{{ r.framework_version.display_name_en }} · {{ r.framework_version.code }}</small></td>
+                    <td><span class="ar-badge ar-neutral">غير منطبق</span></td>
+                    <td style="color:var(--muted);">{{ r.reason }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table></div>
     </details>
     {% endif %}
 
     <!-- Phase 3C: proposed/approved framework scopes -->
-    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
-        <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">نطاق الأطر (الموافقة)</div>
-        <table class="w-full text-sm">
-            <thead class="text-gov-gray-600">
+    <div class="ar-card">
+        <div class="ar-card-h">نطاق الأطر (الموافقة)</div>
+        <div class="ar-scroll"><table class="ar-tbl">
+            <thead>
                 <tr>
-                    <th class="text-right px-4 py-2">الإطار</th>
-                    <th class="text-right px-4 py-2">الحالة</th>
-                    <th class="text-right px-4 py-2">ضوابط رسمية</th>
-                    <th class="text-right px-4 py-2">السبب</th>
-                    {% if can_approve %}<th class="text-right px-4 py-2">إجراء</th>{% endif %}
+                    <th>الإطار</th><th>الحالة</th><th>ضوابط رسمية</th><th>السبب</th>
+                    {% if can_approve %}<th>إجراء</th>{% endif %}
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gov-gray-100">
+            <tbody>
                 {% for s in scopes %}
                 <tr>
-                    <td class="px-4 py-3 font-medium text-gov-gray-800">{{ s.framework_version.code }}</td>
-                    <td class="px-4 py-3">
-                        {% if s.status == 'approved' %}<span class="px-2 py-1 rounded bg-gov-green-100 text-gov-green-800 text-xs">معتمد</span>
-                        {% elif s.status == 'rejected' %}<span class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs">مرفوض</span>
-                        {% elif s.status == 'needs_review' %}<span class="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs">يحتاج مراجعة</span>
-                        {% else %}<span class="px-2 py-1 rounded bg-gov-gray-200 text-gov-gray-700 text-xs">مقترح</span>{% endif %}
+                    <td class="ar-fw">{{ s.framework_version.code }}</td>
+                    <td>
+                        {% if s.status == 'approved' %}<span class="ar-badge ar-ok">معتمد</span>
+                        {% elif s.status == 'rejected' %}<span class="ar-badge ar-crit">مرفوض</span>
+                        {% elif s.status == 'needs_review' %}<span class="ar-badge ar-warn">يحتاج مراجعة</span>
+                        {% else %}<span class="ar-badge ar-neutral">مقترح</span>{% endif %}
                     </td>
-                    <td class="px-4 py-3 text-gov-gray-600">
+                    <td>
                         {% if s.official_count %}
-                        <a href="{% url 'compliance:framework_controls_preview' s.framework_version.code %}"
-                           class="text-gov-green-700 hover:underline font-medium">عرض {{ s.official_count }} ضابط</a>
+                        <a href="{% url 'compliance:framework_controls_preview' s.framework_version.code %}" class="ar-link">عرض {{ s.official_count }} ضابط</a>
                         {% else %}
-                        <span class="text-gov-gray-400 text-xs">لا توجد ضوابط مستوردة لهذا الإطار بعد</span>
+                        <span class="text-xs" style="color:var(--muted);">لا توجد ضوابط مستوردة لهذا الإطار بعد</span>
                         {% endif %}
                     </td>
-                    <td class="px-4 py-3 text-gov-gray-600">{{ s.reason }}</td>
+                    <td>{{ s.reason }}</td>
                     {% if can_approve %}
-                    <td class="px-4 py-3">
+                    <td>
                         {% if s.status != 'approved' %}
                         <form method="post" action="{% url 'compliance:approve_scope' s.id %}" class="inline" data-busy="جارٍ اعتماد الإطار وتجهيز النطاق...">
-                            {% csrf_token %}<button class="text-gov-green-700 hover:underline text-xs">اعتماد</button>
+                            {% csrf_token %}<button class="ar-link text-xs">اعتماد</button>
                         </form>
                         {% endif %}
                         {% if s.status != 'rejected' %}
-                        <form method="post" action="{% url 'compliance:reject_scope' s.id %}" class="inline ml-2" data-busy="جارٍ تحديث حالة الإطار...">
-                            {% csrf_token %}<button class="text-red-600 hover:underline text-xs">رفض</button>
+                        <form method="post" action="{% url 'compliance:reject_scope' s.id %}" class="inline ms-2" data-busy="جارٍ تحديث حالة الإطار...">
+                            {% csrf_token %}<button class="text-xs" style="color:#A64F45;font-weight:600;">رفض</button>
                         </form>
                         {% endif %}
                     </td>
                     {% endif %}
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="px-4 py-4 text-center text-gov-gray-500">لا توجد أطر مقترحة بعد.</td></tr>
+                <tr><td colspan="5" style="padding:16px;text-align:center;color:var(--muted);">لا توجد أطر مقترحة بعد.</td></tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table></div>
     </div>
 
     {% if has_approved_scope %}
-    {# A scope is approved -> the control plan actually exists, so link to it. #}
+    {# A scope is approved -> the control plan exists, link to it. #}
     <div class="flex items-center gap-3">
-        <a href="{% url 'compliance:control_plan' %}" class="inline-block bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium">عرض خطة الضوابط</a>
+        <a href="{% url 'compliance:control_plan' %}" class="ar-btn ar-btn-primary">عرض خطة الضوابط</a>
     </div>
     {% elif results %}
-    {% comment %}Step 4: applicable frameworks exist and scope not approved -> primary CTA is ENABLED and performs the approval.{% endcomment %}
-    <div class="bg-white rounded-xl border border-gov-green-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p class="text-gov-gray-700 text-sm m-0">اعتمد الأطر المقترحة لمنشأتك للانتقال إلى خطة الضوابط.</p>
+    {# Step 4: applicable frameworks exist and scope not approved -> primary CTA performs the approval. #}
+    <div class="ar-actrow">
+        <p class="text-sm m-0" style="color:var(--text2);">اعتمد الأطر المقترحة لمنشأتك للانتقال إلى خطة الضوابط.</p>
         <form method="post" action="{% url 'compliance:approve_company_scope' %}" data-busy="جارٍ اعتماد نطاق الأطر...">
             {% csrf_token %}
-            <button type="submit" class="inline-flex items-center bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium text-sm">
-                اعتماد نطاق الأطر والمتابعة <i class="fas fa-arrow-left mr-1"></i>
-            </button>
+            <button type="submit" class="ar-btn ar-btn-primary">اعتماد نطاق الأطر والمتابعة <i class="fas fa-arrow-left"></i></button>
         </form>
     </div>
     {% else %}
     {# No applicable frameworks -> send the user back to complete classification. #}
-    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
-        <i class="fas fa-circle-info mr-1"></i>
+    <div class="ar-note ar-note-warn">
+        <i class="fas fa-circle-info me-1"></i>
         لا توجد أطر منطبقة لاعتمادها بعد. أكمل التصنيف الذكي لتحديد الأطر المناسبة لمنشأتك.
-        <a href="{% url 'compliance:classification' %}" class="underline font-medium mr-1">العودة إلى التصنيف الذكي</a>
+        <a href="{% url 'compliance:classification' %}" class="underline font-semibold ms-1">العودة إلى التصنيف الذكي</a>
     </div>
     {% endif %}
 
