@@ -54,6 +54,30 @@
         .focus\:ring-gov-green-500:focus, .focus\:ring-gov-green-600:focus, .focus\:ring-gov-green-700:focus{ --tw-ring-color:var(--brand); }
         .focus\:border-gov-green-600:focus, .focus\:border-gov-green-700:focus{ border-color:var(--brand); }
 
+        /* ── Calm content design-system utilities (shared across in-app screens) ── */
+        .cx-head .ic{ width:50px;height:50px;flex:0 0 auto;border-radius:13px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.2rem }
+        .cx-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden }
+        .cx-card-h{ padding:13px 18px; background:var(--soft2); border-bottom:1px solid var(--border); font-weight:700; color:var(--navy); font-size:.95rem; display:flex; align-items:center; justify-content:space-between; gap:12px }
+        .cx-scroll{ overflow-x:auto }
+        .cx-tbl{ width:100%; font-size:.85rem; border-collapse:collapse }
+        .cx-scroll .cx-tbl{ min-width:640px }
+        .cx-tbl thead th{ text-align:right; padding:11px 16px; color:var(--muted); font-weight:600; background:var(--soft2); border-bottom:1px solid var(--border); white-space:nowrap }
+        .cx-tbl tbody td{ padding:11px 16px; border-top:1px solid var(--border); color:var(--text2); vertical-align:top }
+        .cx-tbl tbody tr:first-child td{ border-top:none }
+        .cx-badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:.72rem; font-weight:600; white-space:nowrap }
+        .cx-ok{ background:var(--soft); color:var(--brand); border:1px solid #CFE3DA }
+        .cx-warn{ background:#FBF3E4; color:#A96C24; border:1px solid #EBD9B8 }
+        .cx-crit{ background:#FBF0EF; color:#A64F45; border:1px solid #E6C4C0 }
+        .cx-neutral{ background:#F1F4F2; color:var(--muted); border:1px solid var(--border) }
+        .cx-link{ color:var(--brand); font-weight:600 } .cx-link:hover{ text-decoration:underline }
+        .cx-btn{ display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1.1rem; border-radius:10px; font-weight:600; font-size:.88rem; cursor:pointer; border:1px solid transparent; text-decoration:none }
+        .cx-btn-primary{ background:var(--brand); color:#fff } .cx-btn-primary:hover{ background:var(--brand-h) }
+        .cx-btn-secondary{ background:var(--surface); color:var(--text); border-color:var(--border) } .cx-btn-secondary:hover{ border-color:var(--brand); color:var(--brand) }
+        .cx-note{ border-radius:12px; padding:14px 18px; font-size:.88rem; line-height:1.7 }
+        .cx-note-warn{ background:#FBF3E4; border:1px solid #EBD9B8; color:#8A5A1E }
+        .cx-note-info{ background:#EEF3FB; border:1px solid #CBDAF0; color:#3B537A }
+        .cx-muted{ color:var(--muted) } .cx-navy{ color:var(--navy) }
+
         /* ── Site-wide form polish (Sakinah). Bare inputs get this baseline; Tailwind
            utility classes still override per-element, so styled inputs are untouched. ── */
         input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=submit]):not([type=button]),
