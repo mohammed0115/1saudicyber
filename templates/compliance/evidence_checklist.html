@@ -6,110 +6,102 @@
 <div class="max-w-5xl mx-auto space-y-6">
     {% include "compliance/_workflow_stepper.html" %}
     {% include "components/current_step_card.html" with guide=guide %}
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-gov-green-800">قائمة الأدلة المخطّطة</h1>
-            <p class="text-gov-gray-600">مهام أدلة مخطّطة للضوابط الرسمية المنطبقة. هذه خطة — لا رفع ملفات هنا.</p>
+
+    <div class="cx-head flex items-start justify-between gap-4">
+        <div class="flex items-start gap-3">
+            <span class="ic"><i class="fas fa-list-check" aria-hidden="true"></i></span>
+            <div>
+                <h1 class="text-2xl font-bold cx-navy">قائمة الأدلة المخطّطة</h1>
+                <p class="cx-muted text-sm mt-1">مهام أدلة مخطّطة للضوابط الرسمية المنطبقة. هذه خطة — لا رفع ملفات هنا.</p>
+            </div>
         </div>
         {% if can_generate %}
         <form method="post" action="{% url 'compliance:generate_evidence_checklist' %}" data-busy="جارٍ توليد قائمة الأدلة...">
-
-
             {% csrf_token %}
-            <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
-                توليد قائمة الأدلة
-            </button>
+            <button class="cx-btn cx-btn-primary">توليد قائمة الأدلة</button>
         </form>
         {% endif %}
     </div>
 
     {% if messages %}{% for m in messages %}
-    <div class="bg-gov-green-50 border border-gov-green-200 text-gov-green-800 rounded-lg p-3">{{ m }}</div>
+    <div class="cx-note" style="background:var(--soft);border:1px solid #CFE3DA;color:var(--brand);">{{ m }}</div>
     {% endfor %}{% endif %}
 
     {% if not items %}
     {% if has_approved_scope and not has_control_plan %}
     {# Prerequisite guard (soft): evidence needs a generated control plan first. #}
-    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
-        <i class="fas fa-lock mr-1"></i>
+    <div class="cx-note cx-note-warn">
+        <i class="fas fa-lock me-1"></i>
         يرجى إنشاء خطة الضوابط قبل رفع الأدلة.
         <div class="mt-2 flex flex-wrap gap-3">
-            <a href="{% url 'compliance:control_plan' %}" class="underline font-medium">إنشاء خطة الضوابط</a>
+            <a href="{% url 'compliance:control_plan' %}" class="underline font-semibold">إنشاء خطة الضوابط</a>
         </div>
     </div>
     {% elif has_any_scope and not has_approved_scope %}
-    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
-        <i class="fas fa-hourglass-half mr-1"></i>
+    <div class="cx-note cx-note-warn">
+        <i class="fas fa-hourglass-half me-1"></i>
         نطاق الأطر قيد الاعتماد. ستتوفّر قائمة الأدلة بعد اعتماد النطاق.
         <div class="mt-2 flex flex-wrap gap-3">
-            <a href="{% url 'compliance:applicability_review' %}" class="underline font-medium">مراجعة الأطر</a>
+            <a href="{% url 'compliance:applicability_review' %}" class="underline font-semibold">مراجعة الأطر</a>
         </div>
     </div>
     {% else %}
-    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
-        <i class="fas fa-circle-info mr-1"></i>
+    <div class="cx-note cx-note-warn">
+        <i class="fas fa-circle-info me-1"></i>
         لم يتم توليد قائمة أدلة بعد. أكمل التصنيف الذكي أولًا لتحديد الأطر والضوابط المنطبقة.
         <div class="mt-2 flex flex-wrap gap-3">
-            <a href="{% url 'compliance:intake' %}" class="underline font-medium">التصنيف الذكي</a>
-            <a href="{% url 'compliance:control_plan' %}" class="underline font-medium">خطة الضوابط</a>
+            <a href="{% url 'compliance:intake' %}" class="underline font-semibold">التصنيف الذكي</a>
+            <a href="{% url 'compliance:control_plan' %}" class="underline font-semibold">خطة الضوابط</a>
         </div>
     </div>
     {% endif %}
     {% endif %}
 
-    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
-        <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">
-            العناصر المخطّطة ({{ items|length }})
-        </div>
-        <table class="w-full text-sm">
-            <thead class="text-gov-gray-600">
+    <div class="cx-card">
+        <div class="cx-card-h">العناصر المخطّطة ({{ items|length }})</div>
+        <div class="cx-scroll"><table class="cx-tbl">
+            <thead>
                 <tr>
-                    <th class="text-right px-4 py-2">الضابط</th>
-                    <th class="text-right px-4 py-2">الإطار</th>
-                    <th class="text-right px-4 py-2">متطلّب الدليل</th>
-                    <th class="text-right px-4 py-2">المستوى</th>
-                    <th class="text-right px-4 py-2">الأولوية</th>
-                    <th class="text-right px-4 py-2">الحالة</th>
-                    <th class="text-right px-4 py-2">الأدلة المرفوعة</th>
-                    <th class="text-right px-4 py-2">إجراء</th>
+                    <th>الضابط</th><th>الإطار</th><th>متطلّب الدليل</th><th>المستوى</th>
+                    <th>الأولوية</th><th>الحالة</th><th>الأدلة المرفوعة</th><th>إجراء</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gov-gray-100">
+            <tbody>
                 {% for it in items %}
                 <tr>
-                    <td class="px-4 py-2 font-mono text-xs">{{ it.evidence_requirement.control.control_id }}</td>
-                    <td class="px-4 py-2 text-xs text-gov-gray-500">{{ it.evidence_requirement.control.framework_version.code }}</td>
-                    <td class="px-4 py-2 text-gov-gray-700">{{ it.evidence_requirement.title|req_title_ar }}</td>
-                    <td class="px-4 py-2 text-xs">{{ it.evidence_requirement.requirement_level|level_ar }}</td>
-                    <td class="px-4 py-2 text-xs">{{ it.priority|priority_ar }}</td>
-                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded bg-gov-gray-200 text-gov-gray-700 text-xs">{{ it.status|checklist_status_ar }}</span></td>
-                    <td class="px-4 py-2 text-xs">
+                    <td class="font-mono text-xs" style="color:var(--text);">{{ it.evidence_requirement.control.control_id }}</td>
+                    <td class="text-xs cx-muted">{{ it.evidence_requirement.control.framework_version.code }}</td>
+                    <td style="color:var(--text);">{{ it.evidence_requirement.title|req_title_ar }}</td>
+                    <td class="text-xs">{{ it.evidence_requirement.requirement_level|level_ar }}</td>
+                    <td class="text-xs">{{ it.priority|priority_ar }}</td>
+                    <td><span class="cx-badge cx-neutral">{{ it.status|checklist_status_ar }}</span></td>
+                    <td class="text-xs">
                         {% with subs=it.submissions.all %}
                         {% if subs %}
-                            <a href="{% url 'compliance:evidence_submission_list' it.id %}" class="text-gov-green-700 hover:underline">
+                            <a href="{% url 'compliance:evidence_submission_list' it.id %}" class="cx-link">
                                 {{ subs|length }} ملف — آخرها: {{ subs.0.status|submission_status_ar }}
                             </a>
                         {% else %}
-                            <span class="text-gov-gray-400">لا دليل مرفوع بعد</span>
+                            <span style="color:var(--muted);">لا دليل مرفوع بعد</span>
                         {% endif %}
                         {% endwith %}
                     </td>
-                    <td class="px-4 py-2 text-xs">
-                        <a href="{% url 'compliance:evidence_upload_v2' it.id %}" class="text-gov-green-700 hover:underline">رفع دليل</a>
+                    <td class="text-xs">
+                        <a href="{% url 'compliance:evidence_upload_v2' it.id %}" class="cx-link">رفع دليل</a>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="8" class="px-4 py-6 text-center text-gov-gray-500">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">
                     لا توجد عناصر مخطّطة بعد. اعتمد إطاراً وولّد خطة الضوابط، ثم ولّد قائمة الأدلة.
                 </td></tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table></div>
         <div class="px-4 py-2">{% include "components/pagination.html" %}</div>
     </div>
 
-    <div class="bg-gov-gray-100 border border-gov-gray-200 text-gov-gray-700 rounded-lg p-4 text-sm">
-        <i class="fas fa-lock"></i>
+    <div class="cx-note" style="background:var(--soft2);border:1px solid var(--border);color:var(--text2);">
+        <i class="fas fa-lock me-1" style="color:var(--muted);"></i>
         رفع الأدلة وربطها يتم من صفحة رفع الأدلة. لا رفع في هذه الصفحة.
     </div>
 
