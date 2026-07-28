@@ -94,6 +94,18 @@ class ApiEndpointCoverageTests(TestCase):
         for path in ('/api/v1/dashboard/executive/', '/api/v1/dashboard/compliance/'):
             self.assertEqual(self.client.get(path, **self.auth).status_code, 200, path)
 
+    def test_modern_endpoints_require_auth(self):
+        for path in ('/api/v1/assessments/', '/api/v1/evidence-submissions/'):
+            self.assertEqual(self.client.get(path).status_code, 401, path)
+
+    def test_modern_endpoints_ok_and_tenant_scoped(self):
+        # A freshly registered company has no ControlAssessment / EvidenceSubmission yet
+        # (those are created by auditors / upload-v2), so each returns 200 with an empty list.
+        for path in ('/api/v1/assessments/', '/api/v1/evidence-submissions/'):
+            r = self.client.get(path, **self.auth)
+            self.assertEqual(r.status_code, 200, path)
+            self.assertEqual(r.json(), [], path)
+
     def test_jwt_refresh_flow(self):
         r = self.client.post('/api/v1/token/refresh/',
                              data={'refresh': self.reg['refresh']}, content_type='application/json')

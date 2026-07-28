@@ -13,13 +13,16 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serial
 from drf_spectacular.types import OpenApiTypes
 
 from core.models import Company, User
-from compliance.models import Control, CompanyControl, Evidence
+from compliance.models import (
+    Control, CompanyControl, Evidence, ControlAssessment, EvidenceSubmission,
+)
 from monitoring.models import ComplianceScore, Alert
 from ai_engine.models import GapAnalysis
 from .serializers import (
     RegisterSerializer, ControlSerializer, CompanyControlSerializer,
     EvidenceSerializer, ComplianceScoreSerializer, AlertSerializer,
     GapAnalysisSerializer, CompanySerializer,
+    ControlAssessmentSerializer, EvidenceSubmissionSerializer,
 )
 
 ALLOWED = lambda: getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
@@ -61,7 +64,7 @@ def register(request):
     }, status=status.HTTP_201_CREATED)
 
 
-@extend_schema(summary="ضوابط الشركة (مع حالة التقييم)",
+@extend_schema(summary="ضوابط الشركة (قديم — استخدم /assessments/)", deprecated=True,
                parameters=[OpenApiParameter('framework', str, description='رمز الإطار للتصفية (مثل NCA-ECC).')],
                responses=CompanyControlSerializer(many=True))
 @api_view(['GET'])
@@ -87,6 +90,47 @@ def control_detail(request, control_id):
     except Control.DoesNotExist:
         return Response({'detail': 'Not found.'}, status=404)
     return Response(ControlSerializer(control).data)
+
+
+@extend_schema(summary="تقييمات الضوابط (قرار المدقّق النهائي — حديث)",
+               parameters=[OpenApiParameter('framework', str, description='رمز الإطار للتصفية.'),
+                           OpenApiParameter('status', str, description='تصفية بالحالة (compliant/non_compliant/…).')],
+               responses=ControlAssessmentSerializer(many=True))
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def assessments(request):
+    """Phase 3G — the auditor's final ControlAssessment per official control (tenant-scoped).
+    Modern replacement for the legacy `controls` (CompanyControl) endpoint."""
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    qs = ControlAssessment.objects.filter(company=company).select_related(
+        'control', 'control__framework')
+    fw = request.query_params.get('framework')
+    if fw:
+        qs = qs.filter(control__framework__code=fw)
+    st = request.query_params.get('status')
+    if st:
+        qs = qs.filter(status=st)
+    return Response(ControlAssessmentSerializer(qs, many=True).data)
+
+
+@extend_schema(summary="أدلة الشركة (upload v2 — حديث)",
+               parameters=[OpenApiParameter('status', str, description='تصفية بالحالة (accepted/pending_review/…).')],
+               responses=EvidenceSubmissionSerializer(many=True))
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def evidence_submissions(request):
+    """Upload-v2 EvidenceSubmission list (tenant-scoped). Modern replacement for the
+    legacy Evidence view."""
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    qs = EvidenceSubmission.objects.filter(company=company)
+    st = request.query_params.get('status')
+    if st:
+        qs = qs.filter(status=st)
+    return Response(EvidenceSubmissionSerializer(qs, many=True).data)
 
 
 @extend_schema(summary="تصنيف الشركة (استشاري)", request=None, responses=OpenApiTypes.OBJECT)
@@ -257,7 +301,8 @@ def monitoring_alerts(request):
     return Response(AlertSerializer(qs, many=True).data)
 
 
-@extend_schema(summary="تكليفات المدقّق", responses=OpenApiTypes.OBJECT)
+@extend_schema(summary="تكليفات المدقّق (قديم — نموذج Assessment)", deprecated=True,
+               responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def auditor_assignments(request):
