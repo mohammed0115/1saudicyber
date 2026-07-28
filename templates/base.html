@@ -41,6 +41,19 @@
         .app-footer a{ color:var(--text2); } .app-footer a:hover{ color:var(--brand); }
         .app-fbrand{ color:var(--brand); }
 
+        /* ── Palette unification: remap the darker gov-green content shades (600–900)
+           to the calm brand so in-app screens match the onboarding/shell green. The
+           light shades (50/100/200) are already calm and are intentionally kept. This
+           <style> loads after app.css, so equal-specificity rules win — no !important. ── */
+        .text-gov-green-600, .text-gov-green-700, .text-gov-green-800, .text-gov-green-900{ color:var(--brand); }
+        .hover\:text-gov-green-700:hover, .hover\:text-gov-green-800:hover, .hover\:text-gov-green-900:hover{ color:var(--brand-h); }
+        .bg-gov-green-500, .bg-gov-green-600, .bg-gov-green-700, .bg-gov-green-800, .bg-gov-green-900{ background-color:var(--brand); }
+        .hover\:bg-gov-green-700:hover, .hover\:bg-gov-green-800:hover, .hover\:bg-gov-green-900:hover{ background-color:var(--brand-h); }
+        .border-gov-green-500, .border-gov-green-600, .border-gov-green-700, .border-gov-green-800{ border-color:var(--brand); }
+        .ring-gov-green-600, .ring-gov-green-700,
+        .focus\:ring-gov-green-500:focus, .focus\:ring-gov-green-600:focus, .focus\:ring-gov-green-700:focus{ --tw-ring-color:var(--brand); }
+        .focus\:border-gov-green-600:focus, .focus\:border-gov-green-700:focus{ border-color:var(--brand); }
+
         /* ── Site-wide form polish (Sakinah). Bare inputs get this baseline; Tailwind
            utility classes still override per-element, so styled inputs are untouched. ── */
         input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=submit]):not([type=button]),
