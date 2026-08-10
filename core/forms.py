@@ -74,7 +74,9 @@ class CompanyRegistrationForm(forms.Form):
     def clean(self):
         cleaned = super().clean()
         if not (cleaned.get('target_nca') or cleaned.get('target_aramco') or cleaned.get('target_sabic')):
-            raise forms.ValidationError('Select at least one certification target (NCA, Aramco, or SABIC).')
+            # Aramco is temporarily hidden from the public UI; the target_aramco field
+            # itself stays intact and is still accepted when posted.
+            raise forms.ValidationError('Please select at least one compliance goal (NCA or SABIC).')
         return cleaned
 
 
@@ -116,7 +118,7 @@ class SelfServiceRegistrationForm(forms.Form):
     # Phase 8C — trust: explicit terms/privacy acceptance (form-only, not stored).
     accept_terms = forms.BooleanField(
         required=True,
-        label=_('أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة 1SaudiCyber.'),
+        label=_('أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة Cyber-5.'),
         error_messages={'required': _('يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب.')})
 
     def clean_cr_number(self):
@@ -139,7 +141,9 @@ class SelfServiceRegistrationForm(forms.Form):
         if pw and pw2 and pw != pw2:
             self.add_error('password_confirm', 'كلمتا المرور غير متطابقتين.')
         if not (cleaned.get('target_nca') or cleaned.get('target_aramco') or cleaned.get('target_sabic')):
-            raise forms.ValidationError('اختر هدف امتثال واحدًا على الأقل (NCA أو Aramco أو SABIC).')
+            # Aramco is temporarily hidden from the public UI; the target_aramco field
+            # itself stays intact and is still accepted when posted.
+            raise forms.ValidationError(_('يرجى اختيار هدف امتثال واحد على الأقل (NCA أو SABIC).'))
         return cleaned
 
 

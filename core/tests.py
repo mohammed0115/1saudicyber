@@ -480,6 +480,28 @@ class Phase4ARegistrationOnboardingTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(User.objects.filter(email='sara@co.example').exists())
 
+    def test_goal_required_message_names_nca_and_sabic_only(self):
+        # Aramco is temporarily hidden from public UI copy, so the user-facing
+        # validation message must not name it.
+        resp = self.client.post(reverse('core:company_register'),
+                                self._payload(target_nca='', target_aramco='', target_sabic=''))
+        body = resp.content.decode()
+        self.assertIn('يرجى اختيار هدف امتثال واحد على الأقل (NCA أو SABIC).', body)
+        for hidden in ('Aramco', 'أرامكو', 'SACS'):
+            self.assertNotIn(hidden, body, hidden)
+
+    def test_registration_accepts_nca_only(self):
+        resp = self.client.post(reverse('core:company_register'),
+                                self._payload(target_nca='on', target_aramco='', target_sabic=''))
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Company.objects.filter(cr_number='1212121212', target_nca=True).exists())
+
+    def test_registration_accepts_sabic_only(self):
+        resp = self.client.post(reverse('core:company_register'),
+                                self._payload(target_nca='', target_aramco='', target_sabic='on'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Company.objects.filter(cr_number='1212121212', target_sabic=True).exists())
+
     # --- Tenant / Security ---
     def test_protected_onboarding_requires_login(self):
         resp = self.client.get(reverse('core:onboarding'))
@@ -640,9 +662,10 @@ class Phase4AFixALocalizationTests(TestCase):
         resp = self.client.get(reverse('core:landing'))
         self.assertNotContains(resp, '334')
 
-    def test_public_landing_shows_417_official_controls(self):
+    def test_public_landing_shows_325_official_controls(self):
+        # Aramco (92) temporarily hidden from public pages -> 231 NCA + 94 SABIC.
         resp = self.client.get(reverse('core:landing'))
-        self.assertContains(resp, '417')
+        self.assertContains(resp, '325')
 
     def test_nca_ecc_count_is_108_or_nca_total_is_231(self):
         resp = self.client.get(reverse('core:landing'))
@@ -1507,7 +1530,7 @@ class Phase8CPublicUXTrustTests(TestCase):
         self.assertNotIn('24/7', body)
         self.assertIn('جاهزية للمراقبة المستمرة', body)
         self.assertIn('مؤشرات توضيحية', body)
-        self.assertIn('417', body)        # official total still shown
+        self.assertIn('325', body)        # official total still shown
         self.assertNotIn('>334<', body)   # legacy total not a displayed figure
 
 
@@ -1696,9 +1719,9 @@ class Phase8D2FixACriticalBlockerTests(TestCase):
         for leak in ('Phase 8C-FIX-C', 'reusable public', 'Posts to Django', 'RTL/LTR safe'):
             self.assertNotIn(leak, body)
 
-    def test_landing_417_not_334(self):
+    def test_landing_325_not_334(self):
         body = self.client.get(reverse('core:landing')).content.decode()
-        self.assertIn('417', body)
+        self.assertIn('325', body)
         self.assertNotIn('>334<', body)
 
 

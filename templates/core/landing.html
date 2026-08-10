@@ -3,7 +3,7 @@
 {% block title %}Cyber-5 — {% trans "منصّة جاهزية الامتثال السيبراني للسوق السعودي" %}{% endblock %}
 
 {% block extra_head %}
-<meta name="description" content="{% trans 'منصّة Cyber-5 لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات، وإعداد تقارير الجاهزية وفق أطر NCA وAramco وSABIC.' %}">
+<meta name="description" content="{% trans 'منصّة Cyber-5 لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات، وإعداد تقارير الجاهزية وفق أطر NCA وSABIC.' %}">
 <style>
   /* ============================================================
      P0-UIUX-01 — Light, calm enterprise/GRC landing (management direction).
@@ -167,7 +167,7 @@
           <span class="lp-eyebrow" style="letter-spacing:.04em;">{% trans "منصّة جاهزية الامتثال السيبراني" %}</span>
         </span>
         <h1 data-hero="2" class="mt-5 mb-4" style="text-wrap:balance;">{% trans "امتثال سيبراني أبسط لمنشأتك في السعودية" %}</h1>
-        <p data-hero="3" class="lp-lead mb-7" style="max-width:60ch;">{% trans "تجمع Cyber-5 دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC." %}</p>
+        <p data-hero="3" class="lp-lead mb-7" style="max-width:60ch;">{% trans "تجمع Cyber-5 دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وSABIC." %}</p>
         <div data-hero="4" class="flex flex-wrap gap-3">
           <a href="{% url 'core:get_started' %}" class="lp-btn lp-btn-primary">
             {% trans "ابدأ الآن" %}
@@ -296,10 +296,6 @@
                     <div class="w-full rounded-full overflow-hidden" style="height:6px;background:var(--neutral);"><div class="h-full rounded-full" data-bar style="--w:81%;width:var(--w);background:var(--ok);"></div></div>
                   </div>
                   <div>
-                    <div class="flex items-center justify-between text-xs mb-1"><span class="lp-body">Aramco SACS-002</span><span class="font-semibold tabular-nums" style="color:var(--text);">74%</span></div>
-                    <div class="w-full rounded-full overflow-hidden" style="height:6px;background:var(--neutral);"><div class="h-full rounded-full" data-bar style="--w:74%;width:var(--w);background:var(--ok);"></div></div>
-                  </div>
-                  <div>
                     <div class="flex items-center justify-between text-xs mb-1"><span class="lp-body">SABIC CyberTrust</span><span class="font-semibold tabular-nums" style="color:var(--text);">65%</span></div>
                     <div class="w-full rounded-full overflow-hidden" style="height:6px;background:var(--neutral);"><div class="h-full rounded-full" data-bar style="--w:65%;width:var(--w);background:var(--warn);"></div></div>
                   </div>
@@ -326,7 +322,7 @@
       <h2 class="mb-3">{% trans "الأطر المدعومة" %}</h2>
       <p class="lp-body mx-auto" style="max-width:60ch;">{% trans "تغطية مهيكلة لضوابط الأطر المنشورة في السوق السعودي، من مساحة عمل واحدة." %}</p>
     </div>
-    <div class="grid md:grid-cols-3 gap-5 items-stretch">
+    <div class="grid md:grid-cols-2 gap-5 items-stretch mx-auto" style="max-width:52rem;">
       <div class="lp-card p-6 flex flex-col">
         <div class="lp-iconbox flex items-center justify-center mb-4" style="width:44px;height:44px;"><i class="fas fa-landmark" aria-hidden="true"></i></div>
         <h3 class="mb-2">NCA ECC</h3>
@@ -337,12 +333,6 @@
         </div>
       </div>
       <div class="lp-card p-6 flex flex-col">
-        <div class="lp-iconbox flex items-center justify-center mb-4" style="width:44px;height:44px;"><i class="fas fa-oil-well" aria-hidden="true"></i></div>
-        <h3 class="mb-2">Aramco SACS-002</h3>
-        <p class="lp-body text-sm mb-4 flex-1">{% trans "معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة، للموردين ومزوّدي الخدمات." %}</p>
-        <div class="text-sm font-semibold lp-brand" style="border-top:1px solid var(--border);padding-top:.75rem;">{% trans "92 ضابطًا" %}</div>
-      </div>
-      <div class="lp-card p-6 flex flex-col">
         <div class="lp-iconbox flex items-center justify-center mb-4" style="width:44px;height:44px;"><i class="fas fa-industry" aria-hidden="true"></i></div>
         <h3 class="mb-2">SABIC CyberTrust</h3>
         <p class="lp-body text-sm mb-4 flex-1">{% trans "معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات." %}</p>
@@ -351,7 +341,7 @@
     </div>
     <p class="text-center font-semibold mt-7 flex items-center justify-center gap-2" style="color:var(--text);">
       <i class="fas fa-layer-group lp-brand" aria-hidden="true"></i>
-      {% trans "417 ضابطًا رسميًا مهيكلًا عبر أطر NCA وAramco وSABIC" %}
+      {% trans "325 ضابطًا رسميًا مهيكلًا عبر أطر NCA وSABIC" %}
     </p>
     <p class="text-center lp-muted text-xs mt-3 mx-auto" style="max-width:70ch;">{% trans "Cyber-5 منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها." %}</p>
   </div>
@@ -425,7 +415,7 @@
     <div>
       <p class="lp-eyebrow mb-2">{% trans "ربط الأطر" %}</p>
       <h2 class="mb-4">{% trans "متطلبات متداخلة، مربوطة عبر الأطر" %}</h2>
-      <p class="lp-body mb-4">{% trans "تُربط الضوابط المتكافئة بين NCA وAramco وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار." %}</p>
+      <p class="lp-body mb-4">{% trans "تُربط الضوابط المتكافئة بين NCA وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار." %}</p>
       <p class="lp-muted text-sm">{% trans "الربط يوضّح التكافؤ بين الضوابط؛ والقرار في كفاية الأدلة لكل ضابط يبقى للمراجع المختص." %}</p>
     </div>
     <div class="lp-card p-6">
@@ -434,10 +424,7 @@
         <div class="flex justify-center lp-muted" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
         <div class="rounded-xl px-4 py-2.5 text-sm text-center font-medium" style="background:var(--soft);color:var(--text);border:1px solid var(--border);">{% trans "الأدلة" %}</div>
         <div class="flex justify-center lp-muted" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-xl px-3 py-3 text-sm text-center" style="background:var(--surface);border:1px solid var(--border);color:var(--text);">Aramco SACS-002<div class="lp-muted text-xs mt-0.5">{% trans "ضابط متكافئ" %}</div></div>
-          <div class="rounded-xl px-3 py-3 text-sm text-center" style="background:var(--surface);border:1px solid var(--border);color:var(--text);">SABIC CyberTrust<div class="lp-muted text-xs mt-0.5">{% trans "ضابط متكافئ" %}</div></div>
-        </div>
+        <div class="rounded-xl px-4 py-3 text-sm text-center" style="background:var(--surface);border:1px solid var(--border);color:var(--text);">SABIC CyberTrust<div class="lp-muted text-xs mt-0.5">{% trans "ضابط متكافئ" %}</div></div>
       </div>
     </div>
   </div>

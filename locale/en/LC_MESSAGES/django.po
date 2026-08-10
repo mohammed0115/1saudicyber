@@ -638,8 +638,8 @@ msgstr "108 ECC controls — 231 controls across the NCA frameworks"
 msgid "1SaudiCyber منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها."
 msgstr "1SaudiCyber is an independent platform. Regulatory framework names are shown to indicate coverage scope only, and do not imply official endorsement by, or partnership with, any regulator."
 
-msgid "417 ضابطًا رسميًا مهيكلًا عبر أطر NCA وAramco وSABIC"
-msgstr "417 official framework controls structured across the NCA, Aramco and SABIC frameworks"
+msgid "325 ضابطًا رسميًا مهيكلًا عبر أطر NCA وSABIC"
+msgstr "325 official framework controls structured across the NCA and SABIC frameworks"
 
 msgid "أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص. لا تُصدر المنصّة اعتمادًا رسميًا."
 msgstr "A tool to help organize compliance; the final decision stays with the auditor or the qualified compliance team. The platform does not issue any formal accreditation."
@@ -779,8 +779,8 @@ msgstr "Structured coverage of the published framework controls used in the Saud
 msgid "تقييم وضع الجاهزية وربط الأدلة بالضوابط."
 msgstr "Assess readiness and link evidence to controls."
 
-msgid "تُربط الضوابط المتكافئة بين NCA وAramco وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار."
-msgstr "Equivalent controls are mapped across NCA, Aramco and SABIC, so overlapping requirements appear in one place and duplicated work is reduced when covering more than one framework."
+msgid "تُربط الضوابط المتكافئة بين NCA وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار."
+msgstr "Equivalent controls are mapped across NCA and SABIC, so overlapping requirements appear in one place and duplicated work is reduced when covering more than one framework."
 
 msgid "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية"
 msgstr "Cybersecurity compliance readiness, simplified for Saudi organizations"
@@ -1188,3 +1188,170 @@ msgstr "Enterprise-grade security and privacy"
 
 msgid "بياناتك آمنة ومشفرة وفق أعلى المعايير"
 msgstr "Your data is secure and encrypted to the highest standards"
+
+
+msgid "اختيار نوع الحساب"
+msgstr "Account type"
+
+
+msgid "كيف تريد استخدام 1SaudiCyber؟"
+msgstr "How do you want to use 1SaudiCyber?"
+
+
+msgid "اختر نوع الحساب للمتابعة."
+msgstr "Choose an account type to continue."
+
+
+msgid "الأنسب لمعظم المستخدمين"
+msgstr "Best for most users"
+
+
+msgid "حساب منشأة"
+msgstr "Organization account"
+
+
+msgid "أنشئ حساب مسؤول المنشأة لبدء إعداد الشركة والاشتراك والتصنيف وإدارة رحلة الامتثال."
+msgstr "Create the organization-administrator account to set up your company, subscription, classification, and manage the compliance journey."
+
+
+msgid "إنشاء حساب منشأة"
+msgstr "Create organization account"
+
+
+msgid "حساب مدقّق"
+msgstr "Auditor account"
+
+
+msgid "قدّم طلب تسجيل كمدقّق، وسيخضع الطلب لمراجعة الإدارة قبل التفعيل."
+msgstr "Submit an auditor registration request; it is reviewed by the administration before activation."
+
+
+msgid "طلب التسجيل"
+msgstr "Registration request"
+
+
+msgid "مراجعة الإدارة"
+msgstr "Admin review"
+
+
+msgid "التفعيل"
+msgstr "Activation"
+
+
+msgid "تسجيل كمدقّق"
+msgstr "Register as an auditor"
+
+
+msgid "اختر نوع الحساب المناسب، ويمكنك استكمال البيانات في الخطوات التالية. تُدار الصلاحيات والوصول وفق نوع الحساب وحالة التفعيل."
+msgstr "Choose the account type that fits you; you can complete the details in the following steps. Permissions and access are managed according to account type and activation status."
+
+
+msgid "التحقق"
+msgstr "Verification"
+
+
+msgid "اكتمال التسجيل"
+msgstr "Registration complete"
+
+
+msgid "حساب فردي"
+msgstr "Individual account"
+
+
+msgid "إنشاء حساب فردي"
+msgstr "Create individual account"
+
+
+msgid "للمدقّقين والمستشارين والأفراد للتعاون مع المنشآت في مراجعة الامتثال."
+msgstr "For auditors, consultants, and individuals collaborating with organizations on compliance review."
+
+
+msgid "تأكيد بريدك الإلكتروني"
+msgstr "Confirm your email"
+
+
+msgid "أرسلنا رمز تحقّق مكوّنًا من 6 أرقام لإكمال إنشاء حساب منشأتك."
+msgstr "We sent a 6-digit verification code to complete creating your organization account."
+
+
+msgid "نسخ البريد"
+msgstr "Copy email"
+
+
+msgid "لم تجد الرسالة؟ تحقّق من مجلد الرسائل غير المرغوب فيها (Spam) أو العروض الترويجية. الرمز صالح لمدة 10 دقائق، ولديك 5 محاولات."
+msgstr "Didn't find the message? Check your spam or promotions folder. The code is valid for 10 minutes, and you have 5 attempts."
+
+
+msgid "العودة لتسجيل الدخول"
+msgstr "Back to sign in"
+
+
+msgid "يمكنك إعادة الإرسال خلال"
+msgstr "You can resend in"
+
+
+msgid "تم التحقق بنجاح"
+msgstr "Verified successfully"
+
+
+msgid "تم تأكيد بريدك الإلكتروني وإنشاء حساب منشأتك بنجاح. الخطوة التالية: استكمال إعداد المنشأة لبدء رحلة الامتثال."
+msgstr "Your email is confirmed and your organization account is created. Next: complete your organization setup to start the compliance journey."
+
+
+msgid "حساب المنشأة جاهز"
+msgstr "Organization account ready"
+
+
+msgid "اسم المنشأة"
+msgstr "Organization name"
+
+
+msgid "تاريخ الإنشاء"
+msgstr "Created on"
+
+
+msgid "حالة التحقق"
+msgstr "Verification status"
+
+
+msgid "تم التحقق"
+msgstr "Verified"
+
+
+msgid "ما هي الخطوة التالية؟"
+msgstr "What's next?"
+
+
+msgid "إعداد معلومات المنشأة"
+msgstr "Set up organization details"
+
+
+msgid "أدخل تفاصيل منشأتك الأساسية."
+msgstr "Enter your organization's basic details."
+
+
+msgid "تحديد نطاق الامتثال"
+msgstr "Define compliance scope"
+
+
+msgid "حدّد الأطر والقطاعات ونطاق التقييم."
+msgstr "Choose frameworks, sectors, and assessment scope."
+
+
+msgid "دعوة الفريق"
+msgstr "Invite your team"
+
+
+msgid "أضف أعضاء فريقك وحدّد صلاحياتهم."
+msgstr "Add team members and set their permissions."
+
+
+msgid "متابعة إعداد المنشأة"
+msgstr "Continue to organization setup"
+
+
+msgid "سأكمل لاحقًا من لوحة التحكم"
+msgstr "I'll continue later from the dashboard"
+
+msgid "يرجى اختيار هدف امتثال واحد على الأقل (NCA أو SABIC)."
+msgstr "Please select at least one compliance goal (NCA or SABIC)."
