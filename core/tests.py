@@ -228,6 +228,21 @@ class TeamInviteTests(TestCase):
         inv.refresh_from_db()
         self.assertEqual(inv.status, 'accepted')
 
+    def test_invite_email_uses_absolute_site_url(self):
+        # The emailed invite link must be an absolute URL on the public domain (SITE_URL),
+        # not a bare relative path — otherwise it is not clickable from an email client.
+        from core.invite_services import create_invite
+        from django.test import override_settings
+        from django.core import mail
+        c, admin = self._company_admin()
+        with override_settings(SITE_URL='https://cyber-5.com'):
+            mail.outbox = []
+            create_invite(c, 'link@x.com', 'compliance_officer', admin)
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn('https://cyber-5.com/invite/', body)   # absolute, new public domain
+        self.assertNotIn('\n/invite/', body)                 # not the old relative-only path
+
     def test_role_clamped_never_admin(self):
         from core.invite_services import create_invite
         c, admin = self._company_admin()

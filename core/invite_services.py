@@ -37,10 +37,14 @@ def create_invite(company, email, role, invited_by):
 
 def _email_invite(invite):
     frm = getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@cyber-5.com')
+    # Absolute link so the emailed invite is clickable from outside the app. SITE_URL is the
+    # single source of truth for the public base URL (same pattern as the email-verification
+    # link in core.services); this is not a second URL-building mechanism.
+    link = f"{settings.SITE_URL}/invite/{invite.token}/"
     body = ('تمت دعوتك للانضمام إلى فريق «%s» على منصة 1SaudiCyber.\n\n'
             'لإكمال الانضمام وتعيين كلمة المرور، افتح الرابط:\n'
-            '/invite/%s/\n\nالرابط صالح لمدة %d أيام.'
-            % (invite.company.name, invite.token, INVITE_TTL_DAYS))
+            '%s\n\nالرابط صالح لمدة %d أيام.'
+            % (invite.company.name, link, INVITE_TTL_DAYS))
     try:
         send_mail('دعوة للانضمام إلى فريق منشأتك', body, frm, [invite.email], fail_silently=True)
     except Exception:
