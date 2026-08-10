@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}تفاصيل الطلب - 1SaudiCyber{% endblock %}
+{% block title %}تفاصيل الطلب - Cyber-5{% endblock %}
 {% block content %}
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div style="max-width:820px;margin:0 auto;padding:8px 4px 24px;">
@@ -19,7 +19,7 @@
       {% elif assignment.status == 'requested' %}
         <form method="post" action="{% url 'auditors:assignment_respond' assignment.id %}" data-busy="جارٍ تحديث حالة الطلب..." style="margin-top:14px;display:flex;gap:10px;">
           {% csrf_token %}
-          <button name="action" value="accept" style="background:#2a5646;color:#fff;font-weight:600;padding:10px 20px;border:none;border-radius:10px;cursor:pointer;">قبول الطلب</button>
+          <button name="action" value="accept" style="background:#1E56C9;color:#fff;font-weight:600;padding:10px 20px;border:none;border-radius:10px;cursor:pointer;">قبول الطلب</button>
           <button name="action" value="reject" style="background:#FFFFFF;color:#9B2C2C;font-weight:600;padding:10px 20px;border:1px solid #E6BCBC;border-radius:10px;cursor:pointer;">رفض الطلب</button>
         </form>
       {% endif %}
@@ -27,7 +27,7 @@
 
     {% if context %}
     <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:20px;">
-      <h2 style="color:#2a5646;font-weight:700;font-size:1.05rem;margin:0 0 12px;">سياق الشركة (للقراءة فقط)</h2>
+      <h2 style="color:#1E56C9;font-weight:700;font-size:1.05rem;margin:0 0 12px;">سياق الشركة (للقراءة فقط)</h2>
       <p style="margin:0 0 6px;color:#2b2c27;"><strong>الشركة:</strong> {{ context.company.name_ar|default:context.company.name }}</p>
       <p style="margin:0 0 6px;color:#2b2c27;"><strong>حالة الاشتراك:</strong>
         {% if context.subscription_active %}مفعّل{% else %}غير مفعّل — تنزيل/تصدير التقارير يبقى محكومًا باشتراك الشركة{% endif %}</p>
@@ -41,10 +41,10 @@
       </div>
       <p style="color:#5b5c53;font-size:.82rem;margin:0 0 10px;">ملخّص مصفوفة الأدلة: {{ context.matrix_rows|length }} ضابطًا (عرض مختصر، للقراءة فقط).</p>
       <a href="{% url 'risk:auditor_view' assignment.id %}" data-busy="جارٍ تحميل سجل المخاطر..."
-         style="color:#2a5646;text-decoration:none;font-weight:600;font-size:.85rem;">عرض سجل المخاطر (للقراءة فقط)</a>
+         style="color:#1E56C9;text-decoration:none;font-weight:600;font-size:.85rem;">عرض سجل المخاطر (للقراءة فقط)</a>
       <span style="color:#e3e1d9;">·</span>
       <a href="{% url 'monitoring:auditor_view' assignment.id %}" data-busy="جارٍ تحميل المراقبة..."
-         style="color:#2a5646;text-decoration:none;font-weight:600;font-size:.85rem;">عرض المراقبة (للقراءة فقط)</a>
+         style="color:#1E56C9;text-decoration:none;font-weight:600;font-size:.85rem;">عرض المراقبة (للقراءة فقط)</a>
     </div>
     {% endif %}
   </div>

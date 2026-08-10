@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{% trans "قرار المدقق النهائي" %} - 1SaudiCyber{% endblock %}
+{% block title %}{% trans "قرار المدقق النهائي" %} - Cyber-5{% endblock %}
 {% block content %}
 <div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div style="max-width:960px;margin:0 auto;padding:8px 4px 28px;">
 
     <div style="margin-bottom:14px;">
-      <p style="color:#356a54;font-weight:600;margin:0 0 4px;">{% trans "قرار المدقق النهائي" %}</p>
+      <p style="color:#1E56C9;font-weight:600;margin:0 0 4px;">{% trans "قرار المدقق النهائي" %}</p>
       <h1 style="color:#2b2c27;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;">{{ submission.original_filename }}</h1>
       <p style="color:#5b5c53;font-size:.9rem;margin:0;">{{ submission.checklist_item.evidence_requirement.title }}</p>
     </div>
@@ -35,7 +35,7 @@
       <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
         <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "النص المستخرج من الدليل" %}</p>
         {% if extraction and extraction.status == 'extracted' %}
-          <p style="margin:0;font-weight:600;color:#2a5646;">{{ extraction.char_count }} {% trans "حرف" %}</p>
+          <p style="margin:0;font-weight:600;color:#1E56C9;">{{ extraction.char_count }} {% trans "حرف" %}</p>
         {% else %}<p style="margin:0;color:#9AA5A0;">—</p>{% endif %}
       </div>
     </div>
@@ -50,7 +50,7 @@
     {# Current verdict #}
     {% if verdict %}
     <div style="background:#E7F2EC;border:1px solid #BFE0CF;border-radius:12px;padding:16px;margin-bottom:18px;">
-      <p style="color:#2a5646;font-weight:700;margin:0 0 4px;">{% trans "الحالة بعد مراجعة المدقق" %}: {{ verdict.status_ar }}</p>
+      <p style="color:#1E56C9;font-weight:700;margin:0 0 4px;">{% trans "الحالة بعد مراجعة المدقق" %}: {{ verdict.status_ar }}</p>
       <p style="margin:0;color:#2b2c27;font-size:.9rem;">{{ verdict.rationale }}</p>
       {% if verdict.required_actions %}
       <ul style="margin:8px 0 0;padding-inline-start:18px;color:#8a6a1f;font-size:.86rem;">
@@ -66,7 +66,7 @@
     <form method="post" action="{% url 'compliance:auditor_verdict' submission.id %}" data-busy="جارٍ حفظ قرار المدقق..."
           style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:20px;">
       {% csrf_token %}
-      <h2 style="color:#2a5646;font-weight:700;font-size:1.05rem;margin:0 0 14px;">{% trans "الحالة بعد مراجعة المدقق" %}</h2>
+      <h2 style="color:#1E56C9;font-weight:700;font-size:1.05rem;margin:0 0 14px;">{% trans "الحالة بعد مراجعة المدقق" %}</h2>
       <label style="display:block;color:#2b2c27;font-size:.9rem;margin:0 0 6px;">{% trans "الحالة بعد مراجعة المدقق" %}</label>
       <select name="status" required style="width:100%;border:1px solid #e3e1d9;border-radius:10px;padding:10px 12px;margin-bottom:14px;background:#fff;">
         {% for code, label in allowed_status_choices %}<option value="{{ code }}" {% if verdict and verdict.status == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
@@ -79,7 +79,7 @@
       <label style="display:block;color:#2b2c27;font-size:.9rem;margin:0 0 6px;">{% trans "الإجراءات المطلوبة" %}</label>
       <input type="text" name="required_actions" placeholder="—"
              style="width:100%;box-sizing:border-box;border:1px solid #e3e1d9;border-radius:10px;padding:10px 12px;margin-bottom:16px;">
-      <button type="submit" style="background:#2a5646;color:#fff;font-weight:600;padding:11px 24px;border:none;border-radius:10px;cursor:pointer;">
+      <button type="submit" style="background:#1E56C9;color:#fff;font-weight:600;padding:11px 24px;border:none;border-radius:10px;cursor:pointer;">
         {% trans "حفظ قرار المدقق" %}</button>
     </form>
     {% else %}

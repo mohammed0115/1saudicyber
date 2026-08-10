@@ -1,22 +1,22 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}1SaudiCyber — {% trans "منصّة جاهزية الامتثال السيبراني للسوق السعودي" %}{% endblock %}
+{% block title %}Cyber-5 — {% trans "منصّة جاهزية الامتثال السيبراني للسوق السعودي" %}{% endblock %}
 
 {% block extra_head %}
-<meta name="description" content="{% trans 'منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات، وإعداد تقارير الجاهزية وفق أطر NCA وAramco وSABIC.' %}">
+<meta name="description" content="{% trans 'منصّة Cyber-5 لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات، وإعداد تقارير الجاهزية وفق أطر NCA وAramco وSABIC.' %}">
 <style>
   /* ============================================================
      P0-UIUX-01 — Light, calm enterprise/GRC landing (management direction).
      Green is a brand accent, not a dark dominant surface. Scoped to .lp.
      ============================================================ */
   .lp{
-    --brand:#176B55; --brand-h:#125845; --brand-soft:#2E8B6F;
+    --brand:#1E56C9; --brand-h:#173F94; --brand-soft:#3B72E0;
     /* restrained warm accent (per owner: green primary + a limited gold accent) */
-    --gold:#B08423; --gold-ink:#7A5A14; --gold-soft:#F6EFDA;
-    --bg:#F8FAF9; --surface:#FFFFFF; --neutral:#F4F7F5; --soft:#EDF5F1; --soft2:#F5F9F7;
-    --cta:#E8F3EE; --footer:#EEF4F1;
-    --text:#1F2D28; --text2:#46534C; --muted:#5C6A63; --border:#DDE6E2;
-    --ok:#2E8B6F; --warn:#A96C24; --crit:#A64F45; --info:#2B6C86;
+    --gold:#2C4A86; --gold-ink:#1E3A66; --gold-soft:#E9F0FD;
+    --bg:#F6F8FC; --surface:#FFFFFF; --neutral:#F1F5FB; --soft:#E9F0FD; --soft2:#F3F7FE;
+    --cta:#E9F0FD; --footer:#EEF3FB;
+    --text:#1F2D28; --text2:#46534C; --muted:#5C6A63; --border:#DBE2EC;
+    --ok:#3B72E0; --warn:#A96C24; --crit:#A64F45; --info:#2B6C86;
     color:var(--text); background:var(--bg);
     font-family:'Inter','Noto Sans Arabic',sans-serif;
   }
@@ -54,7 +54,7 @@
   /* cards & surfaces */
   .lp-card{ background:var(--surface); border:1px solid var(--border); border-radius:14px;
     transition:border-color .15s ease, box-shadow .15s ease; }
-  .lp-card:hover{ border-color:#C7DAD1; box-shadow:0 6px 20px rgba(23,107,85,.06); }
+  .lp-card:hover{ border-color:#C7D3EC; box-shadow:0 6px 20px rgba(30,86,201,.06); }
   .lp-chip{ background:var(--surface); border:1px solid var(--border); border-radius:9px; }
   .lp-iconbox{ background:var(--soft); color:var(--brand); border-radius:11px; }
   /* links */
@@ -69,7 +69,7 @@
   .lp-mobile-menu > summary{ list-style:none; }
   .lp-mobile-menu > summary::-webkit-details-marker{ display:none; }
   /* very faint hero texture (barely visible, no SOC feel) */
-  .lp-hero-tint{ background:radial-gradient(58% 52% at 85% 0%, rgba(23,107,85,.06), transparent 70%); }
+  .lp-hero-tint{ background:radial-gradient(58% 52% at 85% 0%, rgba(30,86,201,.06), transparent 70%); }
 
   /* ===================== Motion (restrained, meaning-first) =====================
      Progressive enhancement: motion styles apply ONLY when JS has added `.lp-js`
@@ -108,9 +108,9 @@
 <header class="lp-header sticky top-0 z-50 lp-s-white" style="border-bottom:1px solid var(--border);">
   <div class="lp-container">
     <div class="flex items-center justify-between gap-4" style="height:64px;">
-      <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="1SaudiCyber">
+      <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="Cyber-5">
         <i class="fas fa-shield-halved lp-brand text-2xl" aria-hidden="true"></i>
-        <span class="font-bold text-xl" style="color:var(--text);">1SaudiCyber</span>
+        <span class="font-bold text-xl" style="color:var(--text);">Cyber-5</span>
       </a>
 
       <nav class="hidden lg:flex items-center gap-1" aria-label="{% trans 'روابط الصفحة' %}">
@@ -167,7 +167,7 @@
           <span class="lp-eyebrow" style="letter-spacing:.04em;">{% trans "منصّة جاهزية الامتثال السيبراني" %}</span>
         </span>
         <h1 data-hero="2" class="mt-5 mb-4" style="text-wrap:balance;">{% trans "امتثال سيبراني أبسط لمنشأتك في السعودية" %}</h1>
-        <p data-hero="3" class="lp-lead mb-7" style="max-width:60ch;">{% trans "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC." %}</p>
+        <p data-hero="3" class="lp-lead mb-7" style="max-width:60ch;">{% trans "تجمع Cyber-5 دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC." %}</p>
         <div data-hero="4" class="flex flex-wrap gap-3">
           <a href="{% url 'core:get_started' %}" class="lp-btn lp-btn-primary">
             {% trans "ابدأ الآن" %}
@@ -214,7 +214,7 @@
           <div class="flex" style="min-width:0;">
             <aside class="hidden sm:block" aria-hidden="true" style="width:120px;flex:0 0 auto;background:var(--soft2);border-inline-end:1px solid var(--border);padding:.7rem .45rem;">
               <div class="flex items-center gap-1.5 mb-3" style="padding:.1rem .3rem;">
-                <span style="width:22px;height:22px;border-radius:6px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.56rem;font-weight:800;">1S</span>
+                <span style="width:22px;height:22px;border-radius:6px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.56rem;font-weight:800;">5</span>
                 <span class="lp-muted" style="font-size:.6rem;">{% trans "شركة تجريبية" %}</span>
               </div>
               <nav style="font-size:.66rem;line-height:1;">
@@ -353,7 +353,7 @@
       <i class="fas fa-layer-group lp-brand" aria-hidden="true"></i>
       {% trans "417 ضابطًا رسميًا مهيكلًا عبر أطر NCA وAramco وSABIC" %}
     </p>
-    <p class="text-center lp-muted text-xs mt-3 mx-auto" style="max-width:70ch;">{% trans "1SaudiCyber منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها." %}</p>
+    <p class="text-center lp-muted text-xs mt-3 mx-auto" style="max-width:70ch;">{% trans "Cyber-5 منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها." %}</p>
   </div>
 </section>
 
@@ -363,7 +363,7 @@
     <div style="max-width:62ch;" class="mb-9">
       <p class="lp-eyebrow mb-2">{% trans "المشكلة" %}</p>
       <h2 class="mb-4">{% trans "الامتثال لا يجب أن يعيش في جداول بيانات ورسائل ومجلدات أدلة متفرّقة" %}</h2>
-      <p class="lp-lead">{% trans "تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف المؤسسة فعليًا قبل التدقيق. تجمع 1SaudiCyber هذه الدورة في مسار واحد متّصل." %}</p>
+      <p class="lp-lead">{% trans "تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف المؤسسة فعليًا قبل التدقيق. تجمع Cyber-5 هذه الدورة في مسار واحد متّصل." %}</p>
     </div>
     <ol class="flex flex-wrap items-center gap-x-2 gap-y-3">
       <li class="lp-chip inline-flex items-center px-3.5 py-2 text-sm font-medium" style="color:var(--text);">{% trans "التقييم" %}</li>
@@ -550,7 +550,7 @@
       <div>
         <div class="flex items-center gap-2 mb-3">
           <i class="fas fa-shield-halved lp-brand text-xl" aria-hidden="true"></i>
-          <span class="font-bold text-lg" style="color:var(--text);">1SaudiCyber</span>
+          <span class="font-bold text-lg" style="color:var(--text);">Cyber-5</span>
         </div>
         <p class="lp-body text-sm">{% trans "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية." %}</p>
         <p class="lp-muted text-xs mt-3">cyber-5.com</p>
@@ -582,10 +582,10 @@
     <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm" style="border-top:1px solid var(--border);margin-top:2.5rem;padding-top:1.5rem;">
       <p class="lp-body text-center sm:text-start">
         {% if LANGUAGE_CODE == 'ar' %}
-          © {% now "Y" %} 1SaudiCyber. {% trans "جميع الحقوق محفوظة." %} {% trans "تطوير" %}
+          © {% now "Y" %} Cyber-5. {% trans "جميع الحقوق محفوظة." %} {% trans "تطوير" %}
           <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="lp-brand font-semibold" style="text-decoration:underline;">شركة احصل الحل</a>.
         {% else %}
-          © {% now "Y" %} 1SaudiCyber. All rights reserved. Developed by
+          © {% now "Y" %} Cyber-5. All rights reserved. Developed by
           <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="lp-brand font-semibold" style="text-decoration:underline;">Get Solution</a>.
         {% endif %}
       </p>

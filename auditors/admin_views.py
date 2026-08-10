@@ -1,6 +1,6 @@
 """Phase 8D-3A — Get Solution platform-admin auditor approval views.
 
-Internal operational area for the 1SaudiCyber platform admin (Get Solution
+Internal operational area for the Cyber-5 platform admin (Get Solution
 Company / شركة احصل الحل) to review and act on auditor accounts. Access is
 restricted to authenticated staff/superuser; company users, auditor users, and
 anonymous visitors are denied. Read-only listing + POST-only state changes.

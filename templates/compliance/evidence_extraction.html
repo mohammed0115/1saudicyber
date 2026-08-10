@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load compliance_display %}
 {% load i18n %}
-{% block title %}{% trans "استخراج النص من الدليل" %} - 1SaudiCyber{% endblock %}
+{% block title %}{% trans "استخراج النص من الدليل" %} - Cyber-5{% endblock %}
 {% block content %}
 <div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div style="max-width:920px;margin:0 auto;padding:8px 4px 28px;">
 
     <div style="margin-bottom:14px;">
-      <p style="color:#356a54;font-weight:600;margin:0 0 4px;">{% trans "استخراج النص من الدليل" %}</p>
+      <p style="color:#1E56C9;font-weight:600;margin:0 0 4px;">{% trans "استخراج النص من الدليل" %}</p>
       <h1 dir="auto" style="color:#2b2c27;font-size:1.35rem;font-weight:700;margin:0 0 4px;word-break:break-word;unicode-bidi:plaintext;">{{ submission|display_evidence_filename }}</h1>
       <p style="color:#5b5c53;font-size:.9rem;margin:0;">{{ submission.checklist_item.evidence_requirement.title }}</p>
     </div>
@@ -20,7 +20,7 @@
     {# Run / re-run action — shows the smart processing animation on submit #}
     <form method="post" action="{% url 'compliance:run_evidence_extraction' submission.id %}" data-smart-processing style="margin-bottom:18px;">
       {% csrf_token %}
-      <button type="submit" style="background:#2a5646;color:#fff;font-weight:600;padding:11px 22px;border:none;border-radius:10px;cursor:pointer;">
+      <button type="submit" style="background:#1E56C9;color:#fff;font-weight:600;padding:11px 22px;border:none;border-radius:10px;cursor:pointer;">
         {% if extraction %}{% trans "إعادة استخراج النص" %}{% else %}{% trans "تشغيل استخراج النص" %}{% endif %}
       </button>
     </form>
@@ -37,7 +37,7 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;">
       <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:14px;">
         <p style="color:#5b5c53;font-size:.8rem;margin:0 0 4px;">{% trans "حالة الاستخراج" %}</p>
-        <p style="margin:0;font-weight:700;color:{% if extraction.status == 'extracted' %}#2a5646{% elif extraction.status == 'no_text_extracted' %}#8a6a1f{% else %}#9B2C2C{% endif %};">{{ extraction.status_ar }}</p>
+        <p style="margin:0;font-weight:700;color:{% if extraction.status == 'extracted' %}#1E56C9{% elif extraction.status == 'no_text_extracted' %}#8a6a1f{% else %}#9B2C2C{% endif %};">{{ extraction.status_ar }}</p>
       </div>
       <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:14px;">
         <p style="color:#5b5c53;font-size:.8rem;margin:0 0 4px;">{% trans "طريقة الاستخراج" %}</p>
@@ -64,7 +64,7 @@
 
     {% if extraction.has_text %}
     <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;margin-bottom:18px;">
-      <h2 style="color:#2a5646;font-weight:700;font-size:1rem;margin:0 0 10px;">{% trans "النص المستخرج" %}</h2>
+      <h2 style="color:#1E56C9;font-weight:700;font-size:1rem;margin:0 0 10px;">{% trans "النص المستخرج" %}</h2>
       <pre style="white-space:pre-wrap;word-break:break-word;font-family:inherit;color:#2b2c27;font-size:.88rem;line-height:1.7;margin:0;max-height:520px;overflow:auto;">{{ extraction.extracted_text }}</pre>
     </div>
     {% else %}

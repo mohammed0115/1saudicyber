@@ -1,13 +1,13 @@
 {% extends "onboarding/auth_base.html" %}
 {% load i18n %}
-{% block title %}1SaudiCyber — {% trans "اكتمال التسجيل" %}{% endblock %}
+{% block title %}Cyber-5 — {% trans "اكتمال التسجيل" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
 <style>
   .rc{ max-width:760px; margin-inline:auto; }
   .rc-hero{ text-align:center; margin-bottom:26px }
   .rc-check{ width:64px;height:64px;margin:0 auto 16px;border-radius:50%;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.7rem }
-  .rc-card{ background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 28px;box-shadow:0 10px 30px rgba(20,50,40,.05) }
+  .rc-card{ background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 28px;box-shadow:0 10px 30px rgba(18,30,55,.05) }
   .rc-card .top{ display:flex;align-items:center;gap:13px;margin-bottom:18px }
   .rc-card .top .ic{ width:46px;height:46px;border-radius:12px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.15rem }
   .rc-card .top b{ font-size:1.1rem;color:var(--text) }
@@ -15,11 +15,11 @@
   .rc-row .k{ color:var(--muted);display:flex;align-items:center;gap:8px }
   .rc-row .k i{ width:16px;text-align:center }
   .rc-row .v{ color:var(--text);font-weight:600 }
-  .rc-badge{ display:inline-flex;align-items:center;gap:6px;background:var(--soft);color:var(--brand);border:1px solid #CFE3DA;border-radius:999px;padding:3px 11px;font-size:.8rem;font-weight:600 }
+  .rc-badge{ display:inline-flex;align-items:center;gap:6px;background:var(--soft);color:var(--brand);border:1px solid #CDDDF5;border-radius:999px;padding:3px 11px;font-size:.8rem;font-weight:600 }
   .rc-next h3{ font-size:1.05rem;font-weight:700;color:var(--text);text-align:center;margin:34px 0 16px }
   .rc-steps{ display:grid;grid-template-columns:repeat(3,1fr);gap:14px }
   .rc-step{ background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 16px;text-align:center;transition:.15s }
-  .rc-step:hover{ border-color:var(--border-strong,#CFDAD3);box-shadow:0 8px 22px rgba(20,50,40,.06);transform:translateY(-2px) }
+  .rc-step:hover{ border-color:var(--border-strong,#CFDAD3);box-shadow:0 8px 22px rgba(18,30,55,.06);transform:translateY(-2px) }
   .rc-step .n{ width:38px;height:38px;border-radius:10px;background:var(--soft);color:var(--brand);display:grid;place-items:center;margin:0 auto 10px;font-size:1rem }
   .rc-step b{ display:block;font-size:.92rem;color:var(--text);margin-bottom:3px }
   .rc-step span{ color:var(--muted);font-size:.76rem;line-height:1.6 }

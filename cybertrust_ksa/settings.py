@@ -214,7 +214,7 @@ REST_FRAMEWORK = {
 # OpenAPI / Swagger docs (drf-spectacular). Schema served at /api/v1/schema/,
 # Swagger UI at /api/v1/docs/, ReDoc at /api/v1/redoc/.
 SPECTACULAR_SETTINGS = {
-    'TITLE': '1SaudiCyber API',
+    'TITLE': 'Cyber-5 API',
     'DESCRIPTION': 'CyberTrust KSA — نظام إدارة الامتثال السيبراني. REST API (SRS Appendix D).',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,

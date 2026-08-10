@@ -1,12 +1,12 @@
 {% extends "onboarding/auth_base.html" %}
 {% load i18n %}
-{% block title %}1SaudiCyber — {% trans "التهيئة" %}{% endblock %}
+{% block title %}Cyber-5 — {% trans "التهيئة" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
 <style>
   .wc{ max-width:960px; margin-inline:auto; }
   .wc-hero{ display:flex; align-items:flex-start; gap:16px; margin-bottom:26px }
-  .wc-hero .ic{ width:56px;height:56px;flex:0 0 auto;border-radius:16px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:1.3rem;box-shadow:0 8px 20px rgba(23,107,85,.2) }
+  .wc-hero .ic{ width:56px;height:56px;flex:0 0 auto;border-radius:16px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:1.3rem;box-shadow:0 8px 20px rgba(30,86,201,.2) }
   .wc-hero .eyebrow{ color:var(--brand);font-weight:600;font-size:.82rem }
   .wc-grid{ display:grid; grid-template-columns:1.7fr 1fr; gap:20px; align-items:start }
   .wc-card{ background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 26px }
@@ -19,7 +19,7 @@
   .wc-steps .n{ width:30px;height:30px;flex:0 0 auto;border-radius:50%;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:.78rem;font-weight:700 }
   .wc-steps b{ font-size:.9rem;color:var(--text);display:block }
   .wc-steps span{ font-size:.78rem;color:var(--muted);line-height:1.6 }
-  .wc-tip{ background:var(--gold-soft);border:1px solid #E7D6A8;border-radius:14px;padding:18px 20px }
+  .wc-tip{ background:var(--gold-soft);border:1px solid #CDDDF5;border-radius:14px;padding:18px 20px }
   .wc-tip h3{ color:var(--gold-ink);font-weight:700;font-size:.88rem;margin-bottom:11px }
   .wc-tip li{ display:flex;gap:9px;font-size:.8rem;color:var(--text2);line-height:1.7;margin-bottom:8px }
   .wc-tip li i{ color:var(--brand);margin-top:3px }
@@ -32,7 +32,7 @@
   <div class="wc-hero">
     <span class="ic"><i class="fas fa-rocket" aria-hidden="true"></i></span>
     <div>
-      <p class="eyebrow">{% trans "مرحبًا بك في 1SaudiCyber" %}</p>
+      <p class="eyebrow">{% trans "مرحبًا بك في Cyber-5" %}</p>
       <h1 class="mt-1" style="font-size:1.7rem;">{% blocktrans with name=company.name_ar|default:company.name %}أهلًا، {{ name }}{% endblocktrans %}</h1>
       <p class="au-lead mt-1" style="max-width:60ch;">{% trans "تم إنشاء حساب منشأتك بنجاح. ابدأ بملف التصنيف لتحديد الأطر المنطبقة، وستُرشدك لوحة الرحلة خطوة بخطوة حتى تقرير الجاهزية." %}</p>
     </div>

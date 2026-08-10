@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}الأطر المنطبقة - 1SaudiCyber{% endblock %}
+{% block title %}الأطر المنطبقة - Cyber-5{% endblock %}
 
 {% block extra_head %}{{ block.super }}
 <style>
@@ -8,9 +8,9 @@
   .ar-head .ic{ width:50px;height:50px;flex:0 0 auto;border-radius:13px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.2rem }
   .ar-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden }
   .ar-card-h{ padding:13px 18px; background:var(--soft2); border-bottom:1px solid var(--border); font-weight:700; color:var(--navy); font-size:.95rem }
-  .ar-hero{ display:flex; align-items:center; gap:18px; background:linear-gradient(160deg,var(--soft) 0%,var(--soft2) 60%,#F7EFDC 170%);
+  .ar-hero{ display:flex; align-items:center; gap:18px; background:linear-gradient(160deg,var(--soft) 0%,var(--soft2) 60%,#DCE7FB 170%);
     border:1px solid var(--border); border-radius:16px; padding:20px 24px }
-  .ar-hero .sh{ width:56px;height:56px;flex:0 0 auto;border-radius:14px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:1.4rem;box-shadow:0 8px 20px rgba(23,107,85,.2) }
+  .ar-hero .sh{ width:56px;height:56px;flex:0 0 auto;border-radius:14px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:1.4rem;box-shadow:0 8px 20px rgba(30,86,201,.2) }
   .ar-hero b{ font-size:1.6rem;color:var(--navy);line-height:1 }
   .ar-scroll{ overflow-x:auto }
   .ar-tbl{ width:100%; font-size:.85rem; border-collapse:collapse }
@@ -21,7 +21,7 @@
   .ar-fw{ font-weight:600; color:var(--text) }
   .ar-fw small{ display:block; font-weight:400; color:var(--muted); font-size:.72rem; margin-top:2px }
   .ar-badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:.72rem; font-weight:600; white-space:nowrap }
-  .ar-ok{ background:var(--soft); color:var(--brand); border:1px solid #CFE3DA }
+  .ar-ok{ background:var(--soft); color:var(--brand); border:1px solid #CDDDF5 }
   .ar-warn{ background:#FBF3E4; color:#A96C24; border:1px solid #EBD9B8 }
   .ar-crit{ background:#FBF0EF; color:#A64F45; border:1px solid #E6C4C0 }
   .ar-neutral{ background:#F1F4F2; color:var(--muted); border:1px solid var(--border) }
@@ -30,7 +30,7 @@
   .ar-btn-primary{ background:var(--brand); color:#fff } .ar-btn-primary:hover{ background:var(--brand-h) }
   .ar-note{ border-radius:12px; padding:14px 18px; font-size:.88rem; line-height:1.7 }
   .ar-note-warn{ background:#FBF3E4; border:1px solid #EBD9B8; color:#8A5A1E }
-  .ar-actrow{ background:var(--surface); border:1px solid #CFE3DA; border-radius:14px; padding:16px 20px;
+  .ar-actrow{ background:var(--surface); border:1px solid #CDDDF5; border-radius:14px; padding:16px 20px;
     display:flex; flex-direction:column; gap:12px }
   @media(min-width:640px){ .ar-actrow{ flex-direction:row; align-items:center; justify-content:space-between } }
 </style>

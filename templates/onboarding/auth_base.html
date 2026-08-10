@@ -5,13 +5,14 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   .au{
-    --brand:#176B55; --brand-h:#125845; --brand-soft:#2E8B6F;
-    --gold:#B0821F; --gold-ink:#7A5A14; --gold-soft:#F6EFDA; --navy:#15243D; --navy-2:#22344F;
-    --bg:#F8FAF9; --surface:#FFFFFF; --neutral:#F4F7F5; --soft:#EDF5F1; --soft2:#F5F9F7;
-    --footer:#EEF4F1;
-    --text:#1F2D28; --text2:#46534C; --muted:#5C6A63; --border:#DDE6E2;
-    --ok:#2E8B6F; --warn:#A96C24; --crit:#A64F45;
-    --field-border:#D3DAD5; --field-focus:#176B55;
+    /* Cyber-5 brand palette (calm royal blue + navy; migrated from green). */
+    --brand:#1E56C9; --brand-h:#173F94; --brand-soft:#3B72E0;
+    --gold:#2C4A86; --gold-ink:#1E3A66; --gold-soft:#E9F0FD; --navy:#15233B; --navy-2:#22344F;
+    --bg:#F6F8FC; --surface:#FFFFFF; --neutral:#F1F5FB; --soft:#E9F0FD; --soft2:#F3F7FE;
+    --footer:#EEF3FB;
+    --text:#1A2432; --text2:#44505F; --muted:#5B6675; --border:#DBE2EC;
+    --ok:#1E56C9; --warn:#A96C24; --crit:#A64F45;
+    --field-border:#CFD8E6; --field-focus:#1E56C9;
     color:var(--text); background:var(--bg); font-family:'Inter','IBM Plex Sans Arabic','Noto Sans Arabic',sans-serif;
     min-height:100vh; display:flex; flex-direction:column;
   }
@@ -27,7 +28,7 @@
   .au-navlink{ color:var(--text2); font-weight:500; }
   .au-navlink:hover{ color:var(--brand); }
   .au-avatar{ width:36px; height:36px; flex:0 0 auto; border-radius:50%; background:var(--soft); color:var(--brand);
-    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; border:1px solid #CFE3DA; }
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; border:1px solid #CDDDF5; }
   /* buttons */
   .au-btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; min-height:46px;
     padding:.65rem 1.4rem; border-radius:10px; font-weight:600; font-size:.95rem; cursor:pointer;
@@ -57,7 +58,7 @@
     padding:.6rem .85rem; background:var(--surface); color:var(--text); font-size:.95rem; font-family:inherit;
     transition:border-color .15s ease, box-shadow .15s ease; }
   .au-input::placeholder{ color:#9aa69f; }
-  .au-input:focus, .au-input:focus-visible{ outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(23,107,85,.14); }
+  .au-input:focus, .au-input:focus-visible{ outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(30,86,201,.14); }
   .au-input[aria-invalid="true"]{ border-color:var(--crit); box-shadow:0 0 0 3px rgba(166,79,69,.12); }
   .au-help{ font-size:.78rem; color:var(--muted); margin-top:.3rem; }
   .au-err{ font-size:.8rem; color:var(--crit); margin-top:.3rem; display:flex; align-items:flex-start; gap:.35rem; }
@@ -67,7 +68,7 @@
   .au-pw-toggle:hover{ color:var(--brand); }
   /* choice cards (2.1) */
   .au-choice{ background:var(--surface); border:1px solid var(--border); border-radius:16px; transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
-  .au-choice:hover{ border-color:#C7DAD1; box-shadow:0 8px 24px rgba(23,107,85,.06); }
+  .au-choice:hover{ border-color:#C7D3EC; box-shadow:0 8px 24px rgba(30,86,201,.06); }
   /* focus rings everywhere */
   .au a:focus-visible, .au button:focus-visible, .au [role="button"]:focus-visible, .au input:focus-visible, .au summary:focus-visible{
     outline:2px solid var(--brand); outline-offset:2px; border-radius:8px; }
@@ -82,7 +83,7 @@
     overflow:hidden; background:var(--surface); box-shadow:0 20px 55px rgba(21,36,61,.08); }
   @media (min-width:960px){ .au-split{ grid-template-columns:0.92fr 1.08fr; } }
   .au-brandpanel{ position:relative; padding:2.5rem 2.1rem; display:flex; flex-direction:column;
-    background:linear-gradient(160deg,#EDF5F1 0%,#F5F9F7 55%,#F7EFDC 155%); }
+    background:linear-gradient(160deg,#E9F0FD 0%,#F3F7FE 55%,#DCE7FB 155%); }
   .au-brandpanel h2{ font-weight:800; font-size:clamp(1.5rem,2.5vw,1.95rem); line-height:1.5; color:var(--navy); }
   .au-value{ display:flex; align-items:flex-start; gap:.6rem; color:var(--text2); font-size:.94rem; }
   .au-value i{ color:var(--brand); margin-top:.2rem; flex:0 0 auto; }
@@ -107,7 +108,7 @@
 
   <!-- faint Saudi skyline (decorative, subtle — not dominant) -->
   <div class="au-skyline" aria-hidden="true">
-    <svg viewBox="0 0 1440 190" preserveAspectRatio="xMidYMax slice" fill="#C4D4CB">
+    <svg viewBox="0 0 1440 190" preserveAspectRatio="xMidYMax slice" fill="#C4D0E4">
       <!-- left cluster (varied heights, setbacks, antennas) -->
       <rect x="24" y="120" width="44" height="70"/><rect x="34" y="96" width="24" height="24"/><rect x="44" y="82" width="3" height="14"/>
       <rect x="78" y="104" width="30" height="86"/>
@@ -136,13 +137,13 @@
   <header class="au-header">
     <div class="au-container">
       <div class="flex items-center justify-between gap-2 sm:gap-4" style="height:64px;">
-        <a href="{% url 'core:landing' %}" class="flex items-center gap-2 min-w-0" aria-label="1SaudiCyber">
+        <a href="{% url 'core:landing' %}" class="flex items-center gap-2 min-w-0" aria-label="Cyber-5">
           <svg width="32" height="36" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
-            <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#FBF6EA" stroke="var(--gold)" stroke-width="2.4"/>
-            <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="15" fill="var(--navy)">1S</text>
+            <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#EAF1FF" stroke="var(--brand)" stroke-width="2.4"/>
+            <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="var(--brand)">5</text>
           </svg>
           <span class="flex flex-col leading-none min-w-0">
-            <span class="font-bold text-base sm:text-lg" style="color:var(--navy);white-space:nowrap;">1SaudiCyber</span>
+            <span class="font-bold text-base sm:text-lg" style="color:var(--navy);white-space:nowrap;">Cyber-5</span>
             <span class="hidden sm:block truncate" style="font-size:.6rem;color:var(--gold-ink);margin-top:2px;">{% trans "منصة الامتثال السيبراني" %}</span>
           </span>
         </a>
@@ -184,10 +185,10 @@
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
         <p class="au-muted text-center sm:text-start">
           {% if LANGUAGE_CODE == 'ar' %}
-            © {% now "Y" %} 1SaudiCyber. {% trans "جميع الحقوق محفوظة." %} {% trans "تطوير" %}
+            © {% now "Y" %} Cyber-5. {% trans "جميع الحقوق محفوظة." %} {% trans "تطوير" %}
             <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="au-brand font-semibold" style="text-decoration:underline;">شركة احصل الحل</a>.
           {% else %}
-            © {% now "Y" %} 1SaudiCyber. All rights reserved. Developed by
+            © {% now "Y" %} Cyber-5. All rights reserved. Developed by
             <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="au-brand font-semibold" style="text-decoration:underline;">Get Solution</a>.
           {% endif %}
         </p>

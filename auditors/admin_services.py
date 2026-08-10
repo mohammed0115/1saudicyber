@@ -12,7 +12,7 @@ separate 'rejected' status, so a declined/rejected auditor is recorded as
     suspend     -> suspended  (reason required)
     reactivate  -> active
 
-The platform (1SaudiCyber) is owned and operated by Get Solution Company
+The platform (Cyber-5) is owned and operated by Get Solution Company
 (شركة احصل الحل). This is an INTERNAL operational workflow only; it never issues
 any official certification or accreditation.
 """

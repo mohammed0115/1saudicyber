@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Tiered "smart" checks for 1SaudiCyber.
+"""Tiered "smart" checks for Cyber-5.
 
 Three layers, cheapest first, so you only pay for the confidence you need:
 

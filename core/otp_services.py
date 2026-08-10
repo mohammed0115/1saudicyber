@@ -7,7 +7,7 @@ Safe by design:
   * Resend is throttled to one code per OTP_RESEND_INTERVAL_SECONDS.
   * Verifying never reveals the code; emails contain only the code the user owns.
 
-No official certification/accreditation wording. Branding: 1SaudiCyber, operated
+No official certification/accreditation wording. Branding: Cyber-5, operated
 by Get Solution Company.
 """
 import secrets
@@ -62,12 +62,12 @@ def can_resend(user, purpose=OTP_PURPOSE_EMAIL):
 
 def send_otp_email(user, raw_code):
     """Send the branded OTP email via the configured Django email backend."""
-    subject = 'رمز التحقق من بريدك الإلكتروني · 1SaudiCyber'
+    subject = 'رمز التحقق من بريدك الإلكتروني · Cyber-5'
     body = (
         f"مرحبًا،\n\n"
-        f"رمز التحقق الخاص بك في منصة 1SaudiCyber هو: {raw_code}\n"
+        f"رمز التحقق الخاص بك في منصة Cyber-5 هو: {raw_code}\n"
         f"ينتهي هذا الرمز خلال {OTP_TTL_MINUTES} دقائق، ولا تشاركه مع أي أحد.\n\n"
-        f"منصة 1SaudiCyber مملوكة ومُدارة بواسطة شركة احصل الحل.\n"
+        f"منصة Cyber-5 مملوكة ومُدارة بواسطة شركة احصل الحل.\n"
     )
     send_mail(subject, body, getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@cyber-5.com'),
               [user.email], fail_silently=True)

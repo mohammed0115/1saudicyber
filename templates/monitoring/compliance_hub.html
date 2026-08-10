@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}مركز الامتثال المستمر - 1SaudiCyber{% endblock %}
+{% block title %}مركز الامتثال المستمر - Cyber-5{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gov-green-800">مركز الامتثال المستمر</h1>
-            <p class="text-gov-gray-600">{{ company.name }} — مراقبة وتنبيهات لحظية</p>
+            <p class="text-gov-gray-600">{{ company.name }} — مراقبة وتنبيهات دورية مجدولة</p>
         </div>
-        <div class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span class="text-sm text-gov-gray-600">المراقبة الحية نشطة</span>
+        <div class="flex items-center gap-2" title="تعتمد المراقبة على فحوصات مجدولة ومُدخلات يدوية، وليست ربطًا لحظيًا بالأنظمة.">
+            <span class="w-2 h-2 bg-gov-green-500 rounded-full"></span>
+            <span class="text-sm text-gov-gray-600">مراقبة دورية (تُحدَّث حسب الجدولة)</span>
         </div>
     </div>
 

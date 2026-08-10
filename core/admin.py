@@ -3,10 +3,10 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import User, Company
 
-# ---- PILOT-HOTFIX-B (A) — Django admin branding: Get Solution Company / 1SaudiCyber ----
-admin.site.site_header = "Get Solution Company — 1SaudiCyber Admin"
+# ---- PILOT-HOTFIX-B (A) — Django admin branding: Get Solution Company / Cyber-5 ----
+admin.site.site_header = "Get Solution Company — Cyber-5 Admin"
 admin.site.site_title = "Get Solution Company"
-admin.site.index_title = "1SaudiCyber Operations Administration"
+admin.site.index_title = "Cyber-5 Operations Administration"
 
 
 @admin.register(User)

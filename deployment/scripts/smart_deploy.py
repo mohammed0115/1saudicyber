@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smart Deployment Guard for 1SaudiCyber (Phase 8F-A).
+Smart Deployment Guard for Cyber-5 (Phase 8F-A).
 
 Automates the repeated production deployment checklist with hard safety gates:
   preflight -> backup -> fast-forward pull -> docker build -> Django checks ->
@@ -431,7 +431,7 @@ class SmartDeployGuard:
 # CLI
 # ----------------------------------------------------------------------------
 def build_arg_parser():
-    p = argparse.ArgumentParser(description='1SaudiCyber Smart Deployment Guard')
+    p = argparse.ArgumentParser(description='Cyber-5 Smart Deployment Guard')
     p.add_argument('--target', required=True, help='target commit SHA (7-40 hex)')
     p.add_argument('--phase', required=True, help='phase name (used in backup/report names)')
     mode = p.add_mutually_exclusive_group(required=True)

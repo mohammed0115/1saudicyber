@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load compliance_display %}
-{% block title %}قائمة الأدلة - 1SaudiCyber{% endblock %}
+{% block title %}قائمة الأدلة - Cyber-5{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto space-y-6">
@@ -24,7 +24,7 @@
     </div>
 
     {% if messages %}{% for m in messages %}
-    <div class="cx-note" style="background:var(--soft);border:1px solid #CFE3DA;color:var(--brand);">{{ m }}</div>
+    <div class="cx-note" style="background:var(--soft);border:1px solid #CDDDF5;color:var(--brand);">{{ m }}</div>
     {% endfor %}{% endif %}
 
     {% if not items %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}المخاطر حسب المجال - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex justify-between items-center flex-wrap gap-2">
+      <div>
+        <h1 class="text-2xl font-bold text-gov-green-800">المخاطر المفتوحة حسب المجال</h1>
+        <p class="text-gov-gray-600">تجميع المخاطر في مجالات قابلة للإدارة بدل قائمة طويلة — لتوجيه المعالجة حسب الأولوية.</p>
+      </div>
+      <a href="{% url 'risk:list' %}"
+         class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm">
+        <i class="fas fa-list ms-1"></i> القائمة التفصيلية</a>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-gov-green-800">{{ counts.open }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مخاطر مفتوحة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-red-700">{{ counts.high_critical }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة مفتوحة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-amber-700">{{ counts.overdue_tasks }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مهام متأخرة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-gov-green-700">{{ groups|length }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مجالات نشطة</div></div>
+    </div>
+
+    {% if groups %}
+    <div class="space-y-3">
+      {% for g in groups %}
+      <div class="bg-white rounded-xl border shadow-sm p-5
+                  {% if g.worst == 'critical' %}border-red-200{% elif g.worst == 'high' %}border-amber-200{% else %}border-gov-gray-100{% endif %}">
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-gov-green-800">
+              <span class="inline-block w-2.5 h-2.5 rounded-full align-middle
+                {% if g.worst == 'critical' %}bg-red-600{% elif g.worst == 'high' %}bg-amber-600{% elif g.worst == 'medium' %}bg-amber-400{% else %}bg-gov-green-500{% endif %}"></span>
+              {{ g.category_ar }}
+              <span class="text-sm font-normal text-gov-gray-500">· {{ g.total }} خطر مفتوح</span>
+            </h2>
+            {% if g.control_count %}
+            <p class="text-xs text-gov-gray-500 mt-1">
+              {{ g.control_count }} ضابط متأثّر{% if g.controls %}: {{ g.controls|join:"، " }}{% if g.control_count > 6 %} …{% endif %}{% endif %}</p>
+            {% endif %}
+            {% if g.owners %}<p class="text-xs text-gov-gray-500 mt-1"><i class="fas fa-user ms-1"></i> {{ g.owners|join:"، " }}</p>{% endif %}
+          </div>
+          <a href="{% url 'risk:list' %}?category={{ g.category }}"
+             class="shrink-0 text-sm bg-gov-green-700 hover:bg-gov-green-800 text-white px-3 py-1.5 rounded-lg">
+            عرض التفاصيل</a>
+        </div>
+        {# Severity breakdown — each chip drills down to the filtered list #}
+        <div class="grid grid-cols-4 gap-2 mt-4 text-center text-sm">
+          <a href="{% url 'risk:list' %}?category={{ g.category }}&severity=critical" class="rounded-lg py-2 {% if g.by_severity.critical %}bg-red-50 hover:bg-red-100{% else %}bg-gov-gray-50{% endif %}">
+            <div class="text-lg font-bold {% if g.by_severity.critical %}text-red-700{% else %}text-gov-gray-300{% endif %}">{{ g.by_severity.critical }}</div>
+            <div class="text-xs text-gov-gray-500">حرجة</div></a>
+          <a href="{% url 'risk:list' %}?category={{ g.category }}&severity=high" class="rounded-lg py-2 {% if g.by_severity.high %}bg-amber-50 hover:bg-amber-100{% else %}bg-gov-gray-50{% endif %}">
+            <div class="text-lg font-bold {% if g.by_severity.high %}text-amber-800{% else %}text-gov-gray-300{% endif %}">{{ g.by_severity.high }}</div>
+            <div class="text-xs text-gov-gray-500">عالية</div></a>
+          <a href="{% url 'risk:list' %}?category={{ g.category }}&severity=medium" class="rounded-lg py-2 {% if g.by_severity.medium %}bg-amber-50/50 hover:bg-amber-100{% else %}bg-gov-gray-50{% endif %}">
+            <div class="text-lg font-bold {% if g.by_severity.medium %}text-amber-600{% else %}text-gov-gray-300{% endif %}">{{ g.by_severity.medium }}</div>
+            <div class="text-xs text-gov-gray-500">متوسطة</div></a>
+          <a href="{% url 'risk:list' %}?category={{ g.category }}&severity=low" class="rounded-lg py-2 {% if g.by_severity.low %}bg-gov-green-50 hover:bg-gov-green-100{% else %}bg-gov-gray-50{% endif %}">
+            <div class="text-lg font-bold {% if g.by_severity.low %}text-gov-green-700{% else %}text-gov-gray-300{% endif %}">{{ g.by_severity.low }}</div>
+            <div class="text-xs text-gov-gray-500">منخفضة</div></a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-8 text-center text-gov-gray-500">
+      <i class="fas fa-circle-check text-gov-green-600 text-2xl mb-2"></i>
+      <p>لا توجد مخاطر مفتوحة حاليًا.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

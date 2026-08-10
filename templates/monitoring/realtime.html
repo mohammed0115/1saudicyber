@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}المراقبة اللحظية - 1SaudiCyber{% endblock %}
+{% block title %}مراقبة الامتثال - Cyber-5{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-2xl font-bold text-gov-green-800">مراقبة الامتثال اللحظية</h1>
-            <p class="text-gov-gray-600">{{ company.name }} — كشف آلي على مدار الساعة وتغذية أحداث لحظية</p>
+            <h1 class="text-2xl font-bold text-gov-green-800">مراقبة الامتثال</h1>
+            <p class="text-gov-gray-600">{{ company.name }} — تنبيهات مبنية على فحوصات مجدولة ومراجعة الأدلة</p>
         </div>
-        <div class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span class="text-sm text-gov-gray-600">مباشر</span>
+        <div class="flex items-center gap-2" title="التنبيهات تُولَّد من فحوصات مجدولة، وليست تغذية لحظية مباشرة من الأنظمة.">
+            <span class="w-2 h-2 bg-gov-green-500 rounded-full"></span>
+            <span class="text-sm text-gov-gray-600">محدَّث حسب الجدولة</span>
         </div>
     </div>
 
@@ -42,7 +42,7 @@
     <!-- Live event feed -->
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
         <h2 class="font-bold text-gov-green-800 mb-4">
-            <i class="fas fa-rss mr-2"></i> تغذية الأحداث اللحظية
+            <i class="fas fa-rss mr-2"></i> سجلّ التنبيهات
         </h2>
         <div class="space-y-2">
             {% for alert in alerts %}
@@ -73,7 +73,7 @@
             {% empty %}
             <div class="text-center py-10 text-gov-gray-400">
                 <i class="fas fa-shield-halved text-3xl mb-2"></i>
-                <p>لا تنبيهات. المراقبة نشطة ولم يُكتشف أي انحراف في الامتثال.</p>
+                <p>لا توجد تنبيهات مفتوحة من آخر فحص مجدول.</p>
             </div>
             {% endfor %}
         </div>

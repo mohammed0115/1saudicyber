@@ -41,7 +41,7 @@ def _email_invite(invite):
     # single source of truth for the public base URL (same pattern as the email-verification
     # link in core.services); this is not a second URL-building mechanism.
     link = f"{settings.SITE_URL}/invite/{invite.token}/"
-    body = ('تمت دعوتك للانضمام إلى فريق «%s» على منصة 1SaudiCyber.\n\n'
+    body = ('تمت دعوتك للانضمام إلى فريق «%s» على منصة Cyber-5.\n\n'
             'لإكمال الانضمام وتعيين كلمة المرور، افتح الرابط:\n'
             '%s\n\nالرابط صالح لمدة %d أيام.'
             % (invite.company.name, link, INVITE_TTL_DAYS))

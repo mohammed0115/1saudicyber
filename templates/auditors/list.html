@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}مدقّقو المنصّة - 1SaudiCyber{% endblock %}
+{% block title %}مدقّقو المنصّة - Cyber-5{% endblock %}
 {% block content %}
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
   <div style="max-width:880px;margin:0 auto;padding:8px 4px 24px;">
@@ -9,9 +9,9 @@
 
     {% if current_assignment %}
       {% if current_assignment.status == 'requested' %}
-      <div style="background:#EAF3EF;border:1px solid #CFE3DA;border-radius:12px;padding:18px;margin-bottom:18px;">
-        <p style="margin:0 0 6px;color:#2a5646;font-weight:700;"><i class="fas fa-hourglass-half ms-1"></i> تم إرسال طلب المراجعة إلى المدقق «{{ current_assignment.auditor.full_name }}»، بانتظار الموافقة.</p>
-        <p style="margin:0 0 12px;color:#356a54;font-size:.9rem;">سيظهر ملفك في لوحة المدقق ليقبل الطلب أو يرفضه. يمكنك إلغاء الطلب قبل الموافقة.</p>
+      <div style="background:#E9F0FD;border:1px solid #CDDDF5;border-radius:12px;padding:18px;margin-bottom:18px;">
+        <p style="margin:0 0 6px;color:#1E56C9;font-weight:700;"><i class="fas fa-hourglass-half ms-1"></i> تم إرسال طلب المراجعة إلى المدقق «{{ current_assignment.auditor.full_name }}»، بانتظار الموافقة.</p>
+        <p style="margin:0 0 12px;color:#1E56C9;font-size:.9rem;">سيظهر ملفك في لوحة المدقق ليقبل الطلب أو يرفضه. يمكنك إلغاء الطلب قبل الموافقة.</p>
         <form method="post" action="{% url 'auditors:cancel_assignment' current_assignment.id %}" data-busy="جارٍ إلغاء الطلب..." style="display:inline;">
           {% csrf_token %}
           <button type="submit" style="background:#FFFFFF;color:#9B2C2C;font-weight:600;padding:9px 18px;border:1px solid #E6C7C7;border-radius:10px;cursor:pointer;">إلغاء الطلب</button>
@@ -19,8 +19,8 @@
       </div>
       {% else %}
       <div style="background:#E7F2EC;border:1px solid #BFE0CC;border-radius:12px;padding:18px;margin-bottom:18px;">
-        <p style="margin:0 0 6px;color:#2a5646;font-weight:700;"><i class="fas fa-check-circle ms-1"></i> تم قبول طلب المراجعة من المدقق «{{ current_assignment.auditor.full_name }}».</p>
-        <p style="margin:0;color:#356a54;font-size:.9rem;">انتقلت رحلتك إلى خطوة مراجعة المدقق. يمكنك متابعة الحالة من صفحة التقارير.</p>
+        <p style="margin:0 0 6px;color:#1E56C9;font-weight:700;"><i class="fas fa-check-circle ms-1"></i> تم قبول طلب المراجعة من المدقق «{{ current_assignment.auditor.full_name }}».</p>
+        <p style="margin:0;color:#1E56C9;font-size:.9rem;">انتقلت رحلتك إلى خطوة مراجعة المدقق. يمكنك متابعة الحالة من صفحة التقارير.</p>
       </div>
       {% endif %}
     {% else %}
@@ -39,7 +39,7 @@
         <form method="post" action="{% url 'auditors:assign' a.id %}" data-busy="جارٍ إرسال طلب المراجعة..." style="margin-top:auto;">
           {% csrf_token %}
           <input type="text" name="note" placeholder="ملاحظة للمدقق (اختياري)" style="width:100%;border:1px solid #e3e1d9;border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:8px;">
-          <button type="submit" style="width:100%;background:#2a5646;color:#fff;font-weight:600;padding:10px 16px;border:none;border-radius:10px;cursor:pointer;">
+          <button type="submit" style="width:100%;background:#1E56C9;color:#fff;font-weight:600;padding:10px 16px;border:none;border-radius:10px;cursor:pointer;">
             طلب مراجعة من هذا المدقق
           </button>
         </form>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}1SaudiCyber{% endblock %}</title>
+    <title>{% block title %}Cyber-5{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,15 +12,16 @@
     <style>
         /* ── Calm, government-grade shell tokens (aligned with the onboarding shell). ── */
         :root{
-            --brand:#176B55; --brand-h:#125845; --brand-soft:#2E8B6F;
-            --gold:#B0821F; --gold-ink:#7A5A14; --navy:#15243D;
-            --bg:#F6F8F7; --surface:#FFFFFF; --soft:#EDF5F1; --soft2:#F5F9F7; --footer:#EEF4F1;
-            --text:#1F2D28; --text2:#46534C; --muted:#5C6A63; --border:#DDE6E2;
+            /* Cyber-5 brand palette (calm royal blue + navy; migrated from green). */
+            --brand:#1E56C9; --brand-h:#173F94; --brand-soft:#3B72E0;
+            --gold:#2C4A86; --gold-ink:#1E3A66; --navy:#15233B;
+            --bg:#F6F8FC; --surface:#FFFFFF; --soft:#E9F0FD; --soft2:#F3F7FE; --footer:#EEF3FB;
+            --text:#1A2432; --text2:#44505F; --muted:#5B6675; --border:#DBE2EC;
         }
         body { font-family: 'Inter', 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif; background: var(--bg); color: var(--text); }
-        .gradient-gov { background: linear-gradient(135deg, #2a5646 0%, #1f4135 50%, #12271f 100%); }
+        .gradient-gov { background: linear-gradient(135deg, #23406E 0%, #1A2F52 55%, #14223B 100%); }
         .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-        .score-ring { background: conic-gradient(#176B55 var(--score), #e3e1d9 var(--score)); }
+        .score-ring { background: conic-gradient(#1E56C9 var(--score), #e3e1d9 var(--score)); }
 
         /* ── Calm light app header ── */
         .app-nav{ background:var(--surface); border-bottom:1px solid var(--border); }
@@ -28,7 +29,7 @@
         .app-navlink{ color:var(--text2); font-weight:500; }
         .app-navlink:hover{ color:var(--brand); background:var(--soft); }
         .app-navlink.is-active{ color:var(--brand); background:var(--soft); font-weight:600; }
-        .app-dropdown{ background:var(--surface); border:1px solid var(--border); box-shadow:0 12px 30px rgba(20,50,40,.10); }
+        .app-dropdown{ background:var(--surface); border:1px solid var(--border); box-shadow:0 12px 30px rgba(18,30,55,.10); }
         .app-dropdown a{ color:var(--text2); }
         .app-dropdown a:hover{ color:var(--brand); background:var(--soft); }
         .app-bt{ border-color:var(--border); }
@@ -36,7 +37,7 @@
         .app-lang.is-active{ color:var(--brand); font-weight:700; }
         .app-muted{ color:var(--muted); } .app-muted:hover{ color:var(--brand); }
         .app-avatar{ width:34px;height:34px;flex:0 0 auto;border-radius:50%;background:var(--soft);color:var(--brand);
-            display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;border:1px solid #CFE3DA; }
+            display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;border:1px solid #CDDDF5; }
         .app-footer{ background:var(--footer); border-top:1px solid var(--border); color:var(--text2); }
         .app-footer a{ color:var(--text2); } .app-footer a:hover{ color:var(--brand); }
         .app-fbrand{ color:var(--brand); }
@@ -48,6 +49,9 @@
         .text-gov-green-600, .text-gov-green-700, .text-gov-green-800, .text-gov-green-900{ color:var(--brand); }
         .hover\:text-gov-green-700:hover, .hover\:text-gov-green-800:hover, .hover\:text-gov-green-900:hover{ color:var(--brand-h); }
         .bg-gov-green-500, .bg-gov-green-600, .bg-gov-green-700, .bg-gov-green-800, .bg-gov-green-900{ background-color:var(--brand); }
+        .bg-gov-green-50, .bg-gov-green-100{ background-color:var(--soft); }
+        .text-gov-green-50, .text-gov-green-100, .text-gov-green-200{ color:var(--brand-soft); }
+        .border-gov-green-100, .border-gov-green-200{ border-color:var(--border); }
         .hover\:bg-gov-green-700:hover, .hover\:bg-gov-green-800:hover, .hover\:bg-gov-green-900:hover{ background-color:var(--brand-h); }
         .border-gov-green-500, .border-gov-green-600, .border-gov-green-700, .border-gov-green-800{ border-color:var(--brand); }
         .ring-gov-green-600, .ring-gov-green-700,
@@ -65,7 +69,7 @@
         .cx-tbl tbody td{ padding:11px 16px; border-top:1px solid var(--border); color:var(--text2); vertical-align:top }
         .cx-tbl tbody tr:first-child td{ border-top:none }
         .cx-badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:.72rem; font-weight:600; white-space:nowrap }
-        .cx-ok{ background:var(--soft); color:var(--brand); border:1px solid #CFE3DA }
+        .cx-ok{ background:var(--soft); color:var(--brand); border:1px solid #CDDDF5 }
         .cx-warn{ background:#FBF3E4; color:#A96C24; border:1px solid #EBD9B8 }
         .cx-crit{ background:#FBF0EF; color:#A64F45; border:1px solid #E6C4C0 }
         .cx-neutral{ background:#F1F4F2; color:var(--muted); border:1px solid var(--border) }
@@ -90,13 +94,13 @@
         select:focus-visible, textarea:focus-visible,
         input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,
         select:focus, textarea:focus {
-            outline: none; border-color: #176B55; box-shadow: 0 0 0 3px rgba(23,107,85,.15);
+            outline: none; border-color: #1E56C9; box-shadow: 0 0 0 3px rgba(30,86,201,.15);
         }
         input::placeholder, textarea::placeholder { color: #a8a79c; }
         /* Buttons & links: smooth, accessible focus ring everywhere. */
         button, a, [role="button"], summary { transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease; }
         a:focus-visible, button:focus-visible, [role="button"]:focus-visible, summary:focus-visible {
-            outline: 2px solid #176B55; outline-offset: 2px; border-radius: 6px;
+            outline: 2px solid #1E56C9; outline-offset: 2px; border-radius: 6px;
         }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
     </style>
@@ -109,12 +113,12 @@
     <nav class="app-nav sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 gap-3">
-                <a href="{% url 'dashboard:main' %}" class="flex items-center gap-2 shrink-0" aria-label="1SaudiCyber">
+                <a href="{% url 'dashboard:main' %}" class="flex items-center gap-2 shrink-0" aria-label="Cyber-5">
                     <svg width="30" height="34" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
-                        <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#FBF6EA" stroke="var(--gold)" stroke-width="2.4"/>
-                        <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="15" fill="var(--navy)">1S</text>
+                        <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#EAF1FF" stroke="var(--brand)" stroke-width="2.4"/>
+                        <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="var(--brand)">5</text>
                     </svg>
-                    <span class="app-brand-name font-bold text-lg sm:text-xl">1SaudiCyber</span>
+                    <span class="app-brand-name font-bold text-lg sm:text-xl">Cyber-5</span>
                 </a>
 
                 <div class="hidden md:flex items-center gap-1 flex-1 min-w-0 flex-wrap">
@@ -217,12 +221,12 @@
     <nav class="app-nav">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-14 gap-3">
-                <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="1SaudiCyber">
+                <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="Cyber-5">
                     <svg width="28" height="32" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
-                        <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#FBF6EA" stroke="var(--gold)" stroke-width="2.4"/>
-                        <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="15" fill="var(--navy)">1S</text>
+                        <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#EAF1FF" stroke="var(--brand)" stroke-width="2.4"/>
+                        <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="var(--brand)">5</text>
                     </svg>
-                    <span class="app-brand-name font-bold text-lg">1SaudiCyber</span>
+                    <span class="app-brand-name font-bold text-lg">Cyber-5</span>
                 </a>
                 <div class="flex items-center gap-3">
                     {% include "components/language_switcher.html" %}
@@ -277,7 +281,7 @@
         <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:28px 36px;
                     box-shadow:0 8px 30px rgba(31,41,51,0.12);text-align:center;min-width:240px;">
             <div style="margin:0 auto 14px;width:38px;height:38px;border-radius:50%;
-                        border:3px solid #e3e1d9;border-top-color:#176B55;animation:ct-spin 0.9s linear infinite;"></div>
+                        border:3px solid #e3e1d9;border-top-color:#1E56C9;animation:ct-spin 0.9s linear infinite;"></div>
             <p id="ct-busy-msg" style="color:#2b2c27;font-size:0.95rem;margin:0;">جارٍ المعالجة...</p>
             <p style="color:#5b5c53;font-size:0.8rem;margin:6px 0 0;">يرجى الانتظار، قد تستغرق هذه الخطوة لحظات.</p>
         </div>

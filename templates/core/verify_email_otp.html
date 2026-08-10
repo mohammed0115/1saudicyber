@@ -1,6 +1,6 @@
 {% extends "onboarding/auth_base.html" %}
 {% load i18n %}
-{% block title %}1SaudiCyber — {% trans "تأكيد البريد الإلكتروني" %}{% endblock %}
+{% block title %}Cyber-5 — {% trans "تأكيد البريد الإلكتروني" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
 <style>
@@ -47,7 +47,7 @@
     {% if messages %}{% for m in messages %}
       <div class="mb-4" role="alert" style="text-align:start;border-radius:10px;padding:.7rem 1rem;font-size:.9rem;
         {% if m.tags == 'error' %}background:#FBF0EF;border:1px solid #E6C4C0;color:var(--crit);
-        {% elif m.tags == 'success' %}background:var(--soft);border:1px solid #CFE3DA;color:var(--brand);
+        {% elif m.tags == 'success' %}background:var(--soft);border:1px solid #CDDDF5;color:var(--brand);
         {% else %}background:#EEF3FB;border:1px solid #CBDAF0;color:#1F4F8B;{% endif %}">{{ m }}</div>
     {% endfor %}{% endif %}
 

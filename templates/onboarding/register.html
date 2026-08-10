@@ -1,6 +1,6 @@
 {% extends "onboarding/auth_base.html" %}
 {% load i18n %}
-{% block title %}1SaudiCyber — {% trans "تسجيل شركة" %}{% endblock %}
+{% block title %}Cyber-5 — {% trans "تسجيل شركة" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
 <style>
@@ -27,11 +27,11 @@
     transition:border-color .15s ease, box-shadow .15s ease; }
   .ct-form textarea{ min-height:84px; }
   .ct-form input:focus, .ct-form select:focus, .ct-form textarea:focus{
-    outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(23,107,85,.14); }
+    outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(30,86,201,.14); }
   .ct-form .au-pw-wrap input{ padding-inline-end:2.6rem; }
   .ct-target{ display:flex; align-items:center; gap:.55rem; background:var(--soft2); border:1px solid var(--border);
     border-radius:10px; padding:.6rem .95rem; color:var(--text); font-size:.92rem; cursor:pointer; }
-  .ct-target:hover{ border-color:#C7DAD1; }
+  .ct-target:hover{ border-color:#C7D3EC; }
 </style>
 {% endblock %}
 
@@ -42,7 +42,7 @@
     <!-- ===== Brand panel (identity + value) ===== -->
     <div class="au-brandpanel">
       <h2 class="mb-4">{% trans "ابدأ رحلة الامتثال السيبراني بثقة" %}</h2>
-      <p class="au-lead mb-6">{% trans "انضم إلى 1SaudiCyber لإدارة الامتثال السيبراني لمنشأتك بكفاءة وموثوقية وفق الأطر الوطنية المدعومة." %}</p>
+      <p class="au-lead mb-6">{% trans "انضم إلى Cyber-5 لإدارة الامتثال السيبراني لمنشأتك بكفاءة وموثوقية وفق الأطر الوطنية المدعومة." %}</p>
       <ul class="space-y-3.5 mb-8">
         <li class="au-value"><i class="fas fa-circle-check" aria-hidden="true"></i><span>{% trans "إدارة متطلبات الأطر التنظيمية بسهولة" %}</span></li>
         <li class="au-value"><i class="fas fa-circle-check" aria-hidden="true"></i><span>{% trans "توحيد الأدلة وتقليل تكرار العمل" %}</span></li>
@@ -51,11 +51,11 @@
       </ul>
       <div class="mt-auto">
         <svg class="au-shield" viewBox="0 0 200 214" fill="none" aria-hidden="true">
-          <defs><linearGradient id="au-gsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DBB861"/><stop offset="1" stop-color="#B8892B"/></linearGradient></defs>
-          <ellipse cx="100" cy="200" rx="66" ry="9" fill="#15243D" opacity="0.06"/>
+          <defs><linearGradient id="au-gsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B72E0"/><stop offset="1" stop-color="#1E56C9"/></linearGradient></defs>
+          <ellipse cx="100" cy="200" rx="66" ry="9" fill="#15233B" opacity="0.06"/>
           <path d="M100 12 L170 34 V104 C170 150 140 179 100 195 C60 179 30 150 30 104 V34 Z" fill="url(#au-gsh)"/>
-          <path d="M100 27 L157 45 V102 C157 141 132 164 100 178 C68 164 43 141 43 102 V45 Z" fill="#FBF6EA"/>
-          <text x="100" y="122" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="54" fill="#15243D">1S</text>
+          <path d="M100 27 L157 45 V102 C157 141 132 164 100 178 C68 164 43 141 43 102 V45 Z" fill="#EAF1FF"/>
+          <text x="100" y="122" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="54" fill="#15233B">5</text>
         </svg>
         <p class="text-center au-muted text-xs mt-3 flex items-center justify-center gap-1.5">
           <i class="fas fa-lock" aria-hidden="true"></i>{% trans "بياناتك آمنة ومشفرة وفق أعلى المعايير" %}
@@ -65,7 +65,7 @@
 
     <!-- ===== Form panel ===== -->
     <div class="au-formpanel">
-      <h1 class="mb-1" style="font-size:1.5rem;">{% trans "سجّل شركتك في 1SaudiCyber" %}</h1>
+      <h1 class="mb-1" style="font-size:1.5rem;">{% trans "سجّل شركتك في Cyber-5" %}</h1>
       <p class="au-muted text-sm mb-5">{% trans "أكمل الخطوات التالية لبدء مسار الامتثال. الحقول المعلّمة بـ * مطلوبة." %}</p>
 
       {% if form.non_field_errors %}

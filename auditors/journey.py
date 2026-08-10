@@ -127,7 +127,7 @@ def build_auditor_journey(user):
         'has_assignments': f['has_assignments'],
         'completed_count': completed_count,
         'total': len(steps),
-        'pending_message': ('حسابك قيد مراجعة إدارة منصة 1SaudiCyber لدى شركة احصل الحل. '
+        'pending_message': ('حسابك قيد مراجعة إدارة منصة Cyber-5 لدى شركة احصل الحل. '
                             'بعد التفعيل ستظهر لك ملفات الشركات المسندة.'),
         'rejected_message': ('تعذر تفعيل حسابك كمدقق في الوقت الحالي. '
                              'يمكنك التواصل مع إدارة منصة احصل الحل لمزيد من التفاصيل.'),

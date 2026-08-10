@@ -1,6 +1,6 @@
 {% extends "onboarding/auth_base.html" %}
 {% load i18n %}
-{% block title %}1SaudiCyber — {% trans "نطاق الامتثال والتصنيف" %}{% endblock %}
+{% block title %}Cyber-5 — {% trans "نطاق الامتثال والتصنيف" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
 <style>
@@ -67,7 +67,7 @@
   .su-select-wrap select, .su-select-wrap textarea, .su-sec textarea{
     width:100%; border:1px solid var(--field-border); border-radius:10px; padding:.6rem .8rem;
     background:var(--surface); color:var(--text); font-size:.9rem; font-family:inherit; }
-  .su-select-wrap select:focus, .su-select-wrap textarea:focus{ outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(23,107,85,.14); }
+  .su-select-wrap select:focus, .su-select-wrap textarea:focus{ outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(30,86,201,.14); }
   /* privacy strip */
   .su-privacy{ display:flex; align-items:center; gap:16px; background:#EEF3FB; border:1px solid #CBDAF0; border-radius:14px; padding:18px 22px; }
   .su-privacy .lock{ width:46px;height:46px;flex:0 0 auto;border-radius:12px;background:#DCE7F7;color:#1F4F8B;display:grid;place-items:center;font-size:1.15rem; }
@@ -95,7 +95,7 @@
       {% if messages %}{% for m in messages %}
         <div role="alert" style="border-radius:10px;padding:.7rem 1rem;font-size:.9rem;
           {% if m.tags == 'error' %}background:#FBF0EF;border:1px solid #E6C4C0;color:var(--crit);
-          {% elif m.tags == 'success' %}background:var(--soft);border:1px solid #CFE3DA;color:var(--brand);
+          {% elif m.tags == 'success' %}background:var(--soft);border:1px solid #CDDDF5;color:var(--brand);
           {% else %}background:#EEF3FB;border:1px solid #CBDAF0;color:#1F4F8B;{% endif %}">{{ m }}</div>
       {% endfor %}{% endif %}
 

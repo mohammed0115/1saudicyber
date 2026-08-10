@@ -1139,7 +1139,7 @@ class Phase4DFixBBrandingTests(TestCase):
             'sector': 'technology', 'size': 'small', 'target_nca': 'on', 'accept_terms': 'on'})
 
     def test_public_brand_uses_1saudicyber(self):
-        self.assertContains(self.client.get(reverse('core:landing')), '1SaudiCyber')
+        self.assertContains(self.client.get(reverse('core:landing')), 'Cyber-5')
 
     def test_landing_no_longer_shows_old_cybertrust_brand_as_primary(self):
         resp = self.client.get(reverse('core:landing'))
@@ -1152,14 +1152,14 @@ class Phase4DFixBBrandingTests(TestCase):
         self.assertNotContains(resp, '1saudicyber.com')
 
     def test_get_started_uses_1saudicyber_brand(self):
-        self.assertContains(self.client.get(reverse('core:get_started')), '1SaudiCyber')
+        self.assertContains(self.client.get(reverse('core:get_started')), 'Cyber-5')
 
     def test_onboarding_uses_1saudicyber_brand(self):
         self._register()
-        self.assertContains(self.client.get(reverse('core:onboarding')), '1SaudiCyber')
+        self.assertContains(self.client.get(reverse('core:onboarding')), 'Cyber-5')
 
     def test_auditor_pages_use_1saudicyber_brand_if_brand_visible(self):
-        self.assertContains(self.client.get(reverse('auditors:register')), '1SaudiCyber')
+        self.assertContains(self.client.get(reverse('auditors:register')), 'Cyber-5')
 
     def test_docs_or_env_examples_include_cyber5_domain_if_tested(self):
         from django.conf import settings as dj
@@ -1796,7 +1796,7 @@ class EmailOTPTests(TestCase):
     def test_registration_sends_otp_email(self):
         from django.core import mail
         self.client.post(reverse('core:company_register'), _reg_payload())
-        self.assertTrue(any('1SaudiCyber' in m.subject or 'التحقق' in m.subject for m in mail.outbox))
+        self.assertTrue(any('Cyber-5' in m.subject or 'التحقق' in m.subject for m in mail.outbox))
 
     def test_valid_otp_verifies_email(self):
         u = self._user()

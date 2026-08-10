@@ -56,11 +56,11 @@ def build_commercial_readiness_pdf(company):
     ex = report['executive']
     ss = _styles()
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, title='1SaudiCyber Internal Readiness Report',
+    doc = SimpleDocTemplate(buf, pagesize=A4, title='Cyber-5 Internal Readiness Report',
                             author='Get Solution Company',
                             leftMargin=16 * mm, rightMargin=16 * mm, topMargin=16 * mm, bottomMargin=16 * mm)
     e = []
-    e.append(Paragraph('1SaudiCyber — Internal Readiness Report', ss['H1x']))
+    e.append(Paragraph('Cyber-5 — Internal Readiness Report', ss['H1x']))
     e.append(Paragraph('%s (CR %s)' % (company.name, company.cr_number), ss['Normal']))
     e.append(Paragraph('Report date: %s' % ex['report_date'].strftime('%Y-%m-%d %H:%M'), ss['Smallx']))
     e.append(Spacer(1, 6))

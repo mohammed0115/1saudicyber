@@ -8,10 +8,10 @@ Read-only; renders nothing if `guide` is missing.
 {% if guide %}
 <div dir="rtl" class="ct-current-step rounded-xl border p-4 mb-5"
      style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#FFFFFF;
-     border-color:{% if guide.status == 'blocked' %}#E6C98C{% elif guide.status == 'completed' %}#BFE3CF{% else %}#2a5646{% endif %};
-     {% if guide.status == 'current' %}box-shadow:0 0 0 1px #2a5646;{% endif %}">
+     border-color:{% if guide.status == 'blocked' %}#E6C98C{% elif guide.status == 'completed' %}#BFE3CF{% else %}#1E56C9{% endif %};
+     {% if guide.status == 'current' %}box-shadow:0 0 0 1px #1E56C9;{% endif %}">
   <div class="flex items-center justify-between gap-2 mb-2">
-    <p style="margin:0;color:#356a54;font-weight:700;font-size:.9rem;">
+    <p style="margin:0;color:#1E56C9;font-weight:700;font-size:.9rem;">
       {% if guide.step_number %}أنت الآن في الخطوة {{ guide.step_number }} من {{ guide.total }}: {{ guide.title }}{% else %}خطوة مستمرة: {{ guide.title }}{% endif %}
     </p>
     {% include "components/status_badge.html" with status=guide.status %}
@@ -23,7 +23,7 @@ Read-only; renders nothing if `guide` is missing.
   </p>
   {% else %}
   <p style="margin:0 0 6px;color:#374151;font-size:.92rem;line-height:1.7;">
-    <span style="color:#2a5646;font-weight:600;">المطلوب منك الآن:</span> {{ guide.what_now }}
+    <span style="color:#1E56C9;font-weight:600;">المطلوب منك الآن:</span> {{ guide.what_now }}
   </p>
   {% endif %}
 
@@ -36,7 +36,7 @@ Read-only; renders nothing if `guide` is missing.
   {% if guide.cta_url_name and guide.cta_label %}
   <a href="{% url guide.cta_url_name %}" data-busy="جارٍ فتح الخطوة..."
      class="inline-block rounded-lg text-sm font-medium px-4 py-2"
-     style="{% if guide.status == 'blocked' %}background:#F7F9F8;border:1px solid #D9E2DE;color:#2a5646;{% else %}background:#2a5646;color:#fff;{% endif %}">
+     style="{% if guide.status == 'blocked' %}background:#F7F9F8;border:1px solid #D9E2DE;color:#1E56C9;{% else %}background:#1E56C9;color:#fff;{% endif %}">
     {{ guide.cta_label }}
   </a>
   {% endif %}
