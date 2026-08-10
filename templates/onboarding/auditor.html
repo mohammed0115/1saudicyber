@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}مسار المدقّق - Cyber-5{% endblock %}
+
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#F7F9F8;">
+  <div style="max-width:620px;margin:0 auto;padding:56px 20px;text-align:center;">
+    <div style="width:54px;height:54px;border-radius:14px;background:#F4F1EA;display:flex;
+                align-items:center;justify-content:center;margin:0 auto 18px;">
+      <i class="fas fa-user-shield" style="color:#1E56C9;font-size:1.4rem;"></i>
+    </div>
+    <h1 style="color:#2b2c27;font-size:1.5rem;font-weight:700;margin:0 0 10px;">مسار المدقّق في المنصّة</h1>
+    <p style="color:#5b5c53;font-size:.98rem;margin:0 0 24px;">
+      سجّل كمدقّق أو مراجع امتثال داخل المنصّة. يخضع الحساب لمراجعة المنصّة وتفعيله من إدارة المنصّة، وبعد التفعيل
+      تظهر لك الطلبات المُسندة إليك من الشركات المشتركة.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'auditors:register' %}"
+         style="display:inline-block;background:#1E56C9;color:#fff;font-weight:600;padding:11px 22px;
+                border-radius:10px;text-decoration:none;">التسجيل كمدقّق</a>
+      <a href="{% url 'core:get_started' %}"
+         style="display:inline-block;background:#FFFFFF;color:#2b2c27;font-weight:600;padding:11px 20px;
+                border-radius:10px;text-decoration:none;border:1px solid #e3e1d9;">رجوع لخيارات البدء</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

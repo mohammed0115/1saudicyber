@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}التسجيل كمدقّق - Cyber-5{% endblock %}
+{% block extra_head %}
+<style>
+  .ct-form label{display:block;font-size:.82rem;font-weight:600;color:#42433c;margin:0 0 6px;}
+  .ct-form input[type=text],.ct-form input[type=email],.ct-form input[type=password],
+  .ct-form select,.ct-form textarea{
+    width:100%;box-sizing:border-box;border:1px solid #d3d6ca;border-radius:12px;
+    padding:11px 14px;font-size:.92rem;color:#26302b;background:#fff;font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;}
+  .ct-form input::placeholder,.ct-form textarea::placeholder{color:#a8a79c;}
+  .ct-form input:hover,.ct-form select:hover,.ct-form textarea:hover{border-color:#b9bdb0;}
+  .ct-form input:focus,.ct-form select:focus,.ct-form textarea:focus{
+    outline:none;border-color:#1E56C9;box-shadow:0 0 0 3px rgba(30,86,201,.15);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="bg-gov-gray-50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
+
+    {# Hero header #}
+    <div class="flex items-start gap-4 mb-8">
+      <div class="hidden sm:grid place-items-center w-14 h-14 rounded-2xl bg-gov-green-800 text-white shrink-0 shadow-sm">
+        <i class="fas fa-user-shield text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gov-green-700 font-semibold text-sm">مسار المدقّق</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gov-gray-800 mt-0.5">تسجيل جهة تدقيق / مراجع امتثال</h1>
+        <p class="text-gov-gray-500 text-sm mt-1.5 max-w-2xl">أكمل بياناتك للانضمام كمراجع جاهزية امتثال داخل المنصة. الحقول المعلّمة بـ <span class="text-red-600">*</span> مطلوبة، ويُفعَّل حسابك بعد مراجعة الإدارة.</p>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 mb-6 text-sm">
+      {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+      {# ── Form (primary) ── #}
+      <div class="lg:col-span-2">
+        <form method="post" action="{% url 'auditors:register' %}" class="ct-form bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-6 sm:p-8"
+              data-busy="جارٍ إرسال طلب التسجيل كمدقق...">
+          {% csrf_token %}
+
+          <h2 class="text-base font-bold text-gov-green-800 mb-1 flex items-center gap-2"><i class="fas fa-id-card text-gov-green-600"></i> بيانات الحساب</h2>
+          <p class="text-xs text-gov-gray-400 mb-5">تُستخدم لتسجيل الدخول وإنشاء ملفك كمراجع.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+            {% include "onboarding/_field.html" with field=form.full_name req=1 %}
+            {% include "onboarding/_field.html" with field=form.email req=1 %}
+            {% include "onboarding/_field.html" with field=form.password req=1 %}
+            {% include "onboarding/_field.html" with field=form.password_confirm req=1 %}
+          </div>
+
+          <div class="border-t border-gov-gray-100 my-6"></div>
+
+          <h2 class="text-base font-bold text-gov-green-800 mb-1 flex items-center gap-2"><i class="fas fa-briefcase text-gov-green-600"></i> الملف المهني <span class="text-xs font-normal text-gov-gray-400">(اختياري)</span></h2>
+          <p class="text-xs text-gov-gray-400 mb-5">يُحدّد نطاق مراجعتك — NCA ECC · SABIC CyberTrust أو متعدّد الأطر.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+            {% include "onboarding/_field.html" with field=form.organization_name %}
+            {% include "onboarding/_field.html" with field=form.license_or_membership_no %}
+            {% include "onboarding/_field.html" with field=form.city %}
+            {% include "onboarding/_field.html" with field=form.specialization %}
+          </div>
+          <div class="mt-4">{% include "onboarding/_field.html" with field=form.bio %}</div>
+
+          <div class="flex items-center gap-4 mt-8 pt-6 border-t border-gov-gray-100">
+            <button type="submit" class="bg-gov-green-800 hover:bg-gov-green-900 text-white font-semibold px-7 py-3 rounded-xl shadow-sm transition inline-flex items-center gap-2">
+              <i class="fas fa-paper-plane"></i> إرسال طلب التسجيل
+            </button>
+            <a href="{% url 'core:get_started' %}" class="text-gov-gray-500 hover:text-gov-gray-800 text-sm font-medium">رجوع</a>
+          </div>
+        </form>
+      </div>
+
+      {# ── Sidebar (context) ── #}
+      <aside class="lg:col-span-1 lg:sticky lg:top-6 space-y-5">
+        <div class="bg-gov-sand/10 border border-gov-sand/40 rounded-2xl p-5">
+          <h3 class="font-bold text-sm mb-2" style="color:#8a6a1f"><i class="fas fa-circle-info me-1"></i> قبل أن تبدأ</h3>
+          <ul class="space-y-2 text-xs leading-relaxed text-gov-gray-700">
+            <li class="flex gap-2"><i class="fas fa-check text-gov-green-600 mt-0.5"></i> يُفعَّل الحساب بعد مراجعة إدارة المنصة.</li>
+            <li class="flex gap-2"><i class="fas fa-check text-gov-green-600 mt-0.5"></i> لا تبدأ المراجعة إلا بعد إسنادك لشركة وقبولك.</li>
+            <li class="flex gap-2"><i class="fas fa-check text-gov-green-600 mt-0.5"></i> مراجعة داخلية/استشارية — لا تمثّل اعتمادًا رسميًا من NCA أو SABIC.</li>
+          </ul>
+        </div>
+
+        <div class="bg-white border border-gov-gray-200 rounded-2xl p-5 shadow-sm">
+          <h3 class="font-bold text-sm text-gov-green-800 mb-3">رحلتك كمدقّق</h3>
+          <ol class="space-y-3">
+            <li class="flex items-start gap-3">
+              <span class="grid place-items-center w-6 h-6 rounded-full text-[0.7rem] font-bold shrink-0 bg-gov-green-800 text-white">1</span>
+              <div><p class="text-sm font-medium text-gov-gray-800 leading-tight">التسجيل</p><p class="text-xs text-gov-gray-400 mt-0.5">إنشاء الحساب (هذه الخطوة).</p></div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="grid place-items-center w-6 h-6 rounded-full text-[0.7rem] font-bold shrink-0 bg-gov-gray-100 text-gov-gray-500">2</span>
+              <div><p class="text-sm font-medium text-gov-gray-800 leading-tight">موافقة الإدارة</p><p class="text-xs text-gov-gray-400 mt-0.5">مراجعة بياناتك وتفعيل الحساب.</p></div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="grid place-items-center w-6 h-6 rounded-full text-[0.7rem] font-bold shrink-0 bg-gov-gray-100 text-gov-gray-500">3</span>
+              <div><p class="text-sm font-medium text-gov-gray-800 leading-tight">الإسناد لشركة</p><p class="text-xs text-gov-gray-400 mt-0.5">استلام تكليف مراجعة وقبوله.</p></div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="grid place-items-center w-6 h-6 rounded-full text-[0.7rem] font-bold shrink-0 bg-gov-gray-100 text-gov-gray-500">4</span>
+              <div><p class="text-sm font-medium text-gov-gray-800 leading-tight">المراجعة والحكم</p><p class="text-xs text-gov-gray-400 mt-0.5">أدلة → أحكام → ملاحظات → تقرير.</p></div>
+            </li>
+          </ol>
+          <p class="text-xs text-gov-gray-400 mt-4 pt-3 border-t border-gov-gray-100">أنت الآن في الخطوة الأولى.</p>
+        </div>
+
+        <p class="text-center text-xs text-gov-gray-500">لديك حساب؟ <a href="{% url 'core:login' %}" class="text-gov-green-700 font-medium hover:underline">تسجيل الدخول</a></p>
+      </aside>
+    </div>
+  </div>
+</div>
+{% endblock %}

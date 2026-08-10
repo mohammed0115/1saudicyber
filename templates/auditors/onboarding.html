@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}حساب المدقّق - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div style="max-width:640px;margin:0 auto;padding:24px 16px;">
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:16px;padding:30px;box-shadow:0 2px 10px rgba(31,41,51,0.05);">
+      <h1 style="color:#2b2c27;font-size:1.4rem;font-weight:700;margin:0 0 6px;">مرحبًا، {{ profile.full_name }}</h1>
+      {% if profile.status == 'pending_review' %}
+        <div style="background:#f1eadb;border:1px solid #dcc79a;color:#8a6a1f;border-radius:10px;padding:14px;margin:14px 0;font-size:.95rem;">
+          <i class="fas fa-hourglass-half ms-1"></i> حسابك قيد مراجعة إدارة منصة Cyber-5 لدى شركة احصل الحل. بعد التفعيل ستظهر لك ملفات الشركات المسندة.
+        </div>
+      {% elif profile.status == 'active' %}
+        <div style="background:#E9F0FD;border:1px solid #CDDDF5;color:#1E56C9;border-radius:10px;padding:14px;margin:14px 0;font-size:.95rem;">
+          <i class="fas fa-circle-check ms-1"></i> حسابك مفعّل. يمكنك الآن استعراض الطلبات المُسندة إليك.
+        </div>
+      {% elif profile.status == 'suspended' %}
+        <div style="background:#FBEAEA;border:1px solid #E6BCBC;color:#9B2C2C;border-radius:10px;padding:14px;margin:14px 0;font-size:.95rem;">
+          تم إيقاف صلاحية حساب المدقق مؤقتًا من إدارة المنصة. يرجى التواصل مع إدارة منصة احصل الحل.
+        </div>
+      {% else %}
+        <div style="background:#FBEAEA;border:1px solid #E6BCBC;color:#9B2C2C;border-radius:10px;padding:14px;margin:14px 0;font-size:.95rem;">
+          تعذر تفعيل حسابك كمدقق في الوقت الحالي. يمكنك التواصل مع إدارة منصة احصل الحل لمزيد من التفاصيل.
+        </div>
+      {% endif %}
+      <p style="color:#5b5c53;font-size:.9rem;margin:0 0 10px;">الحالة: {% if profile.status == 'pending_review' %}قيد المراجعة{% elif profile.status == 'active' %}مفعّل{% elif profile.status == 'suspended' %}موقوف مؤقتاً{% else %}غير مفعّل{% endif %}</p>
+      {% if framework_badges %}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px;">
+        {% for b in framework_badges %}
+        <span title="{{ b.label }}" style="font-size:.78rem;background:#E9F0FD;color:#1E56C9;border:1px solid #CDDDF5;border-radius:999px;padding:4px 12px;" dir="auto">{{ b.label }}</span>
+        {% endfor %}
+      </div>
+      <p style="color:#98A2B3;font-size:.78rem;margin:0 0 16px;">قدرات مراجعة مستنتجة داخليًا من ملفك — لا تمثل تخويلًا أو اعتمادًا رسميًا.</p>
+      {% endif %}
+      <a href="{% url 'auditors:dashboard' %}" style="display:inline-block;background:#1E56C9;color:#fff;font-weight:600;padding:11px 20px;border-radius:10px;text-decoration:none;">لوحة المدقّق</a>
+    </div>
+
+    <div style="margin-top:18px;">
+      {% include "components/journey_stepper.html" with journey=auditor_journey %}
+    </div>
+  </div>
+</div>
+{% endblock %}

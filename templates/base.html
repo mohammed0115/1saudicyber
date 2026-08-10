@@ -1,94 +1,236 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
+{% load i18n static %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'ar' }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}CyberTrust KSA{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'gov-green': {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            200: '#bbf7d0',
-                            300: '#86efac',
-                            400: '#4ade80',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#1a4731',
-                            900: '#14532d',
-                            950: '#0a2e1a',
-                        },
-                        'gov-gray': {
-                            50: '#f9fafb',
-                            100: '#f3f4f6',
-                            200: '#e5e7eb',
-                            300: '#d1d5db',
-                            400: '#9ca3af',
-                            500: '#6b7280',
-                            600: '#4b5563',
-                            700: '#374151',
-                            800: '#1f2937',
-                            900: '#111827',
-                        }
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'Noto Sans Arabic', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <title>{% block title %}Cyber-5{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', 'Noto Sans Arabic', sans-serif; }
-        .gradient-gov { background: linear-gradient(135deg, #1a4731 0%, #14532d 50%, #0a2e1a 100%); }
+        /* ── Calm, government-grade shell tokens (aligned with the onboarding shell). ── */
+        :root{
+            /* Cyber-5 brand palette (calm royal blue + navy; migrated from green). */
+            --brand:#1E56C9; --brand-h:#173F94; --brand-soft:#3B72E0;
+            --gold:#2C4A86; --gold-ink:#1E3A66; --navy:#15233B;
+            --bg:#F6F8FC; --surface:#FFFFFF; --soft:#E9F0FD; --soft2:#F3F7FE; --footer:#EEF3FB;
+            --text:#1A2432; --text2:#44505F; --muted:#5B6675; --border:#DBE2EC;
+        }
+        body { font-family: 'Inter', 'IBM Plex Sans Arabic', 'Noto Sans Arabic', sans-serif; background: var(--bg); color: var(--text); }
+        .gradient-gov { background: linear-gradient(160deg, var(--soft2) 0%, var(--soft) 60%, #DCE7FB 100%); }
         .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-        .score-ring { background: conic-gradient(#16a34a var(--score), #e5e7eb var(--score)); }
+        .score-ring { background: conic-gradient(#1E56C9 var(--score), #e3e1d9 var(--score)); }
+
+        /* ── Calm light app header ── */
+        .app-nav{ background:var(--surface); border-bottom:1px solid var(--border); }
+        .app-brand-name{ color:var(--navy); }
+        .app-navlink{ color:var(--text2); font-weight:500; }
+        .app-navlink:hover{ color:var(--brand); background:var(--soft); }
+        .app-navlink.is-active{ color:var(--brand); background:var(--soft); font-weight:600; }
+        .app-dropdown{ background:var(--surface); border:1px solid var(--border); box-shadow:0 12px 30px rgba(18,30,55,.10); }
+        .app-dropdown a{ color:var(--text2); }
+        .app-dropdown a:hover{ color:var(--brand); background:var(--soft); }
+        .app-bt{ border-color:var(--border); }
+        .app-lang{ color:var(--muted); } .app-lang:hover{ color:var(--brand); }
+        .app-lang.is-active{ color:var(--brand); font-weight:700; }
+        .app-muted{ color:var(--muted); } .app-muted:hover{ color:var(--brand); }
+        .app-avatar{ width:34px;height:34px;flex:0 0 auto;border-radius:50%;background:var(--soft);color:var(--brand);
+            display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;border:1px solid #CDDDF5; }
+        .app-footer{ background:var(--footer); border-top:1px solid var(--border); color:var(--text2); }
+        .app-footer a{ color:var(--text2); } .app-footer a:hover{ color:var(--brand); }
+        .app-fbrand{ color:var(--brand); }
+
+        /* ── Palette unification: remap the darker gov-green content shades (600–900)
+           to the calm brand so in-app screens match the onboarding/shell green. The
+           light shades (50/100/200) are already calm and are intentionally kept. This
+           <style> loads after app.css, so equal-specificity rules win — no !important. ── */
+        .text-gov-green-600, .text-gov-green-700, .text-gov-green-800, .text-gov-green-900{ color:var(--brand); }
+        .hover\:text-gov-green-700:hover, .hover\:text-gov-green-800:hover, .hover\:text-gov-green-900:hover{ color:var(--brand-h); }
+        .bg-gov-green-500, .bg-gov-green-600, .bg-gov-green-700, .bg-gov-green-800, .bg-gov-green-900{ background-color:var(--brand); }
+        .bg-gov-green-50, .bg-gov-green-100{ background-color:var(--soft); }
+        .text-gov-green-50, .text-gov-green-100, .text-gov-green-200{ color:var(--brand-soft); }
+        .border-gov-green-100, .border-gov-green-200{ border-color:var(--border); }
+        .hover\:bg-gov-green-700:hover, .hover\:bg-gov-green-800:hover, .hover\:bg-gov-green-900:hover{ background-color:var(--brand-h); }
+        .border-gov-green-500, .border-gov-green-600, .border-gov-green-700, .border-gov-green-800{ border-color:var(--brand); }
+        .ring-gov-green-600, .ring-gov-green-700,
+        .focus\:ring-gov-green-500:focus, .focus\:ring-gov-green-600:focus, .focus\:ring-gov-green-700:focus{ --tw-ring-color:var(--brand); }
+        .focus\:border-gov-green-600:focus, .focus\:border-gov-green-700:focus{ border-color:var(--brand); }
+
+        /* ── Calm content design-system utilities (shared across in-app screens) ── */
+        .cx-head .ic{ width:50px;height:50px;flex:0 0 auto;border-radius:13px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.2rem }
+        .cx-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden }
+        .cx-card-h{ padding:13px 18px; background:var(--soft2); border-bottom:1px solid var(--border); font-weight:700; color:var(--navy); font-size:.95rem; display:flex; align-items:center; justify-content:space-between; gap:12px }
+        .cx-scroll{ overflow-x:auto }
+        .cx-tbl{ width:100%; font-size:.85rem; border-collapse:collapse }
+        .cx-scroll .cx-tbl{ min-width:640px }
+        .cx-tbl thead th{ text-align:right; padding:11px 16px; color:var(--muted); font-weight:600; background:var(--soft2); border-bottom:1px solid var(--border); white-space:nowrap }
+        .cx-tbl tbody td{ padding:11px 16px; border-top:1px solid var(--border); color:var(--text2); vertical-align:top }
+        .cx-tbl tbody tr:first-child td{ border-top:none }
+        .cx-badge{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:.72rem; font-weight:600; white-space:nowrap }
+        .cx-ok{ background:var(--soft); color:var(--brand); border:1px solid #CDDDF5 }
+        .cx-warn{ background:#FBF3E4; color:#A96C24; border:1px solid #EBD9B8 }
+        .cx-crit{ background:#FBF0EF; color:#A64F45; border:1px solid #E6C4C0 }
+        .cx-neutral{ background:#F1F4F2; color:var(--muted); border:1px solid var(--border) }
+        .cx-link{ color:var(--brand); font-weight:600 } .cx-link:hover{ text-decoration:underline }
+        .cx-btn{ display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1.1rem; border-radius:10px; font-weight:600; font-size:.88rem; cursor:pointer; border:1px solid transparent; text-decoration:none }
+        .cx-btn-primary{ background:var(--brand); color:#fff } .cx-btn-primary:hover{ background:var(--brand-h) }
+        .cx-btn-secondary{ background:var(--surface); color:var(--text); border-color:var(--border) } .cx-btn-secondary:hover{ border-color:var(--brand); color:var(--brand) }
+        .cx-note{ border-radius:12px; padding:14px 18px; font-size:.88rem; line-height:1.7 }
+        .cx-note-warn{ background:#FBF3E4; border:1px solid #EBD9B8; color:#8A5A1E }
+        .cx-note-info{ background:#EEF3FB; border:1px solid #CBDAF0; color:#3B537A }
+        .cx-muted{ color:var(--muted) } .cx-navy{ color:var(--navy) }
+
+        /* ── Site-wide form polish (Sakinah). Bare inputs get this baseline; Tailwind
+           utility classes still override per-element, so styled inputs are untouched. ── */
+        input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=submit]):not([type=button]),
+        select, textarea {
+            border: 1px solid #d3d6ca; border-radius: 12px; padding: 10px 14px;
+            background: #ffffff; color: #26302b; font-family: inherit; font-size: 0.92rem;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        input:not([type=checkbox]):not([type=radio]):not([type=file]):focus-visible,
+        select:focus-visible, textarea:focus-visible,
+        input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,
+        select:focus, textarea:focus {
+            outline: none; border-color: #1E56C9; box-shadow: 0 0 0 3px rgba(30,86,201,.15);
+        }
+        input::placeholder, textarea::placeholder { color: #a8a79c; }
+        /* Buttons & links: smooth, accessible focus ring everywhere. */
+        button, a, [role="button"], summary { transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+        a:focus-visible, button:focus-visible, [role="button"]:focus-visible, summary:focus-visible {
+            outline: 2px solid #1E56C9; outline-offset: 2px; border-radius: 6px;
+        }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gov-gray-50 min-h-screen">
+<body class="min-h-screen overflow-x-hidden">
     {% block body %}
     <!-- Navigation -->
     {% if user.is_authenticated %}
-    <nav class="bg-gov-green-800 shadow-lg">
+    <nav class="app-nav sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{% url 'dashboard:main' %}" class="flex items-center space-x-3">
-                        <i class="fas fa-shield-halved text-white text-2xl"></i>
-                        <span class="text-white font-bold text-xl">CyberTrust KSA</span>
-                    </a>
-                    <div class="hidden md:flex ml-10 space-x-4">
-                        <a href="{% url 'dashboard:main' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
-                            <i class="fas fa-chart-line mr-1"></i> Dashboard
-                        </a>
-                        <a href="{% url 'compliance:controls_list' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
-                            <i class="fas fa-list-check mr-1"></i> Controls
-                        </a>
-                        <a href="{% url 'monitoring:hub' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
-                            <i class="fas fa-radar mr-1"></i> Monitoring
-                        </a>
-                        {% if user.role == 'auditor' %}
-                        <a href="{% url 'auditor_portal:dashboard' %}" class="text-gov-green-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">
-                            <i class="fas fa-clipboard-check mr-1"></i> Auditor Portal
-                        </a>
-                        {% endif %}
-                    </div>
+            <div class="flex items-center justify-between h-16 gap-3">
+                <a href="{% url 'dashboard:main' %}" class="flex items-center gap-2 shrink-0" aria-label="Cyber-5">
+                    <svg width="30" height="34" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
+                        <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#EAF1FF" stroke="var(--brand)" stroke-width="2.4"/>
+                        <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="var(--brand)">5</text>
+                    </svg>
+                    <span class="app-brand-name font-bold text-lg sm:text-xl">Cyber-5</span>
+                </a>
+
+                <div class="hidden md:flex items-center gap-1 flex-1 min-w-0 flex-wrap">
+                    {% if user.is_staff or user.is_superuser %}
+                    <a href="{% url 'platform_admin:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "Get Solution CRM" %}</a>
+                    <a href="{% url 'platform_admin:companies_list' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الشركات" %}</a>
+                    <a href="{% url 'platform_admin:auditor_list' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المدققون" %}</a>
+                    {% elif user.role == 'auditor' %}
+                    <a href="{% url 'auditors:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة المدقق" %}</a>
+                    <a href="{% url 'auditor_portal:review_queue' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "طابور المراجعة" %}</a>
+                    <a href="{% url 'auditor_portal:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مساحة مراجعة الأدلة" %}</a>
+                    <a href="{% url 'auditors:onboarding' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الملف الشخصي" %}</a>
+                    {% else %}
+                    <a href="{% url 'dashboard:main' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة التحكم" %}</a>
+                    <a href="{% url 'compliance:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مسار الامتثال" %}</a>
+                    <a href="{% url 'compliance:applicability_review' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأطر" %}</a>
+                    <a href="{% url 'compliance:evidence_checklist' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأدلة" %}</a>
+                    <a href="{% url 'compliance:reports_index' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "التقارير" %}</a>
+                    <a href="{% url 'monitoring:overview' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المراقبة" %}</a>
+                    <details class="relative">
+                        <summary class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer list-none">{% trans "المزيد" %} <i class="fas fa-chevron-down text-xs"></i></summary>
+                        <div class="app-dropdown absolute end-0 mt-2 w-56 rounded-lg p-2 z-50">
+                            <a href="{% url 'compliance:controls_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
+                            <a href="{% url 'compliance:control_plan' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
+                            <a href="{% url 'compliance:gap_dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
+                            <a href="{% url 'risk:list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
+                            <div class="border-t app-bt my-1"></div>
+                            <a href="{% url 'compliance:auditor_review_status' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "حالة مراجعة المدقّق" %}</a>
+                            <a href="{% url 'auditor_portal:company_findings' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "ملاحظات التدقيق" %}</a>
+                            <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
+                            {% if user.company_id %}<a href="{% url 'auditor_portal:message_thread' user.company_id %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراسلة" %}</a>{% endif %}
+                            <a href="{% url 'compliance:auditor_review_queue' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراجعة" %}</a>
+                            <div class="border-t app-bt my-1"></div>
+                            <a href="{% url 'billing:home' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
+                            {% if user.role == 'company_admin' %}<a href="{% url 'core:team' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "فريق العمل" %}</a>{% endif %}
+                            <a href="{% url 'core:settings' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الإعدادات" %}</a>
+                        </div>
+                    </details>
+                    {% endif %}
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-gov-green-200 text-sm">{{ user.get_full_name|default:user.username }}</span>
-                    <a href="{% url 'core:logout' %}" class="text-gov-green-200 hover:text-white text-sm">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+
+                {# Account + language switcher + mobile hamburger #}
+                <div class="flex items-center gap-3 shrink-0">
+                    <form action="{% url 'set_language' %}" method="post" class="hidden sm:flex items-center gap-1 text-xs">
+                        {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+                        <button type="submit" name="language" value="ar" class="app-lang px-1 {% if LANGUAGE_CODE == 'ar' %}is-active{% endif %}">العربية</button>
+                        <span style="color:var(--border);">|</span>
+                        <button type="submit" name="language" value="en" class="app-lang px-1 {% if LANGUAGE_CODE != 'ar' %}is-active{% endif %}">English</button>
+                    </form>
+                    <a href="{% url 'core:notifications_inbox' %}" class="app-muted relative px-1" title="{% trans 'الإشعارات' %}" aria-label="{% trans 'الإشعارات' %}{% if nav_unread %} ({{ nav_unread }} غير مقروء){% endif %}">
+                        <i class="fas fa-bell text-lg" aria-hidden="true"></i>
+                        {% if nav_unread %}<span class="absolute -top-1 -end-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[0.6rem] font-bold flex items-center justify-center">{{ nav_unread }}</span>{% endif %}
                     </a>
+                    <div class="hidden sm:flex items-center gap-2 min-w-0">
+                        <span class="app-avatar" aria-hidden="true">{{ user.get_full_name|default:user.username|slice:":1"|upper }}</span>
+                        <span class="truncate max-w-[140px] text-sm" style="color:var(--text2);">{{ user.get_full_name|default:user.username }}</span>
+                    </div>
+                    <a href="{% url 'core:logout' %}" class="app-muted text-sm whitespace-nowrap" title="{% trans 'تسجيل الخروج' %}"><i class="fas fa-arrow-right-from-bracket"></i> <span class="hidden lg:inline">{% trans "تسجيل الخروج" %}</span></a>
+                    <details class="md:hidden relative">
+                        <summary class="cursor-pointer list-none px-1" role="button" aria-label="{% trans 'القائمة' %}" style="color:var(--navy);"><i class="fas fa-bars text-lg" aria-hidden="true"></i></summary>
+                        <div class="app-dropdown absolute end-0 mt-2 w-56 rounded-lg p-2 z-50">
+                            {% if user.is_staff or user.is_superuser %}
+                            <a href="{% url 'platform_admin:dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "Get Solution CRM" %}</a>
+                            <a href="{% url 'platform_admin:companies_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الشركات" %}</a>
+                            <a href="{% url 'platform_admin:auditor_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المدققون" %}</a>
+                            {% elif user.role == 'auditor' %}
+                            <a href="{% url 'auditors:dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "لوحة المدقق" %}</a>
+                            <a href="{% url 'auditor_portal:review_queue' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "طابور المراجعة" %}</a>
+                            <a href="{% url 'auditor_portal:dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "مساحة مراجعة الأدلة" %}</a>
+                            <a href="{% url 'auditors:onboarding' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الملف الشخصي" %}</a>
+                            {% else %}
+                            <a href="{% url 'dashboard:main' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "لوحة التحكم" %}</a>
+                            <a href="{% url 'compliance:dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "مسار الامتثال" %}</a>
+                            <a href="{% url 'compliance:intake' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "التصنيف" %}</a>
+                            <a href="{% url 'compliance:applicability_review' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الأطر" %}</a>
+                            <a href="{% url 'compliance:control_plan' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
+                            <a href="{% url 'compliance:evidence_checklist' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الأدلة" %}</a>
+                            <a href="{% url 'compliance:gap_dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
+                            <a href="{% url 'risk:list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
+                            <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
+                            <a href="{% url 'compliance:reports_index' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "التقارير" %}</a>
+                            <a href="{% url 'monitoring:overview' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراقبة" %}</a>
+                            <a href="{% url 'compliance:controls_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
+                            <a href="{% url 'billing:home' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
+                            {% endif %}
+                            <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-2 px-3 py-2 border-t app-bt mt-1">
+                                {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+                                <button type="submit" name="language" value="ar" class="app-lang text-sm {% if LANGUAGE_CODE == 'ar' %}is-active{% endif %}">العربية</button>
+                                <span style="color:var(--border);">|</span>
+                                <button type="submit" name="language" value="en" class="app-lang text-sm {% if LANGUAGE_CODE != 'ar' %}is-active{% endif %}">English</button>
+                            </form>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% else %}
+    <!-- Public (anonymous) header: brand + language switcher -->
+    <nav class="app-nav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 gap-3">
+                <a href="{% url 'core:landing' %}" class="flex items-center gap-2 shrink-0" aria-label="Cyber-5">
+                    <svg width="28" height="32" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
+                        <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#EAF1FF" stroke="var(--brand)" stroke-width="2.4"/>
+                        <text x="19" y="26.5" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="var(--brand)">5</text>
+                    </svg>
+                    <span class="app-brand-name font-bold text-lg">Cyber-5</span>
+                </a>
+                <div class="flex items-center gap-3">
+                    {% include "components/language_switcher.html" %}
+                    <a href="{% url 'core:login' %}" class="app-muted text-sm">{% trans "تسجيل الدخول" %}</a>
                 </div>
             </div>
         </div>
@@ -99,7 +241,7 @@
     {% if messages %}
     <div class="max-w-7xl mx-auto px-4 mt-4">
         {% for message in messages %}
-        <div class="rounded-lg p-4 mb-2 {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+        <div class="rounded-lg p-4 mb-2 {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-gov-gray-100 text-gov-gray-700 border border-gov-gray-200{% endif %}">
             <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
             {{ message }}
         </div>
@@ -114,14 +256,66 @@
 
     {% if user.is_authenticated %}
     <!-- Footer -->
-    <footer class="bg-gov-green-950 text-gov-green-200 py-6 mt-12">
+    <footer class="app-footer py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm">
-            <p>&copy; 2024 CyberTrust KSA. AI-Powered Cybersecurity Compliance Platform.</p>
-            <p class="mt-1 text-gov-green-400">Aligned with NCA ECC, Aramco SACS-002, SABIC CyberTrust Standards</p>
+            <p>&copy; {% now "Y" %} cyber-5.com — {% trans "منصّة امتثال الأمن السيبراني المدعومة بالذكاء الاصطناعي." %}
+               {% if LANGUAGE_CODE == 'ar' %}
+                 {% trans "تطوير" %} <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="app-fbrand font-semibold" style="text-decoration:underline;">شركة احصل الحل</a>.
+               {% else %}
+                 {% trans "Developed by" %} <a href="https://gscompany.sa/" target="_blank" rel="noopener noreferrer" class="app-fbrand font-semibold" style="text-decoration:underline;">Get Solution</a>.
+               {% endif %}
+            </p>
+            <p class="mt-1"><a href="{% url 'core:privacy' %}">{% trans "سياسة الخصوصية" %}</a>
+               <span class="mx-2" style="color:var(--border);">|</span>
+               <a href="{% url 'core:terms' %}">{% trans "شروط الاستخدام" %}</a></p>
+            <p class="mt-1 app-muted" dir="rtl">متوافقة مع معايير الهيئة الوطنية للأمن السيبراني (NCA ECC) وأرامكو (SACS-002) وسابك (CyberTrust).</p>
         </div>
     </footer>
     {% endif %}
     {% endblock %}
+
+    <!-- Phase 4A — calm, enterprise loading overlay (only shows for forms with data-busy) -->
+    <div id="ct-busy-overlay" aria-live="polite" aria-hidden="true"
+         style="display:none;position:fixed;inset:0;z-index:60;background:rgba(31,41,51,0.45);
+                align-items:center;justify-content:center;">
+        <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:28px 36px;
+                    box-shadow:0 8px 30px rgba(31,41,51,0.12);text-align:center;min-width:240px;">
+            <div style="margin:0 auto 14px;width:38px;height:38px;border-radius:50%;
+                        border:3px solid #e3e1d9;border-top-color:#1E56C9;animation:ct-spin 0.9s linear infinite;"></div>
+            <p id="ct-busy-msg" style="color:#2b2c27;font-size:0.95rem;margin:0;">جارٍ المعالجة...</p>
+            <p style="color:#5b5c53;font-size:0.8rem;margin:6px 0 0;">يرجى الانتظار، قد تستغرق هذه الخطوة لحظات.</p>
+        </div>
+    </div>
+    <style>@keyframes ct-spin{to{transform:rotate(360deg)}}</style>
+    <script>
+    (function () {
+        var overlay = document.getElementById('ct-busy-overlay');
+        var msg = document.getElementById('ct-busy-msg');
+        function show(text) {
+            msg.textContent = text || 'جارٍ المعالجة...';
+            overlay.style.display = 'flex';
+            overlay.setAttribute('aria-hidden', 'false');
+        }
+        document.querySelectorAll('form[data-busy]').forEach(function (f) {
+            f.addEventListener('submit', function () {
+                // Respect native HTML5 validation: only show once the form actually submits.
+                if (f.checkValidity && !f.checkValidity()) { return; }
+                show(f.getAttribute('data-busy'));
+            });
+        });
+        // Links (e.g. report exports/downloads) show a brief, calm preparing state.
+        document.querySelectorAll('a[data-busy]').forEach(function (a) {
+            a.addEventListener('click', function () {
+                show(a.getAttribute('data-busy'));
+                // Downloads do not navigate away; hide the overlay shortly after.
+                setTimeout(function () {
+                    overlay.style.display = 'none';
+                    overlay.setAttribute('aria-hidden', 'true');
+                }, 2500);
+            });
+        });
+    })();
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>

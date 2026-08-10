@@ -1,0 +1,141 @@
+"""Phase 4C — deterministic, tenant-safe auditor assignment service."""
+from django.utils import timezone
+
+from billing.subscription_access import company_has_active_subscription
+from .models import AuditorProfile, AuditorAssignment
+
+
+def get_auditor_profile(user):
+    """Return the user's AuditorProfile or None (never raises)."""
+    if not getattr(user, 'is_authenticated', False):
+        return None
+    return AuditorProfile.objects.filter(user=user).first()
+
+
+def list_available_auditors():
+    """Active + available auditors that a company may assign to."""
+    return AuditorProfile.objects.filter(status='active', is_available=True)
+
+
+def can_company_assign(company):
+    """A company may assign a platform auditor only with an active subscription."""
+    return company_has_active_subscription(company)
+
+
+def has_active_assignment(company, auditor):
+    return AuditorAssignment.objects.filter(
+        company=company, auditor=auditor,
+        status__in=AuditorAssignment.ACTIVE_STATUSES).exists()
+
+
+def company_active_assignment(company):
+    """The company's current active (pending/accepted) assignment, if any — across ALL auditors.
+    A company may only have ONE active assignment at a time."""
+    return (AuditorAssignment.objects.filter(
+        company=company, status__in=AuditorAssignment.ACTIVE_STATUSES)
+        .select_related('auditor', 'auditor__user').first())
+
+
+def create_assignment(company, auditor, requested_by=None, scope='reports_only', notes=''):
+    """Create a review request, preventing a duplicate active one for the COMPANY (any auditor).
+    Only an active + available auditor may be requested. Returns (assignment, created)."""
+    existing = company_active_assignment(company)
+    if existing is not None:
+        return existing, False
+    if auditor is None or auditor.status != 'active' or not auditor.is_available:
+        return None, False
+    a = AuditorAssignment.objects.create(
+        company=company, auditor=auditor, requested_by=requested_by, scope=scope,
+        notes=(notes or '').strip()[:2000])
+    return a, True
+
+
+def cancel_assignment(assignment, by=None):
+    """The company cancels its own PENDING (requested) request. Returns True if changed."""
+    if assignment is None or assignment.status != 'requested':
+        return False
+    assignment.status = 'cancelled'
+    assignment.responded_at = timezone.now()
+    assignment.save(update_fields=['status', 'responded_at', 'updated_at'])
+    return True
+
+
+def assignments_for_user(user):
+    """Assignments belonging to the logged-in auditor (auditor.user == user)."""
+    profile = get_auditor_profile(user)
+    if profile is None:
+        return AuditorAssignment.objects.none()
+    return AuditorAssignment.objects.filter(auditor=profile).select_related('company')
+
+
+def get_assignment_for_user(user, assignment_id):
+    """Tenant-safe: an assignment only if it belongs to this auditor, else None."""
+    profile = get_auditor_profile(user)
+    if profile is None:
+        return None
+    return AuditorAssignment.objects.filter(id=assignment_id, auditor=profile).first()
+
+
+def auditor_can_view_company_context(assignment):
+    """Read-only context is visible only for an ACTIVE auditor with an ACCEPTED assignment."""
+    return (assignment is not None
+            and assignment.auditor.status == 'active'
+            and assignment.status == 'accepted')
+
+
+def is_auditor_eligible_for_company(user, company):
+    """P0-03 — THE SINGLE SOURCE OF TRUTH for auditor access to a company's private data.
+
+    Fail-closed de-provisioning boundary, re-evaluated from the DB on EVERY call (so no stale
+    session or leftover row can keep a de-provisioned auditor in). An auditor may act on
+    `company` ONLY when EVERY link in the chain is live:
+      * the user is authenticated AND user.is_active   (login not revoked),
+      * an AuditorProfile exists AND profile.status == 'active'
+        (NOT pending_review / suspended / inactive),
+      * a live 'accepted' AuditorAssignment ties that auditor to THIS company.
+    A break in ANY link — suspended/rejected profile, cancelled/rejected assignment, or a
+    disabled user account — denies access immediately.
+
+    P0-03 tightened this from the old "accepted assignment alone" boundary (P0-01), which
+    stopped a de-assigned auditor but NOT a suspended/rejected one whose 'accepted' row lingered.
+    """
+    if company is None:
+        return False
+    if not getattr(user, 'is_authenticated', False) or not getattr(user, 'is_active', False):
+        return False
+    profile = get_auditor_profile(user)
+    if profile is None or not profile.is_active_auditor:
+        return False
+    return AuditorAssignment.objects.filter(
+        auditor=profile, company=company, status='accepted').exists()
+
+
+def has_accepted_assignment(user, company):
+    """P0-01/P0-03 de-provisioning boundary for the auditor portal — a thin, backward-compatible
+    alias over is_auditor_eligible_for_company (the single eligibility policy).
+
+    Requires an ACTIVE profile + ACTIVE user + a live 'accepted' assignment. Access to a
+    company's assessment/controls/evidence/RFI/messages ends the moment ANY of those stops
+    holding — de-assignment, profile suspension/rejection, or login revocation.
+    """
+    return is_auditor_eligible_for_company(user, company)
+
+
+def respond_to_assignment(assignment, action, note='', responder=None):
+    """Auditor accepts/rejects a 'requested' assignment. Reject requires a reason. Returns
+    (ok, error_ar). Idempotent-safe: only a 'requested' assignment can be responded to."""
+    if assignment is None or assignment.status != 'requested' or action not in ('accept', 'reject'):
+        return False, 'لا يمكن تنفيذ هذا الإجراء على الطلب في حالته الحالية.'
+    # P0-03: a de-provisioned (non-active) auditor may not accept/act on an assignment, even if a
+    # stale 'requested' row survived a suspension. Belt-and-braces with the view + revocation.
+    if not assignment.auditor.is_active_auditor:
+        return False, 'حساب المدقّق غير نشط ولا يمكنه اتخاذ إجراء على الطلب.'
+    if action == 'reject' and not (note or '').strip():
+        return False, 'سبب الرفض مطلوب.'
+    assignment.status = 'accepted' if action == 'accept' else 'rejected'
+    assignment.response_note = (note or '').strip()
+    assignment.responded_by = responder
+    assignment.responded_at = timezone.now()
+    assignment.save(update_fields=['status', 'response_note', 'responded_by',
+                                   'responded_at', 'updated_at'])
+    return True, ''

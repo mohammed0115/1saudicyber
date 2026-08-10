@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}تفاصيل دليل - Cyber-5{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-4">
+    <h1 class="text-2xl font-bold text-gov-green-800">تفاصيل الدليل</h1>
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-2 text-sm">
+        <p><span class="text-gov-gray-500">الملف:</span> {{ submission.original_filename }}
+           <a href="{% url 'compliance:download_evidence_file' submission.id %}" class="text-gov-green-700 hover:text-gov-green-900 font-medium ms-2"><i class="fas fa-download me-1"></i>تنزيل</a></p>
+        {# In-app preview for image/PDF evidence (served inline + nosniff) #}
+        {% with ft=submission.file_type|lower %}
+        {% if ft == 'png' or ft == 'jpg' or ft == 'jpeg' or ft == 'gif' %}
+        <div class="mt-2 border border-gov-gray-100 rounded-lg overflow-hidden bg-gov-gray-50">
+          <img src="{% url 'compliance:download_evidence_file' submission.id %}?inline=1" alt="معاينة الدليل" class="max-w-full max-h-96 mx-auto object-contain">
+        </div>
+        {% elif ft == 'pdf' %}
+        <details class="mt-2"><summary class="cursor-pointer text-gov-green-700 text-sm font-medium">معاينة الملف</summary>
+          <iframe src="{% url 'compliance:download_evidence_file' submission.id %}?inline=1" title="معاينة الدليل" class="w-full h-96 mt-1 border border-gov-gray-100 rounded-lg"></iframe>
+        </details>
+        {% endif %}
+        {% endwith %}
+        <p><span class="text-gov-gray-500">النسخة:</span> v{{ submission.version }}</p>
+        <p><span class="text-gov-gray-500">النوع/الحجم:</span> {{ submission.file_type }} — {{ submission.file_size }} بايت</p>
+        <p><span class="text-gov-gray-500">SHA-256:</span> <span class="font-mono text-xs break-all">{{ submission.file_hash }}</span></p>
+        <p><span class="text-gov-gray-500">حالة مراجعة الملف:</span> {{ submission.get_status_display }}
+           <span class="text-gov-gray-400 text-xs">(هل رُوجِع الملف كدليل — ليست حكم الامتثال)</span></p>
+        {% if verdict_ar %}
+        <p><span class="text-gov-gray-500">حكم المدقق (الامتثال):</span>
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium
+            {% if verdict_tone == 'green' %}bg-green-100 text-green-800
+            {% elif verdict_tone == 'red' %}bg-red-100 text-red-800
+            {% elif verdict_tone == 'amber' %}bg-amber-100 text-amber-800
+            {% else %}bg-gov-gray-100 text-gov-gray-700{% endif %}">{{ verdict_ar }}</span>
+          {% if verdict.is_stale %}<span class="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-800">متقادم · رُفعت نسخة أحدث — يلزم إعادة مراجعة</span>{% endif %}</p>
+        {% endif %}
+        <p><span class="text-gov-gray-500">رفعه:</span> {{ submission.uploaded_by }} في {{ submission.uploaded_at|date:"Y-m-d H:i" }}</p>
+        <p><span class="text-gov-gray-500">الضابط:</span> {{ submission.checklist_item.evidence_requirement.control.control_id }}</p>
+        {% if submission.notes %}<p><span class="text-gov-gray-500">ملاحظات:</span> {{ submission.notes }}</p>{% endif %}
+    </div>
+
+    <!-- Phase 8E: text extraction / OCR status -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-2 text-sm">
+        <div class="flex justify-between items-center">
+            <h2 class="font-bold text-gov-green-800">استخراج النص</h2>
+            <form method="post" action="{% url 'compliance:run_evidence_extraction' submission.id %}" data-smart-processing>
+                {% csrf_token %}
+                <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-3 py-1.5 rounded text-xs">
+                    {% if extraction %}إعادة الاستخراج{% else %}تشغيل الاستخراج{% endif %}
+                </button>
+            </form>
+        </div>
+        {% if extraction %}
+            <p><span class="text-gov-gray-500">الحالة:</span>
+              <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                {% if extraction.status == 'extracted' %}bg-green-100 text-green-800
+                {% elif extraction.status == 'failed' %}bg-red-100 text-red-800
+                {% else %}bg-amber-100 text-amber-800{% endif %}">{{ extraction.status_ar }}</span></p>
+            {% if extraction.extraction_method %}<p><span class="text-gov-gray-500">الطريقة:</span> {{ extraction.extraction_method }}</p>{% endif %}
+            {% if extraction.page_count %}<p><span class="text-gov-gray-500">الصفحات:</span> {{ extraction.page_count }}</p>{% endif %}
+            {% if extraction.has_text %}
+                <details class="mt-2"><summary class="cursor-pointer text-gov-gray-600">معاينة النص المُستخرَج{% if extraction.truncated %} (مقتطع){% endif %}</summary>
+                <pre class="text-xs bg-gov-gray-50 p-2 rounded mt-1 whitespace-pre-wrap max-h-48 overflow-auto">{{ extraction.extracted_text|truncatechars:2000 }}</pre></details>
+            {% else %}
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded p-2 text-xs mt-1">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    يتطلب هذا الملف مراجعة يدوية — لا تتوفّر طبقة نص قابلة للاستخراج (OCR غير مفعّل بعد).
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="text-gov-gray-500">لم يبدأ الاستخراج بعد.</p>
+        {% endif %}
+    </div>
+
+    <!-- Phase 3F: advisory AI analysis -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 space-y-2 text-sm">
+        <div class="flex justify-between items-center">
+            <h2 class="font-bold text-gov-green-800">التحليل الاستشاري بالذكاء الاصطناعي</h2>
+            {% if can_analyze %}
+            <form method="post" action="{% url 'compliance:analyze_submission' submission.id %}" data-busy="جارٍ تحليل الدليل استشاريًا...">
+                {% csrf_token %}
+                <button class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-3 py-1.5 rounded text-xs">تشغيل التحليل الاستشاري</button>
+            </form>
+            {% endif %}
+        </div>
+        {% if analysis %}
+            <p><span class="text-gov-gray-500">الحالة:</span>
+                {% if analysis.status == 'completed' %}مكتمل
+                {% elif analysis.status == 'processing' %}قيد المعالجة
+                {% elif analysis.status == 'pending' %}بالانتظار
+                {% elif analysis.status == 'failed' %}فشل
+                {% elif analysis.status == 'skipped' %}متخطّى
+                {% elif analysis.status == 'needs_human_review' %}يلزم مراجعة بشرية
+                {% else %}{{ analysis.get_status_display }}{% endif %}</p>
+            {% if analysis.summary %}<p><span class="text-gov-gray-500">ملخّص:</span> {{ analysis.summary }}</p>{% endif %}
+            {% if analysis.requirement_match %}<p><span class="text-gov-gray-500">المطابقة للمتطلّب:</span> {{ analysis.requirement_match }}</p>{% endif %}
+            {% if analysis.potential_gaps %}<p><span class="text-gov-gray-500">فجوات محتملة:</span> {{ analysis.potential_gaps }}</p>{% endif %}
+            {% if analysis.risk_flags %}<p><span class="text-gov-gray-500">إشارات خطر:</span> {{ analysis.risk_flags|join:", " }}</p>{% endif %}
+            {% if analysis.confidence is not None %}<p><span class="text-gov-gray-500">الثقة:</span> {{ analysis.confidence }}{% with adv=analysis.analysis_metadata.advisory %}{% if adv.confidence_rationale %} <span class="text-xs text-gov-gray-400">— {{ adv.confidence_rationale }}</span>{% endif %}{% endwith %}</p>{% endif %}
+
+            {# ── Consultative advisory detail (15-phase engine, advisory ONLY) ── #}
+            {% with adv=analysis.analysis_metadata.advisory %}
+            {% if adv %}
+            <details class="mt-3 border-t border-gov-gray-100 pt-2">
+              <summary class="cursor-pointer text-gov-green-700 font-medium text-xs">التحليل الاستشاري المفصّل (استشاري — لا يمثّل حكمًا نهائيًا)</summary>
+              <div class="mt-2 space-y-2 text-xs text-gov-gray-700 leading-relaxed">
+                {% if adv.document_classification %}<p><span class="text-gov-gray-500">تصنيف الوثيقة:</span> {{ adv.document_classification.type }}{% if adv.document_classification.confidence %} ({{ adv.document_classification.confidence }}){% endif %}</p>{% endif %}
+                {% if adv.quality %}<p><span class="text-gov-gray-500">جودة الدليل:</span> <b>{{ adv.quality.grade }}</b>{% if adv.quality.reason %} — {{ adv.quality.reason }}{% endif %}</p>{% endif %}
+                {% if adv.completeness %}<p><span class="text-gov-gray-500">مؤشرات الاكتمال:</span>
+                  اكتمال {{ adv.completeness.completeness }} · اتساق {{ adv.completeness.consistency }} · حداثة {{ adv.completeness.freshness }} · تتبّع {{ adv.completeness.traceability }} · أصالة {{ adv.completeness.authenticity }} · تغطية {{ adv.completeness.coverage }}</p>{% endif %}
+                {% if adv.control_analysis %}<p><span class="text-gov-gray-500">تحليل الضابط:</span> {{ adv.control_analysis }}</p>{% endif %}
+                {% if adv.contradictions %}<div><span class="text-gov-gray-500">تناقضات:</span><ul class="list-disc pr-5 mt-1">{% for c in adv.contradictions %}<li class="text-amber-800">{{ c }}</li>{% endfor %}</ul></div>{% endif %}
+                {% if adv.risk_analysis %}<div><span class="text-gov-gray-500">تحليل المخاطر:</span><ul class="list-disc pr-5 mt-1">{% for r in adv.risk_analysis %}<li>{{ r }}</li>{% endfor %}</ul></div>{% endif %}
+                {% if adv.remediation_suggestions %}<div><span class="text-gov-gray-500">اقتراحات معالجة (مرتّبة):</span><ul class="list-disc pr-5 mt-1">{% for m in adv.remediation_suggestions %}<li><span class="uppercase text-[0.65rem] text-gov-gray-400">{{ m.priority }}</span> — {{ m.action }}</li>{% endfor %}</ul></div>{% endif %}
+                {% if adv.missing_evidence %}<div><span class="text-gov-gray-500">أدلة ناقصة:</span><ul class="list-disc pr-5 mt-1">{% for m in adv.missing_evidence %}<li>{{ m }}</li>{% endfor %}</ul></div>{% endif %}
+                {% if adv.rfi_suggestions %}<div><span class="text-gov-gray-500">اقتراحات طلب معلومات (RFI):</span><ul class="list-disc pr-5 mt-1">{% for r in adv.rfi_suggestions %}<li>{{ r }}</li>{% endfor %}</ul></div>{% endif %}
+                <p class="text-[0.7rem] text-amber-700 mt-1"><i class="fas fa-circle-info me-1"></i>تحليل استشاري مساعد فقط — القرار النهائي للامتثال يتّخذه المدقّق البشري.</p>
+              </div>
+            </details>
+            {% endif %}
+            {% endwith %}
+
+            {% if analysis.status == 'failed' or analysis.status == 'needs_human_review' or analysis.status == 'skipped' %}
+            <p class="text-amber-700">تعذر تشغيل التحليل الآلي حاليًا، ويمكن للمدقق متابعة المراجعة يدويًا.</p>
+            {% endif %}
+            {% if analysis.extracted_text %}
+            <details class="mt-2"><summary class="cursor-pointer text-gov-gray-600">معاينة النص المُستخرَج{% if analysis.extracted_text_truncated %} (مقتطع){% endif %}</summary>
+            <pre class="text-xs bg-gov-gray-50 p-2 rounded mt-1 whitespace-pre-wrap max-h-48 overflow-auto">{{ analysis.extracted_text|truncatechars:2000 }}</pre></details>
+            {% endif %}
+            <p class="mt-2"><a href="{% url 'risk:create' %}?analysis_id={{ analysis.id }}" data-busy="جارٍ تحميل النموذج..."
+               class="text-gov-green-700 hover:underline text-xs">إنشاء خطر من نتيجة التحليل</a></p>
+        {% else %}
+            <p class="text-gov-gray-500">لا يوجد تحليل بعد.</p>
+        {% endif %}
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded p-2 text-xs mt-2">
+            <i class="fas fa-triangle-exclamation"></i>
+            التحليل الآلي استشاري فقط — التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا. القرار النهائي للامتثال يجب أن يتّخذه مدقّق بشري.
+        </div>
+    </div>
+
+    <div class="flex flex-wrap gap-4 items-center">
+        <a href="{% url 'compliance:evidence_extraction' submission.id %}" class="text-gov-green-700 hover:underline text-sm"><i class="fas fa-file-lines mr-1"></i> استخراج النص من الدليل</a>
+        <a href="{% url 'compliance:evidence_ai_analysis' submission.id %}" class="text-gov-green-700 hover:underline text-sm"><i class="fas fa-robot mr-1"></i> التحليل الاستشاري للذكاء الاصطناعي</a>
+        <a href="{% url 'compliance:evidence_rule_evaluation' submission.id %}" class="text-gov-green-700 hover:underline text-sm"><i class="fas fa-scale-balanced mr-1"></i> محرك القواعد (حالة مقترحة)</a>
+        <a href="{% url 'compliance:auditor_verdict' submission.id %}" class="text-gov-green-700 hover:underline text-sm"><i class="fas fa-user-check mr-1"></i> قرار المدقق النهائي (مراجعة بشرية)</a>
+        <a href="{% url 'compliance:evidence_submission_list' submission.checklist_item.id %}" class="text-gov-green-700 hover:underline text-sm">رجوع للقائمة</a>
+    </div>
+</div>
+{% endblock %}

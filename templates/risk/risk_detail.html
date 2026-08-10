@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}تفاصيل الخطر - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-4xl mx-auto space-y-5">
+    <a href="{% url 'risk:list' %}" class="text-gov-gray-500 text-sm">← سجل المخاطر</a>
+    <div class="flex justify-between items-start">
+      <h1 class="text-2xl font-bold text-gov-green-800">{{ risk.title }}</h1>
+      <a href="{% url 'risk:edit' risk.id %}" data-busy="جارٍ تحميل النموذج..." class="text-gov-green-700 hover:underline text-sm">تعديل</a>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-5 text-sm space-y-2">
+      <p class="text-gov-gray-700">{{ risk.description|default:"—" }}</p>
+      <div class="grid md:grid-cols-3 gap-3 mt-3">
+        <div><span class="text-gov-gray-500">التصنيف:</span> {{ risk.get_category_display }}</div>
+        <div><span class="text-gov-gray-500">الاحتمالية × الأثر:</span> {{ risk.likelihood }} × {{ risk.impact }} = <strong>{{ risk.inherent_score }}</strong></div>
+        <div><span class="text-gov-gray-500">الخطورة:</span> {{ risk.severity_label_ar }}</div>
+        <div><span class="text-gov-gray-500">الدرجة المتبقية:</span> {{ risk.residual_score|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">الحالة:</span> {{ risk.get_status_display }}</div>
+        <div><span class="text-gov-gray-500">المالك:</span> {{ risk.owner_name|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">تاريخ الاستحقاق:</span> {{ risk.due_date|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">المصدر:</span> {{ risk.get_source_display }}</div>
+        {% if risk.control %}<div><span class="text-gov-gray-500">ربط بالضابط:</span> {{ risk.control.control_id }}</div>{% endif %}
+        {% if risk.evidence_analysis_result %}<div><span class="text-gov-gray-500">ربط بالدليل:</span> تحليل #{{ risk.evidence_analysis_result_id }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm overflow-hidden">
+      <div class="flex justify-between items-center px-4 py-3 bg-gov-green-50">
+        <h2 class="font-semibold text-gov-green-800">خطة المعالجة</h2>
+        <a href="{% url 'risk:task_create' risk.id %}" data-busy="جارٍ تحميل النموذج..." class="text-gov-green-700 hover:underline text-xs">مهمة معالجة</a>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="text-gov-gray-600"><tr>
+          <th class="text-right px-4 py-2">المهمة</th><th class="text-right px-4 py-2">المالك</th>
+          <th class="text-right px-4 py-2">الأولوية</th><th class="text-right px-4 py-2">الحالة</th>
+          <th class="text-right px-4 py-2">الاستحقاق</th><th class="text-right px-4 py-2"></th>
+        </tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+        {% for t in tasks %}
+          <tr>
+            <td class="px-4 py-2 text-gov-gray-800">{{ t.title }}</td>
+            <td class="px-4 py-2 text-xs text-gov-gray-500">{{ t.owner_name|default:"—" }}</td>
+            <td class="px-4 py-2 text-xs">{{ t.get_priority_display }}</td>
+            <td class="px-4 py-2 text-xs">{{ t.get_status_display }}</td>
+            <td class="px-4 py-2 text-xs">{{ t.due_date|default:"—" }}</td>
+            <td class="px-4 py-2">
+              <form method="post" action="{% url 'risk:task_set_status' t.id %}" class="flex items-center gap-1">
+                {% csrf_token %}
+                <select name="status" class="border border-gov-gray-300 rounded px-1 py-0.5 text-xs">
+                  {% for value, label in t.STATUS_CHOICES %}<option value="{{ value }}" {% if t.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="text-gov-green-700 hover:underline text-xs">تحديث</button>
+                <a href="{% url 'risk:task_edit' t.id %}" class="text-gov-gray-500 hover:underline text-xs">تعديل</a>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="px-4 py-5 text-center text-gov-gray-500">لا توجد مهام معالجة بعد.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-gov-gray-500">يمكن تعليم الخطر "مُعالَج" يدويًا من تعديل الخطر بعد إنجاز المهام. لا يُغلق الخطر تلقائيًا.</p>
+  </div>
+</div>
+{% endblock %}

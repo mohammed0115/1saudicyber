@@ -1,0 +1,104 @@
+{% extends "onboarding/auth_base.html" %}
+{% load i18n %}
+{% block title %}Cyber-5 — {% trans "تأكيد البريد الإلكتروني" %}{% endblock %}
+
+{% block extra_head %}{{ block.super }}
+<style>
+  .vf{ max-width:480px; margin-inline:auto; text-align:center; }
+  .vf-env{ width:96px;height:96px;margin:0 auto 22px;position:relative }
+  .vf-env .circle{ width:96px;height:96px;border-radius:50%;background:var(--soft);display:grid;place-items:center;color:var(--brand);font-size:2.2rem }
+  .vf-env .badge{ position:absolute;bottom:2px;inset-inline-end:4px;width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:.8rem;border:3px solid var(--surface) }
+  .vf-email{ display:flex;align-items:center;justify-content:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin:4px auto 24px;max-width:360px }
+  .vf-email .addr{ font-weight:600;color:var(--text) }
+  .vf-copy{ background:none;border:none;color:var(--muted);cursor:pointer;padding:4px }
+  .vf-copy:hover{ color:var(--brand) }
+  .vf-otp{ width:100%;min-height:60px;border:1.5px solid var(--field-border);border-radius:13px;background:var(--surface);
+    text-align:center;font-size:1.7rem;font-weight:700;letter-spacing:.55em;color:var(--text);font-family:'Inter',sans-serif;
+    transition:border-color .15s ease, box-shadow .15s ease }
+  .vf-otp:focus{ outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--soft) }
+  .vf-otp::placeholder{ color:#B7C2BC;letter-spacing:.4em }
+  .vf-spam{ display:flex;align-items:flex-start;gap:11px;text-align:start;background:var(--soft2);border:1px solid var(--border);
+    border-radius:11px;padding:13px 16px;margin-top:20px;color:var(--text2);font-size:.82rem;line-height:1.7 }
+  .vf-spam i{ color:var(--gold-ink);margin-top:2px }
+  .vf-resend{ margin-top:18px;color:var(--muted);font-size:.9rem }
+  .vf-resend .wait{ font-weight:600;font-variant-numeric:tabular-nums;color:var(--text2) }
+  .vf-resend button{ background:none;border:none;color:var(--brand);font-weight:700;cursor:pointer;text-decoration:underline;font-size:.9rem;font-family:inherit }
+  .vf-resend button[disabled]{ color:var(--muted);text-decoration:none;cursor:default }
+</style>
+{% endblock %}
+
+{% block auth_main %}
+  {% include "onboarding/_stepper.html" with step=3 %}
+
+  <div class="vf" data-au-reveal="2">
+    <div class="vf-env">
+      <div class="circle"><i class="fas fa-envelope" aria-hidden="true"></i></div>
+      <span class="badge"><i class="fas fa-check" aria-hidden="true"></i></span>
+    </div>
+    <h1 class="mb-2">{% trans "تأكيد بريدك الإلكتروني" %}</h1>
+    <p class="au-lead mb-1">{% trans "أرسلنا رمز تحقّق مكوّنًا من 6 أرقام لإكمال إنشاء حساب منشأتك." %}</p>
+
+    <div class="vf-email">
+      <i class="fas fa-envelope au-brand" aria-hidden="true"></i>
+      <span class="addr" id="vf-addr" dir="ltr">{{ email }}</span>
+      <button type="button" class="vf-copy" id="vf-copy" aria-label="{% trans 'نسخ البريد' %}" title="{% trans 'نسخ البريد' %}"><i class="fas fa-copy" aria-hidden="true"></i></button>
+    </div>
+
+    {% if messages %}{% for m in messages %}
+      <div class="mb-4" role="alert" style="text-align:start;border-radius:10px;padding:.7rem 1rem;font-size:.9rem;
+        {% if m.tags == 'error' %}background:#FBF0EF;border:1px solid #E6C4C0;color:var(--crit);
+        {% elif m.tags == 'success' %}background:var(--soft);border:1px solid #CDDDF5;color:var(--brand);
+        {% else %}background:#EEF3FB;border:1px solid #CBDAF0;color:#1F4F8B;{% endif %}">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    <form method="post" action="{% url 'core:verify_email_otp' %}">
+      {% csrf_token %}
+      <label for="otp-code" class="block text-sm font-semibold mb-2 text-start" style="color:var(--text);">{% trans "رمز التحقق" %}</label>
+      <input id="otp-code" class="vf-otp" type="text" name="code" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+             autocomplete="one-time-code" required autofocus dir="ltr" placeholder="••••••">
+      <button type="submit" class="au-btn au-btn-primary au-btn-block mt-4">{% trans "تأكيد الرمز" %}</button>
+    </form>
+
+    <div class="vf-spam">
+      <i class="fas fa-circle-info" aria-hidden="true"></i>
+      <span>{% trans "لم تجد الرسالة؟ تحقّق من مجلد الرسائل غير المرغوب فيها (Spam) أو العروض الترويجية. الرمز صالح لمدة 10 دقائق، ولديك 5 محاولات." %}</span>
+    </div>
+
+    <div class="vf-resend">
+      {% trans "لم يصلك الرمز؟" %}
+      <form method="post" action="{% url 'core:resend_email_otp' %}" id="vf-resend-form" style="display:inline">
+        {% csrf_token %}
+        <span class="wait" id="vf-wait"></span>
+        <button type="submit" id="vf-resend-btn">{% trans "إعادة إرسال الرمز" %}</button>
+      </form>
+    </div>
+
+    <p class="au-muted text-sm mt-6">
+      <a href="{% url 'core:login' %}" class="au-brand font-semibold" style="text-decoration:underline;">{% trans "العودة لتسجيل الدخول" %}</a>
+    </p>
+  </div>
+{% endblock %}
+
+{% block auth_js %}
+<script>
+(function(){
+  // Copy email
+  var copy = document.getElementById('vf-copy'), addr = document.getElementById('vf-addr');
+  if (copy && addr) copy.addEventListener('click', function(){
+    var t = addr.textContent.trim();
+    if (navigator.clipboard) navigator.clipboard.writeText(t);
+    var ic = copy.querySelector('i'); if(ic){ ic.className='fas fa-check'; setTimeout(function(){ic.className='fas fa-copy';},1400); }
+  });
+  // Honest 60s resend cooldown (mirrors the server-side throttle: OTP_RESEND_INTERVAL_SECONDS = 60)
+  var btn = document.getElementById('vf-resend-btn'), wait = document.getElementById('vf-wait'), left = 60;
+  function fmt(s){ return '00:' + String(s).padStart(2,'0'); }
+  function tick(){
+    if (left <= 0){ btn.disabled = false; wait.textContent = ''; return; }
+    btn.disabled = true;
+    wait.textContent = '{% trans "يمكنك إعادة الإرسال خلال" %} ' + fmt(left);
+    left--; setTimeout(tick, 1000);
+  }
+  if (btn && wait) tick();
+})();
+</script>
+{% endblock %}

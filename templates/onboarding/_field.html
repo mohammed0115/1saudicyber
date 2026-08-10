@@ -1,0 +1,12 @@
+<div>
+  <label style="display:block;color:#2b2c27;font-size:.88rem;font-weight:600;margin-bottom:6px;">
+    {{ field.label }}{% if req %} <span style="color:#9B2C2C;">*</span>{% endif %}
+  </label>
+  {{ field }}
+  {% if field.help_text %}
+  <div style="color:#5b5c53;font-size:.78rem;margin-top:4px;">{{ field.help_text }}</div>
+  {% endif %}
+  {% if field.errors %}
+  <div style="color:#9B2C2C;font-size:.8rem;margin-top:4px;">{{ field.errors|striptags }}</div>
+  {% endif %}
+</div>

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}سجل المخاطر - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto space-y-6">
+    {% include "components/current_step_card.html" with guide=guide %}
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gov-green-800">سجل المخاطر وخطة المعالجة</h1>
+        <p class="text-gov-gray-600">إدارة مخاطر شركتك ومهام المعالجة. القرار النهائي للامتثال يبقى للمدقّق.</p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="{% url 'risk:aggregate' %}"
+           class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm">
+          <i class="fas fa-layer-group ms-1"></i> عرض مجمّع حسب المجال</a>
+        <form method="post" action="{% url 'risk:generate' %}" data-smart-processing class="inline">
+          {% csrf_token %}
+          <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
+            <i class="fas fa-wand-magic-sparkles mr-1"></i> توليد من تحليل الفجوات
+          </button>
+        </form>
+        <a href="{% url 'risk:create' %}" data-busy="جارٍ تحميل النموذج..."
+           class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm">خطر جديد</a>
+      </div>
+    </div>
+
+    {% if active_filters %}
+    <div class="flex items-center gap-2 text-sm bg-gov-green-50 border border-gov-green-100 rounded-lg px-4 py-2">
+      <i class="fas fa-filter text-gov-green-700"></i>
+      <span class="text-gov-gray-600">تصفية:</span>
+      {% for k, v in active_filters.items %}<span class="px-2 py-0.5 rounded-full bg-white border border-gov-green-200 text-gov-green-800">{{ v }}</span>{% endfor %}
+      <a href="{% url 'risk:list' %}" class="text-gov-green-700 hover:underline ms-auto">إزالة التصفية</a>
+    </div>
+    {% endif %}
+    {% include "components/smart_processing.html" %}
+
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-4 text-sm text-gov-gray-600">
+      <i class="fas fa-circle-info text-gov-green-700"></i>
+      خطة مخاطر ومعالجة داخلية مبنية على الأدلة وتحليل الفجوات — تتطلب مراجعة بشرية ولا يُعد شهادة امتثال رسمية.
+      <span class="block text-xs text-gov-gray-400 mt-1">
+        <a href="{% url 'compliance:gap_dashboard' %}" class="text-gov-green-700 hover:underline">تحليل الفجوات</a></span>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-gov-green-800">{{ counts.open }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مخاطر مفتوحة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-red-700">{{ counts.high_critical }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة مفتوحة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-amber-700">{{ counts.overdue_tasks }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مهام متأخرة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center">
+        <div class="text-2xl font-bold text-gov-green-700">{{ counts.mitigated }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">مُعالَجة/مغلقة</div></div>
+    </div>
+
+    {# Severity + status distribution #}
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
+        <h3 class="font-semibold text-gov-green-800 text-sm mb-2">توزيع الخطورة</h3>
+        <div class="grid grid-cols-4 gap-2 text-center text-sm">
+          <div><div class="text-lg font-bold text-red-700">{{ severity_counts.critical }}</div><div class="text-xs text-gov-gray-500">حرجة</div></div>
+          <div><div class="text-lg font-bold text-amber-800">{{ severity_counts.high }}</div><div class="text-xs text-gov-gray-500">عالية</div></div>
+          <div><div class="text-lg font-bold text-amber-600">{{ severity_counts.medium }}</div><div class="text-xs text-gov-gray-500">متوسطة</div></div>
+          <div><div class="text-lg font-bold text-gov-green-700">{{ severity_counts.low }}</div><div class="text-xs text-gov-gray-500">منخفضة</div></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm">
+        <h3 class="font-semibold text-gov-green-800 text-sm mb-2">حالة المخاطر</h3>
+        <div class="grid grid-cols-3 gap-2 text-center text-sm">
+          <div><div class="text-lg font-bold text-gov-gray-800">{{ status_counts.open|default:0 }}</div><div class="text-xs text-gov-gray-500">مفتوحة</div></div>
+          <div><div class="text-lg font-bold text-gov-gray-700">{{ status_counts.in_progress|default:0 }}</div><div class="text-xs text-gov-gray-500">قيد التنفيذ</div></div>
+          <div><div class="text-lg font-bold text-gov-green-700">{{ status_counts.mitigated|default:0 }}</div><div class="text-xs text-gov-gray-500">مُعالَجة</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gov-green-50 text-gov-green-800"><tr>
+          <th class="text-right px-4 py-2">الخطر</th><th class="text-right px-4 py-2">التصنيف</th>
+          <th class="text-right px-4 py-2">الدرجة</th><th class="text-right px-4 py-2">الخطورة</th>
+          <th class="text-right px-4 py-2">الحالة</th><th class="text-right px-4 py-2">المالك</th>
+          <th class="text-right px-4 py-2"></th>
+        </tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+        {% for r in risks %}
+          <tr>
+            <td class="px-4 py-2 text-gov-gray-800">{{ r.title }}</td>
+            <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.get_category_display }}</td>
+            <td class="px-4 py-2">{{ r.inherent_score }}</td>
+            <td class="px-4 py-2"><span class="px-2 py-0.5 rounded text-xs
+              {% if r.severity == 'critical' %}bg-red-100 text-red-800
+              {% elif r.severity == 'high' %}bg-amber-100 text-amber-800
+              {% elif r.severity == 'medium' %}bg-amber-100 text-amber-800
+              {% else %}bg-gov-green-100 text-gov-green-800{% endif %}">{{ r.severity_label_ar }}</span></td>
+            <td class="px-4 py-2 text-xs">{{ r.get_status_display }}</td>
+            <td class="px-4 py-2 text-xs text-gov-gray-500">{{ r.owner_name|default:"—" }}</td>
+            <td class="px-4 py-2"><a href="{% url 'risk:detail' r.id %}" class="text-gov-green-700 hover:underline text-xs">عرض</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="px-4 py-6 text-center text-gov-gray-500">لا توجد مخاطر بعد. أنشئ خطرًا جديدًا أو من فجوة/تحليل.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

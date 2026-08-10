@@ -8,11 +8,20 @@ from core.models import Company
 from compliance.models import CompanyControl, Assessment, Framework
 from monitoring.models import ComplianceScore, Alert, CertificateTracker
 from ai_engine.models import GapAnalysis
+from core.roles import company_portal_required
 
 
 @login_required
 def main_dashboard(request):
-    """Route to appropriate dashboard based on user role."""
+    """Route to the correct portal based on the user's role (fail-closed).
+
+    Phase 8D-3C: Get Solution staff/superuser go to the CRM console (never the
+    customer compliance dashboard), and auditor accounts go to the auditor portal.
+    """
+    from core.roles import is_platform_admin_user
+    # Get Solution staff/admin are NOT customers — send them to the CRM console.
+    if is_platform_admin_user(request.user):
+        return redirect('platform_admin:dashboard')
     role = request.user.role
     if role == 'executive':
         return executive_dashboard(request)
@@ -27,6 +36,7 @@ def main_dashboard(request):
 
 
 @login_required
+@company_portal_required
 def executive_dashboard(request):
     """Executive Leadership Dashboard - Risk heatmap, ROI, board reports."""
     company = request.user.company
@@ -60,52 +70,83 @@ def executive_dashboard(request):
 
 
 @login_required
+@company_portal_required
 def compliance_officer_dashboard(request):
-    """Compliance Officer Dashboard - Full control checklist, audit readiness."""
+    """Compliance Officer Dashboard.
+
+    Driven strictly by the company's APPROVED framework scope and its GENERATED control plan
+    (ControlApplicabilityResult) — never by all active/legacy Framework rows. Fail-closed states:
+      * no approved scope  -> ask the user to review & approve the framework scope.
+      * approved, no plan   -> ask to generate the control plan.
+      * plan exists         -> real counts + only approved frameworks that have generated controls.
+    All queries are scoped to request.user.company (tenant isolation).
+    """
+    from compliance.models import CompanyFrameworkScope, ControlApplicabilityResult
+
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
 
-    # All company controls with status
-    company_controls = CompanyControl.objects.filter(company=company).select_related('control', 'control__framework', 'control__domain')
+    approved_scopes = list(CompanyFrameworkScope.objects
+                           .filter(company=company, status='approved')
+                           .select_related('framework_version', 'framework_version__framework'))
+    has_approved_scope = bool(approved_scopes)
 
-    # Status breakdown
-    status_counts = company_controls.values('status').annotate(count=Count('id'))
+    # The generated control plan = applicable planned controls for this company only.
+    plan = list(ControlApplicabilityResult.objects
+                .filter(company=company, decision='applicable')
+                .select_related('control', 'control__framework_version', 'control__domain'))
+    total_controls = len(plan)
+    has_control_plan = total_controls > 0
 
-    # Framework-specific scores
-    frameworks = Framework.objects.filter(is_active=True)
+    # Progress status comes from CompanyControl (keyed by Control pk); planned-but-untracked
+    # controls count as not-started. Everything is scoped to the plan, never to legacy imports.
+    cc_status = dict(CompanyControl.objects.filter(company=company)
+                     .values_list('control_id', 'status'))
+    status_counts = {'not_started': 0, 'in_progress': 0, 'compliant': 0}
+    for r in plan:
+        st = cc_status.get(r.control_id, 'not_started')
+        status_counts[st] = status_counts.get(st, 0) + 1
+    compliant_controls = status_counts.get('compliant', 0)
+
+    # Framework cards: only approved frameworks that actually have generated controls (no 0/0).
     framework_scores = {}
-    for fw in frameworks:
-        fw_controls = company_controls.filter(control__framework=fw)
-        total = fw_controls.count()
-        compliant = fw_controls.filter(status='compliant').count()
-        framework_scores[fw.code] = {
-            'name': fw.name,
-            'total': total,
-            'compliant': compliant,
-            'score': (compliant / total * 100) if total > 0 else 0,
-        }
+    if has_control_plan:
+        for scope in approved_scopes:
+            fv = scope.framework_version
+            fv_plan = [r for r in plan if r.control.framework_version_id == fv.id]
+            total = len(fv_plan)
+            if total == 0:
+                continue
+            compliant = sum(1 for r in fv_plan if cc_status.get(r.control_id) == 'compliant')
+            framework_scores[fv.code] = {
+                'name': fv.display_name_ar,
+                'total': total,
+                'compliant': compliant,
+                'score': (compliant / total * 100) if total > 0 else 0,
+            }
 
-    # Recent assessments
-    assessments = Assessment.objects.filter(company=company).order_by('-created_at')[:5]
+    # Pending controls (need action) — from the plan, not legacy imports.
+    pending_controls = [r for r in plan
+                        if cc_status.get(r.control_id, 'not_started') in ('not_started', 'in_progress')][:20]
 
-    # Pending evidence
-    pending_controls = company_controls.filter(status__in=['not_started', 'in_progress'])
-
+    from compliance.workflow_stepper import build_company_workflow_stepper
     context = {
         'company': company,
-        'company_controls': company_controls,
-        'status_counts': {item['status']: item['count'] for item in status_counts},
+        'has_approved_scope': has_approved_scope,
+        'has_control_plan': has_control_plan,
+        'status_counts': status_counts,
         'framework_scores': framework_scores,
-        'assessments': assessments,
-        'pending_controls': pending_controls[:20],
-        'total_controls': company_controls.count(),
-        'compliant_controls': company_controls.filter(status='compliant').count(),
+        'pending_controls': pending_controls,
+        'total_controls': total_controls,
+        'compliant_controls': compliant_controls,
+        'stepper': build_company_workflow_stepper(company),
     }
     return render(request, 'dashboard/compliance_officer.html', context)
 
 
 @login_required
+@company_portal_required
 def it_security_dashboard(request):
     """IT/Security Team Dashboard - Technical controls, vulnerabilities."""
     company = request.user.company
@@ -119,35 +160,59 @@ def it_security_dashboard(request):
         control__domain__name__in=technical_domains
     ).select_related('control', 'control__domain')
 
-    # Recent alerts
-    alerts = Alert.objects.filter(company=company).order_by('-created_at')[:20]
+    # Recent alerts. NOTE: count BEFORE slicing — filtering a sliced queryset raises
+    # "Cannot filter a query once a slice has been taken" (a guaranteed 500).
+    company_alerts = Alert.objects.filter(company=company)
+    critical_count = company_alerts.filter(severity='critical').count()
+    alerts = company_alerts.order_by('-created_at')[:20]
+
+    # Real, distinct metrics (the old template bound two cards to the same count).
+    technical_total = technical_controls.count()
+    technical_compliant = technical_controls.filter(status='compliant').count()
 
     context = {
         'company': company,
         'technical_controls': technical_controls,
         'alerts': alerts,
-        'critical_count': alerts.filter(severity='critical').count(),
+        'critical_count': critical_count,
+        'technical_total': technical_total,
+        'technical_compliant': technical_compliant,
     }
     return render(request, 'dashboard/it_security.html', context)
 
 
 @login_required
+@company_portal_required
 def bu_manager_dashboard(request):
     """Business Unit Manager Dashboard - Department compliance, training."""
     company = request.user.company
     if not company:
         return render(request, 'dashboard/no_company.html')
 
-    # Department-level compliance
+    # Department-level compliance (real data only — the old template rendered a variable
+    # `domains`/`training`/`recent actions` the view never supplied, so it showed fabricated
+    # hardcoded rows; those are removed and every number below is now computed).
     company_controls = CompanyControl.objects.filter(company=company).select_related('control__domain')
     domain_stats = company_controls.values('control__domain__name').annotate(
         total=Count('id'),
         compliant=Count('id', filter=Q(status='compliant')),
     )
+    domains = [{
+        'name': d['control__domain__name'] or 'غير مصنّف',
+        'total': d['total'],
+        'compliant': d['compliant'],
+        'score': round(d['compliant'] / d['total'] * 100) if d['total'] else 0,
+    } for d in domain_stats]
+    total_all = sum(d['total'] for d in domains)
+    compliant_all = sum(d['compliant'] for d in domains)
 
+    from core.models import User
     context = {
         'company': company,
-        'domain_stats': domain_stats,
+        'domains': domains,
+        'department_score': round(compliant_all / total_all * 100) if total_all else 0,
+        'team_count': User.objects.filter(company=company).count(),
+        'open_issues': total_all - compliant_all,
     }
     return render(request, 'dashboard/bu_manager.html', context)
 

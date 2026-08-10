@@ -1,0 +1,198 @@
+{% extends "onboarding/auth_base.html" %}
+{% load i18n %}
+{% block title %}Cyber-5 — {% trans "نطاق الامتثال والتصنيف" %}{% endblock %}
+
+{% block extra_head %}{{ block.super }}
+<style>
+  /* Setup screens are clean/white — the decorative skyline is hidden here. */
+  .au-skyline{ display:none; }
+  .su-wrap{ display:grid; grid-template-columns:1fr 300px; gap:24px; align-items:start; }
+  @media(max-width:900px){ .su-wrap{ grid-template-columns:1fr; } }
+  /* sidebar */
+  .su-pct{ font-size:.82rem; font-weight:700; color:var(--brand); }
+  .su-bar{ height:8px; border-radius:99px; background:var(--soft); overflow:hidden; }
+  .su-bar span{ display:block; height:100%; background:var(--brand); border-radius:99px; }
+  .su-phase{ margin-bottom:16px; }
+  .su-phase-h{ display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+  .su-phase-h b{ font-size:.85rem; color:var(--text); }
+  .su-badge{ width:22px;height:22px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;font-size:.7rem;font-weight:700; }
+  .su-badge.is-done{ background:var(--brand); color:#fff; }
+  .su-badge.is-active{ background:var(--brand); color:#fff; }
+  .su-badge.is-todo{ background:var(--soft); color:var(--muted); }
+  .su-phase ul{ padding-inline-start:31px; }
+  .su-phase li{ display:flex; align-items:center; gap:8px; font-size:.8rem; color:var(--muted); padding:3px 0; }
+  .su-phase li i{ font-size:.72rem; }
+  .su-phase li.is-done{ color:var(--text2); } .su-phase li.is-done i{ color:var(--brand); }
+  .su-phase li.is-active{ color:var(--brand); font-weight:600; } .su-phase li.is-active i{ color:var(--brand); }
+  .su-phase li.is-todo i{ color:#C4D0CA; }
+  /* main header row */
+  .su-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; }
+  .su-head .ic{ width:52px;height:52px;flex:0 0 auto;border-radius:14px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.25rem; }
+  .su-head h1{ font-size:1.4rem; }
+  /* intro card */
+  .su-intro{ display:flex; align-items:center; gap:22px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px 26px; }
+  .su-intro .art{ width:96px;height:96px;flex:0 0 auto;border-radius:18px;background:var(--soft2);display:grid;place-items:center;color:var(--brand);font-size:2.4rem; }
+  .su-intro h2{ font-size:1.08rem; font-weight:700; color:var(--text); margin-bottom:6px; }
+  @media(max-width:560px){ .su-intro{ flex-direction:column; text-align:center; } }
+  /* why panel */
+  .su-why{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px 24px; }
+  .su-why .cols{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:16px; }
+  @media(max-width:760px){ .su-why .cols{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:420px){ .su-why .cols{ grid-template-columns:1fr; } }
+  .su-why .col{ text-align:center; }
+  .su-why .col .i{ width:44px;height:44px;margin:0 auto 9px;border-radius:12px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.05rem; }
+  .su-why .col b{ display:block; font-size:.86rem; color:var(--text); margin-bottom:3px; }
+  .su-why .col span{ font-size:.75rem; color:var(--muted); line-height:1.6; }
+  /* form section cards */
+  .su-sec{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px 24px; }
+  .su-sec > h3{ display:flex; align-items:center; gap:9px; font-size:1rem; font-weight:700; color:var(--navy); margin-bottom:4px; }
+  .su-sec > h3 i{ color:var(--brand); }
+  .su-sec > .hint{ font-size:.8rem; color:var(--muted); margin-bottom:16px; }
+  /* selectable checkbox cards */
+  .su-check{ display:flex; align-items:flex-start; gap:12px; border:1px solid var(--border); border-radius:12px; padding:14px 16px; cursor:pointer; margin-bottom:10px;
+    transition:border-color .15s, background-color .15s, box-shadow .15s; }
+  .su-check:hover{ border-color:#B9D2C7; background:var(--soft2); }
+  .su-check:has(input:checked){ border-color:var(--brand); background:var(--soft); box-shadow:0 0 0 1px var(--brand) inset; }
+  .su-check input[type=checkbox]{ width:1.15rem;height:1.15rem;margin-top:1px;accent-color:var(--brand);cursor:pointer;flex:0 0 auto; }
+  .su-check-box{ display:flex;flex:0 0 auto; }
+  .su-check-body{ flex:1 1 auto;min-width:0; }
+  .su-check-label{ display:block; font-size:.9rem; font-weight:600; color:var(--text); }
+  .su-check-help{ display:block; font-size:.76rem; color:var(--muted); margin-top:3px; line-height:1.6; }
+  .su-check-err{ display:block; font-size:.76rem; color:var(--crit); margin-top:4px; }
+  .su-tick{ flex:0 0 auto; align-self:center; color:var(--brand); opacity:0; transition:opacity .15s; }
+  .su-check:has(input:checked) .su-tick{ opacity:1; }
+  /* select / textarea rows */
+  .su-select-wrap{ border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:10px; }
+  .su-select-label{ display:block; font-size:.88rem; font-weight:600; color:var(--text); margin-bottom:.4rem; }
+  .su-select-wrap select, .su-select-wrap textarea, .su-sec textarea{
+    width:100%; border:1px solid var(--field-border); border-radius:10px; padding:.6rem .8rem;
+    background:var(--surface); color:var(--text); font-size:.9rem; font-family:inherit; }
+  .su-select-wrap select:focus, .su-select-wrap textarea:focus{ outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(30,86,201,.14); }
+  /* privacy strip */
+  .su-privacy{ display:flex; align-items:center; gap:16px; background:#EEF3FB; border:1px solid #CBDAF0; border-radius:14px; padding:18px 22px; }
+  .su-privacy .lock{ width:46px;height:46px;flex:0 0 auto;border-radius:12px;background:#DCE7F7;color:#1F4F8B;display:grid;place-items:center;font-size:1.15rem; }
+  .su-privacy b{ color:#1F4F8B; font-size:.9rem; }
+  .su-privacy p{ color:#3B537A; font-size:.8rem; line-height:1.7; margin-top:2px; }
+  /* action bar */
+  .su-actions{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+</style>
+{% endblock %}
+
+{% block auth_main %}
+  {% include "onboarding/_setup_stepper.html" with step=4 %}
+
+  <div class="su-wrap">
+    <!-- ===================== main ===================== -->
+    <div class="su-main space-y-5" data-au-reveal="2">
+      <div class="su-head">
+        <div>
+          <h1>{% trans "نطاق الامتثال والتصنيف" %}</h1>
+          <p class="au-lead mt-1" style="max-width:60ch;">{% trans "نحدّد معًا الأطر التنظيمية والمتطلبات الأكثر ملاءمة لمنشأتك." %}</p>
+        </div>
+        <span class="ic"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
+      </div>
+
+      {% if messages %}{% for m in messages %}
+        <div role="alert" style="border-radius:10px;padding:.7rem 1rem;font-size:.9rem;
+          {% if m.tags == 'error' %}background:#FBF0EF;border:1px solid #E6C4C0;color:var(--crit);
+          {% elif m.tags == 'success' %}background:var(--soft);border:1px solid #CDDDF5;color:var(--brand);
+          {% else %}background:#EEF3FB;border:1px solid #CBDAF0;color:#1F4F8B;{% endif %}">{{ m }}</div>
+      {% endfor %}{% endif %}
+
+      <!-- intro -->
+      <div class="su-intro">
+        <span class="art"><i class="fas fa-clipboard-check" aria-hidden="true"></i></span>
+        <div>
+          <h2>{% trans "مرحبًا بك في مرحلة تحديد نطاق الامتثال والتصنيف" %}</h2>
+          <p class="au-muted" style="font-size:.88rem;line-height:1.8;">{% trans "لتمكيننا من تحديد الأطر التنظيمية والضوابط الأكثر ملاءمة لمنشأتك، أجب عن الأسئلة التالية حول طبيعة عملك وعلاقاتك بالجهات التنظيمية والخدمات والتقنيات التي تستخدمها. تُستخدم هذه البيانات لتجهيز التصنيف الأولي وخطة الضوابط." %}</p>
+        </div>
+      </div>
+
+      <!-- why -->
+      <div class="su-why">
+        <div class="flex items-center gap-2" style="color:var(--text);font-weight:700;font-size:.92rem;">
+          <i class="fas fa-circle-info au-brand"></i>{% trans "لماذا نحتاج هذه المعلومات؟" %}
+        </div>
+        <div class="cols">
+          <div class="col"><span class="i"><i class="fas fa-bullseye"></i></span><b>{% trans "تحديد الأطر المناسبة" %}</b><span>{% trans "نحدّد الأطر التي تنطبق فعلًا على منشأتك." %}</span></div>
+          <div class="col"><span class="i"><i class="fas fa-sliders"></i></span><b>{% trans "تركيز الجهود" %}</b><span>{% trans "نركّز على المتطلبات ذات الأولوية." %}</span></div>
+          <div class="col"><span class="i"><i class="fas fa-clock"></i></span><b>{% trans "توفير الوقت والجهد" %}</b><span>{% trans "خارطة طريق واضحة لرحلة الامتثال." %}</span></div>
+          <div class="col"><span class="i"><i class="fas fa-shield-halved"></i></span><b>{% trans "تحسين الجاهزية" %}</b><span>{% trans "رفع مستوى جاهزيتك السيبرانية بفعالية." %}</span></div>
+        </div>
+      </div>
+
+      <!-- the real single-POST intake form, grouped into meaningful sections -->
+      <form method="post" data-busy="{% trans 'جارٍ حفظ البيانات وتحديد الأطر...' %}" class="space-y-5">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="su-check-err" style="font-size:.85rem;">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="su-sec">
+          <h3><i class="fas fa-building"></i>{% trans "طبيعة المنشأة ونشاطها" %}</h3>
+          <p class="hint">{% trans "أجب بنعم على ما ينطبق على منشأتك." %}</p>
+          {% for field in form %}{% if field.name == 'is_government_entity' or field.name == 'is_critical_system_operator' or field.name == 'has_ot_environment' or field.name == 'manages_official_social_media_accounts' %}{% include "onboarding/_intake_field.html" with field=field %}{% endif %}{% endfor %}
+        </div>
+
+        <div class="su-sec">
+          <h3><i class="fas fa-server"></i>{% trans "البيئة التقنية والبيانات" %}</h3>
+          <p class="hint">{% trans "الخدمات السحابية والبيانات وأنماط العمل." %}</p>
+          {% for field in form %}{% if field.name == 'uses_cloud_services' or field.name == 'provides_cloud_services' or field.name == 'handles_sensitive_data' or field.name == 'handles_personal_data' or field.name == 'has_remote_work' %}{% include "onboarding/_intake_field.html" with field=field %}{% endif %}{% endfor %}
+        </div>
+
+        <div class="su-sec">
+          <h3><i class="fas fa-handshake"></i>{% trans "علاقات وجهات تنظيمية" %}</h3>
+          <p class="hint">{% trans "التعامل مع الجهات الوطنية الكبرى (أرامكو، سابك)." %}</p>
+          {% for field in form %}{% if field.name == 'works_with_aramco' or field.name == 'aramco_supplier_type' or field.name == 'works_with_sabic' or field.name == 'sabic_supplier_type' %}{% include "onboarding/_intake_field.html" with field=field %}{% endif %}{% endfor %}
+        </div>
+
+        <div class="su-sec">
+          <h3><i class="fas fa-note-sticky"></i>{% trans "ملاحظات" %}</h3>
+          {% for field in form %}{% if field.name == 'notes' %}{% include "onboarding/_intake_field.html" with field=field %}{% endif %}{% endfor %}
+        </div>
+
+        <div class="su-privacy">
+          <span class="lock"><i class="fas fa-lock" aria-hidden="true"></i></span>
+          <div>
+            <b>{% trans "خصوصية وأمان البيانات" %}</b>
+            <p>{% trans "جميع البيانات التي تقدّمها يتم التعامل معها بسرية تامة واستخدامها فقط لأغراض تحديد نطاق الامتثال والتصنيف." %}</p>
+          </div>
+        </div>
+
+        <div class="su-actions">
+          <a href="{% url 'core:onboarding' %}" class="au-btn au-btn-secondary"><i class="fas fa-arrow-right" aria-hidden="true"></i>{% trans "السابق" %}</a>
+          <div class="flex items-center gap-4">
+            {% if has_profile %}
+            <a href="{% url 'compliance:applicability_review' %}" class="au-brand text-sm font-semibold" style="text-decoration:underline;">{% trans "عرض نتيجة المراجعة الحالية" %}</a>
+            {% endif %}
+            <button type="submit" class="au-btn au-btn-primary">{% trans "حفظ وتحديد الأطر المنطبقة" %}<i class="fas fa-arrow-left" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===================== sidebar ===================== -->
+    {% include "onboarding/_setup_sidebar.html" with active='classification' %}
+  </div>
+{% endblock %}
+
+{% block auth_js %}
+<script>
+{# UAT-3: reveal a supplier category only when its supplier checkbox is ticked (progressive enhancement; backend clears stale values in CompanyIntakeForm.clean). #}
+(function () {
+  function bind(checkboxId, fieldName) {
+    var cb = document.getElementById(checkboxId);
+    var wrap = document.querySelector('[data-field="' + fieldName + '"]');
+    if (!cb || !wrap) return;
+    function sync() {
+      wrap.style.display = cb.checked ? '' : 'none';
+      if (!cb.checked) { var sel = wrap.querySelector('select, input'); if (sel) { sel.value = ''; } }
+    }
+    cb.addEventListener('change', sync);
+    sync();
+  }
+  bind('id_works_with_aramco', 'aramco_supplier_type');
+  bind('id_works_with_sabic', 'sabic_supplier_type');
+})();
+</script>
+{% endblock %}

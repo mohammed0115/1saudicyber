@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}فحوص المراقبة - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto space-y-5">
+    <h1 class="text-2xl font-bold text-gov-green-800">فحوص المراقبة المستمرة</h1>
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gov-green-50 text-gov-green-800"><tr>
+          <th class="text-right px-4 py-2">الفحص</th><th class="text-right px-4 py-2">النوع</th>
+          <th class="text-right px-4 py-2">التكرار</th><th class="text-right px-4 py-2">الحالة</th>
+          <th class="text-right px-4 py-2">آخر نتيجة</th><th class="text-right px-4 py-2">الاستحقاق التالي</th>
+        </tr></thead>
+        <tbody class="divide-y divide-gov-gray-100">
+        {% for c in checks %}
+          <tr>
+            <td class="px-4 py-2 text-gov-gray-800">{{ c.title }}</td>
+            <td class="px-4 py-2 text-xs">{{ c.get_check_type_display }}</td>
+            <td class="px-4 py-2 text-xs">{{ c.get_frequency_display }}</td>
+            <td class="px-4 py-2 text-xs">{{ c.get_status_display }}</td>
+            <td class="px-4 py-2 text-xs">{{ c.get_last_result_display }}</td>
+            <td class="px-4 py-2 text-xs">{{ c.next_run_at|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="px-4 py-6 text-center text-gov-gray-500">لا توجد فحوص مراقبة بعد. تُنشأ الفحوص عبر الإدارة أو الأمر البرمجي.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a href="{% url 'monitoring:overview' %}" class="text-gov-gray-500 text-sm">← نظرة المراقبة</a>
+  </div>
+</div>
+{% endblock %}

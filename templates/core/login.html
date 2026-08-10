@@ -1,33 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Login - CyberTrust KSA{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "تسجيل الدخول" %} - Cyber-5{% endblock %}
 
 {% block body %}
-<div class="min-h-screen gradient-gov flex items-center justify-center py-12 px-4">
+<div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" class="min-h-screen gradient-gov flex items-center justify-center py-12 px-4" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
     <div class="max-w-md w-full">
+        <div class="flex justify-end mb-3">
+            {% include "components/language_switcher.html" %}
+        </div>
         <div class="text-center mb-8">
-            <a href="{% url 'core:landing' %}" class="inline-flex items-center space-x-3 mb-6">
-                <i class="fas fa-shield-halved text-white text-3xl"></i>
-                <span class="text-white font-bold text-2xl">CyberTrust KSA</span>
+            <a href="{% url 'core:landing' %}" class="inline-flex items-center gap-3 mb-6">
+                <i class="fas fa-shield-halved text-3xl" style="color:var(--brand);"></i>
+                <span class="font-bold text-2xl" style="color:var(--navy);">Cyber-5</span>
             </a>
-            <h1 class="text-3xl font-bold text-white">Welcome Back</h1>
-            <p class="text-gov-green-200 mt-2">Sign in to your compliance dashboard</p>
+            <h1 class="text-3xl font-bold" style="color:var(--navy);">{% trans "مرحبًا بعودتك" %}</h1>
+            <p class="mt-2" style="color:var(--muted);">{% trans "سجّل الدخول إلى لوحة الامتثال الخاصة بك" %}</p>
         </div>
 
-        <form method="post" action="{% url 'core:login' %}" class="glass-card rounded-2xl p-8 shadow-2xl">
+        <form method="post" action="{% url 'core:login' %}" class="glass-card rounded-2xl p-8 shadow-2xl text-start">
             {% csrf_token %}
+            {% if login_error %}
+            <div role="alert" class="mb-5 rounded-lg bg-red-50 border border-red-200 text-red-800 px-4 py-3 text-sm flex items-start gap-2">
+                <i class="fas fa-circle-exclamation mt-0.5"></i>
+                <span>{{ login_error }}</span>
+            </div>
+            {% endif %}
             <div class="mb-5">
-                <label class="block text-sm font-medium text-gov-gray-700 mb-1">Email</label>
-                <input type="email" name="username" required class="w-full px-4 py-3 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent" placeholder="your@email.com">
+                <label class="block text-sm font-medium text-gov-gray-700 mb-1">{% trans "البريد الإلكتروني" %}</label>
+                <input type="email" name="username" required value="{{ email|default:'' }}" class="w-full px-4 py-3 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent" placeholder="your@email.com">
             </div>
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gov-gray-700 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full px-4 py-3 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent" placeholder="Enter your password">
+                <label class="block text-sm font-medium text-gov-gray-700 mb-1">{% trans "كلمة المرور" %}</label>
+                <input type="password" name="password" required class="w-full px-4 py-3 border border-gov-gray-300 rounded-lg focus:ring-2 focus:ring-gov-green-500 focus:border-transparent" placeholder="••••••••">
+                <div class="mt-2 text-end">
+                    <a href="{% url 'core:password_reset' %}" class="text-sm text-gov-green-700 font-medium hover:underline">{% trans "نسيت كلمة المرور؟" %}</a>
+                </div>
             </div>
             <button type="submit" class="w-full bg-gov-green-800 text-white py-3.5 rounded-lg font-bold text-lg hover:bg-gov-green-700 transition shadow-lg">
-                <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+                <i class="fas fa-sign-in-alt me-2"></i> {% trans "تسجيل الدخول" %}
             </button>
             <p class="text-center text-sm text-gov-gray-500 mt-4">
-                Don't have an account? <a href="{% url 'core:register' %}" class="text-gov-green-700 font-medium hover:underline">Register here</a>
+                {% trans "ليس لديك حساب؟" %} <a href="{% url 'core:get_started' %}" class="text-gov-green-700 font-medium hover:underline">{% trans "ابدأ الآن" %}</a>
             </p>
         </form>
     </div>

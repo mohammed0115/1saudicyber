@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}الدفع - Cyber-5{% endblock %}
+{% block extra_head %}
+  {% if configured %}<link rel="stylesheet" href="{{ moyasar_css }}">{% endif %}
+{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-2xl mx-auto px-4 py-6 space-y-6">
+
+    <div>
+      <p class="text-gov-green-700 font-semibold text-sm mb-1">الدفع الإلكتروني</p>
+      <h1 class="text-2xl font-bold text-gov-green-800">إتمام الاشتراك</h1>
+    </div>
+
+    {% if messages %}{% for m in messages %}
+      <div class="rounded-lg p-3 text-sm {% if m.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% else %}bg-gov-gray-100 border border-gov-gray-200 text-gov-gray-700{% endif %}">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    {# Sandbox notice #}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm leading-7">
+      <i class="fas fa-flask"></i>
+      وضع الاختبار (Sandbox): لا يتم خصم أي مبالغ حقيقية. <strong>لا يُعد هذا الدفع شهادة امتثال رسمية ولا يمثل اعتمادًا رسميًا أو حكوميًا</strong>.
+    </div>
+
+    {# Order summary #}
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">ملخص الطلب</h2>
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><span class="text-gov-gray-500">الخطة:</span> <strong>{{ plan.name|default:subscription.plan_name }}</strong></div>
+        <div><span class="text-gov-gray-500">المبلغ:</span> <strong>{{ payment.amount }} {{ payment.currency }}</strong></div>
+        <div><span class="text-gov-gray-500">الرقم المرجعي:</span> {{ payment.reference|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">مزوّد الدفع:</span> Moyasar ({{ moyasar_mode }})</div>
+      </div>
+    </div>
+
+    {# Payment form #}
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      {% if configured %}
+        <h2 class="font-bold text-gov-green-800 mb-3">بيانات الدفع</h2>
+        <form id="moyasar-processing-form" data-smart-processing>
+          <div class="mysr-form"></div>
+        </form>
+        <p class="text-xs text-gov-gray-400 mt-3">
+          <i class="fas fa-lock"></i>
+          تتم معالجة بيانات البطاقة بأمان لدى مزوّد الدفع ولا تُخزَّن على خوادمنا.
+        </p>
+      {% else %}
+        <div class="bg-gov-gray-50 border border-gov-gray-200 text-gov-gray-700 rounded-lg p-4 text-sm">
+          <i class="fas fa-triangle-exclamation text-amber-600"></i>
+          لم تتم تهيئة الدفع عبر Moyasar بعد.
+          <span class="block text-xs text-gov-gray-500 mt-1">يمكنك العودة لصفحة الاشتراك والمتابعة لاحقًا.</span>
+        </div>
+      {% endif %}
+      <a href="{% url 'billing:home' %}" class="inline-block mt-4 text-sm text-gov-green-700 hover:text-gov-green-800">
+        <i class="fas fa-arrow-right mr-1"></i> العودة للاشتراك
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{% include "components/smart_processing.html" %}
+{% endblock %}
+
+{% block extra_js %}
+{% if configured %}
+<script src="{{ moyasar_js }}"></script>
+<script>
+  (function () {
+    try {
+      Moyasar.init({
+        element: '.mysr-form',
+        amount: {{ amount_halalas }},
+        currency: '{{ payment.currency }}',
+        description: 'اشتراك {{ plan.code|default:subscription.plan_name }} · دفعة {{ payment.id }}',
+        publishable_api_key: '{{ publishable_key }}',
+        callback_url: '{{ callback_url|escapejs }}',
+        methods: ['creditcard'],
+        metadata: {
+          internal_payment_id: '{{ metadata.internal_payment_id }}',
+          company_id: '{{ metadata.company_id }}',
+          subscription_id: '{{ metadata.subscription_id }}',
+          plan_code: '{{ metadata.plan_code|escapejs }}'
+        }
+      });
+    } catch (e) {
+      var el = document.querySelector('.mysr-form');
+      if (el) { el.innerHTML = '<p style="color:#6B7280;font-size:.9rem;">تعذّر تحميل نموذج الدفع.</p>'; }
+    }
+  })();
+</script>
+{% endif %}
+{% endblock %}

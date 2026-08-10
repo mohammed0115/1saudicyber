@@ -1,0 +1,3 @@
+# Deploy run reports are generated artifacts — keep the dir, ignore outputs.
+smart_deploy_*.md
+safe_manual_deploy_*.md

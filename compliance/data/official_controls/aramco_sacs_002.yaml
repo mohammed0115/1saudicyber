@@ -1,0 +1,1125 @@
+# CyberTrust KSA — Official control dataset (Phase 2F/2G)
+# Source of truth: Aramco SACS-002 (NOT the legacy 334 Excel).
+framework_version_code: ARAMCO-SACS-002
+source_document_title: Saudi Aramco SACS-002 Third Party Cybersecurity Standard
+expected_control_count: 92
+notes: >-
+  Statements transcribed from the official Aramco Third Party Cybersecurity Compliance Report Template.
+  TPC-62 (absent from that template) was verified and added from the SACS-002 standard PDF and the Cybersecurity
+  Controls Requirements Guideline. Domain/subdomain mapped from SACS-002 section headers. NOT derived
+  from the legacy 334 Excel.
+controls:
+- control_id: TPC-1
+  external_reference: SACS-002 TPC-1
+  domain: IDENTIFY
+  subdomain: Governance (GV)
+  title: The Third Party must establish, maintain, and communicate a Cybersecurity…
+  statement: >-
+    The Third Party must establish, maintain, and communicate a Cybersecurity Acceptable Use Policy (AUP)
+    governing the use of Third Party Technology Assets.
+  level: control
+  source_reference: SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Governance (GV) / TPC-1
+  tags: []
+- control_id: TPC-2
+  external_reference: SACS-002 TPC-2
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Password protection measures must be enforced by the Third Party.
+  statement: >-
+    Password protection measures must be enforced by the Third Party. The following are recommended measures:
+    - Minimum length: eight alphanumeric characters and special characters - History: last 12 passwords
+    - Maximum age: 90 days for login authentication - Account lockout threshold: 10 invalid login attempts
+    - Screen saver settings: automatically locked within five minutes of inactivity
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-2
+  tags: []
+- control_id: TPC-3
+  external_reference: SACS-002 TPC-3
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Third party must not write down, electronically store in clear text, or…
+  statement: >-
+    Third party must not write down, electronically store in clear text, or disclose any password or authentication
+    code that is used to access Assets or Critical Facilities. This should be part of Third Party cybersecurity
+    polices.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-3
+  tags: []
+- control_id: TPC-4
+  external_reference: SACS-002 TPC-4
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Two-Factor authentication must be enforced on all remote access, including…
+  statement: >-
+    Two-Factor authentication must be enforced on all remote access, including access from the Internet,
+    to Third Party Company computing resources.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-4
+  tags: []
+- control_id: TPC-5
+  external_reference: SACS-002 TPC-5
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Multi-factor authentication must be enforced on all access to Cloud services…
+  statement: >-
+    Multi-factor authentication must be enforced on all access to Cloud services utilized by the Third
+    Party, including access to cloud-based email.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-5
+  tags: []
+- control_id: TPC-6
+  external_reference: SACS-002 TPC-6
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: The Third Party must inform Saudi Aramco when employees provided with Saudi…
+  statement: >-
+    The Third Party must inform Saudi Aramco when employees provided with Saudi Aramco user credentials
+    no longer need their access, or are transferred, reassigned, have retired, or resigned, or no longer
+    associated with the Third Party.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-6
+  tags: []
+- control_id: TPC-7
+  external_reference: SACS-002 TPC-7
+  domain: PROTECT
+  subdomain: Awareness and Training (AT)
+  title: The Third Party must require all information systems users to take annual…
+  statement: >-
+    The Third Party must require all information systems users to take annual mandatory cybersecurity
+    training that addresses acceptable use and good computing practices. Training must address the following
+    topics: 1. Internet and social media security 2. Cybersecurity acceptable use 3. Social engineering
+    and phishing emails 4. Sharing credentials (i.e., username and password) 5. Data security
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Awareness and Training (AT) / TPC-7
+  tags: []
+- control_id: TPC-8
+  external_reference: SACS-002 TPC-8
+  domain: PROTECT
+  subdomain: Awareness and Training (AT)
+  title: The Third Party must inform personnel, in keeping with the Third Party Company…
+  statement: >-
+    The Third Party must inform personnel, in keeping with the Third Party Company Policy, that using
+    personal email to share and transmit Saudi Aramco data is strictly prohibited.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Awareness and Training (AT) / TPC-8
+  tags: []
+- control_id: TPC-9
+  external_reference: SACS-002 TPC-9
+  domain: PROTECT
+  subdomain: Awareness and Training (AT)
+  title: The Third Party must inform personnel, in keeping with the Third Party Company…
+  statement: >-
+    The Third Party must inform personnel, in keeping with the Third Party Company Policy, that disclosing
+    Saudi Aramco policies, procedures, and standards, or any type of data with unauthorized entities or
+    on the Internet, is strictly prohibited.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Awareness and Training (AT) / TPC-9
+  tags: []
+- control_id: TPC-10
+  external_reference: SACS-002 TPC-10
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: All Third Party Technology Assets and Systems must be password protected.
+  statement: All Third Party Technology Assets and Systems must be password protected.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-10
+  tags: []
+- control_id: TPC-11
+  external_reference: SACS-002 TPC-11
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Third Party Technology Assets and Systems must be regularly updated with…
+  statement: >-
+    Third Party Technology Assets and Systems must be regularly updated with operating system (OS), software
+    and applets patches (i.e. Adobe, Flash, Java etc.).
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-11
+  tags: []
+- control_id: TPC-12
+  external_reference: SACS-002 TPC-12
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Third Party Technology Assets must be protected with anti-virus (AV) software.
+  statement: >-
+    Third Party Technology Assets must be protected with anti-virus (AV) software. Updates must be applied
+    daily, and full system scans must be performed every two weeks.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-12
+  tags: []
+- control_id: TPC-13
+  external_reference: SACS-002 TPC-13
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: The Third Party must implement Sender Policy Framework (SPF) technology on the…
+  statement: >-
+    The Third Party must implement Sender Policy Framework (SPF) technology on the mail server.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-13
+  tags: []
+- control_id: TPC-14
+  external_reference: SACS-002 TPC-14
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: The Third Party must enforce Sender Policy Framework (SPF) feature on Saudi…
+  statement: >-
+    The Third Party must enforce Sender Policy Framework (SPF) feature on Saudi Aramco email domains:
+    Aramco.com and Aramco.com.sa.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-14
+  tags: []
+- control_id: TPC-15
+  external_reference: SACS-002 TPC-15
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: The Third Party must publish the SPF record in the DNS server.
+  statement: The Third Party must publish the SPF record in the DNS server.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-15
+  tags: []
+- control_id: TPC-16
+  external_reference: SACS-002 TPC-16
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: The Third Party must inspect all incoming emails originating from the Internet…
+  statement: >-
+    The Third Party must inspect all incoming emails originating from the Internet using anti-spam protection.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-16
+  tags: []
+- control_id: TPC-17
+  external_reference: SACS-002 TPC-17
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: The Third Party must use a private email domain.
+  statement: >-
+    The Third Party must use a private email domain. Generic domains, such as Gmail and Hotmail, must
+    not be used.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-17
+  tags: []
+- control_id: TPC-18
+  external_reference: SACS-002 TPC-18
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Third Party must have formal procedures for off-boarding employees.
+  statement: >-
+    Third Party must have formal procedures for off-boarding employees. Off-boarding procedures must include
+    the return of assets, and removal of all associated access.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-18
+  tags: []
+- control_id: TPC-19
+  external_reference: SACS-002 TPC-19
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Assets used to process or store Saudi Aramco data and information must be…
+  statement: >-
+    Assets used to process or store Saudi Aramco data and information must be sanitized by the end of
+    the data life cycle, or by the end of the retention period as stated in the contract, if defined.
+    This includes all data copies such as backup copies created at any Third Party site(s). The sanitization
+    must be conducted in alignment to industry best practices such as NIST 800-88. The Third party shall
+    certify in a signed letter to Saudi Aramco that the data sanitization has been successfully completed.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-19
+  tags: []
+- control_id: TPC-20
+  external_reference: SACS-002 TPC-20
+  domain: PROTECT
+  subdomain: Protective Technology (PT)
+  title: The Third Party must obtain a Cybersecurity Compliance Certificate (CCC) from…
+  statement: >-
+    The Third Party must obtain a Cybersecurity Compliance Certificate (CCC) from Saudi Aramco authorized
+    audit firms in accordance to the third-Party classification requirements set forth in this Standard
+    (Section II). Third Parties must submit the CCC to Saudi Aramco through the Saudi Aramco e-Marketplace
+    system.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Protective Technology (PT) / TPC-20
+  tags: []
+- control_id: TPC-21
+  external_reference: SACS-002 TPC-21
+  domain: PROTECT
+  subdomain: Protective Technology (PT)
+  title: The Third Party must renew the CCC every two years.
+  statement: The Third Party must renew the CCC every two years.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Protective Technology (PT) / TPC-21
+  tags: []
+- control_id: TPC-22
+  external_reference: SACS-002 TPC-22
+  domain: PROTECT
+  subdomain: Protective Technology (PT)
+  title: Firewalls must be configured and enabled on endpoint devices.
+  statement: Firewalls must be configured and enabled on endpoint devices.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Protective Technology (PT) / TPC-22
+  tags: []
+- control_id: TPC-23
+  external_reference: SACS-002 TPC-23
+  domain: RESPOND
+  subdomain: Communications (CO)
+  title: If the Third Party discovers a cybersecurity incident, the Third Party must…
+  statement: >-
+    If the Third Party discovers a cybersecurity incident, the Third Party must (besides its continuous
+    efforts to resolve and mitigate the Incident): - Notify SAUDI ARAMCO within 24 hours of discovering
+    the incident - Follow the Cybersecurity Incident Response Instructions set forth in Appendix A.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, RESPOND / Communications (CO) / TPC-23
+  tags: []
+- control_id: TPC-24
+  external_reference: SACS-002 TPC-24
+  domain: IDENTIFY
+  subdomain: Asset Management (AM)
+  title: Third Party must have policies and processes to classify information in terms…
+  statement: >-
+    Third Party must have policies and processes to classify information in terms of its value, criticality
+    and confidentiality.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Asset Management (AM) / TPC-24
+  tags: []
+- control_id: TPC-25
+  external_reference: SACS-002 TPC-25
+  domain: IDENTIFY
+  subdomain: Governance (GV)
+  title: The Third Party must establish, maintain and communicate cybersecurity policies…
+  statement: >-
+    The Third Party must establish, maintain and communicate cybersecurity policies and standards.
+  level: control
+  source_reference: SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Governance (GV) / TPC-25
+  tags: []
+- control_id: TPC-26
+  external_reference: SACS-002 TPC-26
+  domain: IDENTIFY
+  subdomain: Governance (GV)
+  title: >-
+    Third Party must be staffed by employee(s) whose primary responsibility is cybersecurity.
+  statement: >-
+    Third Party must be staffed by employee(s) whose primary responsibility is cybersecurity. Responsibilities
+    of those personnel must include maintaining the security of information systems, and ensuring compliance
+    with existing policies.
+  level: control
+  source_reference: SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Governance (GV) / TPC-26
+  tags: []
+- control_id: TPC-27
+  external_reference: SACS-002 TPC-27
+  domain: IDENTIFY
+  subdomain: Risk Assessment (RA)
+  title: The Third Party must conduct annual external Penetration Testing on its IT…
+  statement: >-
+    The Third Party must conduct annual external Penetration Testing on its IT infrastructure systems
+    and Internet facing applications.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Risk Assessment (RA) / TPC-27
+  tags: []
+- control_id: TPC-28
+  external_reference: SACS-002 TPC-28
+  domain: IDENTIFY
+  subdomain: Risk Assessment (RA)
+  title: Third Party must conduct annual external Penetration Testing on Cloud Computing…
+  statement: >-
+    Third Party must conduct annual external Penetration Testing on Cloud Computing Service(s) used by
+    Saudi Aramco
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Risk Assessment (RA) / TPC-28
+  tags: []
+- control_id: TPC-29
+  external_reference: SACS-002 TPC-29
+  domain: IDENTIFY
+  subdomain: Risk Assessment (RA)
+  title: If Third Party is hosting a website for Saudi Aramco, annual Penetration…
+  statement: >-
+    If Third Party is hosting a website for Saudi Aramco, annual Penetration Testing must be conducted
+    to test website security.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Risk Assessment (RA) / TPC-29
+  tags: []
+- control_id: TPC-30
+  external_reference: SACS-002 TPC-30
+  domain: IDENTIFY
+  subdomain: Risk Assessment (RA)
+  title: Third party data center must be certified by industry recognized authority
+  statement: Third party data center must be certified by industry recognized authority
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Risk Assessment (RA) / TPC-30
+  tags: []
+- control_id: TPC-31
+  external_reference: SACS-002 TPC-31
+  domain: IDENTIFY
+  subdomain: Risk Management Strategy (RM)
+  title: The Third Party must have a process to conduct a Cybersecurity Risk Assessment…
+  statement: >-
+    The Third Party must have a process to conduct a Cybersecurity Risk Assessment on a regular basis,
+    to identify, assess, and remediate risks to data and information systems.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, IDENTIFY / Risk Management Strategy (RM) / TPC-31
+  tags: []
+- control_id: TPC-32
+  external_reference: SACS-002 TPC-32
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Users accessing applications and information systems must be issued unique user…
+  statement: >-
+    Users accessing applications and information systems must be issued unique user logins and passwords.
+    Generic accounts must not be allowed.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-32
+  tags: []
+- control_id: TPC-33
+  external_reference: SACS-002 TPC-33
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: User access to the operating system, applications and database must be reviewed…
+  statement: >-
+    User access to the operating system, applications and database must be reviewed on a semiannual basis
+    to determine if accessing personnel still require such access.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-33
+  tags: []
+- control_id: TPC-34
+  external_reference: SACS-002 TPC-34
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: >-
+    All privileged accounts must be limited, justified, and reviewed on regular basis.
+  statement: >-
+    All privileged accounts must be limited, justified, and reviewed on regular basis.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-34
+  tags: []
+- control_id: TPC-35
+  external_reference: SACS-002 TPC-35
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Remote administrative access from the Internet must not be allowed, unless…
+  statement: >-
+    Remote administrative access from the Internet must not be allowed, unless explicitly approved, restricted,
+    and controlled.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-35
+  tags: []
+- control_id: TPC-36
+  external_reference: SACS-002 TPC-36
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Network connections to information systems and applications at the Third…
+  statement: >-
+    Network connections to information systems and applications at the Third Parties location must be
+    authorized and monitored.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-36
+  tags: []
+- control_id: TPC-37
+  external_reference: SACS-002 TPC-37
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Multi-factor authentication must be enforced on all privileged accounts access,…
+  statement: >-
+    Multi-factor authentication must be enforced on all privileged accounts access, including remote access
+    to information systems and applications.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-37
+  tags: []
+- control_id: TPC-38
+  external_reference: SACS-002 TPC-38
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Third Party must logically (e.g., partitioning a physical drive), and/or…
+  statement: >-
+    Third Party must logically (e.g., partitioning a physical drive), and/or physically segregate data-at-rest
+    related to Saudi Aramco from the data of other clients or customers.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-38
+  tags: []
+- control_id: TPC-39
+  external_reference: SACS-002 TPC-39
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Saudi Aramco Critical Data documents must only be shared with limited…
+  statement: >-
+    Saudi Aramco Critical Data documents must only be shared with limited individuals who are part of
+    the work specified in the contract.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-39
+  tags: []
+- control_id: TPC-40
+  external_reference: SACS-002 TPC-40
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Servers and workstations subnets must be segmented and access between them is…
+  statement: >-
+    Servers and workstations subnets must be segmented and access between them is restricted and monitored.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-40
+  tags: []
+- control_id: TPC-41
+  external_reference: SACS-002 TPC-41
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Servers accessible from the Internet must be placed in a DMZ (i.e., perimeter…
+  statement: >-
+    Servers accessible from the Internet must be placed in a DMZ (i.e., perimeter network) with restricted
+    access to internal subnets.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-41
+  tags: []
+- control_id: TPC-42
+  external_reference: SACS-002 TPC-42
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Wireless networks accessing information systems must use strong encryption for…
+  statement: >-
+    Wireless networks accessing information systems must use strong encryption for authentication and
+    transmission, such as WPA2 or WPA2 Enterprise.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-42
+  tags: []
+- control_id: TPC-43
+  external_reference: SACS-002 TPC-43
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Third Party data center must have the required tier rating and…
+  statement: >-
+    Third Party data center must have the required tier rating and high-availability of service fail-over
+    as determined by Saudi Aramco
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-43
+  tags: []
+- control_id: TPC-44
+  external_reference: SACS-002 TPC-44
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Multi-Factor authentication must be enforced on Saudi Aramco users accessing…
+  statement: >-
+    Multi-Factor authentication must be enforced on Saudi Aramco users accessing Cloud Service Provider's
+    Public Cloud Computing Service storing or hosting Saudi Aramco Critical Data.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-44
+  tags: []
+- control_id: TPC-45
+  external_reference: SACS-002 TPC-45
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Multi-Factor authentication must be enforced on end-users accessing Content…
+  statement: >-
+    Multi-Factor authentication must be enforced on end-users accessing Content Management Services (CMS)
+    of Cloud Computing Service.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-45
+  tags: []
+- control_id: TPC-46
+  external_reference: SACS-002 TPC-46
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: All systems (routers, switches, servers and firewalls) must be housed in a…
+  statement: >-
+    All systems (routers, switches, servers and firewalls) must be housed in a communication room and
+    locked rack(s). The access to the communication room must be contingent on security requirements,
+    such as access card readers or biometric devices.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-46
+  tags: []
+- control_id: TPC-47
+  external_reference: SACS-002 TPC-47
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Third party must define a process for visitor management.
+  statement: >-
+    Third party must define a process for visitor management. The process should include maintaining and
+    regularly reviewing visitor logs. The visitor log should capture information such as: - Visitor identification
+    (e.g. Government ID( - Visit Purpose - Check in/check out date and time
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-47
+  tags: []
+- control_id: TPC-48
+  external_reference: SACS-002 TPC-48
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Visitors accessing Critical Facilities must be escorted at all times.
+  statement: Visitors accessing Critical Facilities must be escorted at all times.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-48
+  tags: []
+- control_id: TPC-49
+  external_reference: SACS-002 TPC-49
+  domain: PROTECT
+  subdomain: Access Control (AC)
+  title: Third Party must dedicate an access restricted working area for personnel with…
+  statement: >-
+    Third Party must dedicate an access restricted working area for personnel with access to the Saudi
+    Aramco network.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Access Control (AC) / TPC-49
+  tags: []
+- control_id: TPC-50
+  external_reference: SACS-002 TPC-50
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Backup media must be secured to block/inhibit unauthorized physical access.
+  statement: Backup media must be secured to block/inhibit unauthorized physical access.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-50
+  tags: []
+- control_id: TPC-51
+  external_reference: SACS-002 TPC-51
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Technology assets and systems connected to the Internet must be licensed and…
+  statement: >-
+    Technology assets and systems connected to the Internet must be licensed and supported by the provider.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-51
+  tags: []
+- control_id: TPC-52
+  external_reference: SACS-002 TPC-52
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Third Party must encrypt data in transit (e.g., SSH, FTPS, HTTPS, TLS, IPSEC).
+  statement: Third Party must encrypt data in transit (e.g., SSH, FTPS, HTTPS, TLS, IPSEC).
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-52
+  tags: []
+- control_id: TPC-53
+  external_reference: SACS-002 TPC-53
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Third Party must encrypt (e.g.
+  statement: >-
+    Third Party must encrypt (e.g. using HTTPS) sessions where Critical Saudi Aramco information or data
+    will be transmitted from and to the Public Cloud Computing Services, and enforce session authentication,
+    lockout, and timeout.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-53
+  tags: []
+- control_id: TPC-54
+  external_reference: SACS-002 TPC-54
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Third Party must implement encryption mechanisms, using at least AES encryption…
+  statement: >-
+    Third Party must implement encryption mechanisms, using at least AES encryption algorithm, and 256
+    bit key, on all devices or storage media hosting sensitive data per the Third Party’s assets classification
+    policy.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-54
+  tags: []
+- control_id: TPC-55
+  external_reference: SACS-002 TPC-55
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Encryption key management capability, including preservation and retrieval,…
+  statement: >-
+    Encryption key management capability, including preservation and retrieval, must be defined, applied,
+    and periodically reviewed.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-55
+  tags: []
+- control_id: TPC-56
+  external_reference: SACS-002 TPC-56
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Third Party must implement a device control mechanism on Assets that are used…
+  statement: >-
+    Third Party must implement a device control mechanism on Assets that are used to receive, store, process
+    or transmit Saudi Aramco data, such as disabling the use of external storage media.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-56
+  tags: []
+- control_id: TPC-57
+  external_reference: SACS-002 TPC-57
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Access to the Internet must be restricted by Content-filtering technologies to…
+  statement: >-
+    Access to the Internet must be restricted by Content-filtering technologies to block: • Malicious
+    and suspicious websites. • Personal and non-company email services. • Personal and non-company approved
+    public cloud services.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-57
+  tags: []
+- control_id: TPC-58
+  external_reference: SACS-002 TPC-58
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Documents containing Saudi Aramco Critical Data, must be encrypted and stored…
+  statement: >-
+    Documents containing Saudi Aramco Critical Data, must be encrypted and stored securely with access
+    limited to authorized personnel.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-58
+  tags: []
+- control_id: TPC-59
+  external_reference: SACS-002 TPC-59
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Remote wipe solution must be installed on all tablets and mobile phones used to…
+  statement: >-
+    Remote wipe solution must be installed on all tablets and mobile phones used to receive, store and/or
+    produce critical data for Saudi Aramco.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-59
+  tags: []
+- control_id: TPC-60
+  external_reference: SACS-002 TPC-60
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Third Party must implement data validation on all input fields for applications…
+  statement: >-
+    Third Party must implement data validation on all input fields for applications or Cloud Computing
+    Services used by Saudi Aramco to only accept input with valid data type, syntax and length range.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-60
+  tags: []
+- control_id: TPC-61
+  external_reference: SACS-002 TPC-61
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Application error messages must not display any sensitive technical information.
+  statement: Application error messages must not display any sensitive technical information.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-61
+  tags: []
+- control_id: TPC-62
+  external_reference: SACS-002 TPC-62
+  domain: PROTECT
+  subdomain: Data Security (DS)
+  title: Application or Cloud Computing Services must not store, generate, transmit, or…
+  statement: >-
+    Application or Cloud Computing Services must not store, generate, transmit, or use plain-text passwords.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Data Security (DS) / TPC-62
+  tags: []
+- control_id: TPC-63
+  external_reference: SACS-002 TPC-63
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: >-
+    Third Party must create and manage baseline configurations to harden information systems.
+  statement: >-
+    Third Party must create and manage baseline configurations to harden information systems. The hardening
+    process must address configurations, such as: - Resetting default usernames/passwords - Disabling
+    unneeded software - Disabling unneeded services - Removing administrative access of users on workstations
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-63
+  tags: []
+- control_id: TPC-64
+  external_reference: SACS-002 TPC-64
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Third Party must establish and follow regular procedures for backup of critical…
+  statement: >-
+    Third Party must establish and follow regular procedures for backup of critical systems and Saudi
+    Aramco’s data, software, and websites.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-64
+  tags: []
+- control_id: TPC-65
+  external_reference: SACS-002 TPC-65
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Backup stored at an off-site location must be encrypted using at least AES…
+  statement: >-
+    Backup stored at an off-site location must be encrypted using at least AES encryption algorithm, and
+    256 bit key, except for data classified as public.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-65
+  tags: []
+- control_id: TPC-66
+  external_reference: SACS-002 TPC-66
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Third Party must implement a sanitization process before any assets are loaned,…
+  statement: >-
+    Third Party must implement a sanitization process before any assets are loaned, donated, destroyed,
+    transferred, or surplused. The process must be aligned to industry best practices, such as NIST 800-88.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-66
+  tags: []
+- control_id: TPC-67
+  external_reference: SACS-002 TPC-67
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Third Party must have a Disaster Recovery Plan (DR Plan), which is documented,…
+  statement: >-
+    Third Party must have a Disaster Recovery Plan (DR Plan), which is documented, maintained, and communicated
+    to appropriate parties. The DR Plan should address the recovery of assets and communication following
+    a major disruption to business operations.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-67
+  tags: []
+- control_id: TPC-68
+  external_reference: SACS-002 TPC-68
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: The Third Party must have a comprehensive Business Continuity (BC) plan, which…
+  statement: >-
+    The Third Party must have a comprehensive Business Continuity (BC) plan, which is documented, maintained,
+    and communicated to appropriate parties. The BC plan should address the occurrence of the following
+    scenarios: a) Equipment failure b) Disruption of power supply or communication c) Application failure
+    or corruption of database d) Human error, sabotage or strike e) Malicious Software attack f) Hacking
+    or other Internet attacks g) Social unrest or terrorist attacks h) Environmental disasters i) Emergency
+    contact information for personnel
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-68
+  tags: []
+- control_id: TPC-69
+  external_reference: SACS-002 TPC-69
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: The Third Party must ensure that owners of the Business Continuity (BC) plan…
+  statement: >-
+    The Third Party must ensure that owners of the Business Continuity (BC) plan are identified, and that
+    the BC plan is reviewed and updated annually.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-69
+  tags: []
+- control_id: TPC-70
+  external_reference: SACS-002 TPC-70
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: The Third Party must conduct Business Continuity drills at least annually.
+  statement: The Third Party must conduct Business Continuity drills at least annually.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-70
+  tags: []
+- control_id: TPC-71
+  external_reference: SACS-002 TPC-71
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Third Party must have formal procedures for on-boarding employees.
+  statement: >-
+    Third Party must have formal procedures for on-boarding employees. On-boarding procedures must include
+    background checks (e.g. Verification of work histories).
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-71
+  tags: []
+- control_id: TPC-72
+  external_reference: SACS-002 TPC-72
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Third Party must conduct security and source-code vulnerability scanning on all…
+  statement: >-
+    Third Party must conduct security and source-code vulnerability scanning on all developed applications,
+    and close all discovered vulnerabilities before deployment in production.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-72
+  tags: []
+- control_id: TPC-73
+  external_reference: SACS-002 TPC-73
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: All changes to the application must be properly authorized, and tested in a…
+  statement: >-
+    All changes to the application must be properly authorized, and tested in a testing environment before
+    moving to production.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-73
+  tags: []
+- control_id: TPC-74
+  external_reference: SACS-002 TPC-74
+  domain: PROTECT
+  subdomain: Information Protection Processes and Procedures (IP)
+  title: Third Party must have a process for secure system and software development life…
+  statement: >-
+    Third Party must have a process for secure system and software development life cycle in alignment
+    with industry best practice.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Information Protection Processes and Procedures
+    (IP) / TPC-74
+  tags: []
+- control_id: TPC-75
+  external_reference: SACS-002 TPC-75
+  domain: PROTECT
+  subdomain: Protective Technology (PT)
+  title: Third Party must retain all audit logs from information systems and…
+  statement: >-
+    Third Party must retain all audit logs from information systems and applications storing, processing,
+    or transmitting Saudi Aramco data for one (1) year.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Protective Technology (PT) / TPC-75
+  tags: []
+- control_id: TPC-76
+  external_reference: SACS-002 TPC-76
+  domain: PROTECT
+  subdomain: Protective Technology (PT)
+  title: Firewalls must be implemented at the network perimeter and only required…
+  statement: >-
+    Firewalls must be implemented at the network perimeter and only required services must be allowed.
+    Vulnerable services or insecure protocols should be blocked.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Protective Technology (PT) / TPC-76
+  tags: []
+- control_id: TPC-77
+  external_reference: SACS-002 TPC-77
+  domain: PROTECT
+  subdomain: Protective Technology (PT)
+  title: Intrusion Detection Systems (IDS) or Intrusion Prevention Systems (IPS) must be…
+  statement: >-
+    Intrusion Detection Systems (IDS) or Intrusion Prevention Systems (IPS) must be implemented at the
+    network perimeter.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Protective Technology (PT) / TPC-77
+  tags: []
+- control_id: TPC-78
+  external_reference: SACS-002 TPC-78
+  domain: PROTECT
+  subdomain: Protective Technology (PT)
+  title: Signatures of firewalls, IDS, and IPS must be up-to-date.
+  statement: Signatures of firewalls, IDS, and IPS must be up-to-date.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Protective Technology (PT) / TPC-78
+  tags: []
+- control_id: TPC-79
+  external_reference: SACS-002 TPC-79
+  domain: PROTECT
+  subdomain: Protective Technology (PT)
+  title: If Third Party is hosting an application or a website for Saudi Aramco or…
+  statement: >-
+    If Third Party is hosting an application or a website for Saudi Aramco or providing cloud-based web
+    application, Web Application Firewall (WAF) must be implemented to inspect all incoming traffic for
+    potential threats and malicious activity e.g. SQL injection and Cross Site Scripting.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, PROTECT / Protective Technology (PT) / TPC-79
+  tags: []
+- control_id: TPC-80
+  external_reference: SACS-002 TPC-80
+  domain: DETECT
+  subdomain: Anomalies and Events (AE)
+  title: Third Party must monitor technology assets, systems, and applications to…
+  statement: >-
+    Third Party must monitor technology assets, systems, and applications to identify unauthorized access,
+    or unauthorized activity.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, DETECT / Anomalies and Events (AE) / TPC-80
+  tags: []
+- control_id: TPC-81
+  external_reference: SACS-002 TPC-81
+  domain: DETECT
+  subdomain: Anomalies and Events (AE)
+  title: Third Party must periodically aggregate and correlate data from multiple…
+  statement: >-
+    Third Party must periodically aggregate and correlate data from multiple systems and critical applications
+    such as Firewalls, IDS/IPS, and anti-virus in a central repository for event monitoring and analysis
+    purposes.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, DETECT / Anomalies and Events (AE) / TPC-81
+  tags: []
+- control_id: TPC-82
+  external_reference: SACS-002 TPC-82
+  domain: DETECT
+  subdomain: Continuous Monitoring (CM)
+  title: Multiple physical security measures must be implemented to prevent unauthorized…
+  statement: >-
+    Multiple physical security measures must be implemented to prevent unauthorized access to facilities.
+    Entrances and exits must be secured with authentication card key, door locks, and monitored by video
+    cameras.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, DETECT / Continuous Monitoring (CM) / TPC-82
+  tags: []
+- control_id: TPC-83
+  external_reference: SACS-002 TPC-83
+  domain: DETECT
+  subdomain: Continuous Monitoring (CM)
+  title: Privileged accounts activity must be logged and monitored on a regular basis.
+  statement: Privileged accounts activity must be logged and monitored on a regular basis.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, DETECT / Continuous Monitoring (CM) / TPC-83
+  tags: []
+- control_id: TPC-84
+  external_reference: SACS-002 TPC-84
+  domain: DETECT
+  subdomain: Continuous Monitoring (CM)
+  title: Non-authorized devices (such as personal devices and mobile phones) must not be…
+  statement: >-
+    Non-authorized devices (such as personal devices and mobile phones) must not be used to store, process,
+    or access assets.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, DETECT / Continuous Monitoring (CM) / TPC-84
+  tags: []
+- control_id: TPC-85
+  external_reference: SACS-002 TPC-85
+  domain: DETECT
+  subdomain: Continuous Monitoring (CM)
+  title: Monthly Vulnerability scans must be conducted to evaluate configuration,…
+  statement: >-
+    Monthly Vulnerability scans must be conducted to evaluate configuration, patches, and services for
+    known vulnerabilities.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, DETECT / Continuous Monitoring (CM) / TPC-85
+  tags: []
+- control_id: TPC-86
+  external_reference: SACS-002 TPC-86
+  domain: DETECT
+  subdomain: Continuous Monitoring (CM)
+  title: Physical access to the facility where information systems reside must be…
+  statement: >-
+    Physical access to the facility where information systems reside must be restricted to authorized
+    personnel and reviewed on a regular basis.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, DETECT / Continuous Monitoring (CM) / TPC-86
+  tags: []
+- control_id: TPC-87
+  external_reference: SACS-002 TPC-87
+  domain: DETECT
+  subdomain: Continuous Monitoring (CM)
+  title: Information systems and applications must log auditable events as stated in…
+  statement: >-
+    Information systems and applications must log auditable events as stated in SACS-002 Third Party Cybersecurity
+    Standard Appendix C.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, DETECT / Continuous Monitoring (CM) / TPC-87
+  tags: []
+- control_id: TPC-88
+  external_reference: SACS-002 TPC-88
+  domain: RESPOND
+  subdomain: Communications (CO)
+  title: Incident management policy and plan must be documented, maintained, and…
+  statement: >-
+    Incident management policy and plan must be documented, maintained, and communicated to management
+    and appropriate team members.
+  level: control
+  source_reference: >-
+    SACS-002 Third Party Cybersecurity Standard, RESPOND / Communications (CO) / TPC-88
+  tags: []
+- control_id: TPC-89
+  external_reference: SACS-002 TPC-89
+  domain: RESPOND
+  subdomain: Analysis (AN)
+  title: Third Party must have an incident response capability that includes…
+  statement: >-
+    Third Party must have an incident response capability that includes preparation, detection and analysis,
+    containment, eradication, recovery, documentation and preservation of evidence, communication protocols,
+    and lessons learned.
+  level: control
+  source_reference: SACS-002 Third Party Cybersecurity Standard, RESPOND / Analysis (AN) / TPC-89
+  tags: []
+- control_id: TPC-90
+  external_reference: SACS-002 TPC-90
+  domain: RESPOND
+  subdomain: Analysis (AN)
+  title: The Third Party must track, classify, and document all cybersecurity Incidents.
+  statement: The Third Party must track, classify, and document all cybersecurity Incidents.
+  level: control
+  source_reference: SACS-002 Third Party Cybersecurity Standard, RESPOND / Analysis (AN) / TPC-90
+  tags: []
+- control_id: TPC-91
+  external_reference: SACS-002 TPC-91
+  domain: RESPOND
+  subdomain: Mitigation (MI)
+  title: Third Party must resolve or mitigate the identified security Vulnerabilities on…
+  statement: >-
+    Third Party must resolve or mitigate the identified security Vulnerabilities on a system, computer,
+    network, or other computer equipment within the following timeframes: - Critical Risk: immediate correction
+    up to fourteen (14) calendar days of critical vendor patch release, notification from Saudi Aramco,
+    or discovered security breach whichever is earlier. - High Risk: within one (1) month of vendor patch
+    release, or discovered security breach whichever is earlier. Medium and Low Risk: within three (3)
+    months of discovery.
+  level: control
+  source_reference: SACS-002 Third Party Cybersecurity Standard, RESPOND / Mitigation (MI) / TPC-91
+  tags: []
+- control_id: TPC-92
+  external_reference: SACS-002 TPC-92
+  domain: RESPOND
+  subdomain: Mitigation (MI)
+  title: If Third Party is hosting a website for Saudi Aramco or providing a Cloud…
+  statement: >-
+    If Third Party is hosting a website for Saudi Aramco or providing a Cloud Computing Service, the website
+    / Cloud Computing Service must be secured by a Distributed Denial of Service (DDOS) protection.
+  level: control
+  source_reference: SACS-002 Third Party Cybersecurity Standard, RESPOND / Mitigation (MI) / TPC-92
+  tags: []

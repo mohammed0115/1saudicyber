@@ -1,20 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Executive Dashboard - CyberTrust KSA{% endblock %}
+{% load i18n %}
+{% block title %}لوحة التنفيذيين - Cyber-5{% endblock %}
 
 {% block content %}
 <div class="space-y-8">
     <!-- Header -->
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-center flex-wrap gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-gov-green-800">Executive Dashboard</h1>
-            <p class="text-gov-gray-600">{{ company.name }} — Board-Ready Overview</p>
+            <h1 class="text-2xl font-bold text-gov-green-800">لوحة القيادة التنفيذية</h1>
+            <p class="text-gov-gray-600">{{ company.name }} — نظرة عامة جاهزة للعرض على مجلس الإدارة</p>
         </div>
         <div class="flex items-center gap-3">
             <span class="bg-red-100 text-red-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                <i class="fas fa-bell mr-1"></i> {{ critical_alerts }} Critical
+                <i class="fas fa-bell me-1"></i> {{ critical_alerts }} حرجة
             </span>
             <span class="bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-full text-sm font-medium">
-                {{ high_alerts }} High
+                {{ high_alerts }} عالية
             </span>
         </div>
     </div>
@@ -23,57 +24,58 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Overall Score -->
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 text-center">
-            <h3 class="text-sm font-medium text-gov-gray-500 mb-4">Overall Compliance</h3>
+            <h3 class="text-sm font-medium text-gov-gray-500 mb-4">نسبة الامتثال العامة</h3>
             <div class="relative inline-flex items-center justify-center w-32 h-32">
-                <svg class="w-32 h-32 transform -rotate-90">
+                <svg class="w-32 h-32 -rotate-90" viewBox="0 0 128 128">
                     <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="12" fill="none"/>
-                    <circle cx="64" cy="64" r="56" stroke="#16a34a" stroke-width="12" fill="none"
-                        stroke-dasharray="352" stroke-dashoffset="{{ company.overall_compliance_score|default:0 }}" stroke-linecap="round"/>
+                    <circle cx="64" cy="64" r="56" stroke="#1E56C9" stroke-width="12" fill="none"
+                        stroke-dasharray="{% widthratio company.overall_compliance_score 100 352 %} 352"
+                        stroke-linecap="round"/>
                 </svg>
                 <span class="absolute text-3xl font-bold text-gov-green-800">{{ company.overall_compliance_score|default:0 }}%</span>
             </div>
-            <p class="text-sm text-gov-gray-500 mt-3">Across all frameworks</p>
+            <p class="text-sm text-gov-gray-500 mt-3">عبر جميع الأطر المعتمدة</p>
         </div>
 
-        <!-- ROI Metrics -->
+        <!-- Readiness snapshot (real data — replaced the fabricated ROI constants) -->
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
-            <h3 class="text-sm font-medium text-gov-gray-500 mb-4">ROI Metrics</h3>
+            <h3 class="text-sm font-medium text-gov-gray-500 mb-4">مؤشّرات الجاهزية</h3>
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
-                    <span class="text-sm text-gov-gray-600">Time Saved</span>
-                    <span class="font-bold text-gov-green-800">75%</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gov-gray-600">Cost Reduction</span>
-                    <span class="font-bold text-gov-green-800">60%</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gov-gray-600">Audit Readiness</span>
+                    <span class="text-sm text-gov-gray-600">جاهزية التدقيق</span>
                     <span class="font-bold text-gov-green-800">{{ company.overall_compliance_score|default:0 }}%</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-sm text-gov-gray-600">Risk Reduction</span>
-                    <span class="font-bold text-gov-green-800">45%</span>
+                    <span class="text-sm text-gov-gray-600">تنبيهات حرجة مفتوحة</span>
+                    <span class="font-bold {% if critical_alerts %}text-red-700{% else %}text-gov-green-800{% endif %}">{{ critical_alerts }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gov-gray-600">تنبيهات عالية مفتوحة</span>
+                    <span class="font-bold {% if high_alerts %}text-amber-700{% else %}text-gov-green-800{% endif %}">{{ high_alerts }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gov-gray-600">شهادات سارية</span>
+                    <span class="font-bold text-gov-green-800">{{ certificates|length }}</span>
                 </div>
             </div>
         </div>
 
         <!-- Certificate Status -->
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
-            <h3 class="text-sm font-medium text-gov-gray-500 mb-4">Certifications</h3>
+            <h3 class="text-sm font-medium text-gov-gray-500 mb-4">الشهادات</h3>
             <div class="space-y-3">
                 {% for cert in certificates %}
                 <div class="flex items-center justify-between p-3 bg-gov-gray-50 rounded-lg">
                     <div>
                         <div class="font-medium text-gov-green-800 text-sm">{{ cert.framework_name }}</div>
-                        <div class="text-xs text-gov-gray-500">Expires: {{ cert.expiry_date|date:"M d, Y" }}</div>
+                        <div class="text-xs text-gov-gray-500">تنتهي في: {{ cert.expiry_date|date:"Y-m-d" }}</div>
                     </div>
                     <span class="text-xs px-2 py-1 rounded-full {% if cert.status == 'active' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                        {{ cert.get_status_display }}
+                        {% if cert.status == 'active' %}سارية{% elif cert.status == 'expired' %}منتهية{% else %}{{ cert.get_status_display }}{% endif %}
                     </span>
                 </div>
                 {% empty %}
-                <p class="text-sm text-gov-gray-500 text-center py-4">No active certifications yet</p>
+                <p class="text-sm text-gov-gray-500 text-center py-4">لا توجد شهادات سارية بعد</p>
                 {% endfor %}
             </div>
         </div>
@@ -81,13 +83,21 @@
 
     <!-- Controls Summary -->
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
-        <h3 class="font-bold text-gov-green-800 mb-4">Control Status Overview</h3>
+        <h3 class="font-bold text-gov-green-800 mb-4">توزيع حالة الضوابط</h3>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             {% for item in controls_summary %}
             <div class="text-center p-4 bg-gov-gray-50 rounded-xl">
                 <div class="text-2xl font-bold text-gov-green-800">{{ item.count }}</div>
-                <div class="text-xs text-gov-gray-600 mt-1 capitalize">{{ item.status|default:"Unknown" }}</div>
+                <div class="text-xs text-gov-gray-600 mt-1">
+                    {% if item.status == 'compliant' %}ممتثل
+                    {% elif item.status == 'in_progress' %}قيد التنفيذ
+                    {% elif item.status == 'not_started' %}لم يبدأ
+                    {% elif item.status == 'non_compliant' %}غير ممتثل
+                    {% else %}{{ item.status|default:"غير محدّد" }}{% endif %}
+                </div>
             </div>
+            {% empty %}
+            <div class="col-span-full text-center py-6 text-gov-gray-400 text-sm">لا توجد ضوابط بعد.</div>
             {% endfor %}
         </div>
     </div>

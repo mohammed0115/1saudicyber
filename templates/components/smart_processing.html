@@ -1,0 +1,84 @@
+{% comment %}
+Phase 8E — Smart evidence processing animation (safe, non-blocking, JS-optional).
+
+Shows an "AI-thinking" style overlay when a form marked data-smart-processing is
+submitted (reading file → extracting text → preparing result). It is PURELY a
+client-side affordance: the form still POSTs normally, the real result always
+comes from the backend extraction status, and with JS disabled the overlay never
+shows but the upload/extraction still works. It never claims a compliance
+decision, certification, or accreditation.
+
+Include once on any page that has a data-smart-processing form.
+{% endcomment %}
+<div id="ct-smart-overlay" aria-live="polite" aria-hidden="true"
+     style="display:none;position:fixed;inset:0;z-index:70;background:rgba(15,41,33,0.55);
+            align-items:center;justify-content:center;font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="ct-smart-card" dir="rtl"
+       style="position:relative;overflow:hidden;background:#FFFFFF;border:1px solid #e3e1d9;border-radius:16px;
+              padding:28px 30px;max-width:420px;width:90%;box-shadow:0 12px 40px rgba(15,41,33,0.22);text-align:center;">
+    <div class="ct-smart-scan"></div>
+    <div style="margin:0 auto 14px;width:46px;height:46px;border-radius:50%;
+                border:3px solid #E3EEE9;border-top-color:#1E56C9;animation:ct-smart-spin 0.9s linear infinite;"></div>
+
+    <p style="margin:0 0 6px;color:#1E56C9;font-weight:700;font-size:1.05rem;">جاري تحليل الدليل…</p>
+    <p style="margin:0 0 4px;color:#4B5563;font-size:.9rem;line-height:1.7;">
+      نقرأ الملف الآن ونحاول استخراج النص القابل للمراجعة. قد تستغرق العملية بضع ثوانٍ حسب نوع الملف وحجمه.
+    </p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;">
+      <span class="ct-dot"></span><span class="ct-dot"></span><span class="ct-dot"></span>
+    </div>
+
+    <ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+      <li class="ct-step" data-step="0" style="display:flex;align-items:center;gap:8px;justify-content:center;color:#6B7280;font-size:.88rem;">
+        <i class="fas fa-file-lines"></i> قراءة الملف</li>
+      <li class="ct-step" data-step="1" style="display:flex;align-items:center;gap:8px;justify-content:center;color:#6B7280;font-size:.88rem;">
+        <i class="fas fa-magnifying-glass"></i> استخراج النص</li>
+      <li class="ct-step" data-step="2" style="display:flex;align-items:center;gap:8px;justify-content:center;color:#6B7280;font-size:.88rem;">
+        <i class="fas fa-list-check"></i> تجهيز النتيجة</li>
+    </ol>
+    <p style="margin:14px 0 0;color:#9AA0A6;font-size:.72rem;">معالجة ذكية للأدلة · جارٍ استخراج النص</p>
+  </div>
+</div>
+
+<style>
+  @keyframes ct-smart-spin { to { transform: rotate(360deg); } }
+  @keyframes ct-dot-pulse { 0%,80%,100% { opacity:.25; transform:scale(.8);} 40% { opacity:1; transform:scale(1);} }
+  @keyframes ct-scan { 0% { top:-40%; } 100% { top:120%; } }
+  #ct-smart-overlay .ct-dot { width:9px;height:9px;border-radius:50%;background:#1E56C9;display:inline-block;
+    animation:ct-dot-pulse 1.2s infinite ease-in-out; }
+  #ct-smart-overlay .ct-dot:nth-child(2){ animation-delay:.15s; }
+  #ct-smart-overlay .ct-dot:nth-child(3){ animation-delay:.3s; }
+  #ct-smart-overlay .ct-smart-scan { position:absolute;left:0;right:0;height:36%;pointer-events:none;
+    background:linear-gradient(180deg, rgba(15,93,70,0) 0%, rgba(15,93,70,0.10) 50%, rgba(15,93,70,0) 100%);
+    animation:ct-scan 1.8s linear infinite; }
+  #ct-smart-overlay .ct-step.active { color:#1E56C9 !important; font-weight:600; }
+</style>
+
+<script>
+(function () {
+  var overlay = document.getElementById('ct-smart-overlay');
+  if (!overlay) return;
+  var steps = overlay.querySelectorAll('.ct-step');
+  var timer = null;
+  function cycle() {
+    var i = 0;
+    if (timer) clearInterval(timer);
+    timer = setInterval(function () {
+      steps.forEach(function (s, idx) { s.classList.toggle('active', idx === (i % steps.length)); });
+      i++;
+    }, 900);
+  }
+  function show() {
+    overlay.style.display = 'flex';
+    overlay.setAttribute('aria-hidden', 'false');
+    cycle();
+  }
+  document.querySelectorAll('form[data-smart-processing]').forEach(function (f) {
+    f.addEventListener('submit', function () {
+      // Respect native HTML5 validation; only animate on a real submit.
+      if (f.checkValidity && !f.checkValidity()) { return; }
+      show();
+    });
+  });
+})();
+</script>

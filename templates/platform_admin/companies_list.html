@@ -1,0 +1,101 @@
+{% extends "platform_admin/base.html" %}
+{% load crm_display %}
+{% block title %}الشركات - Get Solution CRM{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+    <div>
+      <h1 class="text-2xl font-bold text-gov-green-800">الشركات</h1>
+      <p class="text-gov-gray-600 text-sm mt-1">عرض تشغيلي للقراءة فقط لجميع الشركات المسجّلة على المنصة — {{ total_count }} شركة.</p>
+    </div>
+
+    <!-- Search + status filter -->
+    <form method="get" class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-4 flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[220px]">
+        <label class="block text-xs font-medium text-gov-gray-500 mb-1">بحث بالاسم أو السجل التجاري</label>
+        <input type="search" name="q" value="{{ q }}" placeholder="اكتب اسمًا أو رقم سجل تجاري…"
+               class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gov-green-500">
+      </div>
+      <div class="min-w-[180px]">
+        <label class="block text-xs font-medium text-gov-gray-500 mb-1">الحالة</label>
+        <select name="status" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">كل الحالات</option>
+          {% for code, label in status_choices %}
+          <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ code|company_status_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="bg-gov-green-800 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-gov-green-700">
+        <i class="fas fa-magnifying-glass me-1"></i> بحث</button>
+      {% if q or selected_status %}
+      <a href="{% url 'platform_admin:companies_list' %}" class="text-gov-gray-500 hover:text-gov-gray-800 text-sm px-2 py-2">مسح</a>
+      {% endif %}
+    </form>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gov-green-50 text-gov-green-800">
+            <tr>
+              <th class="text-right px-4 py-3">الشركة</th>
+              <th class="text-right px-4 py-3">السجل التجاري</th>
+              <th class="text-right px-4 py-3">الحالة</th>
+              <th class="text-right px-4 py-3">متابعة المنصة</th>
+              <th class="text-right px-4 py-3">المسؤول</th>
+              <th class="text-right px-4 py-3">المتابعة التالية</th>
+              <th class="text-right px-4 py-3">المستخدمون</th>
+              <th class="text-right px-4 py-3">القطاع</th>
+              <th class="text-right px-4 py-3">تاريخ الإنشاء</th>
+              <th class="text-right px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gov-gray-100">
+            {% for c in companies %}
+            <tr class="hover:bg-gov-gray-50">
+              <td class="px-4 py-3 font-medium text-gov-gray-800">{{ c.name_ar|default:c.name }}</td>
+              <td class="px-4 py-3 text-gov-gray-600" dir="ltr">{{ c.cr_number }}</td>
+              <td class="px-4 py-3"><span class="text-xs px-2.5 py-1 rounded-full font-medium
+                {% if c.status == 'certified' %}bg-green-100 text-green-800
+                {% elif c.status == 'audit_ready' %}bg-emerald-50 text-emerald-700
+                {% elif c.status == 'in_assessment' %}bg-amber-100 text-amber-800
+                {% elif c.status == 'classified' %}bg-gov-gray-200 text-gov-gray-700
+                {% elif c.status == 'expired' %}bg-red-100 text-red-800
+                {% else %}bg-gov-gray-100 text-gov-gray-700{% endif %}">{{ c.status|company_status_ar }}</span></td>
+              <td class="px-4 py-3"><span class="text-xs px-2.5 py-1 rounded-full bg-gov-gray-100 text-gov-gray-700 font-medium">{% if c.crm_profile %}{{ c.crm_profile.crm_status|crm_status_ar }}{% else %}جديدة{% endif %}</span></td>
+              <td class="px-4 py-3 text-gov-gray-600" dir="ltr">{% if c.crm_profile.assigned_staff %}{{ c.crm_profile.assigned_staff.email }}{% else %}—{% endif %}</td>
+              <td class="px-4 py-3 text-gov-gray-500">{{ c.crm_profile.next_follow_up_date|date:"Y-m-d"|default:"—" }}</td>
+              <td class="px-4 py-3 text-gov-gray-600">{{ c.user_count }}</td>
+              <td class="px-4 py-3 text-gov-gray-600">{{ c.sector|sector_ar }}</td>
+              <td class="px-4 py-3 text-gov-gray-500">{{ c.created_at|date:"Y-m-d" }}</td>
+              <td class="px-4 py-3"><a href="{% url 'platform_admin:company_detail' c.id %}" class="text-gov-green-700 hover:text-gov-green-900 font-medium">تفاصيل</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10" class="px-4 py-10 text-center text-gov-gray-500">
+              {% if q or selected_status %}لا توجد شركات مطابقة لبحثك.{% else %}لا توجد شركات مسجّلة بعد.{% endif %}
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-between text-sm">
+      <span class="text-gov-gray-500">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+      <div class="flex gap-2">
+        {% if page_obj.has_previous %}
+        <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_status %}status={{ selected_status }}&{% endif %}page={{ page_obj.previous_page_number }}"
+           class="px-3 py-1.5 border border-gov-gray-300 rounded-lg text-gov-gray-700 hover:bg-gov-gray-50">السابق</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+        <a href="?{% if q %}q={{ q }}&{% endif %}{% if selected_status %}status={{ selected_status }}&{% endif %}page={{ page_obj.next_page_number }}"
+           class="px-3 py-1.5 border border-gov-gray-300 rounded-lg text-gov-gray-700 hover:bg-gov-gray-50">التالي</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

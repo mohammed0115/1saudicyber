@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}مسار الامتثال - Cyber-5{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gov-green-800">مسار الامتثال</h1>
+        <p class="text-gov-gray-600">نظرة عامة على مراحل عمل {{ company.name }} من البداية إلى التقارير. هذه الصفحة للعرض فقط.</p>
+    </div>
+
+    {% if open_rfi_count %}
+    <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 text-sm hover:bg-amber-100 transition">
+        <i class="fas fa-file-circle-question ml-1"></i> لديك {{ open_rfi_count }} طلب استكمال من المدقق بانتظار ردّك — اضغط للعرض والرد.
+    </a>
+    {% endif %}
+
+    {# Phase UX-WIZARD-A — target compliance journey wizard (5 stages / 16 substeps) #}
+    {% include "components/journey_wizard.html" with journey=journey %}
+
+    {# Phase 6A — advisory Smart Classification summary card (read-only) #}
+    {% if classification %}
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <p class="text-gov-green-700 text-sm font-semibold"><i class="fas fa-wand-magic-sparkles mr-1"></i> التصنيف الذكي</p>
+                <p class="text-gov-gray-600 text-sm mt-1">تصنيف أولي استشاري بناءً على بيانات الشركة. لا يُعد قرارًا نهائيًا.</p>
+            </div>
+            <a href="{% url 'compliance:classification' %}"
+               class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm shrink-0">عرض التصنيف</a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">مستوى المخاطر</p>
+                <p class="font-bold text-gov-gray-800">{{ classification.risk_level_ar }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">الأطر المقترحة</p>
+                <p class="font-bold text-gov-gray-800">{{ classification.recommended_count }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">عدد الضوابط المتوقع</p>
+                <p class="font-bold text-gov-gray-800">{{ classification.total_expected_controls }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">ثقة التصنيف</p>
+                <p class="font-bold text-gov-gray-800">{{ classification.overall_confidence }}%</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Phase 6B — advisory control-applicability preview card (read-only) #}
+    {% if applicability %}
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <p class="text-gov-green-700 text-sm font-semibold"><i class="fas fa-list-check mr-1"></i> قابلية تطبيق الضوابط</p>
+                <p class="text-gov-gray-600 text-sm mt-1">تحليل استشاري لقابلية تطبيق الضوابط بناءً على بيانات الشركة. لا يقرر الامتثال.</p>
+            </div>
+            <a href="{% url 'compliance:applicability_preview' %}"
+               class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm shrink-0">عرض قابلية التطبيق</a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">إجمالي الضوابط</p>
+                <p class="font-bold text-gov-gray-800">{{ applicability.total_controls }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">قابلة للتطبيق</p>
+                <p class="font-bold text-gov-green-700">{{ applicability.total_applicable }}</p>
+            </div>
+            <div class="bg-gov-gray-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gov-gray-500">مستوى الثقة</p>
+                <p class="font-bold text-gov-gray-800">{{ applicability.overall_confidence }}%</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Progress + next recommended action -->
+    <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 md:col-span-1">
+            <p class="text-gov-gray-500 text-sm">نسبة الإنجاز</p>
+            <p class="text-3xl font-bold text-gov-green-800">{{ progress.percentage }}%</p>
+            <p class="text-xs text-gov-gray-500 mt-1">{{ progress.completed }} من {{ progress.total }} مراحل مكتملة</p>
+            <div class="w-full bg-gov-gray-200 rounded-full h-2 mt-3">
+                <div class="bg-gov-green-600 h-2 rounded-full" style="width: {{ progress.percentage }}%"></div>
+            </div>
+        </div>
+        <div class="bg-gov-green-50 rounded-xl p-5 shadow-sm border border-gov-green-200 md:col-span-2">
+            <p class="text-gov-green-700 text-sm"><i class="fas fa-arrow-right mr-1"></i> الخطوة التالية الموصى بها</p>
+            <p class="text-lg font-semibold text-gov-green-900 mt-1">{{ next_action.message }}</p>
+            <a href="{% url next_action.action_url_name %}"
+               class="inline-block mt-3 bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">
+                {{ next_action.action_label }}
+            </a>
+        </div>
+    </div>
+
+    <!-- Workflow stages -->
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-hidden">
+        <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold">مراحل العمل</div>
+        <ul class="divide-y divide-gov-gray-100">
+            {% for s in stages %}
+            <li class="px-4 py-3 flex items-center justify-between gap-4">
+                <div class="flex items-start gap-3 min-w-0">
+                    <span class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
+                        {% if s.status == 'completed' %}bg-gov-green-100 text-gov-green-800
+                        {% elif s.status == 'in_progress' %}bg-gov-gray-200 text-gov-gray-700
+                        {% elif s.status == 'needs_attention' %}bg-amber-100 text-amber-800
+                        {% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">{{ s.order }}</span>
+                    <div class="min-w-0">
+                        <p class="font-medium text-gov-gray-800">{{ s.title }}</p>
+                        <p class="text-xs text-gov-gray-500">{{ s.explanation }}</p>
+                        <p class="text-xs text-gov-gray-400 mt-0.5">{{ s.metric }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <span class="px-2 py-0.5 rounded text-xs font-medium
+                        {% if s.status == 'completed' %}bg-gov-green-100 text-gov-green-800
+                        {% elif s.status == 'in_progress' %}bg-gov-gray-200 text-gov-gray-700
+                        {% elif s.status == 'needs_attention' %}bg-amber-100 text-amber-800
+                        {% else %}bg-gov-gray-100 text-gov-gray-500{% endif %}">
+                        {% if s.status == 'completed' %}مكتملة
+                        {% elif s.status == 'in_progress' %}قيد التنفيذ
+                        {% elif s.status == 'needs_attention' %}بحاجة لاهتمام
+                        {% else %}لم تبدأ{% endif %}
+                    </span>
+                    <a href="{% url s.action_url_name %}" class="text-gov-green-700 hover:underline text-xs whitespace-nowrap">{{ s.action_label }}</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="rounded-lg p-3 text-sm flex items-center justify-between gap-3"
+         style="{% if subscription_active %}background:#E9F0FD;border:1px solid #CDDDF5;color:#1E56C9;{% else %}background:#f1eadb;border:1px solid #dcc79a;color:#8a6a1f;{% endif %}">
+        <span>
+            <i class="fas {% if subscription_active %}fa-unlock{% else %}fa-lock{% endif %} mr-1"></i>
+            {% if subscription_active %}التقارير مفعّلة{% else %}التقارير تتطلب اشتراكًا فعّالًا{% endif %}
+        </span>
+        <a href="{% url 'compliance:reports_index' %}" class="underline whitespace-nowrap">التقارير</a>
+    </div>
+
+    <!-- Phase 5B — Continuous Monitoring summary + link (informational) -->
+    <div class="bg-white rounded-lg border border-gov-gray-100 shadow-sm p-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-4 flex-wrap text-sm">
+            <span class="font-semibold text-gov-green-800">المراقبة المستمرة</span>
+            <span class="text-gov-gray-600">فحوص نشطة: <strong>{{ monitoring_summary.active_checks }}</strong></span>
+            <span class="text-amber-700">مستحقّة الآن: <strong>{{ monitoring_summary.due }}</strong></span>
+            <span class="text-gov-green-700">نتائج مفتوحة: <strong>{{ monitoring_summary.open_findings }}</strong></span>
+            <span class="text-gov-gray-500">آخر نتيجة: {{ monitoring_summary.last_result }}</span>
+        </div>
+        <a href="{% url 'monitoring:overview' %}" data-busy="جارٍ تحميل المراقبة..."
+           class="text-gov-green-700 hover:underline text-sm whitespace-nowrap">فتح المراقبة</a>
+    </div>
+
+    <!-- Phase 5A — Risk register summary + link -->
+    <div class="bg-white rounded-lg border border-gov-gray-100 shadow-sm p-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-4 flex-wrap text-sm">
+            <span class="font-semibold text-gov-green-800">سجل المخاطر وخطة المعالجة</span>
+            <span class="text-gov-gray-600">مفتوحة: <strong>{{ risk_counts.open }}</strong></span>
+            <span class="text-red-700">عالية/حرجة: <strong>{{ risk_counts.high_critical }}</strong></span>
+            <span class="text-amber-700">مهام متأخرة: <strong>{{ risk_counts.overdue_tasks }}</strong></span>
+            <span class="text-gov-green-700">مُعالَجة: <strong>{{ risk_counts.mitigated }}</strong></span>
+        </div>
+        <a href="{% url 'risk:list' %}" data-busy="جارٍ تحميل سجل المخاطر..."
+           class="text-gov-green-700 hover:underline text-sm whitespace-nowrap">فتح السجل</a>
+    </div>
+
+    <details class="bg-white rounded-lg border border-gov-gray-100 shadow-sm">
+        <summary class="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gov-green-800">عرض المسار التفصيلي</summary>
+        <div class="px-4 pb-4">
+            {% include "compliance/_workflow_stepper.html" %}
+        </div>
+    </details>
+
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm">
+        <i class="fas fa-info-circle"></i>
+        القرار النهائي للامتثال يتّخذه المدقّق فقط. التحليل الآلي استشاري، والضوابط غير المُراجَعة لا تُحتسب كمطابِقة.
+    </div>
+</div>
+{% endblock %}

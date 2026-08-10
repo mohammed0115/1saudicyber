@@ -1,0 +1,362 @@
+# CyberTrust KSA — Official control dataset (Phase 2J)
+# Source of truth: NCA TCC official PDF (NOT the legacy 334 Excel).
+framework_version_code: NCA-TCC-1-2021
+source_document_title: NCA Telework Cybersecurity Controls (TCC) 1:2021
+expected_control_count: 21
+notes: >-
+  Controls extracted from the official NCA TCC PDF (pdftotext -raw) with subdomain header tracking and
+  an Appendices cutoff (the "Relationship with ECC" mapping appendix is excluded). Count matches the 21
+  Main Controls declared in the PDF. Domain names are verbatim phrases from the source, ordered per the
+  standard NCA structure. NOT derived from the legacy 334 Excel.
+controls:
+- control_id: 1-1-1
+  external_reference: NCA TCC 1-1-1
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity Policies and Procedures
+  title: Referring to control 1-3-1 in the ECC, cybersecurity policies and procedures…
+  statement: >-
+    Referring to control 1-3-1 in the ECC, cybersecurity policies and procedures must include the following:
+    1-1-1-1 Defining and documenting the telework cybersecurity requirements and controls as part of the
+    organization’s cybersecurity policies.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Governance / Cybersecurity Policies
+    and Procedures / 1-1-1
+  tags: []
+- control_id: 1-2-1
+  external_reference: NCA TCC 1-2-1
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity Risk Management
+  title: In addition to the controls within subdomain 1-5 in the ECC, requirements for…
+  statement: >-
+    In addition to the controls within subdomain 1-5 in the ECC, requirements for cybersecu- rity risk
+    management should include at least the following: 1-2-1-1 Assessment of the cybersecurity risks for
+    telework systems, once per year at least. 1-2-1-2 Assessment of cybersecurity risks during planning
+    and before permitting telework for any service or system. 1-2-1-3 Including the cybersecurity risks
+    related to telework systems and its related services and systems in the entity's cybersecurity risk
+    register, and monitoring it at least once a year. Cybersecurity Governance Document Classification:
+    Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Governance / Cybersecurity Risk Management
+    / 1-2-1
+  tags: []
+- control_id: 1-3-1
+  external_reference: NCA TCC 1-3-1
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity Awareness and Training Program
+  title: In addition to the sub-controls within control 1-10-3 in the ECC, the…
+  statement: >-
+    In addition to the sub-controls within control 1-10-3 in the ECC, the cybersecurity aware- ness program
+    must cover the awareness about the potential cyber risks and threats related to telework, including
+    the following: 1-3-1-1 Secure use of telework devices and how to protect them. 1-3-1-2 Secure handling
+    of identities and passwords. 1-3-1-3 Protection of the stored data on the telework devices, and to
+    be handled based on its classification. 1-3-1-4 Secure handling of applications and solutions used
+    for telework such as: virtual conferencing and collaboration, and file sharing solutions. 1-3-1-5
+    Secure handling of home networks, making sure it is configured in a secure way. 1-3-1-6 Avoidance
+    of teleworking using unreliable public devices or networks or while in public places. 1-3-1-7 Unauthorized
+    physical access, loss, theft, and sabotage of technical assets and telework systems. 1-3-1-8 To Communicate
+    directly with the cybersecurity department If a cybersecurity threat is suspected.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Governance / Cybersecurity Awareness
+    and Training Program / 1-3-1
+  tags: []
+- control_id: 1-3-2
+  external_reference: NCA TCC 1-3-2
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity Awareness and Training Program
+  title: In addition to the sub-controls within control 1-10-4 in the ECC, employees…
+  statement: >-
+    In addition to the sub-controls within control 1-10-4 in the ECC, employees must be trained with the
+    required technical skills to ensure the implementation of the cybersecuri- ty requirements when handling
+    telework systems. Sharing Notice: White Document Classification: Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Governance / Cybersecurity Awareness
+    and Training Program / 1-3-2
+  tags: []
+- control_id: 2-1-1
+  external_reference: NCA TCC 2-1-1
+  domain: Cybersecurity Defense
+  subdomain: Asset Management
+  title: In addition to the controls within subdomain 2-1 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the controls within subdomain 2-1 in the ECC, cybersecurity requirements for asset
+    management related to telework systems should include at least the following: 2-1-1-1 Identifying
+    and maintaining an annually-updated Inventory of informa- tion and technology assets of the telework
+    systems.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Asset Management / 2-1-1
+  tags: []
+- control_id: 2-2-1
+  external_reference: NCA TCC 2-2-1
+  domain: Cybersecurity Defense
+  subdomain: Identity and Access Management
+  title: In addition to the sub-controls within control 2-2-3 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the sub-controls within control 2-2-3 in the ECC, cybersecurity require- ments for
+    identity and access management related to telework systems shall include at least the following: 2-2-1-1
+    Managing telework access rights based on need, considering the sensitivi- ty of the systems, the level
+    of access rights and the type of devices used by employees for telework. 2-2-1-2 Restricting remote
+    access for the same user from multiple computers at the same time (Concurrent Logins). 2-2-1-3 Using
+    secure standards to manage identities and passwords used in the telework systems.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Identity and Access Management
+    / 2-2-1
+  tags: []
+- control_id: 2-2-2
+  external_reference: NCA TCC 2-2-2
+  domain: Cybersecurity Defense
+  subdomain: Identity and Access Management
+  title: With reference to the ECC subcontrol 2-2-3-5, user’s identities and access…
+  statement: >-
+    With reference to the ECC subcontrol 2-2-3-5, user’s identities and access rights used for telework
+    must be reviewed at least once every year. Cybersecurity Defense Document Classification: Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Identity and Access Management
+    / 2-2-2
+  tags: []
+- control_id: 2-3-1
+  external_reference: NCA TCC 2-3-1
+  domain: Cybersecurity Defense
+  subdomain: Information System and Processing Facilities Protection
+  title: In addition to the subcontrols in the ECC control 2-3-3, cybersecurity…
+  statement: >-
+    In addition to the subcontrols in the ECC control 2-3-3, cybersecurity requirements for protecting
+    telework systems and information processing facilities must include at least the following: 2-3-1-1
+    Applying updates and security patches for telework systems at least once every three months. 2-3-1-2
+    Reviewing telework systems’ configurations and hardening at least once every year. 2-3-1-3 Reviewing
+    and changing default configurations, and ensuring the removal of hard-coded, backdoor and/or default
+    passwords. 2-3-1-4 Securing Session Management which includes the session authenticity, lockout, and
+    timeout. 2-3-1-5 Restricting the activation of the features and services of the telework sys- tems
+    based on needs, provided that potential cyber risks are analyzed in case there is a need to activate
+    them.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Information System and Processing
+    Facilities Protection / 2-3-1
+  tags: []
+- control_id: 2-4-1
+  external_reference: NCA TCC 2-4-1
+  domain: Cybersecurity Defense
+  subdomain: Network Security Management
+  title: In addition to the subcontrols in the ECC control 2-5-3, cybersecurity…
+  statement: >-
+    In addition to the subcontrols in the ECC control 2-5-3, cybersecurity requirements of telework systems’
+    network security management must include at least the following: 2-4-1-1 Restrictions on network services,
+    protocols and ports used to access remotely, specifically to internal systems and to only be opened
+    based on need. 2-4-1-2 Reviewing firewall rules and configurations, at least once every year. 2-4-1-3
+    Protecting against Distributed Denial of Service Attack (DDoS) attacks to limit risks arising from
+    these attacks. 2-4-1-4 Protecting against Advanced Persistent Threats (APT) at the network layer.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Network Security Management
+    / 2-4-1
+  tags: []
+- control_id: 2-5-1
+  external_reference: NCA TCC 2-5-1
+  domain: Cybersecurity Defense
+  subdomain: Mobile Device Security
+  title: In addition to the sub-controls within control 2-6-3 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the sub-controls within control 2-6-3 in the ECC, cybersecurity require- ments for
+    mobile device security related to telework systems shall include at least the following: 2-5-1-1 Central
+    management of mobile devices and BYODs using a Mobile De- vice Management system (MDM). 2-5-1-2 Applying
+    updates and security patches on mobile devices, at least once every month. Sharing Notice: White Document
+    Classification: Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Mobile Device Security /
+    2-5-1
+  tags: []
+- control_id: 2-6-1
+  external_reference: NCA TCC 2-6-1
+  domain: Cybersecurity Defense
+  subdomain: Data and Information Protection
+  title: In addition to the subcontrols in the ECC control 2-7-3, cybersecurity…
+  statement: >-
+    In addition to the subcontrols in the ECC control 2-7-3, cybersecurity requirements for protecting
+    and handling data and information must include at least the following: 2-6-1-1 Identifying classified
+    data, according to the relevant regulations, that can be used, accessed or dealt with through telework
+    systems. 2-6-1-2 Protecting classified data, which was identified in control 2-6-1-1, using controls
+    such as: not allowing the use of a specific type of classified data, or by the use of technology (e.g.
+    Data leakage Prevention), such controls and technologies can be determined by analyzing the cyber
+    risks of the organization.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Data and Information Protection
+    / 2-6-1
+  tags: []
+- control_id: 2-7-1
+  external_reference: NCA TCC 2-7-1
+  domain: Cybersecurity Defense
+  subdomain: Cryptography
+  title: In addition to the sub-controls within control 2-8-3 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the sub-controls within control 2-8-3 in the ECC, cybersecurity require- ments for
+    cryptography related to telework systems shall include at least the following: 2-7-1-1 The use of
+    updated and secure methods and algorithms for encryption over the entire network connection used for
+    telework, according to the Advanced level within the National Cryptography Standards (NCS 1:2020).
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Cryptography / 2-7-1
+  tags: []
+- control_id: 2-8-1
+  external_reference: NCA TCC 2-8-1
+  domain: Cybersecurity Defense
+  subdomain: Backup and Recovery Management
+  title: In addition to the subcontrols in the ECC control 2-9-3, cybersecurity…
+  statement: >-
+    In addition to the subcontrols in the ECC control 2-9-3, cybersecurity requirements for backup and
+    recovery management must include at least the following: 2-8-1-1 Performing backup within planned
+    intervals, according to the organiza- tion’s risk assessment.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Backup and Recovery Management
+    / 2-8-1
+  tags: []
+- control_id: 2-8-2
+  external_reference: NCA TCC 2-8-2
+  domain: Cybersecurity Defense
+  subdomain: Backup and Recovery Management
+  title: With reference to the ECC subcontrol 2-9-3-3, a periodical test must be…
+  statement: >-
+    With reference to the ECC subcontrol 2-9-3-3, a periodical test must be conducted at least once every
+    six months in order to determine the efficiency of recovering telework systems backups. Document Classification:
+    Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Backup and Recovery Management
+    / 2-8-2
+  tags: []
+- control_id: 2-9-1
+  external_reference: NCA TCC 2-9-1
+  domain: Cybersecurity Defense
+  subdomain: Vulnerabilities Management
+  title: In addition to the subcontrols in the ECC control 2-10-3, cybersecurity…
+  statement: >-
+    In addition to the subcontrols in the ECC control 2-10-3, cybersecurity requirements for technical
+    vulnerabilities management of telework systems must include at least the follow- ing: 2-9-1-1 Assessing
+    vulnerabilities on technical components of telework systems, and to be classified based on criticality
+    at least once every three months. 2-9-1-2 Remediating vulnerabilities for telework systems, at least
+    once every three months.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Vulnerabilities Management
+    / 2-9-1
+  tags: []
+- control_id: 2-10-1
+  external_reference: NCA TCC 2-10-1
+  domain: Cybersecurity Defense
+  subdomain: Penetration Testing
+  title: In addition to the sub-controls within control 2-11-3 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the sub-controls within control 2-11-3 in the ECC, cybersecurity require- ments for
+    penetration testing related to telework systems shall include at least the follow- ing: 2-10-1-1 Scope
+    of penetration tests must cover all of the telework systems’ techni- cal components.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Penetration Testing / 2-10-1
+  tags: []
+- control_id: 2-10-2
+  external_reference: NCA TCC 2-10-2
+  domain: Cybersecurity Defense
+  subdomain: Penetration Testing
+  title: With reference to the ECC subcontrol 2-11-3-2, penetration tests must be…
+  statement: >-
+    With reference to the ECC subcontrol 2-11-3-2, penetration tests must be conducted on telework systems
+    at least once every year.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Penetration Testing / 2-10-2
+  tags: []
+- control_id: 2-11-1
+  external_reference: NCA TCC 2-11-1
+  domain: Cybersecurity Defense
+  subdomain: Cybersecurity Events Logs and Monitoring Management
+  title: In addition to the subcontrols in the ECC control 2-12-3, cybersecurity…
+  statement: >-
+    In addition to the subcontrols in the ECC control 2-12-3, cybersecurity requirements for event logs
+    and monitoring management for telework systems must include at least the following: 2-11-1-1 Activating
+    cybersecurity events logs on all technical components of tele- work systems. 2-11-1-2 Monitoring and
+    analyzing user behavior (UBA). 2-11-1-3 Monitoring telework systems events around the clock. 2-11-1-4
+    Updating and implementing cybersecurity monitoring procedures around the clock, to include monitoring
+    remote access operations, especially remote access from outside the Kingdom of Saudi Arabia, after
+    checking their authenticity. Sharing Notice: White Document Classification: Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Cybersecurity Events Logs
+    and Monitoring Management / 2-11-1
+  tags: []
+- control_id: 2-11-2
+  external_reference: NCA TCC 2-11-2
+  domain: Cybersecurity Defense
+  subdomain: Cybersecurity Events Logs and Monitoring Management
+  title: With reference to the ECC subcontrol 2-12-3-5, retention period of…
+  statement: >-
+    With reference to the ECC subcontrol 2-12-3-5, retention period of cybersecurity’s tele- work systems
+    event logs must be 12 months minimum, in accordance with relevant legisla- tive and regulatory requirements.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Cybersecurity Events Logs
+    and Monitoring Management / 2-11-2
+  tags: []
+- control_id: 2-12-1
+  external_reference: NCA TCC 2-12-1
+  domain: Cybersecurity Defense
+  subdomain: Cybersecurity Incident and Threat Management
+  title: In addition to the sub-controls within control 2-13-3 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the sub-controls within control 2-13-3 in the ECC, cybersecurity require- ments for
+    incident and threat management related to telework systems shall include at least the following: 2-12-1-1
+    Updating cyber security incidents response plans and contact informa- tion within the organization
+    in a way that is compatible with the telework situation and to ensure the ability to communicate and
+    the preparedness of the incident response teams. 2-12-1-2 Periodically obtaining and dealing with
+    threat intelligence information related to telework systems. 2-12-1-3 Addressing and implementing
+    the recommendations and alerts for cyber security incidents and threats issued by the Sector regulator
+    or by the National Cybersecurity Authority (NCA). Document Classification: Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Cybersecurity Defense / Cybersecurity Incident and
+    Threat Management / 2-12-1
+  tags: []
+- control_id: 3-1-1
+  external_reference: NCA TCC 3-1-1
+  domain: Third Party and Cloud Computing Cybersecurity
+  subdomain: Cloud Computing and Hosting Cybersecurity
+  title: In addition to the subcontrols in the ECC control 4-2-3, cybersecurity…
+  statement: >-
+    In addition to the subcontrols in the ECC control 4-2-3, cybersecurity requirements relat- ed to the
+    use of hosting and cloud computing services must include at least the following: 3-1-1-1 The location
+    of the hosted telework systems must be inside the Kingdom of Saudi Arabia. Third Party And Cloud Computing
+    Cybersecurity Sharing Notice: White Document Classification: Open Appendices
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Telework Cybersecurity Controls (TCC) 1:2021, Third Party and Cloud Computing Cybersecurity /
+    Cloud Computing and Hosting Cybersecurity / 3-1-1
+  tags: []

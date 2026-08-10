@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}حالة مراجعة المدقّق - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" class="bg-gov-gray-50" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:py-10 space-y-6">
+
+    {# ── Hero ── #}
+    <div class="flex items-start gap-4">
+      <div class="hidden sm:grid place-items-center w-14 h-14 rounded-2xl bg-gov-green-800 text-white shrink-0 shadow-sm">
+        <i class="fas fa-user-check text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gov-green-700 font-semibold text-sm">مراجعة الجاهزية</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gov-gray-800 mt-0.5">حالة مراجعة المدقّق</h1>
+        <p class="text-gov-gray-500 text-sm mt-1.5 max-w-2xl">متابعة تقدّم مراجعة المدقّق لملف شركتك. القرار المهني للمدقّق مرجعيّ — يمكنك المتابعة دون تعديله.</p>
+      </div>
+    </div>
+
+    {# ── Assigned auditor ── #}
+    <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-5 sm:p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">المدقّق المُسنَد</h2>
+      {% if assignment %}
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="grid place-items-center w-12 h-12 rounded-full bg-gov-green-50 text-gov-green-800 font-bold shrink-0">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="min-w-0">
+          <p class="font-semibold text-gov-gray-800">{{ assignment.auditor.user.get_full_name|default:assignment.auditor.user.username }}</p>
+          <p class="text-xs text-gov-gray-500 mt-0.5">
+            الحالة:
+            {% if assignment.status == 'accepted' %}<span class="text-gov-green-700 font-medium">مقبول ونشِط</span>
+            {% elif assignment.status == 'requested' %}<span style="color:#8a6a1f" class="font-medium">بانتظار قبول المدقّق</span>
+            {% elif assignment.status == 'completed' %}<span class="text-gov-green-700 font-medium">اكتملت المراجعة</span>
+            {% else %}{{ assignment.get_status_display }}{% endif %}
+            · النطاق: {{ assignment.get_scope_display }}
+          </p>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-sm text-gov-gray-500 bg-gov-gray-50 border border-gov-gray-100 rounded-xl p-4">
+        <i class="fas fa-circle-info me-1 text-gov-gray-400"></i> لم يُسنَد مدقّق لشركتك بعد. يتم الإسناد من إدارة المنصة بعد اكتمال أدلتك.
+      </div>
+      {% endif %}
+    </div>
+
+    {% if summary %}
+    {# ── Progress + verdict distribution ── #}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-4">
+        <div class="text-2xl font-bold text-gov-green-800">{{ summary.reviewed_controls }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">ضوابط مُراجَعة</div>
+      </div>
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-4">
+        <div class="text-2xl font-bold text-gov-gray-700">{{ summary.unreviewed_controls }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">بانتظار المراجعة</div>
+      </div>
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-4">
+        <div class="text-2xl font-bold" style="color:#8a6a1f">{{ summary.open_rfi }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">RFI مفتوح</div>
+      </div>
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-4">
+        <div class="text-2xl font-bold text-gov-green-800">{{ summary.controls_count }}</div>
+        <div class="text-xs text-gov-gray-500 mt-1">إجمالي الضوابط</div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-5 sm:p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">توزيع أحكام المدقّق</h2>
+      {% with v=summary.verdict_counts %}
+      <div class="flex flex-wrap gap-2 text-xs">
+        <span class="px-3 py-1.5 rounded-full bg-green-100 text-green-800 font-medium">ممتثل: {{ v.compliant }}</span>
+        <span class="px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 font-medium">ممتثل جزئيًا: {{ v.partially_compliant }}</span>
+        <span class="px-3 py-1.5 rounded-full bg-red-100 text-red-800 font-medium">غير ممتثل: {{ v.non_compliant }}</span>
+        <span class="px-3 py-1.5 rounded-full bg-sky-100 text-sky-800 font-medium">يحتاج أدلة: {{ v.needs_more_evidence }}</span>
+        <span class="px-3 py-1.5 rounded-full bg-gov-gray-200 text-gov-gray-600 font-medium">غير منطبق: {{ v.not_applicable }}</span>
+      </div>
+      {% endwith %}
+    </div>
+
+    {# ── Open RFIs ── #}
+    {% if open_rfis %}
+    <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm overflow-hidden">
+      <div class="px-5 sm:px-6 py-3.5 bg-gov-sand/10 border-b border-gov-sand/30 font-bold flex items-center justify-between" style="color:#8a6a1f">
+        <span><i class="fas fa-file-circle-question me-1"></i> طلبات معلومات مفتوحة تحتاج ردّك</span>
+        <a href="{% url 'auditor_portal:company_rfi_list' %}" class="text-xs font-semibold underline">فتح كل الطلبات</a>
+      </div>
+      <div class="divide-y divide-gov-gray-100">
+        {% for r in open_rfis %}
+        <div class="px-5 sm:px-6 py-3">
+          <p class="text-sm font-medium text-gov-gray-800">{{ r.title|default:"طلب استكمال" }}</p>
+          <p class="text-xs text-gov-gray-500 mt-0.5">الضابط: <span dir="ltr">{{ r.company_control.control.control_id }}</span></p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Recent verdicts ── #}
+    {% if recent_verdicts %}
+    <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm overflow-hidden">
+      <div class="px-5 sm:px-6 py-3.5 border-b border-gov-gray-100 text-gov-green-800 font-bold">أحدث أحكام المدقّق</div>
+      <div class="divide-y divide-gov-gray-100">
+        {% for v in recent_verdicts %}
+        <div class="px-5 sm:px-6 py-3 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm text-gov-gray-800"><span dir="ltr" class="font-mono text-xs">{{ v.company_control.control.control_id }}</span> — {% if v.company_control.control.title_ar %}{{ v.company_control.control.title_ar|truncatechars:50 }}{% else %}<span dir="ltr">{{ v.company_control.control.title|truncatechars:50 }}</span>{% endif %}</p>
+            <p class="text-xs text-gov-gray-400 mt-0.5">{{ v.updated_at|date:"Y-m-d H:i" }}</p>
+          </div>
+          <span class="shrink-0 text-xs px-2.5 py-1 rounded-full font-medium
+            {% if v.status == 'compliant' %}bg-green-100 text-green-800
+            {% elif v.status == 'partially_compliant' %}bg-amber-100 text-amber-800
+            {% elif v.status == 'non_compliant' %}bg-red-100 text-red-800
+            {% elif v.status == 'needs_more_evidence' %}bg-sky-100 text-sky-800
+            {% else %}bg-gov-gray-200 text-gov-gray-600{% endif %}">
+            {% if v.status == 'compliant' %}ممتثل{% elif v.status == 'partially_compliant' %}ممتثل جزئيًا{% elif v.status == 'non_compliant' %}غير ممتثل{% elif v.status == 'needs_more_evidence' %}يحتاج أدلة{% else %}غير منطبق{% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-10 text-center">
+      <i class="fas fa-hourglass-half text-gov-gray-300 text-4xl mb-3"></i>
+      <p class="text-gov-gray-500">لم تبدأ مراجعة المدقّق بعد. تظهر التفاصيل هنا بمجرد إسناد مدقّق وبدء المراجعة.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

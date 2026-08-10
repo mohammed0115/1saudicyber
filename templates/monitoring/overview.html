@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}المراقبة المستمرة - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gov-green-800">المراقبة المستمرة</h1>
+      <p class="text-gov-gray-600">صحّة الضوابط والمراجعات الدورية. هذه نظرة داخلية — لا تتّخذ قرار الامتثال.</p>
+    </div>
+    {% include "components/current_step_card.html" with guide=guide %}
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {% with s=summary %}
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-gov-green-800">{{ s.active_checks }}</div><div class="text-xs text-gov-gray-500 mt-1">فحوص نشطة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-amber-700">{{ s.due }}</div><div class="text-xs text-gov-gray-500 mt-1">مستحقّة الآن</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-red-700">{{ s.overdue }}</div><div class="text-xs text-gov-gray-500 mt-1">متأخرة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-red-700">{{ s.failed }}</div><div class="text-xs text-gov-gray-500 mt-1">فشلت</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-amber-700">{{ s.needs_review }}</div><div class="text-xs text-gov-gray-500 mt-1">تحتاج مراجعة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-gov-green-800">{{ s.open_findings }}</div><div class="text-xs text-gov-gray-500 mt-1">نتائج مفتوحة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-red-700">{{ s.critical_high_findings }}</div><div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة</div></div>
+      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-sm font-bold text-gov-gray-700">{{ s.last_run_at|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر تشغيل</div></div>
+      {% endwith %}
+    </div>
+
+    <div class="flex gap-3 text-sm">
+      <a href="{% url 'monitoring:checks' %}" class="text-gov-green-700 hover:underline">الفحوص</a>
+      <a href="{% url 'monitoring:findings' %}" class="text-gov-green-700 hover:underline">النتائج</a>
+      <span class="text-gov-gray-500">الاستحقاق التالي: {{ summary.next_due_at|default:"—" }}</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% load i18n %}
+{# Light (.au) field partial for the company registration re-skin. Renders label + widget + help + error. #}
+<div class="au-field">
+  <label{% if field.id_for_label %} for="{{ field.id_for_label }}"{% endif %}>{{ field.label }}{% if req %} <span class="au-req">*</span>{% endif %}</label>
+  {{ field }}
+  {% if field.help_text %}<div class="au-help">{{ field.help_text }}</div>{% endif %}
+  {% if field.errors %}<div class="au-err"><i class="fas fa-circle-exclamation" aria-hidden="true"></i><span>{{ field.errors|striptags }}</span></div>{% endif %}
+</div>

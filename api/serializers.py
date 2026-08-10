@@ -2,7 +2,9 @@
 from rest_framework import serializers
 
 from core.models import Company
-from compliance.models import Control, CompanyControl, Evidence
+from compliance.models import (
+    Control, CompanyControl, Evidence, ControlAssessment, EvidenceSubmission,
+)
 from monitoring.models import ComplianceScore, Alert
 from ai_engine.models import GapAnalysis
 
@@ -42,6 +44,31 @@ class EvidenceSerializer(serializers.ModelSerializer):
         model = Evidence
         fields = ['id', 'original_filename', 'file_type', 'file_size', 'status',
                   'ai_verdict', 'ocr_confidence', 'uploaded_at', 'analyzed_at']
+        read_only_fields = fields
+
+
+class ControlAssessmentSerializer(serializers.ModelSerializer):
+    """Phase 3G — the auditor's FINAL compliance decision per official control.
+    Modern replacement for the legacy CompanyControl view."""
+    control_code = serializers.CharField(source='control.control_id', read_only=True)
+    control_title = serializers.CharField(source='control.title', read_only=True)
+    framework = serializers.CharField(source='control.framework.code', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = ControlAssessment
+        fields = ['id', 'control_code', 'control_title', 'framework', 'status', 'status_display',
+                  'score', 'risk_level', 'confidence_level', 'remediation_required',
+                  'remediation_due_date', 'reviewed_at', 'updated_at']
+        read_only_fields = fields
+
+
+class EvidenceSubmissionSerializer(serializers.ModelSerializer):
+    """Upload-v2 evidence (modern replacement for the legacy Evidence view)."""
+    class Meta:
+        model = EvidenceSubmission
+        fields = ['id', 'original_filename', 'file_type', 'file_size', 'file_hash',
+                  'version', 'status', 'uploaded_at', 'notes']
         read_only_fields = fields
 
 

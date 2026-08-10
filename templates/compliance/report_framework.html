@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}تقرير الإطار - Cyber-5{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <a href="{% url 'compliance:reports_index' %}" class="text-gov-green-700 hover:underline text-sm">رجوع للتقارير</a>
+    <h1 class="text-2xl font-bold text-gov-green-800">{{ framework_version.framework.name }} — {{ framework_version.code }}</h1>
+    {% if framework_version.source_document %}<p class="text-xs text-gov-gray-500">المصدر: {{ framework_version.source_document.title }}</p>{% endif %}
+    {% if gap %}
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 text-sm">
+        <p>إجمالي منطبق: {{ gap.total_applicable }} | مطابق: {{ gap.counts.compliant }} | غير مطابق: {{ gap.counts.non_compliant }} | جزئي: {{ gap.counts.partially_compliant }} | يحتاج أدلة: {{ gap.counts.needs_more_evidence }} | غير مُراجَع: {{ gap.counts.not_reviewed }}</p>
+    </div>
+    {% endif %}
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="text-gov-gray-600"><tr><th class="text-right px-3 py-2">الضابط</th><th class="text-right px-3 py-2">العنوان</th><th class="text-right px-3 py-2">أدلة</th><th class="text-right px-3 py-2">التقييم</th></tr></thead>
+            <tbody class="divide-y divide-gov-gray-100">
+            {% for r in rows %}<tr><td class="px-3 py-1 font-mono text-xs">{{ r.control_id }}</td><td class="px-3 py-1">{{ r.title|truncatechars:60 }}</td><td class="px-3 py-1 text-center">{{ r.submission_count }}</td><td class="px-3 py-1 text-xs">{{ r.assessment_status }}</td></tr>
+            {% empty %}<tr><td colspan="4" class="px-3 py-6 text-center text-gov-gray-500">لا ضوابط.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm"><i class="fas fa-info-circle"></i> الضوابط غير المُراجَعة لا تُحتسب كمطابِقة.</div>
+</div>
+{% endblock %}

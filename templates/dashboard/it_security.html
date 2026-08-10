@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% block title %}IT Security Dashboard - CyberTrust KSA{% endblock %}
+{% load i18n %}
+{% block title %}لوحة تقنية وأمن المعلومات - Cyber-5{% endblock %}
 {% block content %}
 <div class="space-y-6">
     <div>
-        <h1 class="text-2xl font-bold text-gov-green-800">IT & Security Dashboard</h1>
-        <p class="text-gov-gray-600">{{ company.name }} — Technical Controls & Vulnerability Queue</p>
+        <h1 class="text-2xl font-bold text-gov-green-800">لوحة تقنية وأمن المعلومات</h1>
+        <p class="text-gov-gray-600">{{ company.name }} — الضوابط التقنية وطابور التنبيهات</p>
     </div>
 
     <!-- Alert Summary -->
@@ -14,7 +15,7 @@
                 <i class="fas fa-exclamation-circle text-red-600 text-2xl"></i>
                 <div>
                     <div class="text-2xl font-bold text-red-800">{{ critical_count }}</div>
-                    <div class="text-sm text-red-600">Critical Alerts</div>
+                    <div class="text-sm text-red-600">تنبيهات حرجة</div>
                 </div>
             </div>
         </div>
@@ -22,8 +23,8 @@
             <div class="flex items-center gap-3">
                 <i class="fas fa-shield-halved text-gov-green-600 text-2xl"></i>
                 <div>
-                    <div class="text-2xl font-bold text-gov-green-800">{{ technical_controls.count }}</div>
-                    <div class="text-sm text-gov-gray-600">Technical Controls</div>
+                    <div class="text-2xl font-bold text-gov-green-800">{{ technical_total }}</div>
+                    <div class="text-sm text-gov-gray-600">إجمالي الضوابط التقنية</div>
                 </div>
             </div>
         </div>
@@ -31,8 +32,8 @@
             <div class="flex items-center gap-3">
                 <i class="fas fa-check-double text-green-600 text-2xl"></i>
                 <div>
-                    <div class="text-2xl font-bold text-green-700">{{ technical_controls.count }}</div>
-                    <div class="text-sm text-gov-gray-600">Monitored Systems</div>
+                    <div class="text-2xl font-bold text-green-700">{{ technical_compliant }}</div>
+                    <div class="text-sm text-gov-gray-600">ضوابط تقنية ممتثلة</div>
                 </div>
             </div>
         </div>
@@ -41,7 +42,7 @@
     <!-- Technical Controls -->
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100">
         <div class="p-6 border-b border-gov-gray-100">
-            <h2 class="font-bold text-gov-green-800"><i class="fas fa-cogs mr-2"></i> Technical Controls</h2>
+            <h2 class="font-bold text-gov-green-800"><i class="fas fa-cogs me-2"></i> الضوابط التقنية</h2>
         </div>
         <div class="divide-y divide-gov-gray-100">
             {% for cc in technical_controls|slice:":20" %}
@@ -53,12 +54,16 @@
                 <span class="text-xs px-2.5 py-1 rounded-full font-medium
                     {% if cc.status == 'compliant' %}bg-green-100 text-green-800
                     {% elif cc.status == 'in_progress' %}bg-yellow-100 text-yellow-800
-                    {% else %}bg-gray-100 text-gray-600{% endif %}">
-                    {{ cc.get_status_display }}
+                    {% else %}bg-gov-gray-100 text-gov-gray-600{% endif %}">
+                    {% if cc.status == 'compliant' %}ممتثل
+                    {% elif cc.status == 'in_progress' %}قيد التنفيذ
+                    {% elif cc.status == 'non_compliant' %}غير ممتثل
+                    {% elif cc.status == 'not_started' %}لم يبدأ
+                    {% else %}{{ cc.get_status_display }}{% endif %}
                 </span>
             </div>
             {% empty %}
-            <div class="p-8 text-center text-gov-gray-500">No technical controls assigned yet.</div>
+            <div class="p-8 text-center text-gov-gray-500">لا توجد ضوابط تقنية مُسندة بعد.</div>
             {% endfor %}
         </div>
     </div>
@@ -66,19 +71,19 @@
     <!-- Recent Alerts -->
     <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100">
         <div class="p-6 border-b border-gov-gray-100">
-            <h2 class="font-bold text-gov-green-800"><i class="fas fa-bell mr-2"></i> Security Alerts</h2>
+            <h2 class="font-bold text-gov-green-800"><i class="fas fa-bell me-2"></i> تنبيهات الأمن</h2>
         </div>
         <div class="divide-y divide-gov-gray-100">
             {% for alert in alerts %}
             <div class="p-4 flex items-center gap-3">
-                <div class="w-2 h-2 rounded-full {% if alert.severity == 'critical' %}bg-red-500{% elif alert.severity == 'high' %}bg-orange-500{% else %}bg-yellow-500{% endif %}"></div>
+                <div class="w-2 h-2 rounded-full {% if alert.severity == 'critical' %}bg-red-500{% elif alert.severity == 'high' %}bg-amber-500{% else %}bg-yellow-500{% endif %}"></div>
                 <div class="flex-1">
                     <div class="text-sm font-medium text-gov-gray-800">{{ alert.title }}</div>
-                    <div class="text-xs text-gov-gray-500">{{ alert.created_at|timesince }} ago</div>
+                    <div class="text-xs text-gov-gray-500">منذ {{ alert.created_at|timesince }}</div>
                 </div>
             </div>
             {% empty %}
-            <div class="p-8 text-center text-gov-gray-500">No security alerts.</div>
+            <div class="p-8 text-center text-gov-gray-500">لا توجد تنبيهات أمنية.</div>
             {% endfor %}
         </div>
     </div>

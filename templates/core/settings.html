@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}الإعدادات - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" class="bg-gov-gray-50" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 lg:py-10 space-y-6">
+
+    {# ── Hero ── #}
+    <div class="flex items-start gap-4">
+      <div class="hidden sm:grid place-items-center w-14 h-14 rounded-2xl bg-gov-green-800 text-white shrink-0 shadow-sm">
+        <i class="fas fa-gear text-xl"></i>
+      </div>
+      <div>
+        <p class="text-gov-green-700 font-semibold text-sm">الإعدادات</p>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gov-gray-800 mt-0.5">إعدادات الشركة</h1>
+        <p class="text-gov-gray-500 text-sm mt-1.5">ملف الشركة، الأمان، الفريق، والبيانات — في مكان واحد.</p>
+      </div>
+    </div>
+
+    {# ── Company profile (read-only summary) ── #}
+    <section class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-5 sm:p-6">
+      <h2 class="font-bold text-gov-green-800 mb-4">ملف الشركة</h2>
+      <div class="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+        <div><span class="text-gov-gray-500">الاسم:</span> <span class="font-medium text-gov-gray-800">{{ company.name_ar|default:company.name }}</span></div>
+        <div><span class="text-gov-gray-500">السجل التجاري:</span> <span dir="ltr" class="font-medium text-gov-gray-800">{{ company.cr_number|default:"—" }}</span></div>
+        <div><span class="text-gov-gray-500">القطاع:</span> <span class="font-medium text-gov-gray-800">{{ company.get_sector_display|default:company.sector|default:"—" }}</span></div>
+        <div><span class="text-gov-gray-500">الحجم:</span> <span class="font-medium text-gov-gray-800">{{ company.get_size_display|default:company.size|default:"—" }}</span></div>
+        <div><span class="text-gov-gray-500">المدينة:</span> <span class="font-medium text-gov-gray-800">{{ company.city|default:"—" }}</span></div>
+        <div><span class="text-gov-gray-500">بريد التواصل:</span> <span dir="ltr" class="font-medium text-gov-gray-800">{{ company.contact_email|default:"—" }}</span></div>
+      </div>
+    </section>
+
+    {# ── Settings tiles ── #}
+    <div class="grid sm:grid-cols-2 gap-4">
+      {# Security / MFA #}
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-5 flex flex-col">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="grid place-items-center w-9 h-9 rounded-xl bg-gov-green-50 text-gov-green-700 shrink-0"><i class="fas fa-shield-halved"></i></span>
+          <h3 class="font-bold text-gov-gray-800">الأمان والتحقق بخطوتين</h3>
+        </div>
+        <p class="text-sm text-gov-gray-500 flex-1 mt-1">
+          {% if mfa_enabled %}<span class="text-gov-green-700 font-medium"><i class="fas fa-circle-check me-1"></i>MFA مُفعّل</span> — حسابك محميّ بالتحقق بخطوتين.
+          {% else %}التحقق بخطوتين غير مُفعّل. نوصي بتفعيله لحماية حسابك.{% endif %}
+        </p>
+        <a href="{% url 'core:mfa_setup' %}" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold {% if mfa_enabled %}text-gov-gray-600 hover:text-gov-gray-800{% else %}text-white bg-gov-green-800 hover:bg-gov-green-900 px-4 py-2 rounded-xl{% endif %} transition">
+          {% if mfa_enabled %}إدارة التحقق بخطوتين{% else %}<i class="fas fa-key"></i> تفعيل التحقق بخطوتين{% endif %}
+        </a>
+      </div>
+
+      {# Team #}
+      {% if is_company_admin %}
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-5 flex flex-col">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="grid place-items-center w-9 h-9 rounded-xl bg-gov-green-50 text-gov-green-700 shrink-0"><i class="fas fa-users"></i></span>
+          <h3 class="font-bold text-gov-gray-800">فريق العمل</h3>
+        </div>
+        <p class="text-sm text-gov-gray-500 flex-1 mt-1">أضِف زملاءك وادعهم للعمل على ملف الامتثال بأدوارهم.</p>
+        <a href="{% url 'core:team' %}" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-gov-green-700 hover:text-gov-green-900"><i class="fas fa-user-plus"></i> إدارة الفريق</a>
+      </div>
+      {% endif %}
+
+      {# Subscription #}
+      <div class="bg-white rounded-2xl border border-gov-gray-200 shadow-sm p-5 flex flex-col">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="grid place-items-center w-9 h-9 rounded-xl bg-gov-green-50 text-gov-green-700 shrink-0"><i class="fas fa-credit-card"></i></span>
+          <h3 class="font-bold text-gov-gray-800">الاشتراك والفوترة</h3>
+        </div>
+        <p class="text-sm text-gov-gray-500 flex-1 mt-1">اطّلع على خطتك الحالية والميزات وحدود الاستخدام.</p>
+        <a href="{% url 'billing:home' %}" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-gov-green-700 hover:text-gov-green-900"><i class="fas fa-arrow-left"></i> إدارة الاشتراك</a>
+      </div>
+
+      {# Danger zone — delete #}
+      {% if is_company_admin %}
+      <div class="bg-white rounded-2xl border border-red-200 shadow-sm p-5 flex flex-col">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="grid place-items-center w-9 h-9 rounded-xl bg-red-50 text-red-700 shrink-0"><i class="fas fa-triangle-exclamation"></i></span>
+          <h3 class="font-bold text-red-800">حذف بيانات الشركة</h3>
+        </div>
+        <p class="text-sm text-gov-gray-500 flex-1 mt-1">حذف نهائي لكل بيانات شركتك (حق الحذف — PDPL). لا يمكن التراجع.</p>
+        <a href="{% url 'core:delete_company_data' %}" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-red-700 hover:text-red-900"><i class="fas fa-trash"></i> حذف البيانات</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% load i18n %}
+{# Setup-phase stepper (Scenario 8/9) — pass step 4 (classification) or 5 (completed); steps 1-3 always done. #}
+<nav class="mb-8" aria-label="{% trans 'مراحل الإعداد' %}" data-au-reveal>
+  <!-- Desktop / tablet -->
+  <ol class="hidden md:flex items-start justify-center" style="max-width:900px;margin-inline:auto;">
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node is-done"><i class="fas fa-check text-xs" aria-hidden="true"></i></span>
+      <span class="au-step-label mt-2 is-done">{% trans "نوع الحساب" %}</span>
+    </li>
+    <li aria-hidden="true" style="flex:1 1 auto;height:2px;margin:16px 6px 0;" class="au-step-line is-done"></li>
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node is-done"><i class="fas fa-check text-xs" aria-hidden="true"></i></span>
+      <span class="au-step-label mt-2 is-done">{% trans "إنشاء الحساب" %}</span>
+    </li>
+    <li aria-hidden="true" style="flex:1 1 auto;height:2px;margin:16px 6px 0;" class="au-step-line is-done"></li>
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node is-done"><i class="fas fa-check text-xs" aria-hidden="true"></i></span>
+      <span class="au-step-label mt-2 is-done">{% trans "تأكيد البريد الإلكتروني" %}</span>
+    </li>
+    <li aria-hidden="true" style="flex:1 1 auto;height:2px;margin:16px 6px 0;" class="au-step-line is-done"></li>
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node{% if step > 4 %} is-done{% else %} is-active{% endif %}" aria-current="{% if step == 4 %}step{% endif %}">{% if step > 4 %}<i class="fas fa-check text-xs" aria-hidden="true"></i>{% else %}4{% endif %}</span>
+      <span class="au-step-label mt-2{% if step > 4 %} is-done{% else %} is-active{% endif %}">{% trans "نطاق الامتثال والتصنيف" %}</span>
+    </li>
+    <li aria-hidden="true" style="flex:1 1 auto;height:2px;margin:16px 6px 0;" class="au-step-line{% if step > 4 %} is-done{% endif %}"></li>
+    <li class="flex flex-col items-center" style="flex:0 0 auto;">
+      <span class="au-node{% if step == 5 %} is-active{% endif %}" aria-current="{% if step == 5 %}step{% endif %}">5</span>
+      <span class="au-step-label mt-2{% if step == 5 %} is-active{% endif %}">{% trans "إكمال الإعداد" %}</span>
+    </li>
+  </ol>
+  <!-- Mobile: compact -->
+  <div class="md:hidden flex items-center justify-between au-card" style="padding:.7rem 1rem;">
+    <span class="au-node is-active" style="width:30px;height:30px;font-size:.82rem;">{{ step }}</span>
+    <div class="text-end">
+      <div class="text-xs au-muted">{% blocktrans %}الخطوة {{ step }} من 5{% endblocktrans %}</div>
+      <div class="text-sm font-semibold au-brand">
+        {% if step == 5 %}{% trans "إكمال الإعداد" %}{% else %}{% trans "نطاق الامتثال والتصنيف" %}{% endif %}
+      </div>
+    </div>
+  </div>
+</nav>

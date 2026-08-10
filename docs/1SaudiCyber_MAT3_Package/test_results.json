@@ -1,0 +1,303 @@
+{
+  "S1_1.1": {
+    "scenario": "S1",
+    "step": "1.1",
+    "desc": "homepage loads (HTTP 200, no 500)",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S1_1.2": {
+    "scenario": "S1",
+    "step": "1.2",
+    "desc": "company registration form loads (HTTP 200, no 500)",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S1_1.3": {
+    "scenario": "S1",
+    "step": "1.3",
+    "desc": "auditor registration form loads (HTTP 200, no 500)",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S1_1.4": {
+    "scenario": "S1",
+    "step": "1.4",
+    "desc": "login page loads (HTTP 200, no 500)",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S1_1.5a": {
+    "scenario": "S1",
+    "step": "1.5a",
+    "desc": "privacy policy loads (HTTP 200, no 500)",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S1_1.5b": {
+    "scenario": "S1",
+    "step": "1.5b",
+    "desc": "terms of use loads (HTTP 200, no 500)",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S1_1.6": {
+    "scenario": "S1",
+    "step": "1.6",
+    "desc": "Language switch (AR/EN content present)",
+    "passed": true,
+    "notes": ""
+  },
+  "S2_2.3": {
+    "scenario": "S2",
+    "step": "2.3",
+    "desc": "Company login → dashboard",
+    "passed": true,
+    "notes": "url=https://cyber-5.com/dashboard/"
+  },
+  "S2_2.4": {
+    "scenario": "S2",
+    "step": "2.4",
+    "desc": "Company blocked from /platform-admin/",
+    "passed": true,
+    "notes": "status=403, url=https://cyber-5.com/platform-admin/, has_admin_content=False"
+  },
+  "S3_3.1": {
+    "scenario": "S3",
+    "step": "3.1",
+    "desc": "Billing page loads",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S3_3.6a": {
+    "scenario": "S3",
+    "step": "3.6a",
+    "desc": "No Moyasar live keys exposed in billing page",
+    "passed": false,
+    "notes": "EXPOSED!"
+  },
+  "S3_3.6b": {
+    "scenario": "S3",
+    "step": "3.6b",
+    "desc": "No API keys exposed in billing page source",
+    "passed": true,
+    "notes": "clean"
+  },
+  "S3_3.2": {
+    "scenario": "S3",
+    "step": "3.2",
+    "desc": "Admin can access companies list in platform-admin",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S4_4.1": {
+    "scenario": "S4",
+    "step": "4.1",
+    "desc": "Intake/classification page loads",
+    "passed": true,
+    "notes": "status=200, url=https://cyber-5.com/compliance/intake/"
+  },
+  "S4_4.3": {
+    "scenario": "S4",
+    "step": "4.3",
+    "desc": "Framework review page loads",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S4_4.4": {
+    "scenario": "S4",
+    "step": "4.4",
+    "desc": "Control plan/controls page loads after classification",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "R2_5.1": {
+    "scenario": "R2",
+    "step": "5.1",
+    "desc": "Cloud-specific controls exist in system",
+    "passed": false,
+    "notes": "found: none"
+  },
+  "R2_5.2": {
+    "scenario": "R2",
+    "step": "5.2",
+    "desc": "Control applicability results model accessible",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S6_6.1": {
+    "scenario": "S6",
+    "step": "6.1",
+    "desc": "Evidence checklist page loads",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S6_6.5a": {
+    "scenario": "S6",
+    "step": "6.5a",
+    "desc": "No template injection {##} in evidence checklist",
+    "passed": true,
+    "notes": "clean"
+  },
+  "S6_6.2": {
+    "scenario": "S6",
+    "step": "6.2",
+    "desc": "Valid DOCX upload succeeds",
+    "passed": false,
+    "notes": "status=200, file_in_page=False"
+  },
+  "S6_6.3": {
+    "scenario": "S6",
+    "step": "6.3",
+    "desc": "EXE renamed as PDF rejected safely (no 500, not stored)",
+    "passed": true,
+    "notes": "status=200, stored=False"
+  },
+  "R1_7.5": {
+    "scenario": "R1",
+    "step": "7.5",
+    "desc": "AI disclaimer present on evidence upload page",
+    "passed": true,
+    "notes": "found"
+  },
+  "R1_7.4": {
+    "scenario": "R1",
+    "step": "7.4",
+    "desc": "Corrupt PDF handled safely (no 500 crash)",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S9_9.1": {
+    "scenario": "S9",
+    "step": "9.1",
+    "desc": "Gap analysis page loads",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S9_9.2": {
+    "scenario": "S9",
+    "step": "9.2",
+    "desc": "Risk register page loads",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S9_9.1b": {
+    "scenario": "S9",
+    "step": "9.1b",
+    "desc": "Reports/gap dashboard loads",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "R5_10.1": {
+    "scenario": "R5",
+    "step": "10.1",
+    "desc": "PDF report downloadable at /dashboard/reports/gap-analysis.pdf",
+    "passed": true,
+    "notes": ""
+  },
+  "R5_10.3": {
+    "scenario": "R5",
+    "step": "10.3",
+    "desc": "PDF does not claim official Certificate of Compliance",
+    "passed": true,
+    "notes": "clean"
+  },
+  "R5_10.2": {
+    "scenario": "R5",
+    "step": "10.2",
+    "desc": "Executive summary has readiness disclaimer (not fake cert)",
+    "passed": true,
+    "notes": "cert_claim=False, readiness=False"
+  },
+  "S11_11.1a": {
+    "scenario": "S11",
+    "step": "11.1a",
+    "desc": "Company blocked from /platform-admin/",
+    "passed": true,
+    "notes": "admin_content_visible=False"
+  },
+  "S11_11.1b": {
+    "scenario": "S11",
+    "step": "11.1b",
+    "desc": "Company blocked from /admin/",
+    "passed": true,
+    "notes": "url=https://cyber-5.com/admin/login/?next=/admin/, status=200"
+  },
+  "S11_11.2": {
+    "scenario": "S11",
+    "step": "11.2",
+    "desc": "IDOR protection: cannot access other company controls by ID manipulation",
+    "passed": true,
+    "notes": "protected"
+  },
+  "S11_11.3": {
+    "scenario": "S11",
+    "step": "11.3",
+    "desc": "API IDOR blocked (evidence analyze for other company)",
+    "passed": true,
+    "notes": "status=403"
+  },
+  "S11_11.4_/dashboard/": {
+    "scenario": "S11",
+    "step": "11.4_/dashboard/",
+    "desc": "Unauthenticated access to /dashboard/ redirects to login",
+    "passed": true,
+    "notes": "url=https://cyber-5.com/login/?next=/dashboard/"
+  },
+  "S11_11.4_/compliance/controls/": {
+    "scenario": "S11",
+    "step": "11.4_/compliance/controls/",
+    "desc": "Unauthenticated access to /compliance/controls/ redirects to login",
+    "passed": true,
+    "notes": "url=https://cyber-5.com/login/?next=/compliance/controls/"
+  },
+  "S11_11.4_/compliance/risks/": {
+    "scenario": "S11",
+    "step": "11.4_/compliance/risks/",
+    "desc": "Unauthenticated access to /compliance/risks/ redirects to login",
+    "passed": true,
+    "notes": "url=https://cyber-5.com/login/?next=/compliance/risks/"
+  },
+  "S11_11.4_/platform-admin/": {
+    "scenario": "S11",
+    "step": "11.4_/platform-admin/",
+    "desc": "Unauthenticated access to /platform-admin/ redirects to login",
+    "passed": true,
+    "notes": "url=https://cyber-5.com/login/?next=/platform-admin/"
+  },
+  "S12_12.1": {
+    "scenario": "S12",
+    "step": "12.1",
+    "desc": "Admin can access auditors management",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S12_12.3": {
+    "scenario": "S12",
+    "step": "12.3",
+    "desc": "Admin CRM dashboard loads",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S13_13.1": {
+    "scenario": "S13",
+    "step": "13.1",
+    "desc": "Monitoring/continuous page loads (no 500)",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S13_13.2": {
+    "scenario": "S13",
+    "step": "13.2",
+    "desc": "Compliance dashboard loads with real DB data",
+    "passed": true,
+    "notes": "status=200"
+  },
+  "S13_13.2b": {
+    "scenario": "S13",
+    "step": "13.2b",
+    "desc": "Compliance dashboard shows numeric data",
+    "passed": true,
+    "notes": ""
+  }
+}

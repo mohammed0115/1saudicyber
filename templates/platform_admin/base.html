@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% comment %}
+Phase 8D-3B-UI-FIX-A — dedicated Get Solution CRM / Platform Admin layout.
+
+Overrides base.html's `body` block so the customer/compliance navbar (Compliance
+Journey, Frameworks, Evidence, Reports, Monitoring) is NOT rendered on any
+platform-admin page. Keeps the shared <head>, styles, and busy overlay. Child
+pages provide their content via {% block content %}.
+{% endcomment %}
+{% block body %}
+  {% include "platform_admin/_crm_nav.html" %}
+
+  {# Internal console sub-header #}
+  <div class="bg-white border-b border-gov-gray-100" dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <p class="text-xs text-gov-gray-500">إدارة المنصة — شركة احصل الحل · وحدة التشغيل الداخلية</p>
+    </div>
+  </div>
+
+  {# Messages #}
+  {% if messages %}
+  <div class="max-w-7xl mx-auto px-4 mt-4" dir="rtl">
+    {% for message in messages %}
+    <div class="rounded-lg p-3 mb-2 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-gov-gray-100 text-gov-gray-700 border border-gov-gray-200{% endif %}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="bg-gov-green-950 text-gov-green-200 py-6 mt-12" dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+    <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+      <p>&copy; {% now "Y" %} Cyber-5 · CRM شركة احصل الحل — وحدة التشغيل الداخلية.</p>
+      <p class="mt-1 text-gov-green-400">إجراء داخلي تشغيلي فقط — لا يمثّل اعتمادًا رسميًا أو شهادة امتثال رسمية من أي جهة.</p>
+    </div>
+  </footer>
+{% endblock %}

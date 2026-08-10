@@ -12,9 +12,65 @@ from PIL import Image
 from pdf2image import convert_from_path
 
 
-def get_openai_client():
-    """Initialize OpenAI client."""
-    return OpenAI(api_key=settings.OPENAI_API_KEY)
+def ai_enabled():
+    """True only when an OpenAI API key is configured. External AI is advisory-only."""
+    return bool((getattr(settings, 'OPENAI_API_KEY', '') or '').strip())
+
+
+def ai_data_residency_mode():
+    """Current data-sovereignty mode: 'disabled' | 'external' | 'local'."""
+    return (getattr(settings, 'AI_DATA_RESIDENCY_MODE', 'disabled') or 'disabled').strip().lower()
+
+
+def external_ai_allowed():
+    """External LLM calls send text out of the Kingdom — require BOTH an explicit
+    'external' data-residency opt-in AND a configured API key. Default is fail-closed:
+    no evidence/company text leaves unless deliberately enabled (PDPL / NCA classification)."""
+    return ai_data_residency_mode() == 'external' and ai_enabled()
+
+
+def ai_advisory_state():
+    """(available, reason_ar) for the advisory AI service — an honest, user-facing state.
+
+    Distinguishes the two fail-closed reasons so the UI never shows a vague 'unavailable'.
+    """
+    if not ai_enabled():
+        return False, 'التحليل الآلي غير مُفعّل على هذه البيئة (لا يوجد مفتاح).'
+    if ai_data_residency_mode() != 'external':
+        return False, ('التحليل الآلي معطّل بسياسة سيادة البيانات — '
+                       'لتفعيله اضبط AI_DATA_RESIDENCY_MODE=external.')
+    return True, 'التحليل الاستشاري مُفعّل (استشاري فقط، ليس قرارًا نهائيًا).'
+
+
+class ExternalAINotAllowed(RuntimeError):
+    """The data-residency policy forbids constructing/using the external-AI client.
+
+    Central provider-boundary tripwire (P0-04): raised by get_openai_client() so a caller that
+    forgets its own residency guard cannot silently egress tenant data — it fails LOUD and safe.
+    """
+
+
+def get_openai_client(*, allow_public_reference=False):
+    """Construct the external OpenAI client — FAIL-CLOSED at the provider boundary (P0-04).
+
+    This is the single choke point for external-AI egress. By default it refuses to build the
+    client unless external_ai_allowed() (residency == 'external' AND a configured key), so no
+    tenant evidence/company text can leave the Kingdom just because a key exists or a caller
+    forgot its guard — the caller gets a loud ExternalAINotAllowed instead of a silent send.
+
+    allow_public_reference=True is the ONE documented exception: the translate_controls_ar
+    command sends PUBLIC regulatory control text (NCA/Aramco/SABIC standards — not tenant/company
+    data), so it is exempt from the tenant residency gate but STILL requires a configured key.
+    Nothing that handles tenant/company content may set this.
+    """
+    if allow_public_reference:
+        if not ai_enabled():
+            raise ExternalAINotAllowed('No API key configured for external AI.')
+    elif not external_ai_allowed():
+        raise ExternalAINotAllowed(
+            'External AI is disabled by the data-residency policy '
+            '(AI_DATA_RESIDENCY_MODE is not "external", or no API key).')
+    return OpenAI(api_key=settings.OPENAI_API_KEY, timeout=30.0, max_retries=2)
 
 
 # ============================================================
@@ -143,7 +199,13 @@ def classify_company(company_data):
     AI-powered company classification.
     Determines applicable controls and risk level based on company profile.
     """
-    client = get_openai_client()
+    # Fail-closed: no key OR external AI not opted-in (data residency) -> safe advisory
+    # result; company text never leaves the Kingdom unless AI_DATA_RESIDENCY_MODE=external.
+    if not external_ai_allowed():
+        return {'ai_available': False, 'residency_mode': ai_data_residency_mode(),
+                'risk_level': 'medium',
+                'summary_en': 'AI classification not available (external AI disabled by data-residency policy).',
+                'summary_ar': 'التصنيف الآلي غير متاح (الذكاء الخارجي معطّل بسياسة سيادة البيانات).'}
     start_time = time.time()
 
     user_prompt = f"""Analyze this company and classify its cybersecurity compliance requirements:
@@ -172,6 +234,7 @@ Provide your analysis in this JSON structure:
 }}"""
 
     try:
+        client = get_openai_client()
         response = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
@@ -191,7 +254,8 @@ Provide your analysis in this JSON structure:
         return result
 
     except Exception as e:
-        return {'error': str(e), 'risk_level': 'medium', 'summary_en': 'Classification pending', 'summary_ar': 'التصنيف قيد المعالجة'}
+        return {'error': str(e), 'ai_available': False, 'risk_level': 'medium',
+                'summary_en': 'Classification pending', 'summary_ar': 'التصنيف قيد المعالجة'}
 
 
 # ============================================================
@@ -214,7 +278,14 @@ def analyze_evidence(extracted_text, control_data):
     AI-powered evidence analysis.
     Analyzes extracted text against a specific compliance control.
     """
-    client = get_openai_client()
+    # Fail-closed on data residency: evidence text must NOT be sent to an external LLM
+    # unless AI_DATA_RESIDENCY_MODE=external (and a key is set). Otherwise return a safe
+    # "insufficient — pending human review" result. Never a final verdict.
+    if not external_ai_allowed():
+        return {'ai_available': False, 'residency_mode': ai_data_residency_mode(),
+                'verdict': 'insufficient_evidence', 'confidence': 0.0,
+                'reasoning_en': 'AI analysis not available (external AI disabled by data-residency policy) — pending human review.',
+                'reasoning_ar': 'التحليل الآلي غير متاح (الذكاء الخارجي معطّل بسياسة سيادة البيانات) — بانتظار مراجعة بشرية.'}
     start_time = time.time()
 
     user_prompt = f"""Analyze this evidence document against the following compliance control:
@@ -247,6 +318,7 @@ Provide your analysis in this JSON structure:
 }}"""
 
     try:
+        client = get_openai_client()
         response = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
@@ -266,7 +338,8 @@ Provide your analysis in this JSON structure:
         return result
 
     except Exception as e:
-        return {'error': str(e), 'verdict': 'insufficient_evidence', 'confidence': 0.0}
+        return {'error': str(e), 'ai_available': False,
+                'verdict': 'insufficient_evidence', 'confidence': 0.0}
 
 
 # ============================================================
@@ -286,7 +359,13 @@ def generate_gap_analysis(company_data, controls_status):
     """
     AI-powered gap analysis and predictive risk assessment.
     """
-    client = get_openai_client()
+    # Fail-closed on data residency: company data must not leave the Kingdom for an
+    # external LLM unless AI_DATA_RESIDENCY_MODE=external (and a key is set).
+    if not external_ai_allowed():
+        return {'ai_available': False, 'residency_mode': ai_data_residency_mode(),
+                'overall_risk_score': 0, 'compliance_score': 0,
+                'predicted_audit_outcome_en': 'AI gap analysis not available (external AI disabled by data-residency policy).',
+                'predicted_audit_outcome_ar': 'تحليل الفجوات الآلي غير متاح (الذكاء الخارجي معطّل بسياسة سيادة البيانات).'}
     start_time = time.time()
 
     user_prompt = f"""Perform a comprehensive gap analysis for this company:
@@ -325,6 +404,7 @@ Provide your analysis in this JSON structure:
 }}"""
 
     try:
+        client = get_openai_client()
         response = client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
@@ -341,4 +421,5 @@ Provide your analysis in this JSON structure:
         return result
 
     except Exception as e:
-        return {'error': str(e), 'overall_risk_score': 0, 'compliance_score': 0}
+        return {'error': str(e), 'ai_available': False,
+                'overall_risk_score': 0, 'compliance_score': 0}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}الاشتراك - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+    <div>
+      <p class="text-gov-green-700 font-semibold text-sm mb-1">الاشتراك والخطط</p>
+      <h1 class="text-2xl font-bold text-gov-green-800">اشتراك {{ company.name_ar|default:company.name }}</h1>
+    </div>
+
+    {% if messages %}{% for m in messages %}
+      <div class="rounded-lg p-3 text-sm {% if m.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% else %}bg-green-50 border border-green-200 text-green-800{% endif %}">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    {# Safe disclaimer #}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm leading-7">
+      <i class="fas fa-circle-info"></i>
+      يمنحك الاشتراك الوصول إلى أدوات الجاهزية الداخلية فقط. <strong>لا يُعد استخدام المنصة شهادة امتثال رسمية ولا يمثل اشتراكك اعتمادًا رسميًا أو حكوميًا</strong>.
+    </div>
+
+    {# Current subscription #}
+    <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gov-green-800 mb-3">الاشتراك الحالي</h2>
+      <div class="grid md:grid-cols-3 gap-3 text-sm">
+        <div><span class="text-gov-gray-500">الحالة:</span> <strong>{{ subscription.get_status_display }}</strong></div>
+        <div><span class="text-gov-gray-500">الخطة:</span> {{ subscription.plan.name|default:subscription.plan_name|default:"—" }}</div>
+        <div><span class="text-gov-gray-500">فعّال حتى:</span> {{ subscription.ends_at|date:"Y-m-d"|default:"—" }}</div>
+        {% if subscription.trial_ends_at %}<div><span class="text-gov-gray-500">انتهاء التجربة:</span> {{ subscription.trial_ends_at|date:"Y-m-d" }}</div>{% endif %}
+      </div>
+      <p class="text-sm text-gov-gray-600 mt-3">{{ status_message }}</p>
+
+      {% if pending_payment %}
+      <div class="mt-4 bg-gov-gray-100 border border-gov-gray-200 text-gov-gray-700 rounded-lg p-3 text-sm">
+        <i class="fas fa-hourglass-half"></i>
+        دفعة قيد الانتظار: {{ pending_payment.amount }} {{ pending_payment.currency }}.
+        {% if pending_payment.provider == 'moyasar' %}
+          {% if pending_payment.provider_payment_id %}
+            <span class="block mt-1">بانتظار التحقق من الدفع. سيُفعّل الاشتراك بعد تأكيد الدفع.</span>
+          {% else %}
+          <a href="{% url 'billing:checkout' payment_id=pending_payment.id %}"
+             class="inline-block mt-2 bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg font-medium">
+            <i class="fas fa-credit-card mr-1"></i> ادفع عبر Moyasar (تجريبي)
+          </a>
+          {% endif %}
+        {% else %}
+          <span class="block mt-1">الدفع اليدوي قيد المراجعة.</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if failed_payment %}
+      <div class="mt-4 bg-red-50 border border-red-200 text-red-800 rounded-lg p-3 text-sm">
+        <i class="fas fa-triangle-exclamation"></i>
+        لم تكتمل عملية الدفع السابقة.
+        <span class="block mt-1">يمكنك اختيار خطة والمحاولة مرة أخرى.</span>
+      </div>
+      {% endif %}
+
+      {% if can_start_trial %}
+      <form method="post" action="{% url 'billing:start_trial' %}" class="mt-4">
+        {% csrf_token %}
+        <input type="hidden" name="plan_code" value="trial">
+        <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
+          <i class="fas fa-play mr-1"></i> ابدأ فترة تجريبية
+        </button>
+      </form>
+      {% endif %}
+
+      {# Plan features + limits + usage #}
+      <div class="mt-6 border-t border-gov-gray-100 pt-4">
+        <h3 class="font-bold text-gov-green-800 mb-2 text-sm">ميزات خطتك</h3>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+          {% for f in feature_summary.features %}
+          <div class="flex items-center gap-2">
+            {% if f.enabled %}<i class="fas fa-check text-gov-green-700"></i>{% else %}<i class="fas fa-lock text-gov-gray-400"></i>{% endif %}
+            <span class="{% if not f.enabled %}text-gov-gray-400{% endif %}">{{ f.code }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <h3 class="font-bold text-gov-green-800 mt-4 mb-2 text-sm">حدود الاستخدام</h3>
+        <div class="grid sm:grid-cols-3 gap-3 text-sm">
+          <div class="rounded-lg bg-gov-gray-50 p-3">
+            <div class="font-bold text-gov-gray-800">الأدلة: {{ feature_summary.evidence_used|default:"0" }}{% if feature_summary.evidence_limit %} / {{ feature_summary.evidence_limit }}{% else %} / ∞{% endif %}</div>
+          </div>
+          <div class="rounded-lg bg-gov-gray-50 p-3">
+            <div class="font-bold text-gov-gray-800">تصدير PDF: {{ feature_summary.pdf_used|default:"0" }}{% if feature_summary.pdf_limit %} / {{ feature_summary.pdf_limit }}{% else %} / ∞{% endif %}</div>
+          </div>
+          <div class="rounded-lg bg-gov-gray-50 p-3">
+            <div class="font-bold text-gov-gray-800">الأطر: {{ feature_summary.frameworks_used|default:"0" }}{% if feature_summary.frameworks_limit %} / {{ feature_summary.frameworks_limit }}{% else %} / ∞{% endif %}</div>
+          </div>
+        </div>
+        <p class="text-xs text-gov-gray-500 mt-3">
+          للترقية اختر خطة أعلى من الأسفل.
+        </p>
+      </div>
+    </div>
+
+    {# Available plans #}
+    <div>
+      <h2 class="font-bold text-gov-green-800 mb-3">الخطط المتاحة</h2>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for plan in plans %}
+        <div class="bg-white rounded-xl border border-gov-gray-100 shadow-sm p-5 flex flex-col">
+          <h3 class="font-bold text-gov-green-800">{{ plan.name }}</h3>
+          <p class="text-2xl font-bold text-gov-gray-800 mt-1">{{ plan.price_amount }} <span class="text-sm text-gov-gray-500">{{ plan.currency }}/{{ plan.get_billing_cycle_display }}</span></p>
+          <p class="text-xs text-gov-gray-500 mt-2 flex-1">{{ plan.description }}</p>
+          <ul class="text-xs text-gov-gray-600 mt-3 space-y-1">
+            {% if plan.commercial_reports_enabled %}<li>✓ تقارير الجاهزية</li>{% endif %}
+            {% if plan.pdf_export_enabled %}<li>✓ تصدير PDF</li>{% endif %}
+            {% if plan.auditor_review_enabled %}<li>✓ مراجعة المدقق</li>{% endif %}
+          </ul>
+          <form method="post" action="{% url 'billing:select_plan' %}" class="mt-4">
+            {% csrf_token %}
+            <input type="hidden" name="plan_code" value="{{ plan.code }}">
+            <button type="submit" class="w-full bg-white text-gov-green-800 border border-gov-green-700 hover:bg-gov-green-50 px-3 py-2 rounded-lg text-sm font-medium">اختيار الخطة</button>
+          </form>
+        </div>
+        {% empty %}
+        <p class="text-sm text-gov-gray-500">لا توجد خطط متاحة حاليًا.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <p class="text-xs text-gov-gray-400">الدفع الإلكتروني قادم لاحقًا. لا يتم حفظ بيانات البطاقات في هذه المرحلة.</p>
+  </div>
+</div>
+{% endblock %}

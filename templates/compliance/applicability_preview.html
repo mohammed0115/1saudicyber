@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "قابلية تطبيق الضوابط" %} - Cyber-5{% endblock %}
+{% block content %}
+<div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div style="max-width:980px;margin:0 auto;padding:8px 4px 28px;">
+
+    <div style="margin-bottom:16px;">
+      <p style="color:#1E56C9;font-weight:600;margin:0 0 4px;">{% trans "قابلية تطبيق الضوابط" %}</p>
+      <h1 style="color:#2b2c27;font-size:1.5rem;font-weight:700;margin:0 0 6px;">{{ company.name_ar|default:company.name }}</h1>
+      <p style="color:#5b5c53;font-size:.95rem;margin:0;">{% trans "تحليل استشاري لقابلية تطبيق الضوابط بناءً على بيانات الشركة." %}</p>
+    </div>
+
+    {% include "components/current_step_card.html" with guide=guide %}
+
+    {# Disclaimers #}
+    <div style="background:#f1eadb;border:1px solid #dcc79a;border-radius:12px;padding:14px 16px;margin-bottom:18px;color:#8a6a1f;font-size:.9rem;">
+      <p style="margin:0 0 4px;"><i class="fas fa-circle-info ms-1"></i> {% trans "هذا التحليل لا يقرر الامتثال أو عدم الامتثال." %}</p>
+      <p style="margin:0;">{% trans "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق." %}</p>
+    </div>
+
+    {# Framework-level summaries #}
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;overflow-x:auto;margin-bottom:18px;">
+      <table style="width:100%;border-collapse:collapse;font-size:.9rem;min-width:640px;">
+        <thead>
+          <tr style="background:#F1F5FB;color:#5b5c53;text-align:start;">
+            <th style="padding:12px 14px;text-align:start;">{% trans "الأطر" %}</th>
+            <th style="padding:12px 14px;text-align:center;">{% trans "إجمالي الضوابط" %}</th>
+            <th style="padding:12px 14px;text-align:center;">{% trans "قابلة للتطبيق" %}</th>
+            <th style="padding:12px 14px;text-align:center;">{% trans "غير قابلة للتطبيق" %}</th>
+            <th style="padding:12px 14px;text-align:center;">{% trans "تحتاج بيانات إضافية" %}</th>
+            <th style="padding:12px 14px;text-align:center;">{% trans "مستوى الثقة" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in preview.summaries %}
+          <tr style="border-top:1px solid #EEF2F0;">
+            <td style="padding:12px 14px;color:#2b2c27;font-weight:600;">{{ s.framework_name }}
+              <span style="display:block;font-weight:400;color:#9AA5A0;font-size:.78rem;">{{ s.status_ar }}</span></td>
+            <td style="padding:12px 14px;text-align:center;color:#2b2c27;">{{ s.total_controls }}</td>
+            <td style="padding:12px 14px;text-align:center;color:#1E56C9;font-weight:600;">{{ s.applicable_count }}</td>
+            <td style="padding:12px 14px;text-align:center;color:#5b5c53;">{{ s.not_applicable_count }}</td>
+            <td style="padding:12px 14px;text-align:center;color:#8a6a1f;">{{ s.needs_more_information_count }}</td>
+            <td style="padding:12px 14px;text-align:center;color:#2b2c27;">{{ s.confidence }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Per-control preview (only when official controls are imported) #}
+    {% if preview.controls %}
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:8px 0;margin-bottom:18px;">
+      <h2 style="color:#1E56C9;font-weight:700;font-size:1.05rem;margin:12px 18px;">{% trans "قابلية تطبيق الضوابط" %}</h2>
+      {% for c in preview.controls|slice:":60" %}
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;padding:12px 18px;border-top:1px solid #EEF2F0;">
+        <div style="flex:1;min-width:240px;">
+          <p style="margin:0;color:#2b2c27;font-weight:600;">{{ c.control_id }} — {% if c.title_ar %}{{ c.title_ar }}{% else %}<span dir="ltr">{{ c.title }}</span>{% endif %}</p>
+          <p style="margin:3px 0 0;color:#5b5c53;font-size:.84rem;">{% trans "سبب القرار" %}: {{ c.reason_ar }}</p>
+        </div>
+        <span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:.76rem;font-weight:600;
+          {% if c.status == 'applicable' %}background:#E7F2EC;color:#1E56C9;
+          {% elif c.status == 'not_applicable' %}background:#F1F3F2;color:#5b5c53;
+          {% else %}background:#f1eadb;color:#8a6a1f;{% endif %}">{{ c.status_ar }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:#5b5c53;font-size:.88rem;margin:0 0 18px;">
+      {% trans "تعرض هذه الصفحة ملخصًا على مستوى الأطر. سيظهر تفصيل الضوابط بعد استيراد مكتبة الضوابط الرسمية." %}
+    </p>
+    {% endif %}
+
+    {# Missing inputs #}
+    {% if preview.missing_inputs %}
+    <div style="background:#f1eadb;border:1px solid #dcc79a;border-radius:12px;padding:16px 18px;margin-bottom:18px;">
+      <h2 style="color:#8a6a1f;font-weight:700;font-size:1rem;margin:0 0 8px;">{% trans "البيانات الناقصة" %}</h2>
+      <ul style="margin:0;padding-inline-start:18px;color:#8a6a1f;font-size:.9rem;">
+        {% for m in preview.missing_inputs %}<li style="margin:4px 0;">{{ m }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {# Next action #}
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+      <div style="flex:1;min-width:240px;background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px 18px;">
+        <p style="color:#1E56C9;font-weight:700;margin:0 0 4px;">{% trans "الخطوة التالية" %}</p>
+        <p style="color:#2b2c27;font-size:.92rem;margin:0;">{{ preview.next_action }}</p>
+      </div>
+      <a href="{% url 'compliance:classification' %}"
+         style="background:#FFFFFF;color:#2b2c27;font-weight:600;padding:12px 22px;border:1px solid #e3e1d9;border-radius:10px;text-decoration:none;">
+        {% trans "عرض التصنيف الذكي" %}</a>
+      <a href="{% url 'compliance:dashboard' %}"
+         style="background:#1E56C9;color:#fff;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">
+        {% trans "العودة إلى لوحة الرحلة" %}</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

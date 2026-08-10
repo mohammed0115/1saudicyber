@@ -1,12 +1,31 @@
 {% extends "base.html" %}
-{% block title %}No Company - CyberTrust KSA{% endblock %}
+{% block title %}{% if user.is_staff or user.is_superuser %}موظّف شركة احصل الحل{% else %}حالة الحساب{% endif %} - Cyber-5{% endblock %}
 {% block content %}
-<div class="text-center py-20">
-    <i class="fas fa-building text-gov-gray-300 text-6xl mb-6"></i>
-    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">No Company Associated</h2>
-    <p class="text-gov-gray-600 mb-6">Your account is not linked to any company. Please contact your administrator.</p>
-    <a href="{% url 'core:landing' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
-        <i class="fas fa-home mr-2"></i> Back to Home
+<div dir="rtl" class="max-w-xl mx-auto text-center py-20 px-4" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  {% if user.is_staff or user.is_superuser %}
+    {# Get Solution staff/admin opened a customer compliance page without a company context. #}
+    <i class="fas fa-building-shield text-gov-green-700 text-5xl mb-6"></i>
+    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">أنت مسجّل الدخول كموظّف لدى شركة احصل الحل</h2>
+    <p class="text-gov-gray-600 mb-6">استخدم وحدة CRM لعرض الشركات والعمليات.</p>
+    <a href="{% url 'platform_admin:dashboard' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+      <i class="fas fa-table-columns mr-2"></i> وحدة CRM — شركة احصل الحل
     </a>
+  {% elif user.auditor_profile %}
+    {# An auditor account landed on a company page — point to the auditor portal. #}
+    <i class="fas fa-user-shield text-gov-green-700 text-5xl mb-6"></i>
+    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">حساب مدقّق</h2>
+    <p class="text-gov-gray-600 mb-6">يتطلب هذا الإجراء بوابة مختلفة. استخدم بوابة المدقّق لعرض الملفات المسندة إليك.</p>
+    <a href="{% url 'auditors:dashboard' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+      <i class="fas fa-clipboard-check mr-2"></i> بوابة المدقّق
+    </a>
+  {% else %}
+    {# Normal account not linked to any company. #}
+    <i class="fas fa-building text-gov-gray-300 text-5xl mb-6"></i>
+    <h2 class="text-2xl font-bold text-gov-green-800 mb-3">هذا الحساب غير مرتبط بأي شركة</h2>
+    <p class="text-gov-gray-600 mb-6">لا توجد شركة مرتبطة بحسابك. يرجى التواصل مع دعم شركة احصل الحل.</p>
+    <a href="{% url 'core:landing' %}" class="bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition">
+      <i class="fas fa-home mr-2"></i> العودة إلى الرئيسية
+    </a>
+  {% endif %}
 </div>
 {% endblock %}

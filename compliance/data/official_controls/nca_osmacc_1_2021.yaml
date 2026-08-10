@@ -1,0 +1,282 @@
+# CyberTrust KSA — Official control dataset (Phase 2J)
+# Source of truth: NCA OSMACC official PDF (NOT the legacy 334 Excel).
+framework_version_code: NCA-OSMACC-1-2021
+source_document_title: NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021
+expected_control_count: 15
+notes: >-
+  Controls extracted from the official NCA OSMACC PDF (pdftotext -raw) with subdomain header tracking
+  and an Appendices cutoff (the "Relationship with ECC" mapping appendix is excluded). Count matches the
+  15 Main Controls declared in the PDF. Domain names are verbatim phrases from the source, ordered per
+  the standard NCA structure. NOT derived from the legacy 334 Excel.
+controls:
+- control_id: 1-1-1
+  external_reference: NCA OSMACC 1-1-1
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity Policies and Procedures
+  title: Referring to control 1-3-1 in the ECC, cybersecurity policies and procedures…
+  statement: >-
+    Referring to control 1-3-1 in the ECC, cybersecurity policies and procedures must include the following:
+    1-1-1-1 Defining and documenting the cybersecurity requirements for organi- zations’ social media
+    accounts as part of the organization’s cybersecurity policies.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Governance
+    / Cybersecurity Policies and Procedures / 1-1-1
+  tags: []
+- control_id: 1-2-1
+  external_reference: NCA OSMACC 1-2-1
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity Risk Management
+  title: In addition to the controls within subdomain 1-5 in the ECC, requirements for…
+  statement: >-
+    In addition to the controls within subdomain 1-5 in the ECC, requirements for cybersecu- rity risk
+    management should include at least the following: 1-2-1-1 Assessing cybersecurity risks for organization’s
+    social media accounts, once per year at least. 1-2-1-2 Assessing cybersecurity risks during planning
+    and before permitting use of organization’s social media accounts. 1-2-1-3 Including cybersecurity
+    risks related to organization’s social media accounts in the organization’s cybersecurity risk register,
+    and monitoring it at least once a year.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Governance
+    / Cybersecurity Risk Management / 1-2-1
+  tags: []
+- control_id: 1-3-1
+  external_reference: NCA OSMACC 1-3-1
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity in Human Resources
+  title: In addition to the subcontrols within control 1-9-4 in the ECC, the…
+  statement: >-
+    In addition to the subcontrols within control 1-9-4 in the ECC, the cybersecurity require- ments for
+    personnel responsible for managing the organization’s social media accounts should include at least
+    the following: 1-3-1-1 Cybersecurity awareness about social media accounts. 1-3-1-2 Implementation
+    of and compliance with the cybersecurity requirements as per the organizational cybersecurity policies
+    and procedures for the organization’s social media accounts.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Governance
+    / Cybersecurity in Human Resources / 1-3-1
+  tags: []
+- control_id: 1-4-1
+  external_reference: NCA OSMACC 1-4-1
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity Awareness and Training Program
+  title: In addition to the subcontrols within control 1-10-3 in the ECC, the…
+  statement: >-
+    In addition to the subcontrols within control 1-10-3 in the ECC, the cybersecurity aware- ness program
+    must cover the awareness about the potential cyber risks and threats related to the organization’s
+    social media accounts and the secure use to minimize these risks and threats, including the following:
+    1-4-1-1 Secure use and protection of devices dedicated to the organization’s social media accounts
+    and ensuring that they do not contain classified data or used for personal purposes. 1-4-1-2 Secure
+    handling of identities, passwords and security questions. 1-4-1-3 Organization’s social media accounts
+    restoration plan and dealing with cybersecurity incidents. 1-4-1-4 Secure handling of applications
+    and solutions used for the organization’s social media accounts. 1-4-1-5 Not to use the organization’s
+    social media accounts for personal purposes such as browsing. 1-4-1-6 Avoiding accessing the organization’s
+    social media accounts using untrusted public devices or networks. 1-4-1-7 Communicating directly with
+    the cybersecurity department if a cybersecurity threat is suspected.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Governance
+    / Cybersecurity Awareness and Training Program / 1-4-1
+  tags: []
+- control_id: 1-4-2
+  external_reference: NCA OSMACC 1-4-2
+  domain: Cybersecurity Governance
+  subdomain: Cybersecurity Awareness and Training Program
+  title: In addition to the subcontrols within control 1-10-4 in the ECC, personnel…
+  statement: >-
+    In addition to the subcontrols within control 1-10-4 in the ECC, personnel responsible for managing
+    the organization’s social media accounts must be trained on the required techni- cal skills, plans
+    and procedures necessary to ensure the implementation of the cybersecuri- ty requirements and practices
+    when using the organization’s social media accounts. Sharing Notice: White Document Classification:
+    Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Governance
+    / Cybersecurity Awareness and Training Program / 1-4-2
+  tags: []
+- control_id: 2-1-1
+  external_reference: NCA OSMACC 2-1-1
+  domain: Cybersecurity Defense
+  subdomain: Asset Management
+  title: In addition to the controls within subdomain 2-1 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the controls within subdomain 2-1 in the ECC, cybersecurity requirements for managing
+    infromation and technology assets must include at least the following: 2-1-1-1 Identifying and inventorying
+    organization’s social media accounts, and information and technology assets related to them, and updating
+    them at least once, every year.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Defense
+    / Asset Management / 2-1-1
+  tags: []
+- control_id: 2-2-1
+  external_reference: NCA OSMACC 2-2-1
+  domain: Cybersecurity Defense
+  subdomain: Identity and Access Management
+  title: In addition to the subcontrols within control 2-2-3 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the subcontrols within control 2-2-3 in the ECC, cybersecurity require- ments for identity
+    and access management related to organization’s social media accounts shall include at least the following:
+    2-2-1-1 Using social media accounts designated for organizations, not individuals. 2-2-1-2 Registering
+    using official information (official specific social media email and official mobile number), and
+    do not use personal information. 2-2-1-3 Verifying organization’s social media accounts whenever possible
+    and maintaining a consistent identity across all organization’s social media accounts used; to facilitate
+    knowledge of official accounts, and to discover fraud or unofficial accounts. 2-2-1-4 Using a secure
+    and specific password for each organization’s social media account, changing the password regularly,
+    and not to repeate use of passwords. 2-2-1-5 Using multi-factor authentication for organization’s
+    social media accounts logins. 2-2-1-6 Activating and updating security questions and documenting them
+    in a safe place. Cybersecurity Defense Document Classification: Open 2-2-1-7 Managing organization’s
+    social media accounts access rights based on business need, considering the sensitivity of the accounts,
+    the level of access rights and the type of devices and systems used. 2-2-1-8 Restricting access rights
+    of service providers of social media manage- ment, social media monitoring or brand protection. 2-2-1-9
+    Restricting access to organization’s social media accounts to specific devices.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Defense
+    / Identity and Access Management / 2-2-1
+  tags: []
+- control_id: 2-2-2
+  external_reference: NCA OSMACC 2-2-2
+  domain: Cybersecurity Defense
+  subdomain: Identity and Access Management
+  title: With reference to ECC subcontrol 2-2-3-5, user identities and access rights…
+  statement: >-
+    With reference to ECC subcontrol 2-2-3-5, user identities and access rights used for or- ganization’s
+    social media accounts must be reviewed at least once every year.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Defense
+    / Identity and Access Management / 2-2-2
+  tags: []
+- control_id: 2-3-1
+  external_reference: NCA OSMACC 2-3-1
+  domain: Cybersecurity Defense
+  subdomain: Information System and Processing Facilities Protection
+  title: In addition to the subcontrols in ECC control 2-3-3, cybersecurity requirements…
+  statement: >-
+    In addition to the subcontrols in ECC control 2-3-3, cybersecurity requirements for protect- ing organization’s
+    social media accounts and technology assets related to them must include at least the following: 2-3-1-1
+    Applying updates and security patches for social media applications at least once a month. 2-3-1-2
+    Reviewing configurations and hardening of organization’s social media accounts and technology assets
+    related to them at least once a year. 2-3-1-3 Reviewing and hardening default configurations, such
+    as default pass- words, pre-login, and lockout, for organization’s social media accounts and technology
+    assets related to them. 2-3-1-4 Restricting activiation of features and services in social media accounts
+    on need basis and carrying out risk assessment if there is a need to activ- iate it.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Defense
+    / Information System and Processing Facilities Protection / 2-3-1
+  tags: []
+- control_id: 2-4-1
+  external_reference: NCA OSMACC 2-4-1
+  domain: Cybersecurity Defense
+  subdomain: Mobile Device Security
+  title: In addition to the subcontrols within control 2-6-3 in the ECC, cybersecurity…
+  statement: >-
+    In addition to the subcontrols within control 2-6-3 in the ECC, cybersecurity require- ments for mobile
+    device security related to organization’s social media accounts must include at least the following:
+    2-4-1-1 Centrally manage mobile devices for organization’s social media accounts using a Mobile Device
+    Management system (MDM). 2-4-1-2 Applying updates and security patches on mobile devices, at least
+    once every month. Sharing Notice: White Document Classification: Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Defense
+    / Mobile Device Security / 2-4-1
+  tags: []
+- control_id: 2-5-1
+  external_reference: NCA OSMACC 2-5-1
+  domain: Cybersecurity Defense
+  subdomain: Data and Information Protection
+  title: In addition to the subcontrols in ECC control 2-7-3, cybersecurity requirements…
+  statement: >-
+    In addition to the subcontrols in ECC control 2-7-3, cybersecurity requirements for pro- tecting and
+    handling data and information for organization’s social media accounts must include at least the following:
+    2-5-1-1 Technology assets for management of organization’s social media ac- counts must not contain
+    classified data, per relevant regulations.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Defense
+    / Data and Information Protection / 2-5-1
+  tags: []
+- control_id: 2-6-1
+  external_reference: NCA OSMACC 2-6-1
+  domain: Cybersecurity Defense
+  subdomain: Cybersecurity Events Logs and Monitoring Management
+  title: In addition to the subcontrols in ECC control 2-12-3, cybersecurity…
+  statement: >-
+    In addition to the subcontrols in ECC control 2-12-3, cybersecurity requirements for event logs and
+    monitoring management for organization’s social media accounts and technology assets related to them
+    must include at least the following: 2-6-1-1 Activating all notifications and cybersecurity alerts
+    for organization’s so- cial media accounts and cybersecurity events logs on related technology assets.
+    2-6-1-2 Following organization’s social media accounts and monitoring them to ensure that they do
+    not post any unauthorized content, or login any unauthorized access. 2-6-1-3 Monitoring social media
+    networks to ensure the organization is not being impersonated. 2-6-1-4 Automated monitoring for any
+    change in the accounts pattern, indicators of compromise, or the publication of any unauthorized content
+    or imper- sonation of the organization.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Defense
+    / Cybersecurity Events Logs and Monitoring Management / 2-6-1
+  tags: []
+- control_id: 2-7-1
+  external_reference: NCA OSMACC 2-7-1
+  domain: Cybersecurity Defense
+  subdomain: Cybersecurity Incident and Threat Management
+  title: In addition to the subcontrols within control 2-13-3 in ECC, cybersecurity…
+  statement: >-
+    In addition to the subcontrols within control 2-13-3 in ECC, cybersecurity requirements for incident
+    and threat management in the organization must include at least the follow- ing: 2-7-1-1 Developing
+    a plan to recover the organization’s social media accounts and to deal with cyber incidents. Document
+    Classification: Open
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Cybersecurity Defense
+    / Cybersecurity Incident and Threat Management / 2-7-1
+  tags: []
+- control_id: 3-1-1
+  external_reference: NCA OSMACC 3-1-1
+  domain: Third Party and Cloud Computing Cybersecurity
+  subdomain: Third-Party Cybersecurity
+  title: A need assessment for the use of social media management, automated monitoring…
+  statement: >-
+    A need assessment for the use of social media management, automated monitoring or brand protection
+    services along with associcated cybersecurity risks must be conducted.
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Third Party and Cloud
+    Computing Cybersecurity / Third-Party Cybersecurity / 3-1-1
+  tags: []
+- control_id: 3-1-2
+  external_reference: NCA OSMACC 3-1-2
+  domain: Third Party and Cloud Computing Cybersecurity
+  subdomain: Third-Party Cybersecurity
+  title: In addition to the subcontrols within control 4-1-2 in ECC, cybersecurity…
+  statement: >-
+    In addition to the subcontrols within control 4-1-2 in ECC, cybersecurity requirements for use of
+    social media management, automated monitoring or brand protection services in the organization must
+    include at least the following: 3-1-2-1 Non-disclosure clauses and secure removal of organization’s
+    data by the third-party upon service termination. 3-1-2-2 Communication procedures to report vulnerabilities
+    and cyber incidents. 3-1-2-3 Requirments for the third-party to comply with cybersecurity require-
+    ments and policies to protect organizations’ social media accounts, and related laws and regulation.
+    Third Party and Cloud Computing Cybersecurity Sharing Notice: White Document Classification: Open
+    Appendices
+  level: control
+  source_page: null
+  source_reference: >-
+    NCA Organizations' Social Media Accounts Cybersecurity Controls (OSMACC) 1:2021, Third Party and Cloud
+    Computing Cybersecurity / Third-Party Cybersecurity / 3-1-2
+  tags: []

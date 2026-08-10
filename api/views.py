@@ -3,21 +3,26 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
+from drf_spectacular.types import OpenApiTypes
 
 from core.models import Company, User
-from compliance.models import Control, CompanyControl, Evidence
+from compliance.models import (
+    Control, CompanyControl, Evidence, ControlAssessment, EvidenceSubmission,
+)
 from monitoring.models import ComplianceScore, Alert
 from ai_engine.models import GapAnalysis
 from .serializers import (
     RegisterSerializer, ControlSerializer, CompanyControlSerializer,
     EvidenceSerializer, ComplianceScoreSerializer, AlertSerializer,
     GapAnalysisSerializer, CompanySerializer,
+    ControlAssessmentSerializer, EvidenceSubmissionSerializer,
 )
 
 ALLOWED = lambda: getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
@@ -28,6 +33,8 @@ def _require_company(request):
     return getattr(request.user, 'company', None)
 
 
+@extend_schema(summary="تسجيل شركة جديدة + مستخدم مسؤول", request=RegisterSerializer,
+               responses={201: OpenApiTypes.OBJECT})
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
@@ -57,6 +64,9 @@ def register(request):
     }, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(summary="ضوابط الشركة (قديم — استخدم /assessments/)", deprecated=True,
+               parameters=[OpenApiParameter('framework', str, description='رمز الإطار للتصفية (مثل NCA-ECC).')],
+               responses=CompanyControlSerializer(many=True))
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def controls(request):
@@ -71,6 +81,7 @@ def controls(request):
     return Response(CompanyControlSerializer(qs, many=True).data)
 
 
+@extend_schema(summary="تفاصيل ضابط رسمي", responses=ControlSerializer)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def control_detail(request, control_id):
@@ -81,6 +92,48 @@ def control_detail(request, control_id):
     return Response(ControlSerializer(control).data)
 
 
+@extend_schema(summary="تقييمات الضوابط (قرار المدقّق النهائي — حديث)",
+               parameters=[OpenApiParameter('framework', str, description='رمز الإطار للتصفية.'),
+                           OpenApiParameter('status', str, description='تصفية بالحالة (compliant/non_compliant/…).')],
+               responses=ControlAssessmentSerializer(many=True))
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def assessments(request):
+    """Phase 3G — the auditor's final ControlAssessment per official control (tenant-scoped).
+    Modern replacement for the legacy `controls` (CompanyControl) endpoint."""
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    qs = ControlAssessment.objects.filter(company=company).select_related(
+        'control', 'control__framework')
+    fw = request.query_params.get('framework')
+    if fw:
+        qs = qs.filter(control__framework__code=fw)
+    st = request.query_params.get('status')
+    if st:
+        qs = qs.filter(status=st)
+    return Response(ControlAssessmentSerializer(qs, many=True).data)
+
+
+@extend_schema(summary="أدلة الشركة (upload v2 — حديث)",
+               parameters=[OpenApiParameter('status', str, description='تصفية بالحالة (accepted/pending_review/…).')],
+               responses=EvidenceSubmissionSerializer(many=True))
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def evidence_submissions(request):
+    """Upload-v2 EvidenceSubmission list (tenant-scoped). Modern replacement for the
+    legacy Evidence view."""
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    qs = EvidenceSubmission.objects.filter(company=company)
+    st = request.query_params.get('status')
+    if st:
+        qs = qs.filter(status=st)
+    return Response(EvidenceSubmissionSerializer(qs, many=True).data)
+
+
+@extend_schema(summary="تصنيف الشركة (استشاري)", request=None, responses=OpenApiTypes.OBJECT)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def classify(request):
@@ -102,6 +155,10 @@ def classify(request):
     return Response(result)
 
 
+@extend_schema(summary="رفع دليل لضابط", request=inline_serializer(
+                   'EvidenceUploadRequest',
+                   {'control_id': serializers.IntegerField(), 'evidence_file': serializers.FileField()}),
+               responses={201: OpenApiTypes.OBJECT})
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
@@ -118,39 +175,63 @@ def evidence_upload(request):
     except Control.DoesNotExist:
         return Response({'detail': 'Control not found.'}, status=404)
 
-    import os
-    ext = os.path.splitext(f.name)[1].lower().replace('.', '')
-    if ext not in ALLOWED():
-        return Response({'detail': f'Unsupported type .{ext}.'}, status=400)
+    # Size cap first (cheap), then magic-byte validation — parity with the web upload paths.
+    # Extension + size alone lets a spoofed file through; validate_evidence_file sniffs the
+    # real content type so a renamed executable/HTML cannot masquerade as allowed evidence.
     if f.size > MAXSZ():
         return Response({'detail': 'File too large.'}, status=400)
+    from compliance.upload_validation import validate_evidence_file
+    ok, ext, err = validate_evidence_file(f, ALLOWED())
+    if not ok:
+        return Response({'detail': err or f'Unsupported type .{ext}.'}, status=400)
 
     cc, _ = CompanyControl.objects.get_or_create(company=company, control=control)
-    evidence = Evidence.objects.create(
-        company_control=cc, uploaded_by=request.user, file=f,
-        original_filename=f.name, file_type=ext, file_size=f.size, status='processing',
-    )
-    from compliance.services import process_evidence_pipeline
+    # A storage failure (e.g. MEDIA_ROOT not writable) must NOT surface as a 500 with a
+    # server path — return a clean 503 instead.
     try:
-        from monitoring.tasks import analyze_evidence_async
-        analyze_evidence_async.delay(evidence.id)
-        queued = True
-    except Exception:
+        evidence = Evidence.objects.create(
+            company_control=cc, uploaded_by=request.user, file=f,
+            original_filename=f.name, file_type=ext, file_size=f.size, status='processing',
+        )
+    except (OSError, IOError):
+        return Response({'detail': 'Evidence storage is temporarily unavailable.'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    from compliance.services import process_evidence_pipeline
+    # Only touch the broker when async is explicitly enabled (worker provisioned).
+    # Otherwise process synchronously — no broker connection attempt, no hang.
+    queued = False
+    if getattr(settings, 'EVIDENCE_ASYNC_ENABLED', False):
+        try:
+            from monitoring.tasks import analyze_evidence_async
+            analyze_evidence_async.delay(evidence.id, expected_company_id=company.id)
+            queued = True
+        except Exception:
+            process_evidence_pipeline(evidence.id, expected_company_id=company.id)
+    else:
         process_evidence_pipeline(evidence.id)
-        queued = False
     evidence.refresh_from_db()
     return Response({'evidence': EvidenceSerializer(evidence).data, 'queued': queued},
                     status=status.HTTP_201_CREATED)
 
 
+@extend_schema(summary="تشغيل تحليل دليل", request=None, responses=OpenApiTypes.OBJECT)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def evidence_analyze(request, evidence_id):
     from compliance.services import process_evidence_pipeline
-    result = process_evidence_pipeline(evidence_id)
+    # TENANT ISOLATION: IsAuthenticated only proves login, NOT ownership. Without this
+    # scope any authenticated user could analyze (and read the result of) another
+    # company's evidence via its id — a cross-tenant IDOR / data leak.
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    if not Evidence.objects.filter(id=evidence_id, company_control__company=company).exists():
+        return Response({'detail': 'Evidence not found.'}, status=status.HTTP_404_NOT_FOUND)
+    result = process_evidence_pipeline(evidence_id, expected_company_id=company.id)
     return Response(result)
 
 
+@extend_schema(summary="أحدث تحليل فجوات لكل إطار", responses=GapAnalysisSerializer(many=True))
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def gap_analysis(request):
@@ -167,6 +248,7 @@ def gap_analysis(request):
     return Response(GapAnalysisSerializer(rows, many=True).data)
 
 
+@extend_schema(summary="لوحة تنفيذية (شركة + تنبيهات + نقاط)", responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard_executive(request):
@@ -182,6 +264,7 @@ def dashboard_executive(request):
     })
 
 
+@extend_schema(summary="توزيع حالة الضوابط", responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard_compliance(request):
@@ -196,6 +279,7 @@ def dashboard_compliance(request):
                      'total_controls': qs.count()})
 
 
+@extend_schema(summary="سلسلة نقاط الامتثال (آخر 90)", responses=ComplianceScoreSerializer(many=True))
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def monitoring_scores(request):
@@ -206,6 +290,7 @@ def monitoring_scores(request):
     return Response(ComplianceScoreSerializer(qs, many=True).data)
 
 
+@extend_schema(summary="تنبيهات المراقبة (آخر 100)", responses=AlertSerializer(many=True))
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def monitoring_alerts(request):
@@ -216,6 +301,8 @@ def monitoring_alerts(request):
     return Response(AlertSerializer(qs, many=True).data)
 
 
+@extend_schema(summary="تكليفات المدقّق (قديم — نموذج Assessment)", deprecated=True,
+               responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def auditor_assignments(request):

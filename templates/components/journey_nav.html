@@ -1,0 +1,33 @@
+{% comment %}
+State-driven company journey navigation (Next / Back). Expects `nav` = build_journey_nav(...).
+The primary "next" is enabled only when the current step's requirement is met; otherwise it is
+a disabled button with a short Arabic locked reason. Back always points to the previous step.
+{% endcomment %}
+{% if nav %}
+<div class="flex items-center justify-between gap-3 pt-4 mt-2 border-t border-gov-gray-100" dir="rtl">
+  {% if nav.back_url_name %}
+  <a href="{% url nav.back_url_name %}" class="inline-flex items-center text-gov-gray-600 hover:text-gov-gray-900 text-sm font-medium">
+    <i class="fas fa-arrow-right ml-1"></i> {{ nav.back_label }}
+  </a>
+  {% else %}<span></span>{% endif %}
+
+  {% if nav.next_url_name %}
+    {% if nav.next_enabled %}
+    <a href="{% url nav.next_url_name %}" data-busy="جارٍ فتح الخطوة التالية..."
+       class="inline-flex items-center bg-gov-green-700 hover:bg-gov-green-800 text-white px-5 py-2.5 rounded-lg font-medium text-sm">
+      {{ nav.next_label }} <i class="fas fa-arrow-left mr-1"></i>
+    </a>
+    {% else %}
+    <span class="inline-flex flex-col items-end">
+      <button type="button" disabled aria-disabled="true"
+              class="inline-flex items-center bg-gov-gray-200 text-gov-gray-500 px-5 py-2.5 rounded-lg font-medium text-sm cursor-not-allowed">
+        {{ nav.next_label }} <i class="fas fa-lock mr-1 text-xs"></i>
+      </button>
+      {% if nav.next_locked_reason %}
+      <span class="text-xs text-amber-700 mt-1">{{ nav.next_locked_reason }}</span>
+      {% endif %}
+    </span>
+    {% endif %}
+  {% else %}<span></span>{% endif %}
+</div>
+{% endif %}

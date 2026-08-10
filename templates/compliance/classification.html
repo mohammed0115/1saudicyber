@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "التصنيف الذكي" %} - Cyber-5{% endblock %}
+{% block content %}
+<div dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <div style="max-width:920px;margin:0 auto;padding:8px 4px 28px;">
+
+    <div style="margin-bottom:18px;">
+      <p style="color:#1E56C9;font-weight:600;margin:0 0 4px;">{% trans "التصنيف الذكي" %}</p>
+      <h1 style="color:#2b2c27;font-size:1.5rem;font-weight:700;margin:0 0 6px;">{{ company.name_ar|default:company.name }}</h1>
+      <p style="color:#9A6A12;font-size:.95rem;margin:0;">
+        {% trans "تصنيف أولي استشاري فقط بناءً على بيانات الشركة، ولا يُعد قرارًا نهائيًا أو شهادة، ولا يُعد شهادة امتثال رسمية." %}
+      </p>
+    </div>
+
+    {% include "components/current_step_card.html" with guide=guide %}
+
+    {# Summary strip: risk level + confidence + recommended count #}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;">
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "مستوى المخاطر" %}</p>
+        <p style="margin:0;font-weight:700;font-size:1.1rem;
+          color:{% if classification.risk_level == 'high' %}#9B2C2C{% elif classification.risk_level == 'medium' %}#9A6A12{% elif classification.risk_level == 'low' %}#1E56C9{% else %}#5b5c53{% endif %};">
+          {{ classification.risk_level_ar }}</p>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "الأطر المقترحة" %}</p>
+        <p style="margin:0;font-weight:700;font-size:1.1rem;color:#2b2c27;">{{ classification.recommended_count }}</p>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "عدد الضوابط المتوقع" %}</p>
+        <p style="margin:0;font-weight:700;font-size:1.1rem;color:#2b2c27;">{{ classification.total_expected_controls }}</p>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px;">
+        <p style="color:#5b5c53;font-size:.82rem;margin:0 0 4px;">{% trans "ثقة التصنيف" %}</p>
+        <p style="margin:0;font-weight:700;font-size:1.1rem;color:#2b2c27;">{{ classification.overall_confidence }}%</p>
+      </div>
+    </div>
+
+    {# UAT-8: why the risk level was assigned — generated from the actual intake signals #}
+    {% if classification.risk_reason_ar %}
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:12px 16px;margin-bottom:20px;color:#5b5c53;font-size:.88rem;line-height:1.7;">
+      <i class="fas fa-circle-info" style="color:#1E56C9;"></i> {{ classification.risk_reason_ar }}
+    </div>
+    {% endif %}
+
+    {# Framework recommendations #}
+    <div style="background:#FFFFFF;border:1px solid #e3e1d9;border-radius:14px;padding:8px 0;margin-bottom:20px;">
+      <h2 style="color:#1E56C9;font-weight:700;font-size:1.05rem;margin:12px 18px;">{% trans "الأطر المقترحة" %}</h2>
+      {# UAT-1/3: show ONLY proposed (indicated) frameworks — non-indicated CSCC must not appear. #}
+      {% for r in classification.indicated %}
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;padding:14px 18px;border-top:1px solid #EEF2F0;">
+        <div style="flex:1;min-width:220px;">
+          <p style="margin:0;color:#2b2c27;font-weight:600;">{{ r.name_ar }}</p>
+          <p style="margin:4px 0 0;color:#5b5c53;font-size:.86rem;">{% trans "سبب التصنيف" %}: {{ r.reason_ar }}</p>
+        </div>
+        <div style="text-align:center;min-width:96px;">
+          <span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:600;
+            {% if r.status == 'required' %}background:#E7F2EC;color:#1E56C9;
+            {% elif r.status == 'recommended' %}background:#EAF1FB;color:#1F4F8B;
+            {% elif r.status == 'optional' %}background:#f1eadb;color:#8a6a1f;
+            {% else %}background:#F1F3F2;color:#5b5c53;{% endif %}">{{ r.status_ar }}</span>
+        </div>
+        <div style="text-align:center;min-width:120px;">
+          <a href="{% url 'compliance:framework_controls_preview' r.code %}" title="{% trans 'معاينة الضوابط المقترحة' %}"
+             style="color:#1E56C9;font-weight:700;text-decoration:underline;">{% trans "عرض" %} {{ r.control_count }} {% trans "ضابط" %}</a>
+          <p style="margin:4px 0 0;color:#5b5c53;font-size:.76rem;">{% trans "عدد الضوابط المتوقع" %}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# Missing inputs #}
+    {% if classification.missing_inputs %}
+    <div style="background:#f1eadb;border:1px solid #dcc79a;border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+      <h2 style="color:#8a6a1f;font-weight:700;font-size:1rem;margin:0 0 8px;">{% trans "البيانات الناقصة" %}</h2>
+      <ul style="margin:0;padding-inline-start:18px;color:#8a6a1f;font-size:.9rem;">
+        {% for m in classification.missing_inputs %}<li style="margin:4px 0;">{{ m }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {# Next action #}
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+      <div style="flex:1;min-width:240px;background:#FFFFFF;border:1px solid #e3e1d9;border-radius:12px;padding:16px 18px;">
+        <p style="color:#1E56C9;font-weight:700;margin:0 0 4px;">{% trans "الخطوة التالية" %}</p>
+        <p style="color:#2b2c27;font-size:.92rem;margin:0;">{{ classification.next_action }}</p>
+      </div>
+      <a href="{% url 'compliance:intake' %}"
+         style="background:#1E56C9;color:#fff;font-weight:600;padding:12px 22px;border-radius:10px;text-decoration:none;">
+        {% if classification.has_intake %}{% trans "تعديل بيانات التصنيف" %}{% else %}{% trans "إكمال بيانات التصنيف" %}{% endif %}</a>
+      <a href="{% url 'compliance:dashboard' %}"
+         style="background:#FFFFFF;color:#2b2c27;font-weight:600;padding:12px 22px;border:1px solid #e3e1d9;border-radius:10px;text-decoration:none;">
+        {% trans "العودة إلى لوحة الرحلة" %}</a>
+    </div>
+
+    {% include "components/journey_nav.html" %}
+
+  </div>
+</div>
+{% endblock %}

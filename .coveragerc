@@ -1,0 +1,26 @@
+# Coverage config for `coverage run manage.py test` (Django test runner).
+[run]
+source = .
+branch = True
+omit =
+    */migrations/*
+    */tests*.py
+    */tests/*
+    */__pycache__/*
+    .venv/*
+    venv/*
+    manage.py
+    cybertrust_ksa/wsgi.py
+    cybertrust_ksa/asgi.py
+    */admin.py
+    deployment/*
+
+[report]
+show_missing = True
+skip_covered = False
+precision = 1
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:

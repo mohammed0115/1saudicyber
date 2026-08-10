@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2.1 — سيناريو</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --brand:#176B55; --brand-h:#125845; --brand-soft:#E9F3EE;
+  --gold:#B0821F; --gold-soft:#F6EFDA; --gold-ink:#7A5A14; --gold-line:#E7D6A8;
+  --navy:#15243D; --bg:#F7FAF8; --surface:#fff;
+  --text:#152119; --text2:#4A574F; --muted:#6E7A72; --border:#E4EAE6; --border-strong:#D2DCD6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+.wrap{width:100%;max-width:1080px;margin-inline:auto;padding-inline:28px}
+/* header */
+header{background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+header .in{height:72px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .mark{width:36px;height:40px;flex:0 0 auto}
+.brand b{color:var(--navy);font-weight:700;font-size:1.14rem;letter-spacing:-.01em;display:block;line-height:1.1}
+.brand small{color:var(--gold-ink);font-size:.62rem}
+.hact{display:flex;align-items:center;gap:16px;font-size:.86rem}
+.hact .lang{display:flex;align-items:center;gap:6px;color:var(--text2);cursor:pointer}
+.hact .login{border:1px solid var(--border-strong);border-radius:9px;padding:9px 20px;font-weight:600;color:var(--text)}
+/* skyline */
+.skyline{position:fixed;inset-inline:0;bottom:0;height:230px;z-index:0;opacity:.42;pointer-events:none}
+.skyline svg{width:100%;height:100%}
+main{position:relative;z-index:1;padding:44px 0 90px}
+/* stepper */
+.stepper{display:flex;align-items:flex-start;justify-content:center;gap:0;max-width:720px;margin:0 auto 46px}
+.stp{display:flex;flex-direction:column;align-items:center;gap:9px;flex:0 0 auto;width:120px}
+.stp .c{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.95rem;background:var(--surface);border:2px solid var(--border-strong);color:var(--muted)}
+.stp.on .c{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(23,107,85,.22)}
+.stp .l{font-size:.85rem;color:var(--muted);text-align:center;font-weight:500}
+.stp.on .l{color:var(--brand);font-weight:700}
+.line{flex:1;height:2px;background:var(--border);margin-top:19px;min-width:24px}
+/* title */
+.head{text-align:center;margin-bottom:40px}
+.head h1{font-size:2.15rem;font-weight:700;color:var(--text);letter-spacing:-.01em;line-height:1.4}
+.head p{color:var(--text2);font-size:1.05rem;margin-top:10px}
+/* cards */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:800px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:34px 28px;text-align:center;display:flex;flex-direction:column;transition:.18s;box-shadow:0 2px 10px rgba(20,50,40,.03)}
+.card:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(20,50,40,.09);border-color:var(--border-strong)}
+.card .ic{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:1.85rem;margin:0 auto 20px}
+.card.org .ic{background:var(--brand-soft);color:var(--brand)}
+.card.ind .ic{background:var(--gold-soft);color:var(--gold-ink)}
+.card h3{font-size:1.4rem;font-weight:700;color:var(--text);margin-bottom:10px}
+.card p{color:var(--text2);font-size:.94rem;line-height:1.85;flex:1;margin-bottom:24px}
+.btn{display:block;border-radius:11px;padding:14px;font-weight:700;font-size:.98rem;transition:.15s}
+.btn-org{background:var(--brand);color:#fff;border:1px solid var(--brand)}
+.btn-org:hover{background:var(--brand-h)}
+.btn-ind{background:var(--surface);color:var(--gold-ink);border:1px solid var(--gold-line)}
+.btn-ind:hover{background:var(--gold-soft)}
+/* security strip */
+.sec{max-width:800px;margin:22px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:16px}
+.sec .s{width:46px;height:46px;flex:0 0 auto;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:1.1rem}
+.sec b{font-size:.96rem;color:var(--text)}
+.sec span{display:block;color:var(--muted);font-size:.85rem;margin-top:2px}
+.login-line{text-align:center;margin-top:30px;color:var(--muted);font-size:.95rem}
+.login-line a{color:var(--brand);font-weight:700;text-decoration:underline}
+/* footer */
+footer{position:relative;z-index:1;border-top:1px solid var(--border);background:rgba(255,255,255,.75);margin-top:40px}
+footer .cols{display:flex;flex-wrap:wrap;gap:34px;justify-content:space-between;padding:32px 0 8px;font-size:.85rem}
+footer .fl{display:flex;gap:26px;color:var(--text2)} footer .fl a:hover{color:var(--brand)}
+footer .fb{display:flex;align-items:center;gap:10px}
+footer .social{display:flex;gap:10px} footer .social a{width:34px;height:34px;border-radius:8px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:.85rem}
+footer .copy{border-top:1px solid var(--border);text-align:center;padding:14px;color:var(--muted);font-size:.76rem}
+footer .copy a{color:var(--brand);font-weight:600}
+/* mobile */
+@media(max-width:800px){
+  .wrap{padding-inline:18px}
+  .stepper{max-width:none;gap:0}.stp{width:74px}.stp .l{font-size:.72rem}.stp .c{width:34px;height:34px;font-size:.85rem}.line{margin-top:16px;min-width:8px}
+  .head h1{font-size:1.55rem}.head p{font-size:.95rem}
+  .cards{grid-template-columns:1fr}
+  footer .cols{flex-direction:column;gap:18px}
+}
+</style>
+</head>
+<body>
+<header><div class="wrap in">
+  <a class="brand">
+    <svg class="mark" viewBox="0 0 38 42" fill="none"><path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#FBF6EA" stroke="var(--gold)" stroke-width="2.4"/><text x="19" y="26.5" text-anchor="middle" font-family="Inter" font-weight="800" font-size="15" fill="var(--navy)">1S</text></svg>
+    <span><b>1SaudiCyber</b><small>منصة الامتثال السيبراني</small></span>
+  </a>
+  <div class="hact">
+    <span class="lang"><i class="fas fa-globe"></i> العربية <i class="fas fa-angle-down" style="font-size:.7rem"></i></span>
+    <a class="login">تسجيل الدخول</a>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+  <!-- stepper -->
+  <div class="stepper">
+    <div class="stp on"><span class="c">1</span><span class="l">نوع الحساب</span></div>
+    <div class="line"></div>
+    <div class="stp"><span class="c">2</span><span class="l">إنشاء الحساب</span></div>
+    <div class="line"></div>
+    <div class="stp"><span class="c">3</span><span class="l">التحقق</span></div>
+    <div class="line"></div>
+    <div class="stp"><span class="c">4</span><span class="l">اكتمال التسجيل</span></div>
+  </div>
+
+  <div class="head">
+    <h1>إنشاء حساب جديد</h1>
+    <p>اختر نوع الحساب المناسب للبدء في استخدام منصة 1SaudiCyber.</p>
+  </div>
+
+  <div class="cards">
+    <div class="card org">
+      <div class="ic"><i class="fas fa-building"></i></div>
+      <h3>حساب منشأة</h3>
+      <p>لإدارات الامتثال والمؤسسات لتقييم الامتثال السيبراني وإدارته وفق الأطر المدعومة.</p>
+      <a class="btn btn-org">إنشاء حساب منشأة</a>
+    </div>
+    <div class="card ind">
+      <div class="ic"><i class="fas fa-user-shield"></i></div>
+      <h3>حساب فردي</h3>
+      <p>للمدققين والمستشارين والأفراد للتعاون مع المنشآت في مراجعة الامتثال.</p>
+      <a class="btn btn-ind">إنشاء حساب فردي</a>
+    </div>
+  </div>
+
+  <div class="sec">
+    <span class="s"><i class="fas fa-shield-halved"></i></span>
+    <div><b>بياناتك آمنة معنا</b><span>نلتزم بأعلى معايير الأمان لحماية بياناتك ومعلومات منشأتك.</span></div>
+  </div>
+
+  <p class="login-line">لديك حساب بالفعل؟ <a>تسجيل الدخول</a></p>
+</div></main>
+
+<div class="skyline"><svg viewBox="0 0 1440 230" preserveAspectRatio="xMidYMax slice" fill="#CFDDD5">
+  <rect x="30" y="150" width="34" height="80"/><rect x="72" y="110" width="26" height="120"/><rect x="106" y="170" width="30" height="60"/><rect x="144" y="130" width="24" height="100"/>
+  <rect x="176" y="96" width="34" height="134"/><path d="M176 96 L193 60 210 96Z"/>
+  <rect x="220" y="160" width="28" height="70"/><rect x="256" y="120" width="32" height="110"/><rect x="296" y="176" width="24" height="54"/><rect x="326" y="140" width="30" height="90"/>
+  <rect x="364" y="108" width="26" height="122"/><rect x="398" y="164" width="34" height="66"/><rect x="440" y="132" width="24" height="98"/><rect x="472" y="182" width="30" height="48"/>
+  <rect x="512" y="150" width="26" height="80"/><rect x="546" y="118" width="32" height="112"/><rect x="586" y="168" width="24" height="62"/><rect x="618" y="140" width="30" height="90"/>
+  <rect x="936" y="140" width="30" height="90"/><rect x="974" y="168" width="24" height="62"/><rect x="1006" y="118" width="32" height="112"/><rect x="1046" y="150" width="26" height="80"/>
+  <rect x="1084" y="182" width="30" height="48"/><rect x="1122" y="132" width="24" height="98"/><rect x="1156" y="164" width="34" height="66"/><rect x="1198" y="108" width="26" height="122"/>
+  <path d="M1236 230 V96 L1250 96 V150 Q1272 122 1294 150 L1294 96 L1308 96 V230 Z"/>
+  <rect x="1330" y="130" width="24" height="100"/><rect x="1362" y="170" width="30" height="60"/><rect x="1400" y="110" width="26" height="120"/>
+</svg></div>
+
+<footer>
+  <div class="wrap cols">
+    <div class="fl"><a>عن المنصة</a><a>الموارد</a><a>الخصوصية</a><a>الدعم</a><a>الشروط والأحكام</a></div>
+    <div class="fb"><div class="social"><a><i class="fab fa-linkedin-in"></i></a><a><i class="fab fa-twitter"></i></a><a><i class="fab fa-youtube"></i></a></div></div>
+  </div>
+  <div class="copy">© 2026 1SaudiCyber. جميع الحقوق محفوظة. تطوير <a>شركة احصل الحل</a>.</div>
+</footer>
+</body>
+</html>

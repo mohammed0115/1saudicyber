@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}تقييم ضابط - Cyber-5{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <a href="{% url 'compliance:auditor_review_queue' %}" class="text-gov-green-700 hover:underline text-sm">رجوع للقائمة</a>
+    <div>
+        <h1 class="text-2xl font-bold text-gov-green-800">{{ control.control_id }} — {% if control.title_ar %}{{ control.title_ar }}{% else %}<span dir="ltr">{{ control.title }}</span>{% endif %}</h1>
+        <p class="text-gov-gray-600 text-sm">{{ control.framework_version.code }} · {{ control.domain.name }}</p>
+        {% if control.description_ar %}<p class="text-gov-gray-700 mt-2 text-sm">{{ control.description_ar }}</p>{% endif %}
+        <p class="text-gov-gray-500 mt-1 text-xs" dir="ltr">{{ control.description }}</p>
+        <a href="{% url 'risk:create' %}?assessment_id={{ assessment.id }}" data-busy="جارٍ تحميل النموذج..."
+           class="text-gov-green-700 hover:underline text-xs">إنشاء خطر من تقييم الضابط</a>
+    </div>
+    {% if messages %}{% for m in messages %}
+    <div class="bg-gov-green-50 border border-gov-green-200 text-gov-green-800 rounded-lg p-3">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gov-gray-100 text-sm space-y-2">
+        <h2 class="font-bold text-gov-green-800">الأدلة المرفوعة ({{ submissions.count }})</h2>
+        {% for s in submissions %}
+            <p><a href="{% url 'compliance:evidence_submission_detail' s.id %}" class="text-gov-green-700 hover:underline">{{ s.original_filename }}</a> — {{ s.get_status_display }}</p>
+        {% empty %}<p class="text-amber-700">لا أدلة مرفوعة بعد.</p>{% endfor %}
+    </div>
+
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gov-gray-100 text-sm space-y-2">
+        <h2 class="font-bold text-gov-green-800">التحليل الاستشاري (AI)</h2>
+        {% for an in analyses %}
+            <p><span class="text-gov-gray-500">{{ an.get_status_display }}:</span> {{ an.summary|default:"—" }}{% if an.potential_gaps %} <span class="text-amber-700">| فجوات: {{ an.potential_gaps }}</span>{% endif %}</p>
+        {% empty %}<p class="text-gov-gray-500">لا تحليل بعد.</p>{% endfor %}
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded p-2 text-xs">
+            <i class="fas fa-triangle-exclamation"></i> التحليل الآلي استشاري فقط. القرار النهائي للامتثال يجب أن يتّخذه مدقّق بشري.
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
+        <h2 class="font-bold text-gov-green-800 mb-3">قرار التقييم (المدقّق)</h2>
+        {% if can_assess %}
+        <form method="post" class="space-y-3 text-sm">
+            {% csrf_token %}
+            <div>
+                <label class="block text-gov-gray-700 mb-1">الحالة</label>
+                <select name="status" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2">
+                    {% for val,label in status_choices %}
+                    <option value="{{ val }}" {% if assessment.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div><label class="block text-gov-gray-700 mb-1">الدرجة</label>
+                <input type="number" name="score" value="{{ assessment.score|default_if_none:'' }}" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2"></div>
+            <div><label class="block text-gov-gray-700 mb-1">ملاحظات المدقّق</label>
+                <textarea name="auditor_notes" rows="3" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2">{{ assessment.auditor_notes }}</textarea></div>
+            <label class="flex items-center gap-2"><input type="checkbox" name="remediation_required" {% if assessment.remediation_required %}checked{% endif %}> يتطلّب معالجة</label>
+            <div><label class="block text-gov-gray-700 mb-1">خطة المعالجة</label>
+                <textarea name="remediation_plan" rows="2" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2">{{ assessment.remediation_plan }}</textarea></div>
+            <div><label class="block text-gov-gray-700 mb-1">تاريخ الاستحقاق</label>
+                <input type="date" name="remediation_due_date" value="{{ assessment.remediation_due_date|date:'Y-m-d' }}" class="border border-gov-gray-300 rounded-lg px-3 py-2"></div>
+            <div class="flex gap-3">
+                <div><label class="block text-gov-gray-700 mb-1">مستوى الخطر</label>
+                    <select name="risk_level" class="border border-gov-gray-300 rounded-lg px-3 py-2">
+                        <option value="">—</option>{% for val,label in risk_choices %}<option value="{{ val }}" {% if assessment.risk_level == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+                <div><label class="block text-gov-gray-700 mb-1">مستوى الثقة</label>
+                    <select name="confidence_level" class="border border-gov-gray-300 rounded-lg px-3 py-2">
+                        <option value="">—</option>{% for val,label in confidence_choices %}<option value="{{ val }}" {% if assessment.confidence_level == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+            </div>
+            <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-6 py-2.5 rounded-lg font-medium">حفظ القرار</button>
+        </form>
+        {% else %}
+        <p class="text-sm text-gov-gray-600">الحالة الحالية: <span class="font-medium">{{ assessment.get_status_display }}</span></p>
+        <p class="text-xs text-gov-gray-500 mt-1">اتخاذ القرار يتطلّب صلاحية موظّف/مدقّق.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

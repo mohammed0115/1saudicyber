@@ -14,6 +14,7 @@ Django==6.0.6
 django-cors-headers==4.9.0
 django-filter==25.2
 djangorestframework==3.17.1
+drf-spectacular==0.30.0
 gunicorn==26.0.0
 h11==0.16.0
 httpcore==1.0.9
@@ -46,4 +47,29 @@ whitenoise==6.12.0
 pyotp==2.9.0
 reportlab==4.2.5
 python-docx==1.1.2
-djangorestframework-simplejwt==5.3.1
+openpyxl==3.1.5
+PyYAML==6.0.2
+djangorestframework-simplejwt==5.5.1
+# PostgreSQL driver — used only when POSTGRES_DB is set (Docker deployment).
+# Local development/tests default to SQLite and do not require this package.
+psycopg[binary]>=3.1,<4
+
+# PDF text-layer extraction — RUNTIME dependency of compliance/evidence_extraction.py
+# (_read_pdf). Absent here, the container marks every PDF as 'unsupported_type' and the
+# commercial-report tests fail with ModuleNotFoundError: pdfplumber. pdfplumber pulls
+# pdfminer.six + pypdfium2; pinned with their transitive deps for reproducible builds
+# (Pillow is already pinned above).
+pdfplumber==0.11.9
+pdfminer.six==20251230
+pypdfium2==5.9.0
+cryptography==48.0.0
+cffi==2.0.0
+pycparser==3.0
+charset-normalizer==3.4.7
+
+# Real upload content-type detection via magic bytes (compliance/upload_validation.py).
+# Pure-Python (no libmagic system dependency).
+filetype==1.2.0
+django-storages==1.14.4
+boto3==1.35.99
+sentry-sdk==2.20.0

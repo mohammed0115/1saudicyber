@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets / local config (never commit real .env)
+.env
+*.env
+
+# Django
+db.sqlite3
+*.sqlite3
+staticfiles/
+media/
+private_media/
+*.log
+
+# Node / Tailwind build toolchain
+node_modules/
+
+# OS / editor
+.DS_Store
+Enterprise_Test_Dataset/

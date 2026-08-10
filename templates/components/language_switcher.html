@@ -1,0 +1,7 @@
+{# Public Arabic/English language switcher (posts to i18n set_language). #}
+<form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1 text-xs">
+  {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+  <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">العربية</button>
+  <span class="text-gov-green-400">|</span>
+  <button type="submit" name="language" value="en" class="px-1 {% if LANGUAGE_CODE != 'ar' %}text-white font-bold underline{% else %}text-gov-green-200 hover:text-white{% endif %}">English</button>
+</form>

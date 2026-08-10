@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}الملخّص التنفيذي - Cyber-5{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <a href="{% url 'compliance:reports_index' %}" class="text-gov-green-700 hover:underline text-sm">رجوع للتقارير</a>
+    <h1 class="text-2xl font-bold text-gov-green-800">الملخّص التنفيذي — {{ company.name }}</h1>
+    <p class="text-gov-gray-600 text-sm">الأطر المعتمدة:
+        {% for fv in summary.frameworks %}<span class="font-mono">{{ fv.code }}</span>{% if not forloop.last %}، {% endif %}{% empty %}—{% endfor %}</p>
+    <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100"><p class="text-gov-gray-500 text-sm">إجمالي الضوابط المنطبقة</p><p class="text-3xl font-bold text-gov-green-800">{{ summary.total_applicable }}</p></div>
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100"><p class="text-gov-gray-500 text-sm">نسبة الإنجاز (مُراجَع)</p><p class="text-3xl font-bold text-gov-green-800">{{ summary.completion_percentage }}%</p></div>
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100"><p class="text-gov-gray-500 text-sm">نسبة المطابقة</p><p class="text-3xl font-bold text-gov-green-800">{{ summary.compliance_percentage }}%</p></div>
+    </div>
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100 text-sm space-y-1">
+        <p><span class="text-gov-gray-500">مطابق:</span> {{ summary.counts.compliant }}</p>
+        <p><span class="text-gov-gray-500">مطابق جزئياً:</span> {{ summary.counts.partially_compliant }}</p>
+        <p><span class="text-gov-gray-500">غير مطابق:</span> {{ summary.counts.non_compliant }}</p>
+        <p><span class="text-gov-gray-500">غير منطبق:</span> {{ summary.counts.not_applicable }}</p>
+        <p><span class="text-gov-gray-500">يحتاج أدلة:</span> {{ summary.counts.needs_more_evidence }}</p>
+        <p><span class="text-gov-gray-500">غير مُراجَع:</span> {{ summary.counts.not_reviewed }}</p>
+        <hr class="my-2">
+        <p><span class="text-gov-gray-500">إجمالي الفجوات:</span> {{ summary.gaps }}</p>
+        <p><span class="text-gov-gray-500">أدلة مرفوعة:</span> {{ summary.evidence_submission_count }} | تغطية الأدلة: {{ summary.evidence_coverage_percentage }}%</p>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm"><i class="fas fa-info-circle"></i> الضوابط غير المُراجَعة لا تُحتسب كمطابِقة.</div>
+</div>
+{% endblock %}

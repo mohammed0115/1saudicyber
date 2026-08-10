@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}مصفوفة الأدلة - Cyber-5{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gov-green-800">مصفوفة الأدلة — {{ company.name }}</h1>
+        <div class="flex gap-2">
+            <a href="{% url 'compliance:export_evidence_matrix_csv' %}" data-busy="جارٍ تجهيز ملف CSV..." class="text-gov-green-700 hover:underline text-sm">
+                <i class="fas fa-file-csv mr-1"></i>CSV</a>
+            <a href="{% url 'compliance:export_evidence_matrix_xlsx' %}" data-busy="جارٍ تجهيز ملف Excel..." class="text-gov-green-700 hover:underline text-sm">
+                <i class="fas fa-file-excel mr-1"></i>Excel</a>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="text-gov-gray-600"><tr>
+                <th class="text-right px-3 py-2">الإطار</th><th class="text-right px-3 py-2">الضابط</th>
+                <th class="text-right px-3 py-2">العنوان</th><th class="text-right px-3 py-2">متطلبات</th>
+                <th class="text-right px-3 py-2">أدلة</th><th class="text-right px-3 py-2">آخر دليل</th>
+                <th class="text-right px-3 py-2">AI</th><th class="text-right px-3 py-2">التقييم</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gov-gray-100">
+            {% for r in rows %}<tr>
+                <td class="px-3 py-1 text-xs">{{ r.framework }}</td>
+                <td class="px-3 py-1 font-mono text-xs">{{ r.control_id }}</td>
+                <td class="px-3 py-1">{{ r.title|truncatechars:50 }}</td>
+                <td class="px-3 py-1 text-center">{{ r.requirement_count }}</td>
+                <td class="px-3 py-1 text-center">{{ r.submission_count }}</td>
+                <td class="px-3 py-1 text-xs">{{ r.latest_submission_status }}</td>
+                <td class="px-3 py-1 text-xs">{{ r.latest_ai_status }}</td>
+                <td class="px-3 py-1 text-xs">{{ r.assessment_status }}</td>
+            </tr>{% empty %}<tr><td colspan="8" class="px-3 py-6 text-center text-gov-gray-500">لا ضوابط منطبقة بعد.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm"><i class="fas fa-info-circle"></i> الضوابط غير المُراجَعة لا تُحتسب كمطابِقة.</div>
+</div>
+{% endblock %}

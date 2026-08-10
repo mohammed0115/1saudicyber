@@ -1,0 +1,5 @@
+Information Security Policy (UAT sample — not a real document)
+Company: Najd Digital Solutions LLC
+Purpose: Establish management direction for information security aligned with NCA, Aramco SACS-002,
+and SABIC requirements. Approved by management. Reviewed annually.
+Scope: All employees, contractors, systems, and cloud services.

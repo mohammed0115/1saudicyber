@@ -41,18 +41,25 @@ def send_alert_email(alert):
 # ---- MFA (TOTP) ----
 
 def mfa_provisioning_uri(user):
-    """Generate (and persist if needed) a TOTP secret and return the otpauth URI for a QR code."""
+    """Generate (and persist if needed) a TOTP secret and return the otpauth URI for a QR code.
+
+    The secret is stored encrypted at rest (DD P1) via set_mfa_secret; the plaintext is only
+    used transiently here to build the provisioning URI.
+    """
     import pyotp
-    if not user.mfa_secret:
-        user.mfa_secret = pyotp.random_base32()
+    secret = user.get_mfa_secret()
+    if not secret:
+        secret = pyotp.random_base32()
+        user.set_mfa_secret(secret)
         user.save(update_fields=['mfa_secret'])
-    return pyotp.totp.TOTP(user.mfa_secret).provisioning_uri(
+    return pyotp.totp.TOTP(secret).provisioning_uri(
         name=user.email, issuer_name='CyberTrust KSA')
 
 
 def verify_totp(user, code):
     """Validate a 6-digit TOTP code against the user's secret."""
     import pyotp
-    if not user.mfa_secret:
+    secret = user.get_mfa_secret()
+    if not secret:
         return False
-    return pyotp.TOTP(user.mfa_secret).verify(str(code).strip(), valid_window=1)
+    return pyotp.TOTP(secret).verify(str(code).strip(), valid_window=1)

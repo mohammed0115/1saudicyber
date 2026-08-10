@@ -1,0 +1,95 @@
+# CyberTrust KSA — deployment stack (Django + Gunicorn + PostgreSQL).
+# Secrets come from a local .env file (never committed). Copy the example first:
+#   cp deployment/docker/env.example .env   # then edit values
+#
+# This file describes a server/local deployment topology only; it performs no
+# real production deployment by itself.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # DD-fix: Redis — Celery broker + Django cache (login throttle, caching).
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      # P0-01: private evidence/RFI files live here, OUTSIDE /app/media, so they are never
+      # web-servable. No route or proxy exposes /app/private_media; only authorized views read it.
+      - private_media_volume:/app/private_media
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz/', timeout=5).status==200 else 1)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # DD-fix: async worker — evidence OCR/AI/PDF no longer block the web request.
+  worker:
+    build: .
+    restart: unless-stopped
+    command: celery -A cybertrust_ksa worker --loglevel=info --concurrency=2
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media_volume:/app/media
+      - private_media_volume:/app/private_media
+
+  # DD-fix: scheduled jobs (score recalc, monthly reports, reminders) actually run.
+  beat:
+    build: .
+    restart: unless-stopped
+    command: celery -A cybertrust_ksa beat --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  private_media_volume:
+  redis_data:

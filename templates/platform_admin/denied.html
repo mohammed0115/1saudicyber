@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% comment %}
+Phase 8D-3B-UI-FIX-A — 403 page for the Get Solution platform-admin area.
+Standalone: overrides `body` so it shows NEITHER the customer/compliance navbar
+NOR the internal CRM navbar (the visitor has no access to either context here).
+{% endcomment %}
+{% block body %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+  <nav class="bg-gov-green-900 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center h-14 gap-2">
+        <i class="fas fa-building-shield text-white text-xl"></i>
+        <span class="text-white font-bold text-base">Get Solution CRM</span>
+      </div>
+    </div>
+  </nav>
+  <div class="max-w-xl mx-auto py-16 px-4 text-center">
+    <i class="fas fa-shield-halved text-gov-green-700 text-4xl mb-4"></i>
+    <h1 class="text-2xl font-bold text-gov-green-800 mb-3">منطقة إدارة المنصة</h1>
+    <p class="text-gov-gray-600 leading-8">
+      هذه المنطقة مخصّصة لإدارة منصة Cyber-5 لدى شركة احصل الحل فقط.
+      لا تملك صلاحية الوصول إلى إدارة اعتماد المدققين أو وحدة CRM.
+    </p>
+    <a href="/dashboard/" class="inline-block mt-6 bg-gov-green-800 text-white px-6 py-2.5 rounded-lg font-medium">العودة إلى لوحة التحكم</a>
+  </div>
+</div>
+{% endblock %}

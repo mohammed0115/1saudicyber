@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from .services import classify_company, generate_gap_analysis
 from .models import AIClassificationLog, GapAnalysis
-from compliance.models import CompanyControl
+from core.roles import company_portal_required
 
 
 @login_required
@@ -54,74 +54,20 @@ def run_classification(request):
 
 
 @login_required
+@company_portal_required
 def run_gap_analysis(request):
-    """Trigger AI gap analysis for the user's company."""
-    company = request.user.company
+    """Phase 8D-2-FIX-A — safe, read-only advisory gap-analysis landing page.
+
+    The previous implementation triggered a real AI/network call on GET and read a
+    non-existent ``company.applicable_frameworks`` attribute, which returned HTTP 500.
+    This view now renders a safe advisory page (no AI call, no network, no writes) and
+    points users to the official, subscription-gated compliance reports. Advisory only —
+    never a final compliance decision.
+    """
+    company = getattr(request.user, 'company', None)
     if not company:
-        return JsonResponse({'error': 'No company associated'}, status=400)
-
-    # Gather current control statuses
-    controls_status = list(
-        CompanyControl.objects.filter(company=company).values(
-            'control__control_id', 'control__title', 'control__framework__code',
-            'control__domain__name', 'status', 'ai_verdict', 'ai_confidence'
-        )[:100]
-    )
-
-    result = generate_gap_analysis(
-        {
-            'name': company.name,
-            'sector': company.get_sector_display(),
-            'size': company.get_size_display(),
-            'frameworks': company.applicable_frameworks,
-        },
-        controls_status
-    )
-
-    if 'error' not in result:
-        # Persist one GapAnalysis row per targeted framework (was: NCA only — bug).
-        targeted = []
-        if company.target_nca:
-            targeted.append('NCA_ECC')
-        if company.target_aramco:
-            targeted.append('ARAMCO_SACS002')
-        if company.target_sabic:
-            targeted.append('SABIC_CT')
-
-        for fw_code in targeted:
-            fw_controls = CompanyControl.objects.filter(
-                company=company, control__framework__code=fw_code
-            )
-            total = fw_controls.count()
-            compliant = fw_controls.filter(status='compliant').count()
-            non_compliant = fw_controls.filter(status='non_compliant').count()
-            partial = fw_controls.filter(status='partially_compliant').count()
-            not_assessed = fw_controls.filter(
-                status__in=['not_started', 'in_progress', 'evidence_uploaded']
-            ).count()
-            fw_score = (compliant / total * 100) if total else result.get('compliance_score', 0)
-
-            GapAnalysis.objects.create(
-                company=company,
-                framework_code=fw_code,
-                total_controls=total,
-                compliant_count=compliant,
-                non_compliant_count=non_compliant,
-                partially_compliant_count=partial,
-                not_assessed_count=not_assessed,
-                compliance_score=fw_score,
-                risk_score=result.get('overall_risk_score', 0),
-                high_risk_gaps=result.get('critical_gaps', []),
-                remediation_priorities=result.get('top_priorities_en', []),
-                ai_prediction=result.get('predicted_audit_outcome_en', ''),
-                ai_prediction_ar=result.get('predicted_audit_outcome_ar', ''),
-            )
-
-        # Update company scores
-        company.overall_compliance_score = result.get('compliance_score', 0)
-        company.save()
-
-    return JsonResponse(result)
+        return render(request, 'dashboard/no_company.html')
+    return render(request, 'ai_engine/gap_analysis_advisory.html', {'company': company})
 
 
 @login_required

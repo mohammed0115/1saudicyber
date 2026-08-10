@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}التقارير - Cyber-5{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <h1 class="text-2xl font-bold text-gov-green-800">تقارير الامتثال</h1>
+    <p class="text-gov-gray-600">تقارير للقراءة فقط مبنية على الضوابط الرسمية وقرارات المدقّق. لا تغيّر أي قرار.</p>
+
+    {% include "compliance/_workflow_stepper.html" %}
+
+    {% if subscription_active %}
+    <div class="rounded-lg p-4 text-sm" style="background:#E9F0FD;border:1px solid #CDDDF5;color:#1E56C9;">
+        <i class="fas fa-unlock mr-1"></i> التقارير مفعّلة — يمكنك عرض وتنزيل التقارير الكاملة.
+    </div>
+    <!-- Phase 4C — two auditor options for a subscribed company -->
+    <div class="grid md:grid-cols-2 gap-4">
+        <a href="{% url 'compliance:report_evidence_matrix' %}" data-busy="جارٍ تجهيز التقرير..."
+           class="block bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-file-arrow-down text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">تنزيل التقرير لمشاركته مع مدقق خارجي</h2>
+            <p class="text-gov-gray-500 text-sm mt-1">صدّر التقرير (CSV/Excel) وشاركه مع مدقّق خارج المنصّة.</p>
+        </a>
+        <a href="{% url 'auditors:list' %}" data-busy="جارٍ فتح قائمة المدقّقين..."
+           class="block bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-user-shield text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">إسناد الملف إلى مدقق داخل المنصة</h2>
+            <p class="text-gov-gray-500 text-sm mt-1">اطلب مراجعة من مدقّق أو مراجع امتثال داخل المنصّة.</p>
+        </a>
+        <a href="{% url 'compliance:auditor_reviewed_report' %}" data-busy="جارٍ تجهيز التقرير..."
+           class="block bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300 md:col-span-2">
+            <i class="fas fa-clipboard-check text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">تقرير مراجعة امتثال داخلي</h2>
+            <p class="text-gov-gray-500 text-sm mt-1">ملخص قرارات المدقق النهائية — مراجعة داخلية، ولا يُعد شهادة رسمية.</p>
+        </a>
+    </div>
+    {% else %}
+    <div class="rounded-lg p-4 text-sm" style="background:#f1eadb;border:1px solid #dcc79a;color:#8a6a1f;">
+        <i class="fas fa-lock me-1"></i>
+        يتطلب تنزيل التقارير أو إسناد الملف إلى مدقق تفعيل الاشتراك.
+        يمكنك إكمال الرحلة ورفع الأدلة، لكن تنزيل التقارير الكاملة وإسناد المدقّق يتطلب تفعيل الاشتراك.
+        <a href="{% url 'billing:home' %}" class="underline font-medium ms-1">تفعيل الاشتراك</a>
+    </div>
+    {% endif %}
+
+    {% if not reviewed_assessment_count %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+        <i class="fas fa-lock mr-1"></i>
+        التقارير غير متاحة بعد.
+        ستصبح التقارير ذات معنى بعد إنشاء تقييمات المدقّق. (Reports will be meaningful after auditor assessments are created.)
+        <a href="{% url 'compliance:auditor_review_queue' %}" class="underline font-medium ml-1">مراجعة المدقّق</a>
+    </div>
+    {% endif %}
+    <div class="grid md:grid-cols-3 gap-4">
+        <a href="{% url 'compliance:report_executive_summary' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-chart-pie text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">الملخّص التنفيذي</h2></a>
+        <a href="{% url 'compliance:report_gap_analysis' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-triangle-exclamation text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">تحليل الفجوات</h2></a>
+        <a href="{% url 'compliance:report_evidence_matrix' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
+            <i class="fas fa-table text-gov-green-700 text-xl"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">مصفوفة الأدلة</h2></a>
+    </div>
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
+        <h2 class="font-semibold text-gov-green-800 mb-2">تقارير حسب الإطار</h2>
+        <ul class="space-y-1 text-sm">
+        {% for fv in frameworks %}
+            <li><a href="{% url 'compliance:report_framework' fv.id %}" class="text-gov-green-700 hover:underline">{{ fv.framework.name }} — {{ fv.code }}</a></li>
+        {% empty %}<li class="text-gov-gray-500">لا أطر معتمدة بعد.</li>{% endfor %}
+        </ul>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm"><i class="fas fa-info-circle"></i> الضوابط غير المُراجَعة لا تُحتسب كمطابِقة.</div>
+
+    {% include "components/journey_nav.html" %}
+</div>
+{% endblock %}

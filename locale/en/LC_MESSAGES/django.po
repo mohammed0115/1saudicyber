@@ -1,0 +1,1357 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-28 21:02+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "لا توجد شركة مرتبطة بحسابك."
+msgstr "No company is associated with your account."
+
+msgid "يرجى اختيار ملف للرفع."
+msgstr "Please select a file to upload."
+
+msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
+msgstr ""
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+
+msgid "تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي."
+msgstr "Company registered successfully. Preparing the initial classification."
+
+msgid "بيانات الدخول غير صحيحة. حاول مرة أخرى."
+msgstr "Invalid credentials. Please try again."
+
+msgid "تم تفعيل التحقق بخطوتين."
+msgstr "Multi-factor authentication enabled."
+
+msgid "تحليل الفجوات الاستشاري"
+msgstr "Advisory gap analysis"
+
+msgid ""
+"تحليل الفجوات هنا استشاري ويساعدك على فهم جاهزيتك، ولا يُعد قرارًا نهائيًا أو "
+"شهادة امتثال رسمية."
+msgstr ""
+"This analysis assists the auditor and is not a final decision or compliance "
+"certificate.This analysis assists the auditor and is not a final decision or "
+"compliance certificate.This analysis assists the auditor and is not a final "
+"decision or compliance certificate.This analysis assists the auditor and is "
+"not a final decision or compliance certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.Evidence uploaded. "
+"Advisory analysis is running and is not a final decision."
+
+msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
+msgstr "The final result depends on evidence and auditor review."
+
+msgid ""
+"للاطّلاع على تقارير الجاهزية وتحليل الفجوات التفصيلي، استخدم صفحة التقارير "
+"ولوحة مسار الامتثال."
+msgstr ""
+
+msgid "التقارير"
+msgstr "Reports"
+
+msgid "لوحة مسار الامتثال"
+msgstr "Compliance journey dashboard"
+
+msgid "لوحة التحكم"
+msgstr "Dashboard"
+
+msgid "مسار الامتثال"
+msgstr "Compliance Journey"
+
+msgid "الأطر"
+msgstr "Frameworks"
+
+msgid "الأدلة"
+msgstr "Evidence"
+
+msgid "المراقبة"
+msgstr "Monitoring"
+
+msgid "المزيد"
+msgstr "More"
+
+msgid "الضوابط"
+msgstr "Controls"
+
+msgid "خطة الضوابط"
+msgstr "Control plan"
+
+msgid "المراجعة"
+msgstr "Review"
+
+msgid "لوحة المدقق"
+msgstr "Auditor dashboard"
+
+msgid "تسجيل الخروج"
+msgstr "Log out"
+
+msgid "التصنيف"
+msgstr "Classification"
+
+msgid "تسجيل الدخول"
+msgstr "Sign in"
+
+msgid "سياسة الخصوصية"
+msgstr "Privacy policy"
+
+msgid "شروط الاستخدام"
+msgstr "Terms of use"
+
+msgid "قابلية تطبيق الضوابط"
+msgstr "Control applicability"
+
+msgid "تحليل استشاري لقابلية تطبيق الضوابط بناءً على بيانات الشركة."
+msgstr "An advisory analysis of control applicability based on company data."
+
+msgid "هذا التحليل لا يقرر الامتثال أو عدم الامتثال."
+msgstr "This analysis does not decide compliance or non-compliance."
+
+msgid "إجمالي الضوابط"
+msgstr "Total controls"
+
+msgid "قابلة للتطبيق"
+msgstr "Applicable"
+
+msgid "غير قابلة للتطبيق"
+msgstr "Not applicable"
+
+msgid "تحتاج بيانات إضافية"
+msgstr "Needs more information"
+
+msgid "مستوى الثقة"
+msgstr "Confidence"
+
+msgid "سبب القرار"
+msgstr "Decision reason"
+
+msgid ""
+"تعرض هذه الصفحة ملخصًا على مستوى الأطر. سيظهر تفصيل الضوابط بعد استيراد مكتبة "
+"الضوابط الرسمية."
+msgstr ""
+
+msgid "البيانات الناقصة"
+msgstr "Missing inputs"
+
+msgid "الخطوة التالية"
+msgstr "Next step"
+
+msgid "عرض التصنيف الذكي"
+msgstr "View Smart Classification"
+
+msgid "العودة إلى لوحة الرحلة"
+msgstr "Back to the journey dashboard"
+
+msgid "تقرير مراجعة امتثال داخلي"
+msgstr "Internal compliance review report"
+
+msgid "ملخص قرارات المدقق"
+msgstr "Auditor decisions summary"
+
+msgid ""
+"هذا التقرير يعرض نتائج مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية "
+"أو اعتمادًا من أي جهة."
+msgstr ""
+"This decision is an internal platform review and is not an official "
+"compliance certificate.This analysis assists the auditor and is not a final "
+"decision or compliance certificate.This analysis assists the auditor and is "
+"not a final decision or compliance certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is "
+"advisory and is not a final decision or a certificate.Evidence uploaded. "
+"Advisory analysis is running and is not a final decision."
+
+msgid "لا توجد قرارات مدقق نهائية بعد. يرجى إكمال مراجعة الأدلة أولًا."
+msgstr ""
+"There are no final auditor decisions yet. Please complete the evidence "
+"review first.There are no final auditor decisions yet. Please complete the "
+"evidence review first."
+
+msgid "إجمالي الأدلة"
+msgstr "Total evidence"
+
+msgid "الأدلة التي تمت مراجعتها"
+msgstr "Reviewed evidence"
+
+msgid "بانتظار مراجعة المدقق"
+msgstr "Pending auditor review"
+
+msgid "آخر مراجعة"
+msgstr "Last review"
+
+msgid "توزيع الحالات بعد مراجعة المدقق"
+msgstr "Distribution of statuses after auditor review"
+
+msgid "تفاصيل القرارات"
+msgstr "Decision details"
+
+msgid "الضابط"
+msgstr "Control"
+
+msgid "الحالة المقترحة من محرك القواعد"
+msgstr "Rule-engine suggested status"
+
+msgid "الحالة بعد مراجعة المدقق"
+msgstr "Status after auditor review"
+
+msgid "الإجراءات المطلوبة"
+msgstr "Required actions"
+
+msgid "العودة إلى التقارير"
+msgstr "Back to reports"
+
+msgid "قرار المدقق النهائي"
+msgstr "Auditor final verdict"
+
+msgid "هذا القرار يمثل مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية."
+msgstr ""
+"This decision is an internal platform review and is not an official "
+"compliance certificate.This decision is an internal platform review and is "
+"not an official compliance certificate.This decision is an internal platform "
+"review and is not an official compliance certificate.This analysis assists "
+"the auditor and is not a final decision or compliance certificate.This "
+"analysis assists the auditor and is not a final decision or compliance "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a "
+"certificate.Evidence uploaded. Advisory analysis is running and is not a "
+"final decision."
+
+msgid "مقترح — بانتظار مراجعة المدقق"
+msgstr "Suggested — pending auditor review"
+
+msgid "التحليل الاستشاري للذكاء الاصطناعي"
+msgstr "AI advisory analysis"
+
+msgid "استشاري فقط"
+msgstr "Advisory only"
+
+msgid "النص المستخرج من الدليل"
+msgstr "Extracted evidence text"
+
+msgid "حرف"
+msgstr "characters"
+
+msgid "سبب الاقتراح"
+msgstr "Reason for suggestion"
+
+msgid "تمت مراجعته بواسطة المدقق"
+msgstr "Reviewed by the auditor"
+
+msgid "حفظ قرار المدقق"
+msgstr "Save auditor decision"
+
+msgid "يمكنك عرض القرار، ولا تملك صلاحية تعديله."
+msgstr "You can view the decision but do not have permission to edit it."
+
+msgid "العودة إلى تفاصيل الدليل"
+msgstr "Back to evidence details"
+
+msgid "التصنيف الذكي"
+msgstr "Smart Classification"
+
+msgid "تصنيف أولي استشاري بناءً على بيانات الشركة."
+msgstr "An advisory preliminary classification based on company data."
+
+msgid "هذا التصنيف استشاري ولا يُعد قرارًا نهائيًا أو شهادة."
+msgstr ""
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+
+msgid "مستوى المخاطر"
+msgstr "Risk level"
+
+msgid "الأطر المقترحة"
+msgstr "Recommended frameworks"
+
+msgid "عدد الضوابط المتوقع"
+msgstr "Expected control count"
+
+msgid "ثقة التصنيف"
+msgstr "Classification confidence"
+
+msgid "سبب التصنيف"
+msgstr "Reason"
+
+msgid "إكمال ملف التصنيف"
+msgstr "Complete the intake profile"
+
+msgid "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال."
+msgstr ""
+"This analysis assists the auditor and is not a final decision or compliance "
+"certificate.This analysis assists the auditor and is not a final decision or "
+"compliance certificate.This analysis assists the auditor and is not a final "
+"decision or compliance certificate.This analysis assists the auditor and is "
+"not a final decision or compliance certificate.This analysis assists the "
+"auditor and is not a final decision or compliance certificate.This "
+"classification is advisory and is not a final decision or a certificate.This "
+"classification is advisory and is not a final decision or a certificate.This "
+"classification is advisory and is not a final decision or a certificate.This "
+"classification is advisory and is not a final decision or a certificate."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+
+msgid "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري."
+msgstr ""
+"Readable text must be extracted from the evidence before running the "
+"advisory analysis.Readable text must be extracted from the evidence before "
+"running the advisory analysis.Readable text must be extracted from the "
+"evidence before running the advisory analysis.Readable text must be "
+"extracted from the evidence before running the advisory analysis.Readable "
+"text must be extracted from the evidence before running the advisory "
+"analysis."
+
+msgid "استخراج النص من الدليل"
+msgstr "Evidence text extraction"
+
+msgid "إعادة تشغيل التحليل الاستشاري"
+msgstr "Re-run advisory analysis"
+
+msgid "تشغيل التحليل الاستشاري"
+msgstr "Run advisory analysis"
+
+msgid "حالة التحليل"
+msgstr "Analysis status"
+
+msgid "مدى ارتباط الدليل بالضابط"
+msgstr "Evidence relevance to the control"
+
+msgid "ملخص التحليل"
+msgstr "Analysis summary"
+
+msgid "إشارات مطابقة"
+msgstr "Matched signals"
+
+msgid "عناصر ناقصة"
+msgstr "Missing items"
+
+msgid "توصيات استشارية"
+msgstr "Advisory recommendations"
+
+msgid "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال."
+msgstr "This extraction is not an analysis or a compliance judgment."
+
+msgid "إعادة استخراج النص"
+msgstr "Re-run text extraction"
+
+msgid "تشغيل استخراج النص"
+msgstr "Run text extraction"
+
+msgid "لم يتم تشغيل استخراج النص بعد."
+msgstr "Text extraction has not been run yet."
+
+msgid "حالة الاستخراج"
+msgstr "Extraction status"
+
+msgid "طريقة الاستخراج"
+msgstr "Extraction method"
+
+msgid "عدد الأحرف"
+msgstr "Character count"
+
+msgid "عدد الصفحات"
+msgstr "Page count"
+
+msgid "تنبيهات"
+msgstr "Warnings"
+
+msgid "النص المستخرج"
+msgstr "Extracted text"
+
+msgid "تعذر استخراج نص كافٍ من هذا الملف."
+msgstr "Could not extract sufficient text from this file."
+
+msgid "محرك القواعد"
+msgstr "Rule engine"
+
+msgid "هذه نتيجة نظامية مقترحة وليست قرارًا نهائيًا."
+msgstr ""
+"This is a system-suggested result, not a final decision.This is a system-"
+"suggested result, not a final decision.This is a system-suggested result, "
+"not a final decision.This is a system-suggested result, not a final decision."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"This classification is advisory and is not a final decision or a certificate."
+"Evidence uploaded. Advisory analysis is running and is not a final decision."
+
+msgid "النتيجة النهائية تعتمد على مراجعة المدقق."
+msgstr "The final result depends on auditor review."
+
+msgid "إعادة تشغيل التقييم النظامي"
+msgstr "Re-run system evaluation"
+
+msgid "تشغيل التقييم النظامي"
+msgstr "Run system evaluation"
+
+msgid "لم يتم تشغيل التقييم النظامي بعد."
+msgstr "The system evaluation has not been run yet."
+
+msgid "حالة نظامية مقترحة"
+msgstr "Suggested system status"
+
+msgid "إشارات القواعد"
+msgstr "Rule signals"
+
+msgid "العناصر الناقصة"
+msgstr "Missing items"
+
+msgid "مسار جاهزية الامتثال"
+msgstr "Compliance readiness journey"
+
+msgid ""
+"اتبع الخطوات التالية لتحديد الأطر المطلوبة، تقييم الضوابط، رفع الأدلة، "
+"معالجة الفجوات، وتجهيز التقارير."
+msgstr ""
+
+msgid "نسبة الإنجاز"
+msgstr "Progress"
+
+msgid "المرحلة الحالية:"
+msgstr "Current stage:"
+
+msgid "الخطوة التالية الموصى بها"
+msgstr "Recommended next step"
+
+msgid "مكتمل"
+msgstr "Completed"
+
+msgid "الخطوة الحالية"
+msgstr "Current step"
+
+msgid "يحتاج إجراء"
+msgstr "Needs action"
+
+msgid "مقفل"
+msgstr "Locked"
+
+msgid "قيد التجهيز"
+msgstr "Planned"
+
+msgid "غير متاح حاليًا"
+msgstr "Not available yet"
+
+msgid "اختياري"
+msgstr "Optional"
+
+msgid "منصة جاهزية الامتثال السيبراني"
+msgstr "Cybersecurity compliance readiness platform"
+
+msgid "ابدأ الآن"
+msgstr "Get started"
+
+msgid "جاهزية الامتثال السيبراني المستمرة"
+msgstr "Continuous cybersecurity compliance readiness"
+
+msgid "للسوق السعودي"
+msgstr "for the Saudi market"
+
+msgid ""
+"منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل "
+"الفجوات، وإعداد تقارير الامتثال وفق أطر NCA وAramco وSABIC. القرار النهائي "
+"يبقى للمدقّق أو فريق الامتثال المختص."
+msgstr "The 1SaudiCyber platform for cybersecurity compliance readiness: organize evidence, analyze gaps, and prepare compliance reports against the NCA, Aramco, and SABIC frameworks. The final decision always remains with the auditor or the responsible compliance team."
+
+msgid "ابدأ تقييم الامتثال"
+msgstr "Start your compliance assessment"
+
+msgid "كيف تعمل المنصّة"
+msgstr "How the platform works"
+
+msgid "مؤشّر الجاهزية"
+msgstr "Readiness indicator"
+
+msgid "مثال توضيحي"
+msgstr "Illustrative example"
+
+msgid "تغطية لـ 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC"
+msgstr "Coverage of 417 official controls across the NCA, Aramco, and SABIC frameworks"
+
+msgid "إنجاز أسرع للتقييم"
+msgstr "Faster assessment"
+
+msgid "خفض في الكلفة"
+msgstr "Cost reduction"
+
+msgid "ضابطًا رسميًا مهيكلًا"
+msgstr "structured official controls"
+
+msgid "جاهزية للمراقبة المستمرة"
+msgstr "Continuous monitoring readiness"
+
+msgid "أساس تقني عند ربط مصادر البيانات المناسبة"
+msgstr "Technical foundation once data sources are connected"
+
+msgid ""
+"مؤشرات توضيحية تعتمد على نضج بيانات العميل واكتمال الأدلة، وليست نتائج "
+"مضمونة."
+msgstr ""
+
+msgid "مسار الامتثال في خمس خطوات"
+msgstr "The compliance journey in five steps"
+
+msgid ""
+"من التسجيل إلى تقارير الجاهزية والامتثال — رحلة منظّمة وواضحة خطوة بخطوة."
+msgstr "From registration to readiness and compliance reports — a clear, structured journey, step by step."
+
+msgid "التسجيل"
+msgstr "Registration"
+
+msgid "ملف الشركة وأهداف الامتثال"
+msgstr "Company profile and compliance objectives"
+
+msgid "تحديد الأطر المنطبقة وخطة الضوابط"
+msgstr "Identify the applicable frameworks and the control plan"
+
+msgid "رفع الأدلة"
+msgstr "Evidence upload"
+
+msgid "تنظيم الأدلة وتحليل استشاري مساعد"
+msgstr "Organize evidence with assistive advisory analysis"
+
+msgid "تحليل الفجوات"
+msgstr "Gap analysis"
+
+msgid "قياس الجاهزية وتحديد الفجوات"
+msgstr "Measure readiness and identify gaps"
+
+msgid "مراجعة المدقّق"
+msgstr "Auditor review"
+
+msgid "القرار النهائي للامتثال يتّخذه المدقّق"
+msgstr "The final compliance decision is made by the auditor"
+
+msgid "الأطر المدعومة"
+msgstr "Supported frameworks"
+
+msgid "منصّة واحدة لمتطلبات الامتثال السيبراني في السوق السعودي"
+msgstr "One platform for cybersecurity compliance requirements in the Saudi market"
+
+msgid ""
+"الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني للجهات "
+"الحكومية والبنى التحتية الحرجة."
+msgstr "The Essential Cybersecurity Controls from the National Cybersecurity Authority for government entities and critical infrastructure."
+
+msgid "108 ضوابط (ECC) — إجمالي أطر NCA 231 ضابطًا"
+msgstr "108 controls (ECC) — 231 controls in total across the NCA frameworks"
+
+msgid ""
+"معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة لجميع الموردين ومزوّدي "
+"الخدمات."
+msgstr "Saudi Aramco's third-party cybersecurity standard for all suppliers and service providers."
+
+msgid "92 ضابطًا"
+msgstr "92 controls"
+
+msgid "معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات."
+msgstr "SABIC's CyberTrust standard for petrochemical-sector suppliers and service providers."
+
+msgid "94 ضابطًا"
+msgstr "94 controls"
+
+msgid "إجمالي التغطية: 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC."
+msgstr "Total coverage: 417 official controls across the NCA, Aramco, and SABIC frameworks."
+
+msgid "جاهزون لرفع جاهزية الامتثال؟"
+msgstr "Ready to raise your compliance readiness?"
+
+msgid ""
+"انضم إلى الشركات والجهات في السعودية التي تنظّم أدلّتها وتُعدّ تقارير جاهزيتها "
+"للمراجعة."
+msgstr "Join the companies and entities in Saudi Arabia that organize their evidence and prepare their readiness reports for review."
+
+msgid "سجّل شركتك"
+msgstr "Register your company"
+
+msgid "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية."
+msgstr "A cybersecurity compliance readiness management platform in the Kingdom of Saudi Arabia."
+
+msgid "الضوابط الأساسية NCA ECC"
+msgstr "NCA ECC Essential Controls"
+
+msgid "معيار SABIC CyberTrust"
+msgstr "SABIC CyberTrust standard"
+
+msgid "المنصّة"
+msgstr "The platform"
+
+msgid "جميع الحقوق محفوظة. متوافقة مع رؤية المملكة 2030."
+msgstr "All rights reserved. Aligned with Saudi Vision 2030."
+
+msgid "مرحبًا بعودتك"
+msgstr "Welcome back"
+
+msgid "سجّل الدخول إلى لوحة الامتثال الخاصة بك"
+msgstr "Sign in to your compliance dashboard"
+
+msgid "البريد الإلكتروني"
+msgstr "Email"
+
+msgid "كلمة المرور"
+msgstr "Password"
+
+msgid "ليس لديك حساب؟"
+msgstr "Don't have an account?"
+
+msgid "آخر تحديث:"
+msgstr "Last updated:"
+
+# --- P0-UIUX-01 landing localization (closure) ---
+
+msgid "108 ضابطًا في ECC — و231 ضابطًا عبر أطر NCA"
+msgstr "108 ECC controls — 231 controls across the NCA frameworks"
+
+msgid "1SaudiCyber منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها."
+msgstr "1SaudiCyber is an independent platform. Regulatory framework names are shown to indicate coverage scope only, and do not imply official endorsement by, or partnership with, any regulator."
+
+msgid "325 ضابطًا رسميًا مهيكلًا عبر أطر NCA وSABIC"
+msgstr "325 official framework controls structured across the NCA and SABIC frameworks"
+
+msgid "أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص. لا تُصدر المنصّة اعتمادًا رسميًا."
+msgstr "A tool to help organize compliance; the final decision stays with the auditor or the qualified compliance team. The platform does not issue any formal accreditation."
+
+msgid "أدخل بيانات المؤسسة وسياق الامتثال."
+msgstr "Enter your organization details and compliance context."
+
+msgid "أدلة قيد المراجعة"
+msgstr "Evidence under review"
+
+msgid "إدارة الضوابط"
+msgstr "Control management"
+
+msgid "إنهاء وصول المدقّق فور تعليقه أو رفضه."
+msgstr "An auditor's access ends the moment they are suspended or rejected."
+
+msgid "ابدأ بتنظيم ضوابطك وأدلّتك وإعداد جاهزيتك للمراجعة."
+msgstr "Start organizing your controls and evidence and preparing your readiness for review."
+
+msgid "الأمان"
+msgstr "Security"
+
+msgid "الأمان أولًا"
+msgstr "Security first"
+
+msgid "الإشارة إلى فجوات محتملة تحتاج تحقّقًا"
+msgstr "Flagging potential gaps that need verification"
+
+msgid "الامتثال لا يجب أن يعيش في جداول بيانات ورسائل ومجلدات أدلة متفرّقة"
+msgstr "Compliance shouldn't live across spreadsheets, emails and scattered evidence folders"
+
+msgid "التدقيق"
+msgstr "Audit"
+
+msgid "التقييم"
+msgstr "Assessment"
+
+msgid "الجاهزية العامة"
+msgstr "Overall readiness"
+
+msgid "الحساب"
+msgstr "Account"
+
+msgid "الحفاظ على الوضوح مع تغيّر وضع الجاهزية عبر الوقت."
+msgstr "Maintain clarity as your readiness changes over time."
+
+msgid "الخصوصية"
+msgstr "Privacy"
+
+msgid "الذكاء الاصطناعي"
+msgstr "Artificial intelligence"
+
+msgid "الربط يوضّح التكافؤ بين الضوابط؛ والقرار في كفاية الأدلة لكل ضابط يبقى للمراجع المختص."
+msgstr "Mapping shows how controls are equivalent; the decision on whether the evidence is sufficient for each control stays with the qualified reviewer."
+
+msgid "الشركة"
+msgstr "Company"
+
+msgid "الشركة والقانوني"
+msgstr "Company and legal"
+
+msgid "الشروط"
+msgstr "Terms"
+
+msgid "الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني، للجهات الحكومية والبنى التحتية الحسّاسة."
+msgstr "The National Cybersecurity Authority's Essential Cybersecurity Controls (ECC), for government entities and critical national infrastructure."
+
+msgid "الفجوات والمعالجة"
+msgstr "Gaps and remediation"
+
+msgid "القدرات"
+msgstr "Capabilities"
+
+msgid "القدرات الأساسية"
+msgstr "Core capabilities"
+
+msgid "القرار النهائي للمدقّق، مع جاهزية للمراقبة المستمرة."
+msgstr "The final decision rests with the auditor, with readiness for continuous monitoring."
+
+msgid "المراقبة المستمرة"
+msgstr "Continuous monitoring"
+
+msgid "المشكلة"
+msgstr "The problem"
+
+msgid "المعالجة"
+msgstr "Remediation"
+
+msgid "المنتج"
+msgstr "Product"
+
+msgid "بيانات كل مؤسسة معزولة عن غيرها."
+msgstr "Each organization's data is isolated from every other."
+
+msgid "تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف المؤسسة فعليًا قبل التدقيق. تجمع 1SaudiCyber هذه الدورة في مسار واحد متّصل."
+msgstr "Controls, evidence and findings are spread across different teams and tools, making it hard to know where the organization really stands before an audit. 1SaudiCyber brings this cycle together into one connected path."
+
+msgid "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC."
+msgstr "1SaudiCyber brings the compliance cycle into one place: assess readiness, manage controls, organize evidence, analyze gaps, track remediation and prepare for audit — across the NCA, Aramco and SABIC frameworks."
+
+msgid "تجهيز الضوابط والأدلة والملاحظات لمسار مراجعة المدقّق."
+msgstr "Prepare controls, evidence and findings for the auditor review path."
+
+msgid "تحديد الأطر والمتطلبات المنطبقة على مؤسستك."
+msgstr "Identify the frameworks and requirements applicable to your organization."
+
+msgid "تحديد الفجوات وترتيب أولويات الملاحظات ومتابعة خطط المعالجة."
+msgstr "Identify gaps, prioritize findings and track remediation plans."
+
+msgid "تحديد المتطلبات المنطبقة وقياس وضع الجاهزية الحالي للمؤسسة."
+msgstr "Identify applicable requirements and measure the organization's current readiness."
+
+msgid "تحليل استشاري للأدلة المرفوعة"
+msgstr "Advisory analysis of uploaded evidence"
+
+msgid "تحليل الفجوات وترتيب أولويات المعالجة ومتابعتها."
+msgstr "Analyze gaps, prioritize remediation and track it."
+
+msgid "تحليل مدعوم بالذكاء الاصطناعي — مساعِد، لا قرار"
+msgstr "AI-assisted analysis — an assistant, not a decision"
+
+msgid "تخزين خاص للأدلة"
+msgstr "Private evidence storage"
+
+msgid "تخطَّ إلى المحتوى"
+msgstr "Skip to content"
+
+msgid "تسجيل الإجراءات الحسّاسة للمراجعة."
+msgstr "Sensitive actions are logged for review."
+
+msgid "تطوير"
+msgstr "Developed by"
+
+msgid "تغطية مهيكلة لضوابط الأطر المنشورة في السوق السعودي، من مساحة عمل واحدة."
+msgstr "Structured coverage of the published framework controls used in the Saudi market, from a single workspace."
+
+msgid "تقييم وضع الجاهزية وربط الأدلة بالضوابط."
+msgstr "Assess readiness and link evidence to controls."
+
+msgid "تُربط الضوابط المتكافئة بين NCA وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار."
+msgstr "Equivalent controls are mapped across NCA and SABIC, so overlapping requirements appear in one place and duplicated work is reduced when covering more than one framework."
+
+msgid "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية"
+msgstr "Cybersecurity compliance readiness, simplified for Saudi organizations"
+
+msgid "جميع الحقوق محفوظة."
+msgstr "All rights reserved."
+
+msgid "حدود واضحة"
+msgstr "Clear limits"
+
+msgid "حدّد الأطر والنطاق"
+msgstr "Define frameworks and scope"
+
+msgid "حلّل الفجوات وعالِجها"
+msgstr "Analyze and remediate gaps"
+
+msgid "ربط الأطر"
+msgstr "Framework mapping"
+
+msgid "رفع الأدلة وتنظيمها ومراجعتها وربطها بالضوابط ذات العلاقة."
+msgstr "Upload, organize, review and link evidence to the relevant controls."
+
+msgid "روابط الصفحة"
+msgstr "Page links"
+
+msgid "سجلّ تدقيق"
+msgstr "Audit log"
+
+msgid "شاهد كيف تعمل"
+msgstr "See how it works"
+
+msgid "شرح الملاحظات واقتراح خطوات تالية"
+msgstr "Explaining findings and suggesting next steps"
+
+msgid "صلاحيات حسب الدور"
+msgstr "Role-based access"
+
+msgid "ضابط"
+msgstr "Control"
+
+msgid "ضابط متكافئ"
+msgstr "Equivalent control"
+
+msgid "ضوابط وصول وحماية للبيانات مطبّقة في المنصّة."
+msgstr "Access controls and data protection applied across the platform."
+
+msgid "طبقة تحقّق إضافية عند تسجيل الدخول."
+msgstr "An extra verification layer at sign-in."
+
+msgid "عرِّف مؤسستك"
+msgstr "Define your organization"
+
+msgid "عزل بيانات المؤسسات"
+msgstr "Organization data isolation"
+
+msgid "عن المنصّة"
+msgstr "About"
+
+msgid "فتح القائمة"
+msgstr "Open menu"
+
+msgid "فجوات حرجة"
+msgstr "Critical gaps"
+
+msgid "قائمة الجوال"
+msgstr "Mobile menu"
+
+msgid "قيّم الضوابط وارفع الأدلة"
+msgstr "Assess controls and upload evidence"
+
+msgid "كل ما تحتاجه لإدارة الامتثال في مكان واحد"
+msgstr "Everything you need to manage compliance in one place"
+
+msgid "كيف تعمل"
+msgstr "How it works"
+
+msgid "لا يضمن الامتثال ولا يُغني عن مراجعة المدقّق المختص."
+msgstr "It does not guarantee compliance and is no substitute for review by a qualified auditor."
+
+msgid "لا يمثّل موافقة أو اعتمادًا من أي جهة تنظيمية."
+msgstr "It does not represent approval or accreditation by any regulator."
+
+msgid "مؤشرات توضيحية"
+msgstr "Illustrative figures"
+
+msgid "مبنية للسوق السعودي"
+msgstr "Built for the Saudi market"
+
+msgid "مبنية مع مراعاة الأمان"
+msgstr "Built with security in mind"
+
+msgid "متابعة الضوابط عبر الأطر المطبّقة من مساحة عمل واحدة موحّدة."
+msgstr "Track controls across the applicable frameworks from a single unified workspace."
+
+msgid "متطلبات متداخلة، مربوطة عبر الأطر"
+msgstr "Overlapping requirements, mapped across frameworks"
+
+msgid "مصادقة ثنائية (MFA)"
+msgstr "Two-factor authentication (MFA)"
+
+msgid "معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة، للموردين ومزوّدي الخدمات."
+msgstr "Saudi Aramco's third-party cybersecurity standard (SACS-002), for suppliers and service providers."
+
+msgid "ملفات الأدلة تُخدَم عبر تنزيل مُصرّح فقط."
+msgstr "Evidence files are served through authorized download only."
+
+msgid "منصّة جاهزية الامتثال السيبراني"
+msgstr "Cybersecurity compliance readiness platform"
+
+msgid "منصّة جاهزية الامتثال السيبراني للسوق السعودي"
+msgstr "Cybersecurity compliance readiness platform for the Saudi market"
+
+msgid "نزع صلاحية المدقّق"
+msgstr "Auditor de-provisioning"
+
+msgid "وصول مقيّد بحسب دور المستخدم."
+msgstr "Access restricted by the user's role."
+
+msgid "يخضع لسياسة سيادة البيانات: لا تُرسل بيانات العميل خارجيًا إلا عند التفعيل الصريح."
+msgstr "Subject to the data-sovereignty policy: customer data is not sent externally unless explicitly enabled."
+
+msgid "يدعم قرار الإنسان ولا يحلّ محلّه."
+msgstr "It supports human decisions and does not replace them."
+
+msgid "يساعد الذكاء الاصطناعي فرق الامتثال والمدقّقين على العمل بأسرع، مع بقاء القرار النهائي للإنسان."
+msgstr "AI helps compliance teams and auditors work faster, while the final decision stays with a human."
+
+# --- P0-UIUX-01 refinement polish ---
+
+msgid "231 ضابطًا عبر أطر NCA"
+msgstr "231 controls across the NCA frameworks"
+
+msgid "منها 108 في إطار ECC"
+msgstr "including 108 in the ECC framework"
+
+msgid "بيئة عرض تجريبية"
+msgstr "Demo workspace"
+
+msgid "نظرة عامة"
+msgstr "Overview"
+
+msgid "الفجوات المفتوحة"
+msgstr "Open gaps"
+
+msgid "الفجوات حسب الفئة"
+msgstr "Gaps by category"
+
+msgid "فجوة"
+msgstr "gaps"
+
+msgid "ضوابط الوصول"
+msgstr "Access controls"
+
+msgid "إدارة الأصول"
+msgstr "Asset management"
+
+msgid "استجابة الحوادث"
+msgstr "Incident response"
+
+msgid "إدارة المخاطر"
+msgstr "Risk management"
+
+msgid "أخرى"
+msgstr "Other"
+
+msgid "تقدّم الأطر"
+msgstr "Framework progress"
+
+msgid "بيانات توضيحية لأغراض العرض فقط"
+msgstr "Illustrative data, for display purposes only"
+
+msgid "حساب شركة"
+msgstr "Company account"
+
+msgid "إنشاء حساب شركة"
+msgstr "Create a company account"
+
+msgid "تسجيل شركة"
+msgstr "Register a company"
+
+msgid "سجّل شركتك في 1SaudiCyber"
+msgstr "Register your company on 1SaudiCyber"
+
+msgid "أكمل الخطوات التالية لبدء مسار الامتثال. الحقول المعلّمة بـ * مطلوبة."
+msgstr "Complete the steps below to start your compliance journey. Fields marked with * are required."
+
+msgid "يرجى تصحيح الحقول المحددة ثم المتابعة."
+msgstr "Please correct the highlighted fields and continue."
+
+msgid "بيانات المستخدم"
+msgstr "User details"
+
+msgid "بيانات الشركة"
+msgstr "Company details"
+
+msgid "أهداف الامتثال"
+msgstr "Compliance goals"
+
+msgid "اختر هدفًا واحدًا على الأقل."
+msgstr "Choose at least one goal."
+
+msgid "التالي"
+msgstr "Next"
+
+msgid "السابق"
+msgstr "Previous"
+
+msgid "إنشاء الحساب والمتابعة"
+msgstr "Create account and continue"
+
+msgid "رجوع"
+msgstr "Back"
+
+msgid "جارٍ حفظ البيانات..."
+msgstr "Saving…"
+
+msgid "لديك حساب بالفعل؟"
+msgstr "Already have an account?"
+
+msgid "إظهار كلمة المرور"
+msgstr "Show password"
+
+msgid "إخفاء كلمة المرور"
+msgstr "Hide password"
+
+msgid "توثيق البريد الإلكتروني"
+msgstr "Email verification"
+
+msgid "أدخل رمز التحقق"
+msgstr "Enter the verification code"
+
+msgid "أرسلنا رمزًا من 6 أرقام إلى"
+msgstr "We sent a 6-digit code to"
+
+msgid "رمز التحقق"
+msgstr "Verification code"
+
+msgid "تأكيد الرمز"
+msgstr "Confirm code"
+
+msgid "الرمز صالح لمدة 10 دقائق، ولديك 5 محاولات."
+msgstr "The code is valid for 10 minutes, and you have 5 attempts."
+
+msgid "لم يصلك الرمز؟"
+msgstr "Didn't receive the code?"
+
+msgid "إعادة إرسال الرمز"
+msgstr "Resend code"
+
+msgid "يمكنك طلب رمز جديد بعد 60 ثانية."
+msgstr "You can request a new code after 60 seconds."
+
+msgid "نوع الحساب"
+msgstr "Account type"
+
+msgid "إنشاء الحساب"
+msgstr "Create account"
+
+msgid "تأكيد البريد الإلكتروني"
+msgstr "Email verification"
+
+msgid "إعداد المنشأة"
+msgstr "Organization setup"
+
+msgid "مراحل التسجيل"
+msgstr "Registration steps"
+
+msgid "الخطوة %(step)s من 4"
+msgstr "Step %(step)s of 4"
+
+
+msgid "الاسم الأول"
+msgstr "First name"
+
+msgid "اسم العائلة"
+msgstr "Last name"
+
+msgid "رقم الجوال"
+msgstr "Mobile number"
+
+msgid "استخدم كلمة مرور قوية لا تقل عن 12 حرفًا، ويفضّل أن تحتوي على أحرف وأرقام ورمز خاص."
+msgstr "Use a strong password of at least 12 characters, ideally including letters, numbers and a special character."
+
+msgid "تأكيد كلمة المرور"
+msgstr "Confirm password"
+
+msgid "اسم الشركة بالعربية"
+msgstr "Company name (Arabic)"
+
+msgid "اسم الشركة بالإنجليزية"
+msgstr "Company name (English)"
+
+msgid "رقم السجل التجاري"
+msgstr "Commercial registration (CR) number"
+
+msgid "رقم السجل التجاري في السعودية يتكوّن غالبًا من 10 أرقام."
+msgstr "A Saudi commercial registration (CR) number is usually 10 digits."
+
+msgid "القطاع / نوع الجهة"
+msgstr "Sector / entity type"
+
+msgid "حجم الشركة"
+msgstr "Company size"
+
+msgid "المدينة"
+msgstr "City"
+
+msgid "الدولة"
+msgstr "Country"
+
+msgid "وصف مختصر"
+msgstr "Short description"
+
+msgid "نحتاج الامتثال لـ NCA"
+msgstr "We need NCA compliance"
+
+msgid "نحتاج الامتثال لـ Aramco"
+msgstr "We need Aramco compliance"
+
+msgid "نحتاج الامتثال لـ SABIC"
+msgstr "We need SABIC compliance"
+
+msgid "أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة 1SaudiCyber."
+msgstr "I agree to 1SaudiCyber's Terms of Use and Privacy Policy."
+
+msgid "يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب."
+msgstr "You must agree to the Terms of Use and Privacy Policy before creating an account."
+
+
+msgid "شركة / جهة طالبة امتثال"
+msgstr "Company / compliance-seeking entity"
+
+
+msgid "امتثال سيبراني أبسط لمنشأتك في السعودية"
+msgstr "Cybersecurity compliance, made simpler for your organization in Saudi Arabia"
+
+
+msgid "تحليل ذكي"
+msgstr "Smart analysis"
+
+
+msgid "مدعوم بالذكاء الاصطناعي"
+msgstr "AI-assisted"
+
+
+msgid "ربط بين الأطر"
+msgstr "Cross-framework mapping"
+
+
+msgid "وتقليل تكرار العمل"
+msgstr "Reduce duplicate work"
+
+
+msgid "أمن وموثوق"
+msgstr "Secure and trusted"
+
+
+msgid "وفق أفضل الممارسات"
+msgstr "Following best practices"
+
+
+msgid "شركة تجريبية"
+msgstr "Demo company"
+
+
+msgid "التطبيقات"
+msgstr "Applications"
+
+
+msgid "الفجوات"
+msgstr "Gaps"
+
+
+msgid "الإعدادات"
+msgstr "Settings"
+
+
+msgid "منصة الامتثال السيبراني"
+msgstr "Cybersecurity Compliance Platform"
+
+
+msgid "ابدأ رحلة الامتثال السيبراني بثقة"
+msgstr "Start your cybersecurity compliance journey with confidence"
+
+
+msgid "انضم إلى 1SaudiCyber لإدارة الامتثال السيبراني لمنشأتك بكفاءة وموثوقية وفق الأطر الوطنية المدعومة."
+msgstr "Join 1SaudiCyber to manage your organization's cybersecurity compliance efficiently and reliably, aligned with the supported national frameworks."
+
+
+msgid "إدارة متطلبات الأطر التنظيمية بسهولة"
+msgstr "Manage regulatory framework requirements with ease"
+
+
+msgid "توحيد الأدلة وتقليل تكرار العمل"
+msgstr "Unify evidence and reduce duplicate work"
+
+
+msgid "رؤى ذكية ومساعدة بالذكاء الاصطناعي"
+msgstr "Smart insights with AI assistance"
+
+
+msgid "أمن وخصوصية على مستوى المؤسسات"
+msgstr "Enterprise-grade security and privacy"
+
+
+msgid "بياناتك آمنة ومشفرة وفق أعلى المعايير"
+msgstr "Your data is secure and encrypted to the highest standards"
+
+
+msgid "اختيار نوع الحساب"
+msgstr "Account type"
+
+
+msgid "كيف تريد استخدام 1SaudiCyber؟"
+msgstr "How do you want to use 1SaudiCyber?"
+
+
+msgid "اختر نوع الحساب للمتابعة."
+msgstr "Choose an account type to continue."
+
+
+msgid "الأنسب لمعظم المستخدمين"
+msgstr "Best for most users"
+
+
+msgid "حساب منشأة"
+msgstr "Organization account"
+
+
+msgid "أنشئ حساب مسؤول المنشأة لبدء إعداد الشركة والاشتراك والتصنيف وإدارة رحلة الامتثال."
+msgstr "Create the organization-administrator account to set up your company, subscription, classification, and manage the compliance journey."
+
+
+msgid "إنشاء حساب منشأة"
+msgstr "Create organization account"
+
+
+msgid "حساب مدقّق"
+msgstr "Auditor account"
+
+
+msgid "قدّم طلب تسجيل كمدقّق، وسيخضع الطلب لمراجعة الإدارة قبل التفعيل."
+msgstr "Submit an auditor registration request; it is reviewed by the administration before activation."
+
+
+msgid "طلب التسجيل"
+msgstr "Registration request"
+
+
+msgid "مراجعة الإدارة"
+msgstr "Admin review"
+
+
+msgid "التفعيل"
+msgstr "Activation"
+
+
+msgid "تسجيل كمدقّق"
+msgstr "Register as an auditor"
+
+
+msgid "اختر نوع الحساب المناسب، ويمكنك استكمال البيانات في الخطوات التالية. تُدار الصلاحيات والوصول وفق نوع الحساب وحالة التفعيل."
+msgstr "Choose the account type that fits you; you can complete the details in the following steps. Permissions and access are managed according to account type and activation status."
+
+
+msgid "التحقق"
+msgstr "Verification"
+
+
+msgid "اكتمال التسجيل"
+msgstr "Registration complete"
+
+
+msgid "حساب فردي"
+msgstr "Individual account"
+
+
+msgid "إنشاء حساب فردي"
+msgstr "Create individual account"
+
+
+msgid "للمدقّقين والمستشارين والأفراد للتعاون مع المنشآت في مراجعة الامتثال."
+msgstr "For auditors, consultants, and individuals collaborating with organizations on compliance review."
+
+
+msgid "تأكيد بريدك الإلكتروني"
+msgstr "Confirm your email"
+
+
+msgid "أرسلنا رمز تحقّق مكوّنًا من 6 أرقام لإكمال إنشاء حساب منشأتك."
+msgstr "We sent a 6-digit verification code to complete creating your organization account."
+
+
+msgid "نسخ البريد"
+msgstr "Copy email"
+
+
+msgid "لم تجد الرسالة؟ تحقّق من مجلد الرسائل غير المرغوب فيها (Spam) أو العروض الترويجية. الرمز صالح لمدة 10 دقائق، ولديك 5 محاولات."
+msgstr "Didn't find the message? Check your spam or promotions folder. The code is valid for 10 minutes, and you have 5 attempts."
+
+
+msgid "العودة لتسجيل الدخول"
+msgstr "Back to sign in"
+
+
+msgid "يمكنك إعادة الإرسال خلال"
+msgstr "You can resend in"
+
+
+msgid "تم التحقق بنجاح"
+msgstr "Verified successfully"
+
+
+msgid "تم تأكيد بريدك الإلكتروني وإنشاء حساب منشأتك بنجاح. الخطوة التالية: استكمال إعداد المنشأة لبدء رحلة الامتثال."
+msgstr "Your email is confirmed and your organization account is created. Next: complete your organization setup to start the compliance journey."
+
+
+msgid "حساب المنشأة جاهز"
+msgstr "Organization account ready"
+
+
+msgid "اسم المنشأة"
+msgstr "Organization name"
+
+
+msgid "تاريخ الإنشاء"
+msgstr "Created on"
+
+
+msgid "حالة التحقق"
+msgstr "Verification status"
+
+
+msgid "تم التحقق"
+msgstr "Verified"
+
+
+msgid "ما هي الخطوة التالية؟"
+msgstr "What's next?"
+
+
+msgid "إعداد معلومات المنشأة"
+msgstr "Set up organization details"
+
+
+msgid "أدخل تفاصيل منشأتك الأساسية."
+msgstr "Enter your organization's basic details."
+
+
+msgid "تحديد نطاق الامتثال"
+msgstr "Define compliance scope"
+
+
+msgid "حدّد الأطر والقطاعات ونطاق التقييم."
+msgstr "Choose frameworks, sectors, and assessment scope."
+
+
+msgid "دعوة الفريق"
+msgstr "Invite your team"
+
+
+msgid "أضف أعضاء فريقك وحدّد صلاحياتهم."
+msgstr "Add team members and set their permissions."
+
+
+msgid "متابعة إعداد المنشأة"
+msgstr "Continue to organization setup"
+
+
+msgid "سأكمل لاحقًا من لوحة التحكم"
+msgstr "I'll continue later from the dashboard"
+
+msgid "يرجى اختيار هدف امتثال واحد على الأقل (NCA أو SABIC)."
+msgstr "Please select at least one compliance goal (NCA or SABIC)."

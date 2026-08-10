@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}التسجيل كمدقّق - Cyber-5{% endblock %}
+{% block content %}
+<div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#F7F9F8;">
+  <div style="max-width:620px;margin:0 auto;padding:48px 20px;">
+    <p style="color:#1E56C9;font-weight:600;margin:0 0 6px;">مسار المدقّق</p>
+    <h1 style="color:#2b2c27;font-size:1.5rem;font-weight:700;margin:0 0 14px;">يلزم تسجيل الخروج أولًا لإنشاء حساب مدقّق</h1>
+
+    <div style="background:#FFF8E6;border:1px solid #F0D98C;color:#7A5B12;border-radius:12px;padding:16px 18px;margin-bottom:24px;font-size:.95rem;line-height:1.7;">
+      أنت مسجّل دخول حاليًا كحساب شركة{% if current_email %} (<strong dir="ltr">{{ current_email }}</strong>){% endif %}.
+      لإنشاء حساب مدقّق، يرجى تسجيل الخروج أولًا أو استخدام بريد إلكتروني مختلف.
+      لن يتم إنشاء حساب مدقّق جديد أو تبديل جلستك الحالية تلقائيًا.
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+      <a href="{% url 'dashboard:main' %}"
+         style="background:#1E56C9;color:#fff;font-weight:600;padding:12px 22px;border:none;border-radius:10px;text-decoration:none;">
+        المتابعة كحساب الشركة الحالي
+      </a>
+      <form method="post" action="{% url 'core:logout' %}?next={% url 'auditors:register' %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit"
+                style="background:#FFFFFF;color:#1E56C9;font-weight:600;padding:12px 22px;border:1px solid #1E56C9;border-radius:10px;cursor:pointer;">
+          تسجيل الخروج والتسجيل كمدقّق
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

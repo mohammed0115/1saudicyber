@@ -1,0 +1,65 @@
+{% load i18n %}{% comment %}Expects `journey` (from build_company_compliance_journey).{% endcomment %}
+<div class="ct-journey-wizard" dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
+
+  <!-- Hero -->
+  <div class="rounded-2xl p-6 mb-4" style="background:#1E56C9;color:#fff;">
+    <h2 class="text-xl font-bold mb-1">{% trans "مسار جاهزية الامتثال" %}</h2>
+    <p class="text-sm mb-4" style="color:#CDDDF5;">
+      {% trans "اتبع الخطوات التالية لتحديد الأطر المطلوبة، تقييم الضوابط، رفع الأدلة، معالجة الفجوات، وتجهيز التقارير." %}
+    </p>
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="flex-1 min-w-[180px]">
+        <div class="flex justify-between text-xs mb-1" style="color:#CDDDF5;">
+          <span>{% trans "نسبة الإنجاز" %}</span><span>{{ journey.overall_progress }}%</span>
+        </div>
+        <div class="w-full rounded-full h-2" style="background:rgba(255,255,255,.25);">
+          <div class="h-2 rounded-full" style="width:{{ journey.overall_progress }}%;background:#fff;"></div>
+        </div>
+        <p class="text-xs mt-1" style="color:#CDDDF5;">{% trans "المرحلة الحالية:" %} {{ journey.current_stage_title }}</p>
+      </div>
+      <div class="rounded-xl px-4 py-3" style="background:rgba(255,255,255,.12);min-width:220px;">
+        <p class="text-xs mb-1" style="color:#CDDDF5;">{% trans "الخطوة التالية الموصى بها" %}</p>
+        <p class="font-semibold text-sm mb-2">{{ journey.next_action.title }}</p>
+        {% if journey.next_action.url_name and journey.next_action.action_label %}
+        <a href="{% url journey.next_action.url_name %}" data-busy="جارٍ فتح الخطوة..."
+           class="inline-block rounded-lg text-xs font-semibold px-3 py-2" style="background:#fff;color:#1E56C9;">
+          {{ journey.next_action.action_label }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Level 1: 5-stage segmented progress (responsive, no overflow) -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4">
+    {% for st in journey.stages %}
+    <div class="rounded-lg p-3 text-center border"
+         style="background:#FFFFFF;border-color:#D9E2DE;{% if st.status == 'current' %}border-color:#1E56C9;box-shadow:0 0 0 1px #1E56C9;{% endif %}">
+      <div class="text-xs font-bold mb-1" style="color:#111827;">{{ forloop.counter }}. {{ st.title }}</div>
+      <div class="w-full rounded-full h-1.5 mb-1" style="background:#F0F2F1;">
+        <div class="h-1.5 rounded-full" style="width:{{ st.progress_percent }}%;background:#1E56C9;"></div>
+      </div>
+      {% include "components/status_badge.html" with status=st.status %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Level 2: stages as accordion (mobile-friendly; current open) -->
+  {% for st in journey.stages %}
+  <details class="ct-stage rounded-xl border mb-3" style="background:#F7F9F8;border-color:#D9E2DE;"
+           {% if st.status == 'current' %}open{% endif %}>
+    <summary class="cursor-pointer select-none px-4 py-3 flex items-center justify-between gap-3">
+      <span class="font-semibold text-sm" style="color:#111827;">{{ forloop.counter }}. {{ st.title }}</span>
+      <span class="flex items-center gap-2 text-xs" style="color:#6B7280;">
+        {{ st.progress_percent }}% {% include "components/status_badge.html" with status=st.status %}
+      </span>
+    </summary>
+    <div class="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for step in st.steps %}{% include "components/journey_step_card.html" with step=step %}{% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+
+  <p class="text-xs mt-1" style="color:#6B7280;">
+    القرار النهائي للامتثال يتّخذه المدقّق. التحليل الآلي استشاري، والخطوات المعلّمة «قيد التجهيز» غير مفعّلة بعد.
+  </p>
+</div>
