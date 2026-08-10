@@ -19,9 +19,9 @@ from django.db import transaction
 from core.models import Company, User
 
 SAMPLE_CR = '1010123456'
-COMPANY_USER_EMAIL = 'client@1saudicyber.local'
-STAFF_USER_EMAIL = 'admin@1saudicyber.local'
-AUDITOR_USER_EMAIL = 'auditor@1saudicyber.local'
+COMPANY_USER_EMAIL = 'client@cyber-5.local'
+STAFF_USER_EMAIL = 'admin@cyber-5.local'
+AUDITOR_USER_EMAIL = 'auditor@cyber-5.local'
 LOCAL_ONLY_DEFAULT_PASSWORD = 'uat-demo-local-only-change-me'  # placeholder, not a secret
 
 

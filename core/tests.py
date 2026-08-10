@@ -1244,16 +1244,16 @@ class SeedUatDemoDataTests(TestCase):
     def test_seed_uat_demo_data_apply_creates_sample_company(self):
         self._run('--apply')
         self.assertTrue(Company.objects.filter(cr_number='1010123456').exists())
-        self.assertTrue(User.objects.filter(email='client@1saudicyber.local').exists())
+        self.assertTrue(User.objects.filter(email='client@cyber-5.local').exists())
         from auditors.models import AuditorProfile
-        self.assertTrue(AuditorProfile.objects.filter(user__email='auditor@1saudicyber.local',
+        self.assertTrue(AuditorProfile.objects.filter(user__email='auditor@cyber-5.local',
                                                       status='active').exists())
 
     def test_seed_uat_demo_data_idempotent(self):
         self._run('--apply')
         self._run('--apply')
         self.assertEqual(Company.objects.filter(cr_number='1010123456').count(), 1)
-        self.assertEqual(User.objects.filter(email='client@1saudicyber.local').count(), 1)
+        self.assertEqual(User.objects.filter(email='client@cyber-5.local').count(), 1)
 
     def test_seed_uat_demo_data_does_not_create_companycontrol(self):
         from compliance.models import CompanyControl
@@ -1278,7 +1278,7 @@ class SeedUatDemoDataTests(TestCase):
             os.environ.pop('UAT_DEMO_PASSWORD', None)
             out = self._run('--apply')
         self.assertIn('UAT_DEMO_PASSWORD not set', out)
-        self.assertTrue(User.objects.filter(email='client@1saudicyber.local').exists())
+        self.assertTrue(User.objects.filter(email='client@cyber-5.local').exists())
 
     def test_seed_uat_demo_data_subscribe_flag_activates_subscription(self):
         from billing.subscription_access import company_has_active_subscription
