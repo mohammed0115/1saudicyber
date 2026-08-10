@@ -21,7 +21,14 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h.strip()]
 # CSRF trusted origins (scheme + host), e.g. "https://app.example.sa". Empty by default
 # so local development is unaffected; set via env for HTTPS deployments.
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+# Django 4.0+ requires a scheme on every entry. Silently drop scheme-less values (a common
+# .env mistake — e.g. pasting bare ALLOWED_HOSTS like 127.0.0.1/localhost here) so a
+# misconfiguration cannot crash boot with SystemCheckError (4_0.E001). Bare hosts belong
+# in ALLOWED_HOSTS, not here.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if o.strip().startswith(('http://', 'https://'))
+]
 TESTING = any(arg in {'test', 'pytest'} for arg in sys.argv[1:])
 if TESTING:
     # The Django test client uses these hosts; keep tests independent of env config.
