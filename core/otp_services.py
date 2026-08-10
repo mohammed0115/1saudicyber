@@ -69,7 +69,7 @@ def send_otp_email(user, raw_code):
         f"ينتهي هذا الرمز خلال {OTP_TTL_MINUTES} دقائق، ولا تشاركه مع أي أحد.\n\n"
         f"منصة 1SaudiCyber مملوكة ومُدارة بواسطة شركة احصل الحل.\n"
     )
-    send_mail(subject, body, getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@1saudicyber.com'),
+    send_mail(subject, body, getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@cyber-5.com'),
               [user.email], fail_silently=True)
 
 

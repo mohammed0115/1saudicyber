@@ -11,7 +11,7 @@ from django.core.mail import send_mail
 
 
 def _from():
-    return getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@1saudicyber.com')
+    return getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@cyber-5.com')
 
 
 def _send(to_emails, subject, body):

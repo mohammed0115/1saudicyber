@@ -36,7 +36,7 @@ def create_invite(company, email, role, invited_by):
 
 
 def _email_invite(invite):
-    frm = getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@1saudicyber.com')
+    frm = getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@cyber-5.com')
     body = ('تمت دعوتك للانضمام إلى فريق «%s» على منصة 1SaudiCyber.\n\n'
             'لإكمال الانضمام وتعيين كلمة المرور، افتح الرابط:\n'
             '/invite/%s/\n\nالرابط صالح لمدة %d أيام.'
