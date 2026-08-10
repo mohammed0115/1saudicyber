@@ -1,6 +1,6 @@
 # Phase UX-1C — Language Switcher + English Catalogs
 
-> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. The internal Django
+> **Branding note:** Public brand and domain: **1SaudiCyber — cyber-5.com**. The internal Django
 > project package name remains `cybertrust_ksa` (technical-only, intentionally unchanged).
 
 **Status:** Local-only. Not deployed to production.

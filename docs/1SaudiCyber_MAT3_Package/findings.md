@@ -1,5 +1,5 @@
 # MAT3 — Findings Log
-**Platform:** 1SaudiCyber (https://1saudicyber.com)
+**Platform:** 1SaudiCyber (https://cyber-5.com)
 **Date:** 2026-07-07
 **Tester:** Manus AI Agent
 **Spec Version:** pasted_content_3.txt (13 scenarios + R1/R2/R3/R5)

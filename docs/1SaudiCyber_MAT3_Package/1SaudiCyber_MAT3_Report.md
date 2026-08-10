@@ -1,6 +1,6 @@
 # 1SaudiCyber Management Acceptance Test (MAT3) Report
 **Date:** July 07, 2026  
-**Platform:** [1SaudiCyber](https://1saudicyber.com)  
+**Platform:** [1SaudiCyber](https://cyber-5.com)  
 **Tester:** Manus AI Agent  
 
 ## Executive Summary

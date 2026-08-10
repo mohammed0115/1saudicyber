@@ -7,9 +7,9 @@
 ## Accounts created by the seed command
 | Role | Email | Password source | Notes |
 |------|-------|-----------------|-------|
-| Company user | `client@1saudicyber.local` | `UAT_DEMO_PASSWORD` (or local-only default) | role `company_admin`, linked to the sample company |
-| Staff/admin | `admin@1saudicyber.local` | `UAT_DEMO_PASSWORD` (or local-only default) | `is_staff=True` (staff-only actions); not a superuser |
-| Auditor | `auditor@1saudicyber.local` | `UAT_DEMO_PASSWORD` (or local-only default) | role `auditor` + active `AuditorProfile` |
+| Company user | `client@cyber-5.local` | `UAT_DEMO_PASSWORD` (or local-only default) | role `company_admin`, linked to the sample company |
+| Staff/admin | `admin@cyber-5.local` | `UAT_DEMO_PASSWORD` (or local-only default) | `is_staff=True` (staff-only actions); not a superuser |
+| Auditor | `auditor@cyber-5.local` | `UAT_DEMO_PASSWORD` (or local-only default) | role `auditor` + active `AuditorProfile` |
 
 ## Setting the demo password (recommended)
 ```bash

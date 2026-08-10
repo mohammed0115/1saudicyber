@@ -66,7 +66,7 @@ legacy 334 shown as the current official total
 ```bash
 docker compose ps
 curl -fsS http://127.0.0.1:${WEB_PORT:-8000}/healthz/
-curl -I https://1saudicyber.com/
+curl -I https://cyber-5.com/
 # re-run the smoke checklist (PHASE_8A_PRODUCTION_SMOKE_CHECKLIST.md)
 ```
 Record outcome and notify the owner. If rollback also fails, escalate and keep the service in the last

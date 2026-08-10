@@ -1,5 +1,5 @@
 # CyberTrust KSA — Deployment Readiness Checklist
-> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. The internal Django project package name remains `cybertrust_ksa` (former internal project name: CyberTrust KSA); it is technical-only and intentionally unchanged.
+> **Branding note:** Public brand and domain: **1SaudiCyber — cyber-5.com**. The internal Django project package name remains `cybertrust_ksa` (former internal project name: CyberTrust KSA); it is technical-only and intentionally unchanged.
 
 
 **Status:** Needs configuration. This is a **documentation-only** checklist — no Docker or

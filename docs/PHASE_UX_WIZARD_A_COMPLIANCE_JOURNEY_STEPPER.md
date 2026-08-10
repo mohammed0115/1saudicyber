@@ -1,6 +1,6 @@
 # Phase UX-WIZARD-A — Compliance Journey Stepper/Wizard
 
-**Public brand:** 1SaudiCyber — 1saudicyber.com · **Internal package:** `cybertrust_ksa` (unchanged).
+**Public brand:** 1SaudiCyber — cyber-5.com · **Internal package:** `cybertrust_ksa` (unchanged).
 
 ## Purpose
 Show the full **target** compliance journey as a guided, bilingual-ready, mobile-friendly wizard so

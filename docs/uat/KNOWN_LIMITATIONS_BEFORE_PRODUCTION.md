@@ -20,5 +20,5 @@
 - Official control library = **417** controls; legacy 334 is a non-authoritative bridge.
 
 ## Internal naming
-- Public brand/domain: **1SaudiCyber / 1saudicyber.com**.
+- Public brand/domain: **1SaudiCyber / cyber-5.com**.
 - Internal Django package remains `cybertrust_ksa` (technical-only; intentionally unchanged).

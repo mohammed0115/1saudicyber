@@ -1,7 +1,7 @@
 # Phase 8A — Production Smoke Checklist
 
 > PLANNING ONLY. To be executed by the deployer AFTER a future approved deploy. Not run in this phase.
-> Domain `https://1saudicyber.com`; health endpoint `/healthz/`.
+> Domain `https://cyber-5.com`; health endpoint `/healthz/`.
 
 ## A. Public / unauthenticated (curl + browser)
 ```

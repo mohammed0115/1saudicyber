@@ -1,6 +1,6 @@
 # Phase 8C — Public UX Trust Polish
 
-> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. Internal package
+> **Branding note:** Public brand and domain: **1SaudiCyber — cyber-5.com**. Internal package
 > `cybertrust_ksa` (technical-only).
 
 **Status:** Local-code only. No production deployment, no SSH, no migration, no secret change.

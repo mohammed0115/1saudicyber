@@ -1,6 +1,6 @@
 # Phase 5B — Continuous Monitoring Foundation
 
-**Public brand:** 1SaudiCyber — 1saudicyber.com · **Internal package:** `cybertrust_ksa` (unchanged).
+**Public brand:** 1SaudiCyber — cyber-5.com · **Internal package:** `cybertrust_ksa` (unchanged).
 
 ## What was added
 An **internal, deterministic** continuous-monitoring foundation in the existing `monitoring` app —

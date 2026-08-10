@@ -1,6 +1,6 @@
 # Phase 8D-2-FIX-A — Critical Manus Blockers
 
-> **Branding note:** Public brand **1SaudiCyber — 1saudicyber.com**; internal package `cybertrust_ksa`.
+> **Branding note:** Public brand **1SaudiCyber — cyber-5.com**; internal package `cybertrust_ksa`.
 > Local code only — no deployment, no SSH, no migration, no secret/production change.
 
 ## 1. Summary

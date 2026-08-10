@@ -14,7 +14,7 @@ python manage.py createsuperuser
 ```
 
 ## 1. Brand & landing (2 min)
-- Open `/` — Arabic-first, RTL, **1SaudiCyber** brand, footer shows **1saudicyber.com**.
+- Open `/` — Arabic-first, RTL, **1SaudiCyber** brand, footer shows **cyber-5.com**.
 - Highlight honest content: **417 official controls** (NCA ECC 108, Aramco 92, SABIC 94); "جاهزية الامتثال" (no certification-granting claims).
 
 ## 2. Company self-service journey (6 min)
@@ -41,4 +41,4 @@ python manage.py createsuperuser
 ## Talking points
 - Read-only reporting and dashboard; auditor is the only decision-maker.
 - Tenant isolation enforced everywhere.
-- Internal package remains `cybertrust_ksa`; public brand is **1SaudiCyber / 1saudicyber.com**.
+- Internal package remains `cybertrust_ksa`; public brand is **1SaudiCyber / cyber-5.com**.

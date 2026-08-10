@@ -1,6 +1,6 @@
 # Phase 8B-UNBLOCK-A — Release Push + Access Readiness
 
-> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. Internal package
+> **Branding note:** Public brand and domain: **1SaudiCyber — cyber-5.com**. Internal package
 > `cybertrust_ksa` (technical-only).
 >
 > **No production change** was made in this phase: no deploy, no pull, no migration, no service restart,

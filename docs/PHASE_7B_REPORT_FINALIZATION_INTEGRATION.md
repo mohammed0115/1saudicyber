@@ -1,6 +1,6 @@
 # Phase 7B — Report Finalization Integration
 
-> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. Internal package
+> **Branding note:** Public brand and domain: **1SaudiCyber — cyber-5.com**. Internal package
 > `cybertrust_ksa` (technical-only).
 
 **Status:** Local-only. Not deployed to production.

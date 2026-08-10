@@ -1,6 +1,6 @@
 # Phase 8A — Controlled Production Deployment Plan
 
-> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. Internal package
+> **Branding note:** Public brand and domain: **1SaudiCyber — cyber-5.com**. Internal package
 > `cybertrust_ksa` (technical-only).
 
 **Status:** PLANNING ONLY. No deployment, no SSH, no production change was performed in this phase.
@@ -11,7 +11,7 @@ Execution requires explicit owner approval and is a separate phase (8B).
 |---|---|
 | Local repo | `/home/mohamed/1saudicyber` |
 | Production path | `/opt/1saudicyber` |
-| Domain / IP | `https://1saudicyber.com` / `88.222.220.132` |
+| Domain / IP | `https://cyber-5.com` / `88.222.220.132` |
 | Branch | `cybertrust-execution` |
 | **Target commit (deploy this)** | **`5771735`** (Phase 7C) |
 | Local baseline | `check` clean · `makemigrations --check` clean · full suite green (see report) |
@@ -60,8 +60,8 @@ docker compose run --rm web python manage.py showmigrations compliance monitorin
 
 ## 4. Environment / secret checklist (verify on host — never print values)
 From `deployment/docker/env.example`, confirm `/opt/1saudicyber/.env` has, with correct values:
-`DJANGO_SECRET_KEY` · `DEBUG=False` · `ALLOWED_HOSTS` (incl. `1saudicyber.com`) ·
-`CSRF_TRUSTED_ORIGINS` (`https://1saudicyber.com`) · `DJANGO_SETTINGS_MODULE` ·
+`DJANGO_SECRET_KEY` · `DEBUG=False` · `ALLOWED_HOSTS` (incl. `cyber-5.com`) ·
+`CSRF_TRUSTED_ORIGINS` (`https://cyber-5.com`) · `DJANGO_SETTINGS_MODULE` ·
 `POSTGRES_DB/USER/PASSWORD/HOST/PORT` · `WEB_PORT` (bound to `127.0.0.1:8000` behind Nginx) ·
 optional `OPENAI_API_KEY`/`OPENAI_MODEL`.
 - **Do not add/modify secrets this phase.** If `OPENAI_API_KEY` is absent, the AI analyzer safely returns
@@ -94,7 +94,7 @@ docker compose run --rm web python manage.py migrate          # additive 0012–
 docker compose run --rm web python manage.py collectstatic --noinput
 docker compose up -d --force-recreate web
 docker compose ps ; docker compose logs --tail=100 web
-curl -fsS http://127.0.0.1:${WEB_PORT:-8000}/healthz/ ; curl -I https://1saudicyber.com/
+curl -fsS http://127.0.0.1:${WEB_PORT:-8000}/healthz/ ; curl -I https://cyber-5.com/
 ```
 > Service names `web`/`db` are confirmed from the repo's `docker-compose.yml`; still re-confirm on host
 > with `docker compose ps` before building. Nginx/SSL/DNS are **not** touched.

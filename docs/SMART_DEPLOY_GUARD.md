@@ -32,7 +32,7 @@ aborts just because docker/path differ locally.
 python deployment/scripts/smart_deploy.py \
   --target a3e3c99 --phase phase8c_deploy_c --execute --yes \
   --project-path /opt/1saudicyber --branch cybertrust-execution \
-  --domain https://1saudicyber.com
+  --domain https://cyber-5.com
 ```
 `--execute` requires `--yes`. It runs the real checklist and **stops on the first failed gate**,
 printing the manual rollback commands.
@@ -53,7 +53,7 @@ printing the manual rollback commands.
 | `--yes` | required with `--execute` | off |
 | `--project-path` | no | `/opt/1saudicyber` |
 | `--branch` | no | `cybertrust-execution` |
-| `--domain` | no | `https://1saudicyber.com` |
+| `--domain` | no | `https://cyber-5.com` |
 | `--backup-base` | no | `/root/1saudicyber-deploy-backups` |
 | `--report-dir` | no | `deployment/reports` |
 
@@ -95,7 +95,7 @@ docker compose build web
 docker compose up -d --force-recreate web
 sleep 30
 docker compose ps
-curl -I https://1saudicyber.com/healthz/
+curl -I https://cyber-5.com/healthz/
 # DB restore is NOT needed (no migrations); restore from backup only on a real DB incident.
 ```
 

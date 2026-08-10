@@ -53,14 +53,14 @@
     "step": "2.3",
     "desc": "Company login → dashboard",
     "passed": true,
-    "notes": "url=https://1saudicyber.com/dashboard/"
+    "notes": "url=https://cyber-5.com/dashboard/"
   },
   "S2_2.4": {
     "scenario": "S2",
     "step": "2.4",
     "desc": "Company blocked from /platform-admin/",
     "passed": true,
-    "notes": "status=403, url=https://1saudicyber.com/platform-admin/, has_admin_content=False"
+    "notes": "status=403, url=https://cyber-5.com/platform-admin/, has_admin_content=False"
   },
   "S3_3.1": {
     "scenario": "S3",
@@ -95,7 +95,7 @@
     "step": "4.1",
     "desc": "Intake/classification page loads",
     "passed": true,
-    "notes": "status=200, url=https://1saudicyber.com/compliance/intake/"
+    "notes": "status=200, url=https://cyber-5.com/compliance/intake/"
   },
   "S4_4.3": {
     "scenario": "S4",
@@ -221,7 +221,7 @@
     "step": "11.1b",
     "desc": "Company blocked from /admin/",
     "passed": true,
-    "notes": "url=https://1saudicyber.com/admin/login/?next=/admin/, status=200"
+    "notes": "url=https://cyber-5.com/admin/login/?next=/admin/, status=200"
   },
   "S11_11.2": {
     "scenario": "S11",
@@ -242,28 +242,28 @@
     "step": "11.4_/dashboard/",
     "desc": "Unauthenticated access to /dashboard/ redirects to login",
     "passed": true,
-    "notes": "url=https://1saudicyber.com/login/?next=/dashboard/"
+    "notes": "url=https://cyber-5.com/login/?next=/dashboard/"
   },
   "S11_11.4_/compliance/controls/": {
     "scenario": "S11",
     "step": "11.4_/compliance/controls/",
     "desc": "Unauthenticated access to /compliance/controls/ redirects to login",
     "passed": true,
-    "notes": "url=https://1saudicyber.com/login/?next=/compliance/controls/"
+    "notes": "url=https://cyber-5.com/login/?next=/compliance/controls/"
   },
   "S11_11.4_/compliance/risks/": {
     "scenario": "S11",
     "step": "11.4_/compliance/risks/",
     "desc": "Unauthenticated access to /compliance/risks/ redirects to login",
     "passed": true,
-    "notes": "url=https://1saudicyber.com/login/?next=/compliance/risks/"
+    "notes": "url=https://cyber-5.com/login/?next=/compliance/risks/"
   },
   "S11_11.4_/platform-admin/": {
     "scenario": "S11",
     "step": "11.4_/platform-admin/",
     "desc": "Unauthenticated access to /platform-admin/ redirects to login",
     "passed": true,
-    "notes": "url=https://1saudicyber.com/login/?next=/platform-admin/"
+    "notes": "url=https://cyber-5.com/login/?next=/platform-admin/"
   },
   "S12_12.1": {
     "scenario": "S12",

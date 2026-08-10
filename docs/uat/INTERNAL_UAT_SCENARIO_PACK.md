@@ -1,6 +1,6 @@
 # 1SaudiCyber — Internal UAT Scenario Pack
 
-**Public brand/domain:** 1SaudiCyber — 1saudicyber.com. **Internal package:** `cybertrust_ksa` (unchanged).
+**Public brand/domain:** 1SaudiCyber — cyber-5.com. **Internal package:** `cybertrust_ksa` (unchanged).
 **Status:** Ready for internal UAT/demo. **Not** a production go-live.
 
 > All credentials in this pack are **UAT only — do not use in production.**

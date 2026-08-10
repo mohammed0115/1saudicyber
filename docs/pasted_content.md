@@ -95,7 +95,7 @@ SABIC CyberTrust      = 94 ضابط
 
 الزائر يدخل على الموقع:
 
-https://1saudicyber.com
+https://cyber-5.com
 
 يرى:
 

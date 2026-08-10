@@ -1,6 +1,6 @@
 # Phase 7A — Local End-to-End UAT 90% Gate
 
-> **Branding note:** Public brand and domain: **1SaudiCyber — 1saudicyber.com**. Internal package
+> **Branding note:** Public brand and domain: **1SaudiCyber — cyber-5.com**. Internal package
 > `cybertrust_ksa` (technical-only).
 
 **Purpose:** Verify that the local platform can complete a realistic compliance-review journey — from
