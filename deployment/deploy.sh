@@ -40,7 +40,7 @@ fi
 
 HOSTS="$(envval ALLOWED_HOSTS)"
 case "$HOSTS" in
-  ""|"*") die "ALLOWED_HOSTS must list explicit hostnames (no empty, no '*'). e.g. ALLOWED_HOSTS=1saudicyber.com,www.1saudicyber.com" ;;
+  ""|"*") die "ALLOWED_HOSTS must list explicit hostnames (no empty, no '*'). e.g. ALLOWED_HOSTS=cyber-5.com,www.cyber-5.com" ;;
 esac
 
 # Informative-only (not fatal): AI + payment posture.

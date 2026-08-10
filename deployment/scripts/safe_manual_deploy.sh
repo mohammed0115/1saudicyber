@@ -16,7 +16,7 @@
 # Usage:
 #   ./deployment/scripts/safe_manual_deploy.sh \
 #       --target <commit-sha> --phase <phase-name> --branch cybertrust-execution \
-#       --domain https://1saudicyber.com --project-path /opt/1saudicyber [--dry-run|--yes]
+#       --domain https://cyber-5.com --project-path /opt/1saudicyber [--dry-run|--yes]
 #
 set -euo pipefail
 
@@ -26,7 +26,7 @@ set -euo pipefail
 TARGET=""
 PHASE=""
 BRANCH="cybertrust-execution"
-DOMAIN="https://1saudicyber.com"
+DOMAIN="https://cyber-5.com"
 PROJECT_PATH="/opt/1saudicyber"
 MEDIA_VOLUME="1saudicyber_media_volume"
 BACKUP_BASE="/root/1saudicyber-deploy-backups"

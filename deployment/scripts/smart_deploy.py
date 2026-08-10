@@ -31,7 +31,7 @@ import urllib.request
 # ----------------------------------------------------------------------------
 DEFAULT_PROJECT_PATH = '/opt/1saudicyber'
 DEFAULT_BRANCH = 'cybertrust-execution'
-DEFAULT_DOMAIN = 'https://1saudicyber.com'
+DEFAULT_DOMAIN = 'https://cyber-5.com'
 
 # Commands that must NEVER be constructed/run by this guard.
 # NOTE: 'push --force'/'push -f' (not bare 'force', so '--force-recreate' stays allowed).

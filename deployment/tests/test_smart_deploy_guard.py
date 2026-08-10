@@ -26,7 +26,7 @@ REG_PAGE = SAFE_PUBLIC + 'الرعاية الصحية شروط الاستخدا�
 
 def make_args(**over):
     d = dict(target='a3e3c99', phase='phase8c_deploy_c', dry_run=False, execute=True,
-             project_path='/opt/1saudicyber', domain='https://1saudicyber.com',
+             project_path='/opt/1saudicyber', domain='https://cyber-5.com',
              branch='cybertrust-execution', yes=True, report_dir=None,
              backup_base=tempfile.mkdtemp())  # writable temp base for tests
     d.update(over)
@@ -95,7 +95,7 @@ def make_fetch(bodies=None, codes=None):
     bodies = bodies or {}
     codes = codes or {}
     def _fetch(url):
-        path = url.replace('https://1saudicyber.com', '') or '/'
+        path = url.replace('https://cyber-5.com', '') or '/'
         code = codes.get(path, 200 if path in (sd.PUBLIC_PATHS + sd.HEALTH_PATHS) else 302)
         body = bodies.get(path, REG_PAGE if 'company' in path else SAFE_PUBLIC)
         return code, body
