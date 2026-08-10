@@ -1161,11 +1161,12 @@ class Phase4DFixBBrandingTests(TestCase):
     def test_auditor_pages_use_1saudicyber_brand_if_brand_visible(self):
         self.assertContains(self.client.get(reverse('auditors:register')), '1SaudiCyber')
 
-    def test_docs_or_env_examples_include_1saudicyber_domain_if_tested(self):
+    def test_docs_or_env_examples_include_cyber5_domain_if_tested(self):
         from django.conf import settings as dj
         path = dj.BASE_DIR / 'deployment' / 'docker' / 'env.example'
         text = path.read_text(encoding='utf-8')
-        self.assertIn('1saudicyber.com', text)
+        self.assertIn('cyber-5.com', text)
+        self.assertNotIn('1saudicyber.com', text)
 
     def test_no_legacy_334_reintroduced(self):
         self.assertNotContains(self.client.get(reverse('core:landing')), '334')
