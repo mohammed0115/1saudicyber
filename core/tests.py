@@ -1145,8 +1145,11 @@ class Phase4DFixBBrandingTests(TestCase):
         resp = self.client.get(reverse('core:landing'))
         self.assertNotContains(resp, 'CyberTrust KSA')  # old brand label gone
 
-    def test_footer_uses_1saudicyber_domain(self):
-        self.assertContains(self.client.get(reverse('core:landing')), '1saudicyber.com')
+    def test_footer_uses_cyber5_domain(self):
+        # Public domain migrated to cyber-5.com (brand name "1SaudiCyber" is unchanged).
+        resp = self.client.get(reverse('core:landing'))
+        self.assertContains(resp, 'cyber-5.com')
+        self.assertNotContains(resp, '1saudicyber.com')
 
     def test_get_started_uses_1saudicyber_brand(self):
         self.assertContains(self.client.get(reverse('core:get_started')), '1SaudiCyber')
