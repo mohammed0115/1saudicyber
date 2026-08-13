@@ -1,28 +1,18 @@
 """
 G5 — email notifications for audit-engagement events, on the existing mail infra.
 
-Best-effort and fail-silent: a mail error must NEVER block the underlying action (recording
-a finding, an RFI, or a message). In dev the console EmailBackend prints; in production SMTP
-is configured via env (EMAIL_HOST / DEFAULT_FROM_EMAIL). All copy is Arabic and internal —
-these are readiness-review notices, not official certification correspondence.
+Best-effort but never silent: a mail error must NEVER block the underlying action (recording
+a finding, an RFI, or a message), yet it must still reach the log — see core.mail. In dev the
+console EmailBackend prints; in production SMTP is configured via env (EMAIL_HOST /
+DEFAULT_FROM_EMAIL). All copy is Arabic and internal — these are readiness-review notices,
+not official certification correspondence.
 """
-from django.conf import settings
-from django.core.mail import send_mail
-
-
-def _from():
-    return getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@cyber-5.com')
+from core.mail import send_mail_logged
 
 
 def _send(to_emails, subject, body):
     """Send one notice to a de-duplicated recipient list; returns count sent (0 if none)."""
-    to = sorted({e for e in to_emails if e})
-    if not to:
-        return 0
-    try:
-        return send_mail(subject, body, _from(), to, fail_silently=True)
-    except Exception:
-        return 0
+    return send_mail_logged(subject, body, to_emails)
 
 
 def _company_emails(company):

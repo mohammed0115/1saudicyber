@@ -1,6 +1,7 @@
 """Core services: email (verification, alerts) and MFA (TOTP)."""
 from django.conf import settings
-from django.core.mail import send_mail
+
+from core.mail import send_mail_logged
 
 
 def send_verification_email(user):
@@ -8,13 +9,12 @@ def send_verification_email(user):
     from core.models import EmailVerificationToken
     token = EmailVerificationToken.objects.create(user=user, token=EmailVerificationToken.generate())
     link = f"{settings.SITE_URL}/verify-email/{token.token}/"
-    send_mail(
+    send_mail_logged(
         subject='Verify your CyberTrust KSA account',
         message=(f'Welcome to CyberTrust KSA.\n\nPlease verify your email:\n{link}\n\n'
                  f'مرحبًا بك في CyberTrust KSA. يرجى تأكيد بريدك عبر الرابط أعلاه.'),
-        from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],
-        fail_silently=True,
+        from_email=settings.DEFAULT_FROM_EMAIL,
     )
     return token
 
@@ -28,12 +28,11 @@ def send_alert_email(alert):
     )
     if not recipients:
         return False
-    send_mail(
+    send_mail_logged(
         subject=f'[CyberTrust KSA] {alert.get_severity_display()} alert: {alert.title}',
         message=f'{alert.title}\n\n{alert.description}\n\n{alert.title_ar}\n{alert.description_ar}',
-        from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=recipients,
-        fail_silently=True,
+        from_email=settings.DEFAULT_FROM_EMAIL,
     )
     return True
 

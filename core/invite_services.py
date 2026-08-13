@@ -9,8 +9,9 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.utils import timezone
+
+from core.mail import send_mail_logged
 
 # Roles a company admin may grant to a teammate (never platform admin or auditor).
 INVITABLE_ROLES = ['company_admin', 'compliance_officer', 'it_security', 'bu_manager', 'executive']
@@ -45,10 +46,7 @@ def _email_invite(invite):
             'لإكمال الانضمام وتعيين كلمة المرور، افتح الرابط:\n'
             '%s\n\nالرابط صالح لمدة %d أيام.'
             % (invite.company.name, link, INVITE_TTL_DAYS))
-    try:
-        send_mail('دعوة للانضمام إلى فريق منشأتك', body, frm, [invite.email], fail_silently=True)
-    except Exception:
-        pass
+    send_mail_logged('دعوة للانضمام إلى فريق منشأتك', body, [invite.email], from_email=frm)
 
 
 def accept_invite(invite, *, first_name, last_name, password):

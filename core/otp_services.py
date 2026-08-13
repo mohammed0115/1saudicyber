@@ -13,10 +13,10 @@ by Get Solution Company.
 import secrets
 from datetime import timedelta
 
-from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
-from django.core.mail import send_mail
 from django.utils import timezone
+
+from core.mail import send_mail_logged
 
 OTP_TTL_MINUTES = 10
 OTP_MAX_ATTEMPTS = 5
@@ -69,8 +69,7 @@ def send_otp_email(user, raw_code):
         f"ينتهي هذا الرمز خلال {OTP_TTL_MINUTES} دقائق، ولا تشاركه مع أي أحد.\n\n"
         f"منصة Cyber-5 مملوكة ومُدارة بواسطة شركة احصل الحل.\n"
     )
-    send_mail(subject, body, getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@cyber-5.com'),
-              [user.email], fail_silently=True)
+    send_mail_logged(subject, body, [user.email])
 
 
 def issue_and_send(user, purpose=OTP_PURPOSE_EMAIL):

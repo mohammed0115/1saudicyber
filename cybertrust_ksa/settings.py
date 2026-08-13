@@ -273,13 +273,32 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # ---- Email (FR-002.8 / FR-010.5 / FR-011.8 / FR-012.7) ----
+def _env_bool(name, default):
+    """Tolerant boolean env parsing: true/1/yes/on, any case, surrounding space ignored.
+
+    The previous `os.getenv(...) == 'True'` silently evaluated to False for 'true', '1'
+    or a trailing space — which on port 587 means connecting without STARTTLS and failing
+    authentication. Env files are hand-edited; the parse must not be case-sensitive.
+    """
+    raw = (os.getenv(name) or '').strip().lower()
+    if not raw:
+        return default
+    return raw in ('1', 'true', 'yes', 'on')
+
+
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+# Implicit TLS (port 465) and STARTTLS (port 587) are mutually exclusive in Django.
+EMAIL_USE_SSL = _env_bool('EMAIL_USE_SSL', False)
+EMAIL_USE_TLS = False if EMAIL_USE_SSL else _env_bool('EMAIL_USE_TLS', True)
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+# Without a timeout a stalled SMTP handshake pins the worker thread indefinitely.
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '20'))
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@cyber-5.com')
+# Envelope sender for Django's own error mail; keep it on the same verified domain.
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
 
 # ---- Payments / Moyasar (Phase 8I-B — sandbox checkout only) ----
