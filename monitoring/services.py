@@ -2,11 +2,9 @@
 Monitoring services — the logic behind continuous compliance (FR-010).
 Pure functions so they can run from Celery tasks, a management command, or tests.
 """
-from datetime import date, timedelta
-
 from django.utils import timezone
 
-from compliance.models import CompanyControl, Framework
+from compliance.models import CompanyControl
 from monitoring.models import ComplianceScore, Alert, MonthlyReport, CertificateTracker
 
 _COMPLIANT = 'compliant'

@@ -174,8 +174,12 @@ class Command(BaseCommand):
         for r in rows:
             if not r:
                 continue
-            src = _clean(r[0]); domain_raw = _clean(r[1]); subdomain = _clean(r[2])
-            cid = _clean(r[3]); statement = _clean(r[4]); req = _clean(r[5])
+            src = _clean(r[0])
+            domain_raw = _clean(r[1])
+            subdomain = _clean(r[2])
+            cid = _clean(r[3])
+            statement = _clean(r[4])
+            req = _clean(r[5])
             if not cid:
                 continue
             fw = FRAMEWORKS.get(src)
