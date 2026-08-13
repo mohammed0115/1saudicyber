@@ -64,3 +64,91 @@ class GapAnalysis(models.Model):
 
     def __str__(self):
         return f"{self.company.name} - {self.framework_code}: {self.compliance_score}%"
+
+
+class PromptTemplate(models.Model):
+    """Source-controlled prompt metadata for reproducible model requests."""
+
+    key = models.SlugField(max_length=100)
+    version = models.CharField(max_length=40)
+    purpose = models.CharField(max_length=100)
+    template = models.TextField()
+    output_schema = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ai_prompt_templates'
+        constraints = [
+            models.UniqueConstraint(fields=['key', 'version'], name='unique_ai_prompt_template_version'),
+        ]
+
+
+class ModelProfile(models.Model):
+    """An approved model/provider routing profile; it never stores provider secrets."""
+
+    key = models.SlugField(max_length=100, unique=True)
+    provider = models.CharField(max_length=50, default='openai')
+    model_name = models.CharField(max_length=100)
+    credential_reference = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    configuration = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'ai_model_profiles'
+
+
+class EvidenceChunk(models.Model):
+    """Traceable evidence segment used to ground an AI decision."""
+
+    evidence = models.ForeignKey('compliance.Evidence', on_delete=models.CASCADE, related_name='chunks')
+    chunk_index = models.PositiveIntegerField()
+    text = models.TextField()
+    content_hash = models.CharField(max_length=64, db_index=True)
+    page_number = models.PositiveIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'evidence_chunks'
+        constraints = [
+            models.UniqueConstraint(fields=['evidence', 'chunk_index'], name='unique_evidence_chunk_index'),
+        ]
+        ordering = ['chunk_index']
+
+
+class AIDecisionRecord(models.Model):
+    """A governance record that joins model, prompt, policy, evidence citations, and review state."""
+
+    STATUS_CHOICES = [
+        ('accepted', 'Accepted'),
+        ('review_required', 'Review required'),
+        ('rejected', 'Rejected'),
+        ('error', 'Error'),
+    ]
+
+    evidence = models.ForeignKey('compliance.Evidence', on_delete=models.CASCADE, related_name='decision_records')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='ai_decision_records')
+    control = models.ForeignKey('compliance.Control', on_delete=models.PROTECT, related_name='ai_decision_records')
+    model_profile = models.ForeignKey(ModelProfile, null=True, blank=True, on_delete=models.SET_NULL)
+    model_name = models.CharField(max_length=100)
+    prompt_key = models.CharField(max_length=100)
+    prompt_version = models.CharField(max_length=40)
+    policy_version_reference = models.CharField(max_length=100, blank=True)
+    input_hash = models.CharField(max_length=64, db_index=True)
+    output_payload = models.JSONField(default=dict)
+    output_hash = models.CharField(max_length=64, db_index=True)
+    cited_chunk_indexes = models.JSONField(default=list)
+    confidence = models.FloatField(default=0.0)
+    status = models.CharField(max_length=24, choices=STATUS_CHOICES)
+    human_reviewed_by = models.ForeignKey(
+        'core.User', null=True, blank=True, on_delete=models.SET_NULL, related_name='reviewed_ai_decisions',
+    )
+    human_reviewed_at = models.DateTimeField(null=True, blank=True)
+    trace_id = models.UUIDField(null=True, blank=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ai_decision_records'
+        ordering = ['-created_at']

@@ -1,12 +1,15 @@
 """/api/v1 URL routes (SRS Appendix D)."""
-from django.urls import path
+from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from . import views
+from . import platform_views, views
 
 app_name = 'api'
 
 urlpatterns = [
+    path('health/', platform_views.health, name='health'),
+    path('platform/capabilities/', platform_views.platform_capabilities, name='platform-capabilities'),
+    path('platform/openapi/', platform_views.openapi_contract, name='platform-openapi'),
     path('register/', views.register, name='register'),
     path('login/', TokenObtainPairView.as_view(), name='login'),          # JWT (NFR-013)
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -21,4 +24,7 @@ urlpatterns = [
     path('monitoring/scores/', views.monitoring_scores, name='monitoring_scores'),
     path('monitoring/alerts/', views.monitoring_alerts, name='monitoring_alerts'),
     path('auditor/assignments/', views.auditor_assignments, name='auditor_assignments'),
+    path('platform/', include('policy_engine.urls')),
+    path('platform/', include('integrations.urls')),
+    path('platform/', include('platform_events.urls')),
 ]

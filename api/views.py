@@ -19,6 +19,7 @@ from .serializers import (
     EvidenceSerializer, ComplianceScoreSerializer, AlertSerializer,
     GapAnalysisSerializer, CompanySerializer,
 )
+from .permissions import require_company, require_company_resource, tenant_control_queryset
 
 ALLOWED = lambda: getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
 MAXSZ = lambda: getattr(settings, 'MAX_EVIDENCE_FILE_SIZE', 50 * 1024 * 1024)
@@ -74,10 +75,17 @@ def controls(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def control_detail(request, control_id):
-    try:
-        control = Control.objects.select_related('framework', 'domain').get(id=control_id)
-    except Control.DoesNotExist:
-        return Response({'detail': 'Not found.'}, status=404)
+    company = require_company(request)
+    if company is None:  # Platform superuser administration route.
+        try:
+            control = Control.objects.select_related('framework', 'domain').get(id=control_id)
+        except Control.DoesNotExist:
+            return Response({'detail': 'Not found.'}, status=404)
+    else:
+        company_control = tenant_control_queryset(company).filter(control_id=control_id).first()
+        if not company_control:
+            return Response({'detail': 'Not found.'}, status=404)
+        control = company_control.control
     return Response(ControlSerializer(control).data)
 
 
@@ -117,6 +125,10 @@ def evidence_upload(request):
         control = Control.objects.get(id=control_id)
     except Control.DoesNotExist:
         return Response({'detail': 'Control not found.'}, status=404)
+    try:
+        cc = CompanyControl.objects.get(company=company, control=control)
+    except CompanyControl.DoesNotExist:
+        return Response({'detail': 'Control is not applicable to this company.'}, status=404)
 
     import os
     ext = os.path.splitext(f.name)[1].lower().replace('.', '')
@@ -125,7 +137,6 @@ def evidence_upload(request):
     if f.size > MAXSZ():
         return Response({'detail': 'File too large.'}, status=400)
 
-    cc, _ = CompanyControl.objects.get_or_create(company=company, control=control)
     evidence = Evidence.objects.create(
         company_control=cc, uploaded_by=request.user, file=f,
         original_filename=f.name, file_type=ext, file_size=f.size, status='processing',
@@ -146,8 +157,13 @@ def evidence_upload(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def evidence_analyze(request, evidence_id):
+    try:
+        evidence = Evidence.objects.select_related('company_control__company').get(id=evidence_id)
+    except Evidence.DoesNotExist:
+        return Response({'detail': 'Evidence not found.'}, status=status.HTTP_404_NOT_FOUND)
+    require_company_resource(request, evidence, company_path='company_control.company')
     from compliance.services import process_evidence_pipeline
-    result = process_evidence_pipeline(evidence_id)
+    result = process_evidence_pipeline(evidence.id)
     return Response(result)
 
 

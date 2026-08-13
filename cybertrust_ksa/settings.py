@@ -30,6 +30,9 @@ INSTALLED_APPS = [
     'dashboard',
     'auditor_portal',
     'monitoring',
+    'policy_engine',
+    'integrations',
+    'platform_events',
     'api',
 ]
 
@@ -45,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.ContentSecurityPolicyMiddleware',
+    'core.middleware.CorrelationIdMiddleware',
     'core.middleware.AuditLogMiddleware',
 ]
 
@@ -161,6 +165,16 @@ CELERY_BEAT_SCHEDULE = {
     'daily-compliance-checks': {
         'task': 'monitoring.tasks.run_compliance_checks',
         'schedule': crontab(hour=3, minute=0),
+    },
+    # Platform foundation: test cadence is individually enforced (15 minutes–24 hours).
+    'due-control-tests': {
+        'task': 'integrations.tasks.run_due_control_tests',
+        'schedule': crontab(minute='*/15'),
+    },
+    # Webhook delivery is opt-in and requires active HTTPS subscriptions plus a resolved secret.
+    'platform-webhook-delivery': {
+        'task': 'integrations.tasks.deliver_due_webhooks',
+        'schedule': crontab(minute='*/5'),
     },
 }
 

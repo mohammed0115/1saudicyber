@@ -3,12 +3,35 @@ Custom middleware:
   - ContentSecurityPolicyMiddleware: adds a CSP header (NFR-017).
   - AuditLogMiddleware: records authenticated, state-changing actions (FR-012.8 / NFR-021).
 """
+import time
+import uuid
+
 from django.conf import settings
 
 # Paths we never log (noise / static).
 _SKIP_PREFIXES = ('/static/', '/media/', '/favicon')
 # Only these methods change state and are worth auditing.
 _AUDIT_METHODS = {'POST', 'PUT', 'PATCH', 'DELETE'}
+
+
+class CorrelationIdMiddleware:
+    """Attach a stable correlation ID and latency header to every response."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        supplied = request.META.get('HTTP_X_REQUEST_ID', '')
+        try:
+            trace_id = str(uuid.UUID(supplied))
+        except (ValueError, TypeError, AttributeError):
+            trace_id = str(uuid.uuid4())
+        request.trace_id = trace_id
+        started = time.perf_counter()
+        response = self.get_response(request)
+        response['X-Request-ID'] = trace_id
+        response['X-Response-Time-ms'] = str(round((time.perf_counter() - started) * 1000, 2))
+        return response
 
 
 class ContentSecurityPolicyMiddleware:
@@ -58,4 +81,5 @@ class AuditLogMiddleware:
             status_code=getattr(response, 'status_code', 0),
             ip_address=ip or None,
             user_agent=request.META.get('HTTP_USER_AGENT', '')[:300],
+            metadata={'trace_id': getattr(request, 'trace_id', '')},
         )

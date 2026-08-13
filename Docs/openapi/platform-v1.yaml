@@ -1,0 +1,196 @@
+openapi: 3.1.0
+info:
+  title: CyberTrust KSA Platform API
+  version: 1.0.0
+  description: |
+    Versioned API contracts for reusable policy evaluation, common-control mappings,
+    connector lifecycle, automated control testing, events, and governed evidence decisions.
+    All platform endpoints except health require a bearer JWT. Production service-to-service
+    OAuth2 client credentials and signed webhook secrets are deployment requirements.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /health/:
+    get:
+      summary: Low-disclosure platform health check
+      security: []
+      responses:
+        '200': {description: Database reachable}
+        '503': {description: Platform degraded}
+  /platform/capabilities/:
+    get:
+      summary: Discover platform capabilities
+      responses:
+        '200': {description: Capability list}
+  /platform/policy-packs/:
+    get:
+      summary: List active policy packs and effective versions
+      responses:
+        '200': {description: Policy pack collection}
+  /platform/policy-versions/{policy_version_id}/:
+    get:
+      summary: Read a published versioned policy contract
+      parameters:
+        - $ref: '#/components/parameters/PolicyVersionId'
+      responses:
+        '200': {description: Policy version}
+        '404': {description: Not found or unpublished}
+  /platform/policy-evaluations/:
+    post:
+      summary: Evaluate an approved policy for the authenticated company tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [policy_version_id]
+              properties:
+                policy_version_id: {type: integer}
+      responses:
+        '201': {description: Reproducible evaluation with policy hash and reasons}
+        '409': {description: Policy is not active and effective}
+  /platform/canonical-controls/{key}/:
+    get:
+      summary: Read approved common-control coverage mappings
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: Canonical control and versioned mappings}
+  /platform/providers/:
+    get:
+      summary: List active connector providers
+      responses:
+        '200': {description: Provider catalogue}
+  /platform/connections/:
+    get:
+      summary: List current tenant connector connections
+      responses:
+        '200': {description: Connection collection}
+    post:
+      summary: Create a connector connection using a vault credential reference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider_key, name]
+              properties:
+                provider_key: {type: string, example: mock}
+                name: {type: string}
+                credential_reference: {type: string, description: External vault reference only}
+                configuration: {type: object, additionalProperties: true}
+      responses:
+        '201': {description: Draft connection created}
+        '400': {description: Validation failure; raw secrets are rejected}
+  /platform/connections/{connection_id}/test/:
+    post:
+      summary: Test a tenant-owned connector connection
+      parameters:
+        - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200': {description: Connection health response}
+  /platform/control-tests/:
+    get:
+      summary: List tenant control-test definitions
+      responses:
+        '200': {description: Test definition collection}
+    post:
+      summary: Create an automated control-test definition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, name, connection_id, control_ids]
+              properties:
+                key: {type: string}
+                name: {type: string}
+                connection_id: {type: integer}
+                control_ids: {type: array, items: {type: string}}
+                schedule_minutes: {type: integer, minimum: 15, maximum: 1440}
+                parameters: {type: object}
+      responses:
+        '201': {description: Test definition created}
+  /platform/control-tests/{definition_id}/runs/:
+    post:
+      summary: Trigger a control test
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema: {type: string}
+        - in: path
+          name: definition_id
+          required: true
+          schema: {type: integer}
+      responses:
+        '201': {description: Test run and immutable evidence results}
+  /platform/control-test-runs/{run_id}/:
+    get:
+      summary: Get a tenant-owned control-test run and results
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema: {type: integer}
+      responses:
+        '200': {description: Test run detail}
+  /platform/events/:
+    get:
+      summary: List current tenant durable domain events
+      responses:
+        '200': {description: Event collection}
+  /platform/webhooks/:
+    get:
+      summary: List current tenant outbound webhook subscriptions
+      responses:
+        '200': {description: Subscription collection}
+    post:
+      summary: Create an HTTPS webhook subscription with external signing-secret reference
+      responses:
+        '201': {description: Subscription created}
+        '400': {description: Invalid destination or configuration}
+  /platform/status-recommendations/:
+    get:
+      summary: List pending and completed human-reviewable control-status recommendations
+      responses:
+        '200': {description: Recommendation collection}
+  /platform/status-recommendations/{recommendation_id}/review/:
+    post:
+      summary: Accept or reject an automated status recommendation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accept]
+              properties:
+                accept: {type: boolean}
+      responses:
+        '200': {description: Recommendation reviewed}
+components:
+  parameters:
+    PolicyVersionId:
+      in: path
+      name: policy_version_id
+      required: true
+      schema: {type: integer}
+    ConnectionId:
+      in: path
+      name: connection_id
+      required: true
+      schema: {type: integer}
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
