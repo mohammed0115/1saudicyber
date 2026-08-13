@@ -1,16 +1,34 @@
-"""
-Compliance services — evidence processing pipeline.
-Extracted from the view so it can run synchronously (dev) or via Celery (prod).
-"""
+"""Evidence processing with explicit, recoverable state transitions."""
 from django.utils import timezone
 
-from ai_engine.services import process_uploaded_file, analyze_evidence
 from ai_engine.models import AIAuditLog
+from ai_engine.services import analyze_evidence, process_uploaded_file, validate_evidence_analysis
+from compliance.file_validation import validate_stored_evidence
+
+
+def _fail_evidence(evidence, message):
+    evidence.status = 'failed'
+    evidence.processing_error = str(message)[:4000]
+    evidence.save(update_fields=['status', 'processing_error'])
+    return {'error': evidence.processing_error, 'status': evidence.status}
+
+
+def _mark_manual_review(evidence, message):
+    evidence.status = 'needs_manual_review'
+    evidence.processing_error = str(message)[:4000]
+    evidence.analyzed_at = timezone.now()
+    evidence.save(update_fields=['status', 'processing_error', 'analyzed_at'])
+    return {'verdict': 'insufficient_evidence', 'status': evidence.status}
 
 
 def process_evidence_pipeline(evidence_id):
-    """Run OCR + AI analysis for one Evidence row and update all related records."""
+    """Run validation, extraction and AI analysis for one Evidence record.
+
+    A failed extraction or model response never marks the evidence/underlying
+    control as reviewed. Those cases are surfaced for a human reviewer instead.
+    """
     from compliance.models import Evidence
+
     try:
         evidence = Evidence.objects.select_related(
             'company_control', 'company_control__control', 'company_control__control__framework',
@@ -19,58 +37,76 @@ def process_evidence_pipeline(evidence_id):
     except Evidence.DoesNotExist:
         return {'error': 'evidence not found'}
 
-    cc = evidence.company_control
-    control = cc.control
-    company = cc.company
+    try:
+        evidence.processing_attempts += 1
+        evidence.status = 'processing'
+        evidence.processing_error = ''
+        evidence.save(update_fields=['processing_attempts', 'status', 'processing_error'])
 
-    # 1) OCR / text extraction
-    ocr = process_uploaded_file(evidence.file.path, evidence.file_type)
-    evidence.extracted_text = ocr.get('text', '')
-    evidence.ocr_confidence = ocr.get('confidence', 0.0)
-    evidence.ocr_language = ocr.get('language', '')
-    evidence.status = 'ai_analyzing'
-    evidence.save()
+        validate_stored_evidence(evidence.file.path)
+        ocr = process_uploaded_file(evidence.file.path, evidence.file_type)
+        evidence.extracted_text = ocr.get('text', '')
+        evidence.ocr_confidence = ocr.get('confidence', 0.0)
+        evidence.ocr_language = ocr.get('language', '')
+        evidence.save(update_fields=['extracted_text', 'ocr_confidence', 'ocr_language'])
 
-    if not evidence.extracted_text:
+        if not evidence.extracted_text.strip():
+            return _mark_manual_review(
+                evidence, ocr.get('error') or 'No readable text was extracted from the evidence.'
+            )
+
+        control = evidence.company_control.control
+        evidence.status = 'ai_analyzing'
+        evidence.save(update_fields=['status'])
+        ai = analyze_evidence(evidence.extracted_text, {
+            'control_id': control.control_id,
+            'framework': control.framework.code,
+            'title': control.title,
+            'description': control.description,
+            'evidence_type': control.evidence_type,
+        })
+        if ai.get('error'):
+            return _fail_evidence(evidence, ai['error'])
+        ai = validate_evidence_analysis(ai)
+
+        evidence.ai_analysis = ai
+        evidence.ai_verdict = ai['verdict']
+        evidence.ai_reasoning = ai['reasoning_en']
+        evidence.ai_reasoning_ar = ai['reasoning_ar']
+        evidence.analyzed_at = timezone.now()
+
+        if ai['verdict'] == 'insufficient_evidence':
+            evidence.status = 'needs_manual_review'
+            evidence.processing_error = 'The AI response requires a human reviewer.'
+            evidence.save()
+            return {'verdict': ai['verdict'], 'status': evidence.status}
+
         evidence.status = 'reviewed'
+        evidence.processing_error = ''
         evidence.save()
-        return {'verdict': 'insufficient_evidence', 'note': 'no text extracted'}
 
-    # 2) AI analysis
-    ai = analyze_evidence(evidence.extracted_text, {
-        'control_id': control.control_id,
-        'framework': control.framework.code,
-        'title': control.title,
-        'description': control.description,
-        'evidence_type': control.evidence_type,
-    })
+        company_control = evidence.company_control
+        company_control.ai_verdict = ai['verdict']
+        company_control.ai_confidence = ai['confidence']
+        company_control.ai_reasoning = ai['reasoning_en']
+        company_control.ai_reasoning_ar = ai['reasoning_ar']
+        company_control.ai_recommendations = '\n'.join(ai['recommendations_en'])
+        company_control.ai_recommendations_ar = '\n'.join(ai['recommendations_ar'])
+        company_control.status = 'ai_reviewed'
+        company_control.last_assessed = timezone.now()
+        company_control.save()
 
-    evidence.ai_analysis = ai
-    evidence.ai_verdict = ai.get('verdict', 'insufficient_evidence')
-    evidence.ai_reasoning = ai.get('reasoning_en', '')
-    evidence.ai_reasoning_ar = ai.get('reasoning_ar', '')
-    evidence.status = 'reviewed'
-    evidence.analyzed_at = timezone.now()
-    evidence.save()
-
-    cc.ai_verdict = ai.get('verdict', '')
-    cc.ai_confidence = ai.get('confidence', 0.0)
-    cc.ai_reasoning = ai.get('reasoning_en', '')
-    cc.ai_reasoning_ar = ai.get('reasoning_ar', '')
-    cc.ai_recommendations = '\n'.join(ai.get('recommendations_en', []))
-    cc.ai_recommendations_ar = '\n'.join(ai.get('recommendations_ar', []))
-    cc.status = 'ai_reviewed'
-    cc.last_assessed = timezone.now()
-    cc.save()
-
-    AIAuditLog.objects.create(
-        evidence_id=evidence.id, control_id=control.control_id, company_name=company.name,
-        input_text=evidence.extracted_text[:2000], verdict=ai.get('verdict', ''),
-        confidence=ai.get('confidence', 0.0), reasoning=ai.get('reasoning_en', ''),
-        reasoning_ar=ai.get('reasoning_ar', ''),
-        recommendations='\n'.join(ai.get('recommendations_en', [])),
-        recommendations_ar='\n'.join(ai.get('recommendations_ar', [])),
-        model_used=ai.get('model_used', ''), prompt_tokens=ai.get('prompt_tokens', 0),
-        completion_tokens=ai.get('completion_tokens', 0), processing_time_ms=ai.get('processing_time_ms', 0),
-    )
-    return {'verdict': cc.ai_verdict, 'confidence': cc.ai_confidence}
+        AIAuditLog.objects.create(
+            evidence_id=evidence.id, control_id=control.control_id,
+            company_name=company_control.company.name, input_text=evidence.extracted_text[:2000],
+            verdict=ai['verdict'], confidence=ai['confidence'],
+            reasoning=ai['reasoning_en'], reasoning_ar=ai['reasoning_ar'],
+            recommendations='\n'.join(ai['recommendations_en']),
+            recommendations_ar='\n'.join(ai['recommendations_ar']),
+            model_used=ai.get('model_used', ''), prompt_tokens=ai.get('prompt_tokens', 0),
+            completion_tokens=ai.get('completion_tokens', 0),
+            processing_time_ms=ai.get('processing_time_ms', 0),
+        )
+        return {'verdict': company_control.ai_verdict, 'confidence': company_control.ai_confidence, 'status': evidence.status}
+    except Exception as exc:
+        return _fail_evidence(evidence, exc)

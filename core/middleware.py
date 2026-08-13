@@ -25,6 +25,19 @@ class ContentSecurityPolicyMiddleware:
         return response
 
 
+class BuildRevisionMiddleware:
+    """Expose only the build identifier needed to correlate production with CI/CD."""
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        release_sha = getattr(settings, 'RELEASE_SHA', 'unknown')
+        if release_sha and release_sha != 'unknown':
+            response['X-Release-SHA'] = release_sha
+        return response
+
+
 class AuditLogMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response

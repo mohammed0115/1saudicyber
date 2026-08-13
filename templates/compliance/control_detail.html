@@ -42,6 +42,7 @@
 
     <!-- AI Verdict (if available) -->
     {% if company_control.ai_verdict %}
+    {% widthratio company_control.ai_confidence 1 100 as ai_confidence_percent %}
     <div class="bg-white rounded-xl p-6 shadow-sm border border-gov-gray-100">
         <h2 class="font-bold text-gov-green-800 mb-4">
             <i class="fas fa-robot mr-2"></i> AI Analysis Result
@@ -55,7 +56,7 @@
             </div>
             <div class="p-4 rounded-lg bg-gov-gray-50 border border-gov-gray-200">
                 <div class="text-sm font-medium text-gov-gray-600">Confidence</div>
-                <div class="text-lg font-bold text-gov-green-800">{{ company_control.ai_confidence|floatformat:0 }}%</div>
+                <div class="text-lg font-bold text-gov-green-800">{{ ai_confidence_percent }}%</div>
             </div>
             <div class="p-4 rounded-lg bg-gov-gray-50 border border-gov-gray-200">
                 <div class="text-sm font-medium text-gov-gray-600">Status</div>
@@ -96,9 +97,9 @@
             {% csrf_token %}
             <div class="border-2 border-dashed border-gov-gray-300 rounded-xl p-8 text-center hover:border-gov-green-500 transition">
                 <i class="fas fa-file-arrow-up text-4xl text-gov-gray-400 mb-4"></i>
-                <p class="text-gov-gray-600 mb-2">Upload your evidence file (PDF, DOCX, PNG, JPG)</p>
-                <p class="text-xs text-gov-gray-500 mb-4">AI will automatically extract text using OCR and analyze compliance</p>
-                <input type="file" name="evidence_file" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.xlsx" required
+                <p class="text-gov-gray-600 mb-2">Upload an approved evidence file (maximum {{ max_evidence_file_size_mb }} MB)</p>
+                <p class="text-xs text-gov-gray-500 mb-4">The file is validated, scanned when configured, then securely extracted and analyzed.</p>
+                <input type="file" name="evidence_file" accept="{{ allowed_evidence_accept }}" required
                     class="block w-full text-sm text-gov-gray-500 file:mr-4 file:py-2.5 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gov-green-800 file:text-white hover:file:bg-gov-green-700 file:cursor-pointer">
             </div>
             <button type="submit" class="mt-4 bg-gov-green-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-gov-green-700 transition w-full md:w-auto">
@@ -120,7 +121,8 @@
                     <i class="fas fa-file-{{ ev.file_type }} text-gov-green-600 text-xl"></i>
                     <div>
                         <div class="font-medium text-gov-gray-800 text-sm">{{ ev.original_filename }}</div>
-                        <div class="text-xs text-gov-gray-500">{{ ev.uploaded_at|date:"M d, Y H:i" }} | {{ ev.file_size|filesizeformat }}</div>
+                        <div class="text-xs text-gov-gray-500">{{ ev.uploaded_at|date:"M d, Y H:i" }} | {{ ev.file_size|filesizeformat }} | {{ ev.get_status_display }}</div>
+                        {% if ev.processing_error %}<div class="text-xs text-red-700 mt-1">{{ ev.processing_error }}</div>{% endif %}
                     </div>
                 </div>
                 <div class="flex items-center gap-3">

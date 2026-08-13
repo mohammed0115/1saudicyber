@@ -3,7 +3,10 @@ CyberTrust KSA - Django Settings
 AI-Driven NCA Compliance Platform
 """
 import os
+from datetime import timedelta
 from pathlib import Path
+
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,6 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+RELEASE_SHA = os.getenv('RELEASE_SHA', 'unknown')[:64]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -45,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.ContentSecurityPolicyMiddleware',
+    'core.middleware.BuildRevisionMiddleware',
     'core.middleware.AuditLogMiddleware',
 ]
 
@@ -102,6 +107,10 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {'location': BASE_DIR / 'media', 'base_url': '/media/'},
+    },
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
@@ -132,7 +141,6 @@ REST_FRAMEWORK = {
     },
 }
 
-from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -148,7 +156,6 @@ CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:63
 CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'False') == 'True'
 
 # Celery beat schedule (FR-010): continuous monitoring jobs.
-from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     'daily-score-recalc': {
         'task': 'monitoring.tasks.recalculate_all_scores',
@@ -203,13 +210,16 @@ DATA_RETENTION_DAYS = {
     'verification_tokens': int(os.getenv('RETAIN_VERIFICATION_TOKENS_DAYS', '7')),
 }
 
-# Evidence files may be up to 50 MB (SRS FR-005.2 / NFR-006).
-MAX_EVIDENCE_FILE_SIZE = 50 * 1024 * 1024
-# Spool larger uploads to a temp file instead of memory.
+# Evidence files: one source of truth shared by server-side validation and the UI.
+MAX_EVIDENCE_FILE_SIZE = int(os.getenv('MAX_EVIDENCE_FILE_SIZE', str(25 * 1024 * 1024)))
+MAX_EVIDENCE_PDF_PAGES = int(os.getenv('MAX_EVIDENCE_PDF_PAGES', '100'))
+MAX_EVIDENCE_OCR_PIXELS = int(os.getenv('MAX_EVIDENCE_OCR_PIXELS', '40000000'))
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
-# Whole request body cap; must exceed the largest allowed file.
 DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_EVIDENCE_FILE_SIZE + (5 * 1024 * 1024)
-# Allowed evidence extensions (FR-005.1 / FR-005.11).
-ALLOWED_EVIDENCE_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'tiff', 'bmp', 'docx', 'xlsx', 'txt']
+ALLOWED_EVIDENCE_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'tiff', 'bmp', 'docx', 'xlsx', 'xlsm', 'txt', 'csv', 'md']
+# Set EVIDENCE_ANTIVIRUS_COMMAND (for example, "clamdscan --no-summary") in production.
+EVIDENCE_ANTIVIRUS_COMMAND = os.getenv('EVIDENCE_ANTIVIRUS_COMMAND', '')
+# Use Celery only when a monitored worker/broker is intentionally enabled; sync fallback remains safe for local development.
+EVIDENCE_ASYNC_ENABLED = os.getenv('EVIDENCE_ASYNC_ENABLED', 'False') == 'True'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

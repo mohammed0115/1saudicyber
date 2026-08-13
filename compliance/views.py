@@ -1,16 +1,14 @@
 """
 Compliance Views - Controls listing, Evidence upload, AI Analysis
 """
-import os
 from django.conf import settings
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
-from django.utils import timezone
-from .models import Framework, Domain, Control, CompanyControl, Evidence, Assessment
-from ai_engine.services import process_uploaded_file, analyze_evidence
-from ai_engine.models import AIAuditLog
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .file_validation import validate_evidence_upload
+from .models import CompanyControl, Control, Domain, Evidence, Framework
 
 
 @login_required
@@ -72,6 +70,10 @@ def control_detail(request, control_id):
         'company_control': company_control,
         'evidences': evidences,
         'mapped_controls': mapped_controls,
+        'allowed_evidence_accept': ','.join(
+            f'.{extension}' for extension in settings.ALLOWED_EVIDENCE_EXTENSIONS
+        ),
+        'max_evidence_file_size_mb': settings.MAX_EVIDENCE_FILE_SIZE // (1024 * 1024),
     }
     return render(request, 'compliance/control_detail.html', context)
 
@@ -91,27 +93,12 @@ def upload_evidence(request, control_id):
         messages.error(request, 'Please select a file to upload.')
         return redirect('compliance:control_detail', control_id=control_id)
 
-    # Determine file type
-    file_ext = os.path.splitext(uploaded_file.name)[1].lower().replace('.', '')
-
-    # Server-side validation (FR-005.11): reject unsupported types / oversized files.
-    allowed = getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
-    max_size = getattr(settings, 'MAX_EVIDENCE_FILE_SIZE', 50 * 1024 * 1024)
-    if file_ext not in allowed:
-        messages.error(
-            request,
-            f'Unsupported file type ".{file_ext}". Allowed types: {", ".join(allowed)}.'
-        )
-        return redirect('compliance:control_detail', control_id=control_id)
-    if uploaded_file.size > max_size:
-        messages.error(
-            request,
-            f'File too large ({uploaded_file.size // (1024*1024)} MB). '
-            f'Maximum allowed is {max_size // (1024*1024)} MB.'
-        )
+    try:
+        file_ext = validate_evidence_upload(uploaded_file)
+    except ValidationError as exc:
+        messages.error(request, exc.messages[0])
         return redirect('compliance:control_detail', control_id=control_id)
 
-    # Create evidence record
     evidence = Evidence.objects.create(
         company_control=company_control,
         uploaded_by=request.user,
@@ -119,23 +106,31 @@ def upload_evidence(request, control_id):
         original_filename=uploaded_file.name,
         file_type=file_ext,
         file_size=uploaded_file.size,
-        status='processing',
+        status='queued' if settings.EVIDENCE_ASYNC_ENABLED else 'processing',
     )
 
-    # Run OCR + AI through the shared pipeline. Use Celery if a broker is reachable,
-    # otherwise process synchronously so the platform works without extra infra.
     from compliance.services import process_evidence_pipeline
-    try:
+    if settings.EVIDENCE_ASYNC_ENABLED:
         try:
             from monitoring.tasks import analyze_evidence_async
-            analyze_evidence_async.delay(evidence.id)
-            messages.success(request, 'Evidence uploaded. AI analysis is running in the background.')
+            task = analyze_evidence_async.delay(evidence.id)
+            evidence.task_id = task.id or ''
+            evidence.save(update_fields=['task_id'])
+            messages.success(request, 'Evidence uploaded and queued for secure background analysis.')
         except Exception:
+            # A broker outage must not leave the evidence permanently queued.
             result = process_evidence_pipeline(evidence.id)
-            messages.success(request, f'Evidence analyzed. AI Verdict: {result.get("verdict", "pending")}')
-    except Exception as e:
-        evidence.status = 'uploaded'
-        evidence.save()
-        messages.error(request, f'Error processing file: {str(e)}')
+            if result.get('error'):
+                messages.error(request, 'Evidence was saved, but processing failed and requires review.')
+            else:
+                messages.success(request, 'Evidence uploaded and processed using the recovery path.')
+    else:
+        result = process_evidence_pipeline(evidence.id)
+        if result.get('error'):
+            messages.error(request, 'Evidence was saved, but processing failed and requires review.')
+        elif result.get('status') == 'needs_manual_review':
+            messages.warning(request, 'Evidence was saved and requires human review before an AI verdict can be used.')
+        else:
+            messages.success(request, 'Evidence uploaded and analyzed successfully.')
 
     return redirect('compliance:control_detail', control_id=control_id)

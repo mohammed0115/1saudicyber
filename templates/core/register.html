@@ -59,30 +59,31 @@
                 </div>
             </div>
 
-            <!-- Vendor Targets -->
-            <h2 class="text-lg font-bold text-gov-green-800 mb-4 flex items-center">
-                <i class="fas fa-bullseye mr-2"></i> Certification Targets
+            <!-- Explainable Framework Scope -->
+            <h2 class="text-lg font-bold text-gov-green-800 mb-2 flex items-center">
+                <i class="fas fa-list-check mr-2"></i> Framework Scope Questions
             </h2>
+            <p class="text-sm text-gov-gray-600 mb-4">Your answers create an explainable recommendation. Each selected framework and the rule that selected it are retained in your onboarding audit record.</p>
             <div class="grid md:grid-cols-3 gap-4 mb-6">
                 <label class="flex items-center p-4 border-2 border-gov-gray-200 rounded-xl cursor-pointer hover:border-gov-green-500 transition has-[:checked]:border-gov-green-600 has-[:checked]:bg-gov-green-50">
-                    <input type="checkbox" name="target_nca" class="w-5 h-5 text-gov-green-600 rounded mr-3">
+                    <input type="checkbox" name="nca_scope" class="w-5 h-5 text-gov-green-600 rounded mr-3" {% if form.nca_scope.value %}checked{% endif %}>
                     <div>
-                        <div class="font-semibold text-gov-green-800">NCA ECC</div>
-                        <div class="text-xs text-gov-gray-500">Government</div>
+                        <div class="font-semibold text-gov-green-800">Government / NCA scope</div>
+                        <div class="text-xs text-gov-gray-500">We operate in government or critical-infrastructure scope.</div>
                     </div>
                 </label>
                 <label class="flex items-center p-4 border-2 border-gov-gray-200 rounded-xl cursor-pointer hover:border-gov-green-500 transition has-[:checked]:border-gov-green-600 has-[:checked]:bg-gov-green-50">
-                    <input type="checkbox" name="target_aramco" class="w-5 h-5 text-gov-green-600 rounded mr-3">
+                    <input type="checkbox" name="aramco_supplier" class="w-5 h-5 text-gov-green-600 rounded mr-3" {% if form.aramco_supplier.value %}checked{% endif %}>
                     <div>
-                        <div class="font-semibold text-gov-green-800">Aramco</div>
-                        <div class="text-xs text-gov-gray-500">SACS-002</div>
+                        <div class="font-semibold text-gov-green-800">Aramco supplier scope</div>
+                        <div class="text-xs text-gov-gray-500">We supply or contract with Aramco.</div>
                     </div>
                 </label>
                 <label class="flex items-center p-4 border-2 border-gov-gray-200 rounded-xl cursor-pointer hover:border-gov-green-500 transition has-[:checked]:border-gov-green-600 has-[:checked]:bg-gov-green-50">
-                    <input type="checkbox" name="target_sabic" class="w-5 h-5 text-gov-green-600 rounded mr-3">
+                    <input type="checkbox" name="sabic_supplier" class="w-5 h-5 text-gov-green-600 rounded mr-3" {% if form.sabic_supplier.value %}checked{% endif %}>
                     <div>
-                        <div class="font-semibold text-gov-green-800">SABIC</div>
-                        <div class="text-xs text-gov-gray-500">CyberTrust</div>
+                        <div class="font-semibold text-gov-green-800">SABIC supplier scope</div>
+                        <div class="text-xs text-gov-gray-500">We supply or contract with SABIC.</div>
                     </div>
                 </label>
             </div>

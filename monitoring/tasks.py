@@ -32,8 +32,20 @@ def run_compliance_checks():
     return {'companies_checked': len(results)}
 
 
-@shared_task(name='ai_engine.tasks.analyze_evidence_async')
-def analyze_evidence_async(evidence_id):
-    """Async wrapper so evidence OCR + AI analysis can run off the request thread (FR-006)."""
+@shared_task(
+    bind=True,
+    name='monitoring.tasks.analyze_evidence_async',
+    autoretry_for=(RuntimeError,),
+    retry_backoff=True,
+    retry_jitter=True,
+    retry_kwargs={'max_retries': 3},
+)
+def analyze_evidence_async(self, evidence_id):
+    """Process evidence outside the request and retry transient pipeline failures."""
     from compliance.services import process_evidence_pipeline
-    return process_evidence_pipeline(evidence_id)
+
+    result = process_evidence_pipeline(evidence_id)
+    if result.get('error'):
+        # The pipeline persists a user-visible failed status before Celery retries.
+        raise RuntimeError(result['error'])
+    return result

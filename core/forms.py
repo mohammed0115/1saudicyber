@@ -1,6 +1,6 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from .models import User, Company
+from .services import recommend_frameworks
 
 
 class CompanyRegistrationForm(forms.Form):
@@ -13,10 +13,11 @@ class CompanyRegistrationForm(forms.Form):
     size = forms.ChoiceField(choices=Company.SIZE_CHOICES)
     city = forms.CharField(max_length=100, required=False)
 
-    # Targets
-    target_nca = forms.BooleanField(required=False)
-    target_aramco = forms.BooleanField(required=False)
-    target_sabic = forms.BooleanField(required=False)
+    # Explainable onboarding questions. The framework targets are derived
+    # server-side from these answers and are never trusted from the browser.
+    nca_scope = forms.BooleanField(required=False)
+    aramco_supplier = forms.BooleanField(required=False)
+    sabic_supplier = forms.BooleanField(required=False)
 
     # User fields
     first_name = forms.CharField(max_length=30)
@@ -43,8 +44,10 @@ class CompanyRegistrationForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
-        if not (cleaned.get('target_nca') or cleaned.get('target_aramco') or cleaned.get('target_sabic')):
-            raise forms.ValidationError('Select at least one certification target (NCA, Aramco, or SABIC).')
+        try:
+            cleaned['framework_recommendation'] = recommend_frameworks(cleaned)
+        except ValueError as exc:
+            raise forms.ValidationError(str(exc)) from exc
         return cleaned
 
 

@@ -56,3 +56,58 @@ def verify_totp(user, code):
     if not user.mfa_secret:
         return False
     return pyotp.TOTP(user.mfa_secret).verify(str(code).strip(), valid_window=1)
+
+
+FRAMEWORK_RULES_VERSION = '2026.08'
+
+
+def recommend_frameworks(answers):
+    """Return deterministic framework recommendations and auditable rule reasons.
+
+    The recommendation is intentionally rule-based rather than model-generated: a
+    company's declared regulatory/customer scope is the authoritative onboarding
+    signal, and every result must be explainable later.
+    """
+    normalized = {
+        'nca_scope': bool(answers.get('nca_scope')),
+        'aramco_supplier': bool(answers.get('aramco_supplier')),
+        'sabic_supplier': bool(answers.get('sabic_supplier')),
+    }
+    rules = (
+        ('NCA_ECC', 'nca_scope', 'The company declared NCA/government or critical-infrastructure scope.'),
+        ('ARAMCO_SACS002', 'aramco_supplier', 'The company declared that it supplies or contracts with Aramco.'),
+        ('SABIC_CT', 'sabic_supplier', 'The company declared that it supplies or contracts with SABIC.'),
+    )
+    codes = []
+    rationale = {}
+    for framework_code, answer_key, reason in rules:
+        if normalized[answer_key]:
+            codes.append(framework_code)
+            rationale[framework_code] = {
+                'rule_id': f'{FRAMEWORK_RULES_VERSION}:{answer_key}',
+                'answer_key': answer_key,
+                'reason': reason,
+            }
+
+    if not codes:
+        raise ValueError('At least one framework-scope question must be answered yes.')
+    return {
+        'answers': normalized,
+        'framework_codes': codes,
+        'rationale': rationale,
+        'rules_version': FRAMEWORK_RULES_VERSION,
+    }
+
+
+def record_framework_decision(company, user, recommendation):
+    """Persist the onboarding decision so it can be reconstructed and audited."""
+    from core.models import FrameworkDecision
+
+    return FrameworkDecision.objects.create(
+        company=company,
+        decided_by=user,
+        answers=recommendation['answers'],
+        recommended_framework_codes=recommendation['framework_codes'],
+        rationale=recommendation['rationale'],
+        rules_version=recommendation['rules_version'],
+    )

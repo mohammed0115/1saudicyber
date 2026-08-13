@@ -145,6 +145,29 @@ class Company(models.Model):
         return frameworks
 
 
+class FrameworkDecision(models.Model):
+    """Immutable, explainable framework recommendation captured at onboarding."""
+    company = models.ForeignKey(
+        Company, on_delete=models.CASCADE, related_name='framework_decisions'
+    )
+    answers = models.JSONField(default=dict)
+    recommended_framework_codes = models.JSONField(default=list)
+    rationale = models.JSONField(default=dict)
+    rules_version = models.CharField(max_length=32, default='2026.08')
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='framework_decisions',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'framework_decisions'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.company.name} — {', '.join(self.recommended_framework_codes)}"
+
+
 class EmailVerificationToken(models.Model):
     """One-time token emailed to a user to verify their address (FR-002.8)."""
     import uuid as _uuid

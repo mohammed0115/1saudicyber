@@ -9,7 +9,7 @@ import tempfile
 from django.test import TestCase
 from django.urls import reverse
 
-from core.models import User, Company, EmailVerificationToken, AuditLog
+from core.models import AuditLog, Company, EmailVerificationToken, FrameworkDecision, User
 from core.forms import CompanyRegistrationForm
 from compliance.models import Framework, Domain, Control, CompanyControl
 
@@ -31,7 +31,7 @@ class RegistrationFormTests(TestCase):
         form = CompanyRegistrationForm(data={
             'company_name': 'X', 'cr_number': '123', 'sector': 'technology', 'size': 'small',
             'first_name': 'A', 'last_name': 'B', 'email': 'a@b.com',
-            'password': 'longenough12', 'target_nca': True})
+            'password': 'longenough12', 'nca_scope': True})
         self.assertFalse(form.is_valid())
         self.assertIn('cr_number', form.errors)
 
@@ -39,7 +39,7 @@ class RegistrationFormTests(TestCase):
         form = CompanyRegistrationForm(data={
             'company_name': 'X', 'cr_number': '1234567890', 'sector': 'technology', 'size': 'small',
             'first_name': 'A', 'last_name': 'B', 'email': 'a@b.com',
-            'password': 'short', 'target_nca': True})
+            'password': 'short', 'nca_scope': True})
         self.assertFalse(form.is_valid())
         self.assertIn('password', form.errors)
 
@@ -53,8 +53,19 @@ class RegistrationFormTests(TestCase):
         form = CompanyRegistrationForm(data={
             'company_name': 'Acme', 'cr_number': '1234567890', 'sector': 'technology', 'size': 'small',
             'first_name': 'A', 'last_name': 'B', 'email': 'good@x.com',
-            'password': 'longenough12', 'target_nca': True})
+            'password': 'longenough12', 'nca_scope': True})
         self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['framework_recommendation']['framework_codes'], ['NCA_ECC'])
+
+    def test_recommendation_explains_multiple_frameworks(self):
+        form = CompanyRegistrationForm(data={
+            'company_name': 'Acme', 'cr_number': '1234567890', 'sector': 'technology', 'size': 'small',
+            'first_name': 'A', 'last_name': 'B', 'email': 'good@x.com',
+            'password': 'longenough12', 'aramco_supplier': True, 'sabic_supplier': True})
+        self.assertTrue(form.is_valid(), form.errors)
+        recommendation = form.cleaned_data['framework_recommendation']
+        self.assertEqual(recommendation['framework_codes'], ['ARAMCO_SACS002', 'SABIC_CT'])
+        self.assertIn('ARAMCO_SACS002', recommendation['rationale'])
 
 
 class EmailVerificationTests(TestCase):
@@ -63,7 +74,8 @@ class EmailVerificationTests(TestCase):
         token = EmailVerificationToken.objects.create(user=user, token=EmailVerificationToken.generate())
         resp = self.client.get(reverse('core:verify_email', args=[token.token]))
         self.assertEqual(resp.status_code, 302)
-        user.refresh_from_db(); token.refresh_from_db()
+        user.refresh_from_db()
+        token.refresh_from_db()
         self.assertTrue(user.email_verified)
         self.assertTrue(token.used)
 
@@ -82,24 +94,33 @@ class ExtractionTests(TestCase):
     def test_txt_extraction(self):
         from ai_engine.services import process_uploaded_file
         with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False, encoding='utf-8') as f:
-            f.write('Cybersecurity policy approved by management.'); path = f.name
-        out = process_uploaded_file(path, 'txt'); os.unlink(path)
+            f.write('Cybersecurity policy approved by management.')
+            path = f.name
+        out = process_uploaded_file(path, 'txt')
+        os.unlink(path)
         self.assertIn('policy', out['text'])
 
     def test_docx_extraction(self):
         from docx import Document
         from ai_engine.services import process_uploaded_file
-        doc = Document(); doc.add_paragraph('Incident Response Plan v2')
-        path = tempfile.mktemp(suffix='.docx'); doc.save(path)
-        out = process_uploaded_file(path, 'docx'); os.unlink(path)
+        doc = Document()
+        doc.add_paragraph('Incident Response Plan v2')
+        path = tempfile.mktemp(suffix='.docx')
+        doc.save(path)
+        out = process_uploaded_file(path, 'docx')
+        os.unlink(path)
         self.assertIn('Incident Response Plan', out['text'])
 
     def test_xlsx_extraction(self):
         from openpyxl import Workbook
         from ai_engine.services import process_uploaded_file
-        wb = Workbook(); wb.active['A1'] = 'Asset'; wb.active['B1'] = 'Owner'
-        path = tempfile.mktemp(suffix='.xlsx'); wb.save(path)
-        out = process_uploaded_file(path, 'xlsx'); os.unlink(path)
+        wb = Workbook()
+        wb.active['A1'] = 'Asset'
+        wb.active['B1'] = 'Owner'
+        path = tempfile.mktemp(suffix='.xlsx')
+        wb.save(path)
+        out = process_uploaded_file(path, 'xlsx')
+        os.unlink(path)
         self.assertIn('Asset', out['text'])
 
 
@@ -151,12 +172,15 @@ class ApiTests(TestCase):
         payload = {
             'company_name': 'ApiCo', 'cr_number': '3333333333', 'sector': 'technology', 'size': 'small',
             'email': 'api@x.com', 'password': 'longenough12', 'first_name': 'A', 'last_name': 'B',
-            'target_nca': True}
+            'nca_scope': True}
         r = self.client.post('/api/v1/register/', data=payload, content_type='application/json')
         self.assertEqual(r.status_code, 201, r.content)
         self.assertIn('access', r.json())
         company = Company.objects.get(cr_number='3333333333')
         self.assertEqual(CompanyControl.objects.filter(company=company).count(), 2)
+        decision = FrameworkDecision.objects.get(company=company)
+        self.assertEqual(decision.recommended_framework_codes, ['NCA_ECC'])
+        self.assertEqual(decision.answers, {'nca_scope': True, 'aramco_supplier': False, 'sabic_supplier': False})
         auth = {'HTTP_AUTHORIZATION': f"Bearer {r.json()['access']}"}
         rc = self.client.get('/api/v1/controls/', **auth)
         self.assertEqual(rc.status_code, 200)

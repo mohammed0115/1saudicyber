@@ -128,9 +128,12 @@ class Evidence(models.Model):
     """Uploaded evidence document for a specific control."""
     STATUS_CHOICES = [
         ('uploaded', 'Uploaded'),
+        ('queued', 'Queued for Processing'),
         ('processing', 'Processing (OCR)'),
         ('ai_analyzing', 'AI Analyzing'),
         ('reviewed', 'AI Reviewed'),
+        ('needs_manual_review', 'Needs Manual Review'),
+        ('failed', 'Processing Failed'),
         ('accepted', 'Accepted'),
         ('rejected', 'Rejected'),
         ('needs_revision', 'Needs Revision'),
@@ -155,6 +158,9 @@ class Evidence(models.Model):
     ai_reasoning = models.TextField(blank=True)
     ai_reasoning_ar = models.TextField(blank=True)
 
+    processing_error = models.TextField(blank=True)
+    processing_attempts = models.PositiveSmallIntegerField(default=0)
+    task_id = models.CharField(max_length=100, blank=True, db_index=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     analyzed_at = models.DateTimeField(null=True, blank=True)
 

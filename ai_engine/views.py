@@ -5,12 +5,14 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from .services import classify_company, generate_gap_analysis
 from .models import AIClassificationLog, GapAnalysis
-from compliance.models import CompanyControl
+from compliance.models import CompanyControl, Framework
 
 
 @login_required
+@require_POST
 def run_classification(request):
     """Trigger AI classification for the user's company."""
     company = request.user.company
@@ -54,6 +56,7 @@ def run_classification(request):
 
 
 @login_required
+@require_POST
 def run_gap_analysis(request):
     """Trigger AI gap analysis for the user's company."""
     company = request.user.company
@@ -65,7 +68,7 @@ def run_gap_analysis(request):
         CompanyControl.objects.filter(company=company).values(
             'control__control_id', 'control__title', 'control__framework__code',
             'control__domain__name', 'status', 'ai_verdict', 'ai_confidence'
-        )[:100]
+        )
     )
 
     result = generate_gap_analysis(
@@ -117,9 +120,16 @@ def run_gap_analysis(request):
                 ai_prediction_ar=result.get('predicted_audit_outcome_ar', ''),
             )
 
-        # Update company scores
-        company.overall_compliance_score = result.get('compliance_score', 0)
-        company.save()
+        # The overall score is deterministic and covers every applicable control;
+        # the model's score remains advisory only in the stored analysis response.
+        all_controls = CompanyControl.objects.filter(company=company)
+        all_total = all_controls.count()
+        all_compliant = all_controls.filter(status='compliant').count()
+        deterministic_score = (all_compliant / all_total * 100) if all_total else 0.0
+        result['advisory_compliance_score'] = result.get('compliance_score', 0)
+        result['compliance_score'] = deterministic_score
+        company.overall_compliance_score = deterministic_score
+        company.save(update_fields=['overall_compliance_score'])
 
     return JsonResponse(result)
 
@@ -133,8 +143,22 @@ def classification_result(request):
 
     latest_log = AIClassificationLog.objects.filter(company=company).order_by('-created_at').first()
 
+    classification = latest_log.output_data if latest_log else {}
+    framework_codes = []
+    if company.target_nca:
+        framework_codes.append('NCA_ECC')
+    if company.target_aramco:
+        framework_codes.append('ARAMCO_SACS002')
+    if company.target_sabic:
+        framework_codes.append('SABIC_CT')
+    applicable_frameworks = Framework.objects.filter(code__in=framework_codes)
+    for framework in applicable_frameworks:
+        framework.control_count = framework.controls.count()
+
     context = {
         'company': company,
-        'classification': latest_log.output_data if latest_log else {},
+        'classification': classification,
+        'applicable_frameworks': applicable_frameworks,
+        'classification_reasoning': classification.get('summary_en', ''),
     }
     return render(request, 'compliance/classification_result.html', context)

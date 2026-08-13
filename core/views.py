@@ -9,6 +9,7 @@ from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from .models import Company, User
 from .forms import CompanyRegistrationForm
+from .services import record_framework_decision
 from ai_engine.services import classify_company
 
 
@@ -57,6 +58,8 @@ def register_company(request):
             })
 
         data = form.cleaned_data
+        recommendation = data['framework_recommendation']
+        selected_frameworks = set(recommendation['framework_codes'])
         with transaction.atomic():
             company = Company.objects.create(
                 name=data['company_name'],
@@ -67,9 +70,9 @@ def register_company(request):
                 contact_email=data['email'],
                 contact_phone=data.get('phone', ''),
                 city=data.get('city', ''),
-                target_aramco=data.get('target_aramco', False),
-                target_sabic=data.get('target_sabic', False),
-                target_nca=data.get('target_nca', False),
+                target_aramco='ARAMCO_SACS002' in selected_frameworks,
+                target_sabic='SABIC_CT' in selected_frameworks,
+                target_nca='NCA_ECC' in selected_frameworks,
             )
             user = User.objects.create_user(
                 username=data['email'],
@@ -80,6 +83,7 @@ def register_company(request):
                 company=company,
                 role='company_admin',
             )
+            record_framework_decision(company, user, recommendation)
 
         # Run AI Classification (best-effort; failure must not block registration)
         try:

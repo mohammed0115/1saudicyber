@@ -2,6 +2,7 @@
 from rest_framework import serializers
 
 from core.models import Company
+from core.services import recommend_frameworks
 from compliance.models import Control, CompanyControl, Evidence
 from monitoring.models import ComplianceScore, Alert
 from ai_engine.models import GapAnalysis
@@ -77,9 +78,9 @@ class RegisterSerializer(serializers.Serializer):
     password = serializers.CharField(min_length=12, write_only=True)
     first_name = serializers.CharField(max_length=30)
     last_name = serializers.CharField(max_length=30)
-    target_nca = serializers.BooleanField(required=False, default=False)
-    target_aramco = serializers.BooleanField(required=False, default=False)
-    target_sabic = serializers.BooleanField(required=False, default=False)
+    nca_scope = serializers.BooleanField(required=False, default=False)
+    aramco_supplier = serializers.BooleanField(required=False, default=False)
+    sabic_supplier = serializers.BooleanField(required=False, default=False)
 
     def validate_cr_number(self, value):
         value = value.strip()
@@ -90,6 +91,8 @@ class RegisterSerializer(serializers.Serializer):
         return value
 
     def validate(self, data):
-        if not (data.get('target_nca') or data.get('target_aramco') or data.get('target_sabic')):
-            raise serializers.ValidationError('Select at least one certification target.')
+        try:
+            data['framework_recommendation'] = recommend_frameworks(data)
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
         return data

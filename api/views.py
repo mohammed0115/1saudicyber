@@ -1,5 +1,6 @@
 """REST API views (/api/v1) — mirrors SRS Appendix D endpoints."""
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -11,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.models import Company, User
+from compliance.file_validation import validate_evidence_upload
 from compliance.models import Control, CompanyControl, Evidence
 from monitoring.models import ComplianceScore, Alert
 from ai_engine.models import GapAnalysis
@@ -19,10 +21,6 @@ from .serializers import (
     EvidenceSerializer, ComplianceScoreSerializer, AlertSerializer,
     GapAnalysisSerializer, CompanySerializer,
 )
-
-ALLOWED = lambda: getattr(settings, 'ALLOWED_EVIDENCE_EXTENSIONS', [])
-MAXSZ = lambda: getattr(settings, 'MAX_EVIDENCE_FILE_SIZE', 50 * 1024 * 1024)
-
 
 def _require_company(request):
     return getattr(request.user, 'company', None)
@@ -35,17 +33,22 @@ def register(request):
     s.is_valid(raise_exception=True)
     d = s.validated_data
     with transaction.atomic():
+        selected_frameworks = set(d['framework_recommendation']['framework_codes'])
         company = Company.objects.create(
             name=d['company_name'], name_ar=d.get('company_name_ar', ''),
             cr_number=d['cr_number'], sector=d['sector'], size=d['size'],
             contact_email=d['email'],
-            target_nca=d['target_nca'], target_aramco=d['target_aramco'], target_sabic=d['target_sabic'],
+            target_nca='NCA_ECC' in selected_frameworks,
+            target_aramco='ARAMCO_SACS002' in selected_frameworks,
+            target_sabic='SABIC_CT' in selected_frameworks,
         )
         user = User.objects.create_user(
             username=d['email'], email=d['email'], password=d['password'],
             first_name=d['first_name'], last_name=d['last_name'],
             company=company, role='company_admin',
         )
+        from core.services import record_framework_decision
+        record_framework_decision(company, user, d['framework_recommendation'])
     from core.views import _create_company_control_checklist
     _create_company_control_checklist(company)
     from core.services import send_verification_email
@@ -118,26 +121,30 @@ def evidence_upload(request):
     except Control.DoesNotExist:
         return Response({'detail': 'Control not found.'}, status=404)
 
-    import os
-    ext = os.path.splitext(f.name)[1].lower().replace('.', '')
-    if ext not in ALLOWED():
-        return Response({'detail': f'Unsupported type .{ext}.'}, status=400)
-    if f.size > MAXSZ():
-        return Response({'detail': 'File too large.'}, status=400)
+    try:
+        extension = validate_evidence_upload(f)
+    except ValidationError as exc:
+        return Response({'detail': exc.messages[0]}, status=400)
 
     cc, _ = CompanyControl.objects.get_or_create(company=company, control=control)
     evidence = Evidence.objects.create(
         company_control=cc, uploaded_by=request.user, file=f,
-        original_filename=f.name, file_type=ext, file_size=f.size, status='processing',
+        original_filename=f.name, file_type=extension, file_size=f.size,
+        status='queued' if settings.EVIDENCE_ASYNC_ENABLED else 'processing',
     )
     from compliance.services import process_evidence_pipeline
-    try:
-        from monitoring.tasks import analyze_evidence_async
-        analyze_evidence_async.delay(evidence.id)
-        queued = True
-    except Exception:
+    queued = False
+    if settings.EVIDENCE_ASYNC_ENABLED:
+        try:
+            from monitoring.tasks import analyze_evidence_async
+            task = analyze_evidence_async.delay(evidence.id)
+            evidence.task_id = task.id or ''
+            evidence.save(update_fields=['task_id'])
+            queued = True
+        except Exception:
+            process_evidence_pipeline(evidence.id)
+    else:
         process_evidence_pipeline(evidence.id)
-        queued = False
     evidence.refresh_from_db()
     return Response({'evidence': EvidenceSerializer(evidence).data, 'queued': queued},
                     status=status.HTTP_201_CREATED)
@@ -146,8 +153,16 @@ def evidence_upload(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def evidence_analyze(request, evidence_id):
+    company = _require_company(request)
+    if not company:
+        return Response({'detail': 'No company associated.'}, status=400)
+    evidence = Evidence.objects.filter(
+        id=evidence_id, company_control__company=company
+    ).first()
+    if not evidence:
+        return Response({'detail': 'Evidence not found.'}, status=404)
     from compliance.services import process_evidence_pipeline
-    result = process_evidence_pipeline(evidence_id)
+    result = process_evidence_pipeline(evidence.id)
     return Response(result)
 
 
