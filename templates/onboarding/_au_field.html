@@ -1,6 +1,6 @@
 {% load i18n %}
 {# Light (.au) field partial for the company registration re-skin. Renders label + widget + help + error. #}
-<div class="au-field">
+<div class="au-field{% if field.name == 'company_name_ar' %} ct-field-ar{% elif field.name == 'company_name' or field.name == 'email' or field.name == 'cr_number' or field.name == 'phone' %} ct-field-ltr{% endif %}">
   <label{% if field.id_for_label %} for="{{ field.id_for_label }}"{% endif %}>{{ field.label }}{% if req %} <span class="au-req">*</span>{% endif %}</label>
   {{ field }}
   {% if field.help_text %}<div class="au-help">{{ field.help_text }}</div>{% endif %}

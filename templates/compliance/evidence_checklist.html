@@ -27,6 +27,21 @@
     <div class="cx-note" style="background:var(--soft);border:1px solid #CDDDF5;color:var(--brand);">{{ m }}</div>
     {% endfor %}{% endif %}
 
+    {% if items %}
+    <section class="cx-card p-4" style="background:linear-gradient(135deg,#F3F7FE,#FFFFFF);">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="ic" style="width:42px;height:42px;"><i class="fas fa-cloud-arrow-up" aria-hidden="true"></i></span>
+                <div>
+                    <p class="m-0 font-semibold cx-navy">ابدأ برفع أول دليل</p>
+                    <p class="m-0 mt-1 text-sm cx-muted">لديك {{ items|length }} عنصرًا في هذه الصفحة. ارفع ملفًا واحدًا أولًا ثم تابع التقدم من قائمة الأدلة.</p>
+                </div>
+            </div>
+            <a href="{% url 'compliance:evidence_upload_v2' items.0.id %}" class="cx-btn cx-btn-primary whitespace-nowrap">رفع أول دليل <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i></a>
+        </div>
+    </section>
+    {% endif %}
+
     {% if not items %}
     {% if has_approved_scope and not has_control_plan %}
     {# Prerequisite guard (soft): evidence needs a generated control plan first. #}
@@ -58,7 +73,10 @@
     {% endif %}
 
     <div class="cx-card">
-        <div class="cx-card-h">العناصر المخطّطة ({{ items|length }})</div>
+        <div class="cx-card-h">
+            <span>العناصر المخطّطة ({{ items|length }})</span>
+            {% if items %}<span class="cx-badge cx-neutral">ابدأ بالأولوية الأعلى</span>{% endif %}
+        </div>
         <div class="cx-scroll"><table class="cx-tbl">
             <thead>
                 <tr>
@@ -87,7 +105,7 @@
                         {% endwith %}
                     </td>
                     <td class="text-xs">
-                        <a href="{% url 'compliance:evidence_upload_v2' it.id %}" class="cx-link">رفع دليل</a>
+                        <a href="{% url 'compliance:evidence_upload_v2' it.id %}" class="cx-btn cx-btn-secondary" style="padding:.38rem .65rem;font-size:.78rem;">رفع</a>
                     </td>
                 </tr>
                 {% empty %}
@@ -100,9 +118,9 @@
         <div class="px-4 py-2">{% include "components/pagination.html" %}</div>
     </div>
 
-    <div class="cx-note" style="background:var(--soft2);border:1px solid var(--border);color:var(--text2);">
-        <i class="fas fa-lock me-1" style="color:var(--muted);"></i>
-        رفع الأدلة وربطها يتم من صفحة رفع الأدلة. لا رفع في هذه الصفحة.
+    <div class="cx-note cx-note-info">
+        <i class="fas fa-circle-info me-1" aria-hidden="true"></i>
+        يمكنك رفع الأدلة وربطها من صفحة الرفع. بعد الرفع، ستظهر حالة الملف هنا لتتابع اكتمال المتطلبات.
     </div>
 
     {% include "components/journey_nav.html" %}

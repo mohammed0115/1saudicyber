@@ -133,25 +133,28 @@
                     <a href="{% url 'auditors:onboarding' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الملف الشخصي" %}</a>
                     {% else %}
                     <a href="{% url 'dashboard:main' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "لوحة التحكم" %}</a>
-                    <a href="{% url 'compliance:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مسار الامتثال" %}</a>
-                    <a href="{% url 'compliance:applicability_review' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأطر" %}</a>
+                    <a href="{% url 'compliance:dashboard' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "مسار الجاهزية" %}</a>
                     <a href="{% url 'compliance:evidence_checklist' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "الأدلة" %}</a>
                     <a href="{% url 'compliance:reports_index' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "التقارير" %}</a>
-                    <a href="{% url 'monitoring:overview' %}" class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition">{% trans "المراقبة" %}</a>
                     <details class="relative">
-                        <summary class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer list-none">{% trans "المزيد" %} <i class="fas fa-chevron-down text-xs"></i></summary>
+                        <summary class="app-navlink px-3 py-2 rounded-md text-sm font-medium transition cursor-pointer list-none">{% trans "إدارة الامتثال" %} <i class="fas fa-chevron-down text-xs"></i></summary>
                         <div class="app-dropdown absolute end-0 mt-2 w-56 rounded-lg p-2 z-50">
+                            <p class="px-3 pt-2 pb-1 text-xs font-semibold app-muted">{% trans "نطاق العمل" %}</p>
+                            <a href="{% url 'compliance:applicability_review' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الأطر المنطبقة" %}</a>
                             <a href="{% url 'compliance:controls_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الضوابط" %}</a>
                             <a href="{% url 'compliance:control_plan' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "خطة الضوابط" %}</a>
+                            <a href="{% url 'monitoring:overview' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراقبة المستمرة" %}</a>
+                            <div class="border-t app-bt my-1"></div>
+                            <p class="px-3 pt-2 pb-1 text-xs font-semibold app-muted">{% trans "المعالجة والمراجعة" %}</p>
                             <a href="{% url 'compliance:gap_dashboard' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "تحليل الفجوات" %}</a>
                             <a href="{% url 'risk:list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المخاطر والمعالجة" %}</a>
-                            <div class="border-t app-bt my-1"></div>
                             <a href="{% url 'compliance:auditor_review_status' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "حالة مراجعة المدقّق" %}</a>
                             <a href="{% url 'auditor_portal:company_findings' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "ملاحظات التدقيق" %}</a>
                             <a href="{% url 'auditor_portal:company_rfi_list' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "طلبات المعلومات (RFI)" %}</a>
                             {% if user.company_id %}<a href="{% url 'auditor_portal:message_thread' user.company_id %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراسلة" %}</a>{% endif %}
                             <a href="{% url 'compliance:auditor_review_queue' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "المراجعة" %}</a>
                             <div class="border-t app-bt my-1"></div>
+                            <p class="px-3 pt-2 pb-1 text-xs font-semibold app-muted">{% trans "الحساب" %}</p>
                             <a href="{% url 'billing:home' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الاشتراك" %}</a>
                             {% if user.role == 'company_admin' %}<a href="{% url 'core:team' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "فريق العمل" %}</a>{% endif %}
                             <a href="{% url 'core:settings' %}" class="block px-3 py-2 rounded-md text-sm">{% trans "الإعدادات" %}</a>

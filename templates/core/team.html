@@ -2,52 +2,75 @@
 {% load crm_display %}
 {% block title %}فريق العمل - Cyber-5{% endblock %}
 {% block content %}
-<div class="max-w-3xl mx-auto space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gov-green-800">فريق العمل</h1>
-    <p class="text-gov-gray-600 text-sm mt-1">أعضاء منشأتك وأدوارهم، ودعوة أعضاء جدد.</p>
-  </div>
+<div class="max-w-4xl mx-auto space-y-6" dir="rtl">
+  <header class="cx-head flex items-start gap-3">
+    <span class="ic"><i class="fas fa-users" aria-hidden="true"></i></span>
+    <div>
+      <h1 class="text-2xl font-bold cx-navy">فريق العمل</h1>
+      <p class="cx-muted text-sm mt-1">أضف الأشخاص المشاركين في جمع الأدلة ومتابعة الجاهزية، وحدد دورًا واضحًا لكل عضو.</p>
+    </div>
+  </header>
 
   {% if can_invite %}
-  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-5">
-    <h2 class="font-semibold text-gov-green-800 mb-3">دعوة عضو جديد</h2>
-    <form method="post" class="flex flex-wrap items-end gap-3">
+  <section class="cx-card p-5" style="background:linear-gradient(135deg,#F3F7FE,#FFFFFF);">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div>
+        <h2 class="font-semibold cx-navy">دعوة عضو جديد</h2>
+        <p class="cx-muted text-sm mt-1">سيرسل النظام دعوة إلى البريد الإلكتروني؛ اختر الدور الذي يطابق مسؤولياته.</p>
+      </div>
+      <span class="cx-badge cx-neutral">إدارة الصلاحيات حسب الدور</span>
+    </div>
+    <form method="post" class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_190px_auto] gap-3 items-end">
       {% csrf_token %}
-      <label class="flex-1 min-w-[220px] text-sm"><span class="block text-gov-gray-500 mb-1">البريد الإلكتروني</span>
-        <input type="email" name="email" required dir="ltr" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-gov-green-500"></label>
-      <label class="min-w-[170px] text-sm"><span class="block text-gov-gray-500 mb-1">الدور</span>
-        <select name="role" class="w-full border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+      <label class="text-sm">
+        <span class="block font-medium cx-navy mb-1">البريد الإلكتروني</span>
+        <input type="email" name="email" required dir="ltr" inputmode="email" autocomplete="email" class="w-full text-left" placeholder="name@company.sa">
+      </label>
+      <label class="text-sm">
+        <span class="block font-medium cx-navy mb-1">الدور</span>
+        <select name="role" class="w-full">
           {% for r in invitable_roles %}<option value="{{ r }}">{{ r|role_ar }}</option>{% endfor %}
-        </select></label>
-      <button type="submit" class="bg-gov-green-800 text-white px-5 py-2 rounded-lg font-medium hover:bg-gov-green-900 text-sm">إرسال الدعوة</button>
+        </select>
+      </label>
+      <button type="submit" class="cx-btn cx-btn-primary justify-center whitespace-nowrap">إرسال الدعوة <i class="fas fa-paper-plane text-xs" aria-hidden="true"></i></button>
     </form>
-  </div>
+  </section>
   {% endif %}
 
-  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-5">
-    <h2 class="font-semibold text-gov-green-800 mb-3">الأعضاء ({{ members|length }})</h2>
-    <div class="overflow-x-auto"><table class="w-full text-sm">
-      <thead class="text-gov-gray-500"><tr><th class="text-start py-2">العضو</th><th class="text-start py-2">البريد</th><th class="text-start py-2">الدور</th></tr></thead>
-      <tbody class="divide-y divide-gov-gray-100">
-        {% for m in members %}
-        <tr><td class="py-2">{{ m.get_full_name|default:"—" }}</td><td class="py-2" dir="ltr">{{ m.email }}</td><td class="py-2">{{ m.role|role_ar }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table></div>
-  </div>
+  <section class="cx-card overflow-hidden">
+    <div class="cx-card-h">
+      <span>الأعضاء</span><span class="cx-badge cx-neutral">{{ members|length }} عضو</span>
+    </div>
+    <div class="divide-y" style="border-color:var(--border);">
+      {% for m in members %}
+      <article class="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="app-avatar" aria-hidden="true">{{ m.get_full_name|default:m.email|slice:":1"|upper }}</span>
+          <div class="min-w-0">
+            <p class="m-0 font-semibold cx-navy">{{ m.get_full_name|default:"عضو فريق" }}</p>
+            <p class="m-0 mt-1 text-sm cx-muted truncate" dir="ltr">{{ m.email }}</p>
+          </div>
+        </div>
+        <span class="cx-badge cx-ok">{{ m.role|role_ar }}</span>
+      </article>
+      {% empty %}
+      <div class="px-5 py-8 text-center cx-muted text-sm">لا يوجد أعضاء بعد. أرسل أول دعوة لبدء توزيع مهام الامتثال.</div>
+      {% endfor %}
+    </div>
+  </section>
 
   {% if invites %}
-  <div class="bg-white rounded-xl shadow-sm border border-gov-gray-100 p-5">
-    <h2 class="font-semibold text-gov-green-800 mb-3">دعوات معلّقة ({{ invites|length }})</h2>
-    <ul class="divide-y divide-gov-gray-100 text-sm">
+  <section class="cx-card overflow-hidden">
+    <div class="cx-card-h"><span>دعوات معلّقة</span><span class="cx-badge cx-warn">{{ invites|length }} بانتظار القبول</span></div>
+    <ul class="divide-y" style="border-color:var(--border);">
       {% for i in invites %}
-      <li class="py-2 flex items-center justify-between gap-2 flex-wrap">
-        <span dir="ltr">{{ i.email }}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">{{ i.role|role_ar }} · بانتظار القبول</span>
+      <li class="px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+        <span class="text-sm cx-navy" dir="ltr">{{ i.email }}</span>
+        <span class="cx-badge cx-warn">{{ i.role|role_ar }} · بانتظار القبول</span>
       </li>
       {% endfor %}
     </ul>
-  </div>
+  </section>
   {% endif %}
 </div>
 {% endblock %}

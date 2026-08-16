@@ -8,8 +8,9 @@
     {% include "compliance/_workflow_stepper.html" %}
 
     {% if subscription_active %}
-    <div class="rounded-lg p-4 text-sm" style="background:#E9F0FD;border:1px solid #CDDDF5;color:#1E56C9;">
-        <i class="fas fa-unlock mr-1"></i> التقارير مفعّلة — يمكنك عرض وتنزيل التقارير الكاملة.
+    <div class="cx-note cx-note-info flex flex-wrap items-center justify-between gap-3">
+        <span><i class="fas fa-unlock ml-1" aria-hidden="true"></i><strong>التقارير مفعّلة.</strong> يمكنك عرض النتائج وتنزيل التقارير المتاحة.</span>
+        <a href="{% url 'compliance:report_executive_summary' %}" class="cx-btn cx-btn-secondary">عرض الملخّص التنفيذي</a>
     </div>
     <!-- Phase 4C — two auditor options for a subscribed company -->
     <div class="grid md:grid-cols-2 gap-4">
@@ -33,32 +34,36 @@
         </a>
     </div>
     {% else %}
-    <div class="rounded-lg p-4 text-sm" style="background:#f1eadb;border:1px solid #dcc79a;color:#8a6a1f;">
-        <i class="fas fa-lock me-1"></i>
-        يتطلب تنزيل التقارير أو إسناد الملف إلى مدقق تفعيل الاشتراك.
-        يمكنك إكمال الرحلة ورفع الأدلة، لكن تنزيل التقارير الكاملة وإسناد المدقّق يتطلب تفعيل الاشتراك.
-        <a href="{% url 'billing:home' %}" class="underline font-medium ms-1">تفعيل الاشتراك</a>
-    </div>
+    <section class="cx-card p-5" style="background:linear-gradient(135deg,#FFF9ED,#FFFFFF);border-color:#EBD9B8;">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <span class="ic" style="width:42px;height:42px;background:#FBF3E4;color:#A96C24;"><i class="fas fa-lock" aria-hidden="true"></i></span>
+                <div>
+                    <p class="m-0 font-semibold" style="color:#8A5A1E;">التقارير الكاملة متاحة بعد تفعيل الاشتراك</p>
+                    <p class="m-0 mt-1 text-sm" style="color:#8A5A1E;">يمكنك إكمال التصنيف ورفع الأدلة الآن. يظهر التقرير التنفيذي بعد التقييم، ولا يُعد شهادة امتثال رسمية.</p>
+                </div>
+            </div>
+            <a href="{% url 'billing:home' %}" class="cx-btn cx-btn-primary whitespace-nowrap">تفعيل الاشتراك</a>
+        </div>
+    </section>
     {% endif %}
 
     {% if not reviewed_assessment_count %}
-    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
-        <i class="fas fa-lock mr-1"></i>
-        التقارير غير متاحة بعد.
-        ستصبح التقارير ذات معنى بعد إنشاء تقييمات المدقّق. (Reports will be meaningful after auditor assessments are created.)
-        <a href="{% url 'compliance:auditor_review_queue' %}" class="underline font-medium ml-1">مراجعة المدقّق</a>
+    <div class="cx-note cx-note-warn flex flex-wrap items-center justify-between gap-3">
+        <span><i class="fas fa-circle-info ml-1" aria-hidden="true"></i>لم تكتمل مراجعة الضوابط بعد، لذلك لا تظهر مؤشرات الجاهزية النهائية.</span>
+        <a href="{% url 'compliance:auditor_review_queue' %}" class="font-semibold underline">انتقل إلى المراجعة</a>
     </div>
     {% endif %}
     <div class="grid md:grid-cols-3 gap-4">
-        <a href="{% url 'compliance:report_executive_summary' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
-            <i class="fas fa-chart-pie text-gov-green-700 text-xl"></i>
-            <h2 class="font-semibold text-gov-green-800 mt-2">الملخّص التنفيذي</h2></a>
-        <a href="{% url 'compliance:report_gap_analysis' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
-            <i class="fas fa-triangle-exclamation text-gov-green-700 text-xl"></i>
-            <h2 class="font-semibold text-gov-green-800 mt-2">تحليل الفجوات</h2></a>
-        <a href="{% url 'compliance:report_evidence_matrix' %}" class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100 hover:border-gov-green-300">
-            <i class="fas fa-table text-gov-green-700 text-xl"></i>
-            <h2 class="font-semibold text-gov-green-800 mt-2">مصفوفة الأدلة</h2></a>
+        <a href="{% url 'compliance:report_executive_summary' %}" class="cx-card p-5 hover:border-gov-green-300 transition">
+            <i class="fas fa-chart-pie text-gov-green-700 text-xl" aria-hidden="true"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">الملخّص التنفيذي</h2><p class="text-sm cx-muted mt-1">نظرة على الأطر والأدلة والفجوات وخطة المعالجة.</p></a>
+        <a href="{% url 'compliance:report_gap_analysis' %}" class="cx-card p-5 hover:border-gov-green-300 transition">
+            <i class="fas fa-triangle-exclamation text-gov-green-700 text-xl" aria-hidden="true"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">تحليل الفجوات</h2><p class="text-sm cx-muted mt-1">تابع الضوابط التي تحتاج أدلة أو معالجة.</p></a>
+        <a href="{% url 'compliance:report_evidence_matrix' %}" class="cx-card p-5 hover:border-gov-green-300 transition">
+            <i class="fas fa-table text-gov-green-700 text-xl" aria-hidden="true"></i>
+            <h2 class="font-semibold text-gov-green-800 mt-2">مصفوفة الأدلة</h2><p class="text-sm cx-muted mt-1">راجع ارتباط ملفات الأدلة بالضوابط الرسمية.</p></a>
     </div>
     <div class="bg-white rounded-xl p-5 shadow-sm border border-gov-gray-100">
         <h2 class="font-semibold text-gov-green-800 mb-2">تقارير حسب الإطار</h2>

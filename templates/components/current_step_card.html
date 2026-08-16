@@ -1,44 +1,44 @@
+{% load i18n %}
 {% comment %}
-Phase 8D-2-FIX-C — guided "Where am I / What now / Next" card.
-Expects `guide` (from compliance.journey.build_page_guide or compatible dict):
-  step_number, total, title, status, what_now, next_title,
-  blocked_reason, cta_url_name, cta_label
-Read-only; renders nothing if `guide` is missing.
+Compact company-journey guidance. Expects `guide` from build_page_guide.
+The page task stays primary; contextual detail is available on demand.
 {% endcomment %}
 {% if guide %}
-<div dir="rtl" class="ct-current-step rounded-xl border p-4 mb-5"
-     style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#FFFFFF;
-     border-color:{% if guide.status == 'blocked' %}#E6C98C{% elif guide.status == 'completed' %}#BFE3CF{% else %}#1E56C9{% endif %};
-     {% if guide.status == 'current' %}box-shadow:0 0 0 1px #1E56C9;{% endif %}">
-  <div class="flex items-center justify-between gap-2 mb-2">
-    <p style="margin:0;color:#1E56C9;font-weight:700;font-size:.9rem;">
-      {% if guide.step_number %}أنت الآن في الخطوة {{ guide.step_number }} من {{ guide.total }}: {{ guide.title }}{% else %}خطوة مستمرة: {{ guide.title }}{% endif %}
-    </p>
-    {% include "components/status_badge.html" with status=guide.status %}
+<section dir="rtl" class="ct-current-step rounded-2xl border px-4 py-3 mb-4"
+         style="font-family:'Inter','Noto Sans Arabic',sans-serif;background:#F3F7FE;border-color:#CBDAF0;">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="min-w-0 flex items-center gap-3">
+      <span class="grid place-items-center w-9 h-9 rounded-xl shrink-0" style="background:#E9F0FD;color:#1E56C9;">
+        <i class="fas {% if guide.status == 'blocked' %}fa-lock{% elif guide.status == 'completed' %}fa-check{% else %}fa-compass{% endif %}" aria-hidden="true"></i>
+      </span>
+      <div class="min-w-0">
+        <p class="m-0 text-xs font-semibold" style="color:#1E56C9;">
+          {% if guide.step_number %}{% trans "الخطوة" %} {{ guide.step_number }} {% trans "من" %} {{ guide.total }}{% else %}{% trans "مرحلة مستمرة" %}{% endif %}
+        </p>
+        <p class="m-0 font-semibold text-sm" style="color:#15233B;">{{ guide.title }}</p>
+      </div>
+      {% include "components/status_badge.html" with status=guide.status %}
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      {% if guide.cta_url_name and guide.cta_label %}
+      <a href="{% url guide.cta_url_name %}" data-busy="جارٍ فتح الخطوة..."
+         class="cx-btn cx-btn-primary whitespace-nowrap">{{ guide.cta_label }} <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i></a>
+      {% endif %}
+      {% if guide.what_now or guide.blocked_reason %}
+      <details class="relative">
+        <summary class="list-none cursor-pointer text-xs font-semibold whitespace-nowrap" style="color:#3B537A;">{% trans "ما المطلوب؟" %} <i class="fas fa-chevron-down text-[0.65rem]" aria-hidden="true"></i></summary>
+        <div class="absolute end-0 top-7 z-20 w-72 rounded-xl border p-3 text-sm leading-6 shadow-lg" style="background:#fff;border-color:#CBDAF0;color:#44505F;">
+          {% if guide.status == 'blocked' and guide.blocked_reason %}
+            <p class="m-0"><i class="fas fa-lock ml-1" aria-hidden="true"></i>{{ guide.blocked_reason }}</p>
+          {% else %}
+            <p class="m-0">{{ guide.what_now }}</p>
+            {% if guide.next_title %}<p class="m-0 mt-2 text-xs" style="color:#5B6675;"><strong>{% trans "بعدها:" %}</strong> {{ guide.next_title }}</p>{% endif %}
+          {% endif %}
+        </div>
+      </details>
+      {% endif %}
+    </div>
   </div>
-
-  {% if guide.status == 'blocked' and guide.blocked_reason %}
-  <p style="margin:0 0 10px;color:#8a6a1f;font-size:.9rem;line-height:1.7;">
-    <i class="fas fa-lock" style="margin-inline-end:6px;"></i>{{ guide.blocked_reason }}
-  </p>
-  {% else %}
-  <p style="margin:0 0 6px;color:#374151;font-size:.92rem;line-height:1.7;">
-    <span style="color:#1E56C9;font-weight:600;">المطلوب منك الآن:</span> {{ guide.what_now }}
-  </p>
-  {% endif %}
-
-  {% if guide.next_title %}
-  <p style="margin:0 0 10px;color:#6B7280;font-size:.85rem;">
-    <span style="font-weight:600;">الخطوة التالية:</span> {{ guide.next_title }}
-  </p>
-  {% endif %}
-
-  {% if guide.cta_url_name and guide.cta_label %}
-  <a href="{% url guide.cta_url_name %}" data-busy="جارٍ فتح الخطوة..."
-     class="inline-block rounded-lg text-sm font-medium px-4 py-2"
-     style="{% if guide.status == 'blocked' %}background:#F7F9F8;border:1px solid #D9E2DE;color:#1E56C9;{% else %}background:#1E56C9;color:#fff;{% endif %}">
-    {{ guide.cta_label }}
-  </a>
-  {% endif %}
-</div>
+</section>
 {% endif %}

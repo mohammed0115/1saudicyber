@@ -3653,7 +3653,7 @@ class JourneyEmptyStateTests(TestCase):
         self.client.force_login(user)
         resp = self.client.get(reverse('compliance:reports_index'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Reports will be meaningful after auditor assessments')
+        self.assertContains(resp, 'لم تكتمل مراجعة الضوابط بعد')
 
 
 class Phase3IBackwardCompatTests(TestCase):
@@ -6223,9 +6223,9 @@ class GuidedCompanyWorkflowTests(TestCase):
         self._login(c, 'guide_cls@x.com')
         resp = self.client.get(reverse('compliance:classification'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'أنت الآن في الخطوة 3 من 13')
-        self.assertContains(resp, 'المطلوب منك الآن')
-        self.assertContains(resp, 'الخطوة التالية')
+        self.assertContains(resp, 'الخطوة 3 من 13')
+        self.assertContains(resp, 'ما المطلوب؟')
+        self.assertContains(resp, 'بعدها:')
 
     def test_applicability_page_blocked_when_classification_missing(self):
         c = _company()
@@ -6251,7 +6251,7 @@ class GuidedCompanyWorkflowTests(TestCase):
         c = _company()
         self._login(c, 'guide_ctrl@x.com')
         resp = self.client.get(reverse('compliance:controls_list'))
-        self.assertContains(resp, 'أنت الآن في الخطوة 5 من 13')
+        self.assertContains(resp, 'الخطوة 5 من 13')
 
     def test_auditor_reviewed_report_explains_pending_review(self):
         c = self._subscribed_company()
@@ -6265,7 +6265,7 @@ class GuidedCompanyWorkflowTests(TestCase):
         c = _company()
         self._login(c, 'guide_risk@x.com')
         resp = self.client.get(reverse('risk:list'))
-        self.assertContains(resp, 'أنت الآن في الخطوة 13 من 13')
+        self.assertContains(resp, 'الخطوة 13 من 13')
 
     def test_guided_pages_have_no_unsafe_certification_wording(self):
         c = self._subscribed_company()
@@ -7177,7 +7177,7 @@ class CompanyJourneyNavTests(TestCase):
     def test_reports_direct_url_guarded_before_ready(self):
         resp = self.client.get(reverse('compliance:reports_index'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'التقارير غير متاحة بعد')
+        self.assertContains(resp, 'لم تكتمل مراجعة الضوابط بعد')
 
     def test_journey_nav_is_company_scoped(self):
         # Another company's approval must not unlock THIS company's review->plan next button.

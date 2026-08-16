@@ -16,7 +16,7 @@
     color:var(--text); background:var(--bg); font-family:'Inter','IBM Plex Sans Arabic','Noto Sans Arabic',sans-serif;
     min-height:100vh; display:flex; flex-direction:column;
   }
-  .au-container{ max-width:1140px; margin-inline:auto; padding-inline:1.25rem; width:100%; }
+  .au-container{ max-width:1220px; margin-inline:auto; padding-inline:1.25rem; width:100%; }
   .au h1{ font-weight:800; font-size:clamp(1.6rem,3.2vw,2.1rem); line-height:1.25; color:var(--text); }
   :lang(ar) .au h1{ line-height:1.5; }
   .au .au-lead{ color:var(--text2); line-height:1.7; }
@@ -42,13 +42,13 @@
   .au-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; }
   .au-iconbox{ background:var(--soft); color:var(--brand); border-radius:12px; display:flex; align-items:center; justify-content:center; }
   /* stepper */
-  .au-step-line{ background:var(--border); }
+  .au-step-line{ background:var(--border); height:3px !important; border-radius:999px; }
   .au-step-line.is-done{ background:var(--brand); }
-  .au-node{ width:34px; height:34px; border-radius:999px; display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:.9rem; border:2px solid var(--border); background:var(--surface); color:var(--muted); }
+  .au-node{ width:36px; height:36px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:.9rem; border:2px solid var(--border); background:var(--surface); color:var(--muted); }
   .au-node.is-active{ border-color:var(--brand); background:var(--brand); color:#fff; }
   .au-node.is-done{ border-color:var(--brand); background:var(--brand); color:#fff; }
-  .au-step-label{ font-size:.78rem; color:var(--muted); }
+  .au-step-label{ font-size:.82rem; color:var(--muted); }
   .au-step-label.is-active{ color:var(--brand); font-weight:600; }
   .au-step-label.is-done{ color:var(--text2); }
   /* form fields */
@@ -76,19 +76,25 @@
   .au-footer{ background:var(--footer); border-top:1px solid var(--border); margin-top:auto; }
   .au-flink{ color:var(--text2); } .au-flink:hover{ color:var(--brand); text-decoration:underline; }
   /* ===== Reference-match: faint skyline, split two-panel (2.2), brand panel ===== */
-  .au-skyline{ position:fixed; inset-inline:0; bottom:0; height:210px; z-index:0; pointer-events:none; opacity:.6; }
+  .au-skyline{ position:fixed; inset-inline:0; bottom:0; height:96px; z-index:0; pointer-events:none; opacity:.2; }
   .au-skyline svg{ width:100%; height:100%; display:block; }
   .au > *{ position:relative; z-index:1; }
-  .au-split{ display:grid; grid-template-columns:1fr; border:1px solid var(--border); border-radius:22px;
-    overflow:hidden; background:var(--surface); box-shadow:0 20px 55px rgba(21,36,61,.08); }
-  @media (min-width:960px){ .au-split{ grid-template-columns:0.92fr 1.08fr; } }
-  .au-brandpanel{ position:relative; padding:2.5rem 2.1rem; display:flex; flex-direction:column;
+  .au-split{ display:grid; grid-template-columns:1fr; border:1px solid var(--border); border-radius:18px;
+    overflow:hidden; background:var(--surface); box-shadow:0 16px 42px rgba(21,36,61,.08); }
+  @media (min-width:960px){ .au-split{ grid-template-columns:.74fr 1.26fr; } }
+  .au-brandpanel{ position:relative; padding:1.9rem 1.7rem; display:flex; flex-direction:column;
     background:linear-gradient(160deg,#E9F0FD 0%,#F3F7FE 55%,#DCE7FB 155%); }
-  .au-brandpanel h2{ font-weight:800; font-size:clamp(1.5rem,2.5vw,1.95rem); line-height:1.5; color:var(--navy); }
-  .au-value{ display:flex; align-items:flex-start; gap:.6rem; color:var(--text2); font-size:.94rem; }
+  .au-brandpanel h2{ font-weight:800; font-size:clamp(1.3rem,2vw,1.7rem); line-height:1.5; color:var(--navy); }
+  .au-value{ display:flex; align-items:flex-start; gap:.55rem; color:var(--text2); font-size:.88rem; }
   .au-value i{ color:var(--brand); margin-top:.2rem; flex:0 0 auto; }
-  .au-formpanel{ padding:2rem 1.9rem; }
-  .au-shield{ width:100%; max-width:190px; margin-inline:auto; display:block; }
+  .au-formpanel{ padding:2rem 2.25rem; }
+  .au-shield{ width:100%; max-width:132px; margin-inline:auto; display:block; }
+  @media (max-width:959px){
+    .au-brandpanel{ padding:1.25rem 1.4rem; }
+    .au-brandpanel .au-lead{ margin-bottom:0; font-size:.92rem; }
+    .au-brandpanel ul, .au-brandpanel .mt-auto{ display:none; }
+  }
+  @media (max-width:599px){ .au-formpanel{ padding:1.35rem 1.1rem; } }
   .au-phone{ display:flex; gap:.5rem; }
   .au-prefix{ display:flex; align-items:center; gap:.3rem; padding:0 .7rem; min-height:46px; flex:0 0 auto;
     border:1px solid var(--field-border); border-radius:10px; background:var(--neutral); color:var(--text2);
@@ -136,7 +142,7 @@
   <!-- ===================== Minimal header ===================== -->
   <header class="au-header">
     <div class="au-container">
-      <div class="flex items-center justify-between gap-2 sm:gap-4" style="height:64px;">
+      <div class="flex items-center justify-between gap-2 sm:gap-4" style="height:58px;">
         <a href="{% url 'core:landing' %}" class="flex items-center gap-2 min-w-0" aria-label="Cyber-5">
           <svg width="32" height="36" viewBox="0 0 38 42" fill="none" aria-hidden="true" style="flex:0 0 auto;">
             <path d="M19 2 L34 7.5 V21 C34 30.5 27.5 37.5 19 40 C10.5 37.5 4 30.5 4 21 V7.5 Z" fill="#EAF1FF" stroke="var(--brand)" stroke-width="2.4"/>
@@ -175,7 +181,7 @@
   </header>
 
   <!-- ===================== Page body ===================== -->
-  <main id="au-main" class="au-container" style="padding-block:2.5rem;flex:1;">
+  <main id="au-main" class="au-container" style="padding-block:1.4rem 2rem;flex:1;">
     {% if messages %}
       <div class="mb-5 space-y-2" aria-live="polite">
         {% for message in messages %}

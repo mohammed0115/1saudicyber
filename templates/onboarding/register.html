@@ -4,39 +4,51 @@
 
 {% block extra_head %}{{ block.super }}
 <style nonce="{{ csp_nonce }}">
-  /* Company registration wizard — light palette, inside the split form panel. */
-  .ct-form .au-field{ margin:0; }
-  .ct-section{ border-bottom:1px solid var(--border); padding-bottom:.5rem; margin:.15rem 0 1.15rem;
-    color:var(--brand); font-weight:700; font-size:1.02rem; }
-  .ct-steps{ display:flex; gap:.5rem; margin-bottom:1.3rem; flex-wrap:wrap; }
-  .ct-pill{ display:flex; align-items:center; gap:.45rem; flex:1; min-width:135px; background:var(--surface);
-    border:1px solid var(--border); border-radius:11px; padding:.55rem .75rem; color:var(--muted);
-    font-size:.82rem; cursor:pointer; transition:border-color .15s ease, background-color .15s ease, color .15s ease; }
-  .ct-pill .num{ width:22px; height:22px; border-radius:50%; background:var(--neutral); color:var(--muted);
-    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.74rem; flex:0 0 22px; }
-  .ct-pill.active{ border-color:var(--brand); color:var(--brand); background:var(--soft); }
-  .ct-pill.active .num{ background:var(--brand); color:#fff; }
-  .ct-pill.done .num{ background:var(--brand); color:#fff; }
+  /* Compact, form-first registration wizard. */
+  .ct-form .au-field{ margin:0; min-width:0; }
+  .ct-section{ display:flex; align-items:center; gap:.55rem; margin:.1rem 0 1.25rem; color:var(--navy); font-weight:800; font-size:1rem; }
+  .ct-section::before{ content:''; width:4px; height:1.15rem; border-radius:999px; background:var(--brand); }
+  .ct-steps{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.55rem; margin:0 0 1.5rem; }
+  .ct-pill{ display:flex; align-items:center; justify-content:flex-start; gap:.55rem; min-width:0; background:var(--surface);
+    border:1px solid var(--border); border-radius:12px; padding:.7rem .75rem; color:var(--muted); font-size:.82rem;
+    font-weight:600; cursor:pointer; transition:border-color .15s ease, background-color .15s ease, color .15s ease, box-shadow .15s ease; }
+  .ct-pill .num{ width:26px; height:26px; border-radius:50%; background:var(--neutral); color:var(--muted);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.78rem; flex:0 0 26px; }
+  .ct-pill.active{ border-color:var(--brand); color:var(--brand); background:var(--soft); box-shadow:0 4px 12px rgba(30,86,201,.1); }
+  .ct-pill.active .num, .ct-pill.done .num{ background:var(--brand); color:#fff; }
+  .ct-pill.done{ color:var(--text2); }
   .ct-step{ display:none; } .ct-step.active{ display:block; }
   .js-off .ct-step{ display:block; }
-  .ct-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; }
+  .ct-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem 1.15rem; }
   .ct-form input[type=text], .ct-form input[type=email], .ct-form input[type=password],
   .ct-form input[type=tel], .ct-form input[type=number], .ct-form select, .ct-form textarea{
-    width:100%; box-sizing:border-box; min-height:46px; border:1px solid var(--field-border); border-radius:10px;
-    padding:.6rem .85rem; font-size:.95rem; color:var(--text); background:var(--surface); font-family:inherit;
-    transition:border-color .15s ease, box-shadow .15s ease; }
-  .ct-form textarea{ min-height:84px; }
+    width:100%; box-sizing:border-box; min-height:48px; border:1px solid var(--field-border); border-radius:10px;
+    padding:.65rem .85rem; font-size:.95rem; color:var(--text); background:var(--surface); font-family:inherit;
+    transition:border-color .15s ease, box-shadow .15s ease, background-color .15s ease; }
+  .ct-form textarea{ min-height:92px; resize:vertical; }
+  .ct-form input:hover, .ct-form select:hover, .ct-form textarea:hover{ border-color:#B9C8DD; }
   .ct-form input:focus, .ct-form select:focus, .ct-form textarea:focus{
     outline:none; border-color:var(--field-focus); box-shadow:0 0 0 3px rgba(30,86,201,.14); }
+  .ct-field-ar input{ direction:rtl; text-align:right; }
+  .ct-field-ltr input{ direction:ltr; text-align:left; }
+  .ct-field-ltr label, .ct-field-ltr .au-help{ direction:rtl; text-align:start; }
   .ct-form .au-pw-wrap input{ padding-inline-end:2.6rem; }
   .ct-target{ display:flex; align-items:center; gap:.55rem; background:var(--soft2); border:1px solid var(--border);
-    border-radius:10px; padding:.6rem .95rem; color:var(--text); font-size:.92rem; cursor:pointer; }
-  .ct-target:hover{ border-color:#C7D3EC; }
+    border-radius:10px; padding:.7rem .95rem; color:var(--text); font-size:.92rem; cursor:pointer; }
+  .ct-target:hover{ border-color:#C7D3EC; background:var(--soft); }
+  @media (max-width:639px){
+    .ct-steps{ grid-template-columns:1fr; gap:.45rem; }
+    .ct-pill{ padding:.6rem .7rem; }
+    .ct-grid{ grid-template-columns:1fr; gap:.9rem; }
+  }
 </style>
 {% endblock %}
 
 {% block auth_main %}
-  {% include "onboarding/_stepper.html" with step=2 %}
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-4 px-1 text-sm">
+    <span class="font-semibold" style="color:var(--navy);">{% trans "تسجيل منشأة جديدة" %}</span>
+    <span class="au-muted text-xs"><i class="fas fa-clock ml-1" aria-hidden="true"></i>{% trans "ثلاث خطوات بسيطة لإكمال التسجيل" %}</span>
+  </div>
 
   <div class="au-split" data-au-reveal="2">
     <!-- ===== Brand panel (identity + value) ===== -->
@@ -65,8 +77,9 @@
 
     <!-- ===== Form panel ===== -->
     <div class="au-formpanel">
-      <h1 class="mb-1" style="font-size:1.5rem;">{% trans "سجّل شركتك في Cyber-5" %}</h1>
-      <p class="au-muted text-sm mb-5">{% trans "أكمل الخطوات التالية لبدء مسار الامتثال. الحقول المعلّمة بـ * مطلوبة." %}</p>
+      <p class="au-brand text-xs font-bold mb-2">{% trans "إنشاء حساب منشأة" %}</p>
+      <h1 class="mb-2" style="font-size:clamp(1.35rem,2.2vw,1.7rem);">{% trans "سجّل شركتك في Cyber-5" %}</h1>
+      <p class="au-muted text-sm mb-5">{% trans "أكمل الخطوات الثلاث التالية. الحقول المعلّمة بـ * مطلوبة." %}</p>
 
       {% if form.non_field_errors %}
       <div role="alert" class="mb-4" style="background:#FBF0EF;border:1px solid #E6C4C0;color:var(--crit);border-radius:11px;padding:.85rem 1rem;font-size:.88rem;">

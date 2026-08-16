@@ -9,24 +9,32 @@
     </div>
     {% include "components/current_step_card.html" with guide=guide %}
 
+    {% if not summary.active_checks and not summary.open_findings %}
+    <section class="cx-card p-6 text-center" style="background:linear-gradient(135deg,#F3F7FE,#FFFFFF);">
+      <span class="ic mx-auto" style="width:52px;height:52px;"><i class="fas fa-radar" aria-hidden="true"></i></span>
+      <h2 class="mt-4 font-semibold text-lg cx-navy">لم تبدأ المراقبة المستمرة بعد</h2>
+      <p class="mx-auto mt-2 max-w-xl text-sm cx-muted">أنشئ فحصًا دوريًا بعد اكتمال مراجعة الضوابط أو ربط مصدر بيانات مناسب. ستظهر هنا الاستحقاقات والتنبيهات والنتائج المفتوحة.</p>
+      <a href="{% url 'monitoring:checks' %}" class="cx-btn cx-btn-primary mt-4">استعراض الفحوص <i class="fas fa-arrow-left text-xs" aria-hidden="true"></i></a>
+    </section>
+    {% else %}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       {% with s=summary %}
-      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-gov-green-800">{{ s.active_checks }}</div><div class="text-xs text-gov-gray-500 mt-1">فحوص نشطة</div></div>
-      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-amber-700">{{ s.due }}</div><div class="text-xs text-gov-gray-500 mt-1">مستحقّة الآن</div></div>
-      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-red-700">{{ s.overdue }}</div><div class="text-xs text-gov-gray-500 mt-1">متأخرة</div></div>
-      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-red-700">{{ s.failed }}</div><div class="text-xs text-gov-gray-500 mt-1">فشلت</div></div>
-      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-amber-700">{{ s.needs_review }}</div><div class="text-xs text-gov-gray-500 mt-1">تحتاج مراجعة</div></div>
-      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-gov-green-800">{{ s.open_findings }}</div><div class="text-xs text-gov-gray-500 mt-1">نتائج مفتوحة</div></div>
-      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-2xl font-bold text-red-700">{{ s.critical_high_findings }}</div><div class="text-xs text-gov-gray-500 mt-1">عالية/حرجة</div></div>
-      <div class="bg-white rounded-xl p-4 border border-gov-gray-100 shadow-sm text-center"><div class="text-sm font-bold text-gov-gray-700">{{ s.last_run_at|default:"—" }}</div><div class="text-xs text-gov-gray-500 mt-1">آخر تشغيل</div></div>
+      <div class="cx-card p-4 text-center"><div class="text-2xl font-bold text-gov-green-800">{{ s.active_checks }}</div><div class="text-xs cx-muted mt-1">فحوص نشطة</div></div>
+      <div class="cx-card p-4 text-center"><div class="text-2xl font-bold text-amber-700">{{ s.due }}</div><div class="text-xs cx-muted mt-1">مستحقّة الآن</div></div>
+      <div class="cx-card p-4 text-center"><div class="text-2xl font-bold text-red-700">{{ s.overdue }}</div><div class="text-xs cx-muted mt-1">متأخرة</div></div>
+      <div class="cx-card p-4 text-center"><div class="text-2xl font-bold text-red-700">{{ s.failed }}</div><div class="text-xs cx-muted mt-1">فشلت</div></div>
+      <div class="cx-card p-4 text-center"><div class="text-2xl font-bold text-amber-700">{{ s.needs_review }}</div><div class="text-xs cx-muted mt-1">تحتاج مراجعة</div></div>
+      <div class="cx-card p-4 text-center"><div class="text-2xl font-bold text-gov-green-800">{{ s.open_findings }}</div><div class="text-xs cx-muted mt-1">نتائج مفتوحة</div></div>
+      <div class="cx-card p-4 text-center"><div class="text-2xl font-bold text-red-700">{{ s.critical_high_findings }}</div><div class="text-xs cx-muted mt-1">عالية/حرجة</div></div>
+      <div class="cx-card p-4 text-center"><div class="text-sm font-bold text-gov-gray-700">{{ s.last_run_at|default:"—" }}</div><div class="text-xs cx-muted mt-1">آخر تشغيل</div></div>
       {% endwith %}
     </div>
-
-    <div class="flex gap-3 text-sm">
-      <a href="{% url 'monitoring:checks' %}" class="text-gov-green-700 hover:underline">الفحوص</a>
-      <a href="{% url 'monitoring:findings' %}" class="text-gov-green-700 hover:underline">النتائج</a>
-      <span class="text-gov-gray-500">الاستحقاق التالي: {{ summary.next_due_at|default:"—" }}</span>
+    <div class="flex flex-wrap gap-3 text-sm">
+      <a href="{% url 'monitoring:checks' %}" class="cx-link">الفحوص</a>
+      <a href="{% url 'monitoring:findings' %}" class="cx-link">النتائج</a>
+      <span class="cx-muted">الاستحقاق التالي: {{ summary.next_due_at|default:"—" }}</span>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
