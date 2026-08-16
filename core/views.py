@@ -583,3 +583,8 @@ def settings_hub(request):
         'mfa_enabled': getattr(request.user, 'mfa_enabled', False),
         'is_company_admin': request.user.role == 'company_admin',
     })
+
+
+def public_404(request, exception):
+    """Render a branded, language-aware 404 page for public and authenticated users."""
+    return render(request, '404.html', status=404)

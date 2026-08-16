@@ -1,0 +1,7 @@
+{% load i18n %}
+<form action="{% url 'set_language' %}" method="post" class="absolute top-5 end-5 flex items-center gap-1 rounded-lg border px-2 py-1 text-xs" style="background:rgba(255,255,255,.92);border-color:var(--border);box-shadow:0 2px 10px rgba(21,35,59,.06);">
+  {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+  <button type="submit" name="language" value="ar" class="px-1 {% if LANGUAGE_CODE == 'ar' %}font-bold{% endif %}" style="color:{% if LANGUAGE_CODE == 'ar' %}var(--brand){% else %}var(--muted){% endif %};">العربية</button>
+  <span aria-hidden="true" style="color:var(--border);">|</span>
+  <button type="submit" name="language" value="en" class="px-1 {% if LANGUAGE_CODE != 'ar' %}font-bold{% endif %}" style="color:{% if LANGUAGE_CODE != 'ar' %}var(--brand){% else %}var(--muted){% endif %};">English</button>
+</form>

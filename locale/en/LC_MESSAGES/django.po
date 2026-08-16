@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-28 21:02+0300\n"
+"POT-Creation-Date: 2026-08-16 13:34+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,1341 +17,2435 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: compliance/views.py:25
 msgid "لا توجد شركة مرتبطة بحسابك."
 msgstr "No company is associated with your account."
 
+#: compliance/views.py:130
 msgid "يرجى اختيار ملف للرفع."
 msgstr "Please select a file to upload."
 
+#: compliance/views.py:186
 msgid "تم رفع الدليل. التحليل الاستشاري قيد التنفيذ ولا يُعد قرارًا نهائيًا."
 msgstr ""
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision.Evidence uploaded. Advisory analysis is running and is not a final "
+"decision."
 
-msgid "تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي."
-msgstr "Company registered successfully. Preparing the initial classification."
+#: core/forms.py:91
+msgid "الاسم الأول"
+msgstr "First name"
 
+#: core/forms.py:92
+msgid "اسم العائلة"
+msgstr "Last name"
+
+#: core/forms.py:93 templates/core/login.html:29
+#: templates/onboarding/registration_complete.html:44
+msgid "البريد الإلكتروني"
+msgstr "Email"
+
+#: core/forms.py:94
+msgid "رقم الجوال"
+msgstr "Mobile number"
+
+#: core/forms.py:96 templates/core/login.html:33
+msgid "كلمة المرور"
+msgstr "Password"
+
+#: core/forms.py:97
+msgid ""
+"استخدم كلمة مرور قوية لا تقل عن 12 حرفًا، ويفضّل أن تحتوي على أحرف وأرقام "
+"ورمز خاص."
+msgstr ""
+"Use a strong password of at least 12 characters, ideally including letters, "
+"numbers and a special character."
+
+#: core/forms.py:98
+msgid "تأكيد كلمة المرور"
+msgstr "Confirm password"
+
+#: core/forms.py:101
+msgid "اسم الشركة بالعربية"
+msgstr "Company name (Arabic)"
+
+#: core/forms.py:102
+msgid "اسم الشركة بالإنجليزية"
+msgstr "Company name (English)"
+
+#: core/forms.py:104
+msgid "رقم السجل التجاري"
+msgstr "Commercial registration (CR) number"
+
+#: core/forms.py:105
+msgid "رقم السجل التجاري في السعودية يتكوّن غالبًا من 10 أرقام."
+msgstr "A Saudi commercial registration (CR) number is usually 10 digits."
+
+#: core/forms.py:106
+msgid "القطاع / نوع الجهة"
+msgstr "Sector / entity type"
+
+#: core/forms.py:107
+msgid "حجم الشركة"
+msgstr "Company size"
+
+#: core/forms.py:108
+msgid "المدينة"
+msgstr "City"
+
+#: core/forms.py:109
+msgid "الدولة"
+msgstr "Country"
+
+#: core/forms.py:111
+msgid "وصف مختصر"
+msgstr "Short description"
+
+#: core/forms.py:114
+msgid "نحتاج الامتثال لـ NCA"
+msgstr "We need NCA compliance"
+
+#: core/forms.py:115
+msgid "نحتاج الامتثال لـ Aramco"
+msgstr "We need Aramco compliance"
+
+#: core/forms.py:116
+msgid "نحتاج الامتثال لـ SABIC"
+msgstr "We need SABIC compliance"
+
+#: core/forms.py:121
+#, fuzzy
+#| msgid ""
+#| "أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة 1SaudiCyber."
+msgid "أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة Cyber-5."
+msgstr "I agree to 1SaudiCyber's Terms of Use and Privacy Policy."
+
+#: core/forms.py:122
+msgid "يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب."
+msgstr ""
+"You must agree to the Terms of Use and Privacy Policy before creating an "
+"account."
+
+#: core/forms.py:146
+msgid "يرجى اختيار هدف امتثال واحد على الأقل (NCA أو SABIC)."
+msgstr "Please select at least one compliance goal (NCA or SABIC)."
+
+#: core/views.py:146
+#, fuzzy
+#| msgid "تأكيد بريدك الإلكتروني"
+msgid "تم إنشاء الحساب. أكّد بريدك الإلكتروني للمتابعة."
+msgstr "Confirm your email"
+
+#: core/views.py:166
+msgid "تم إيقاف المحاولات مؤقتًا بسبب تكرار الفشل. حاول لاحقًا."
+msgstr ""
+
+#: core/views.py:188
 msgid "بيانات الدخول غير صحيحة. حاول مرة أخرى."
 msgstr "Invalid credentials. Please try again."
 
+#: core/views.py:221
 msgid "تم تفعيل التحقق بخطوتين."
 msgstr "Multi-factor authentication enabled."
 
+#: templates/404.html:4 templates/404.html:13
+msgid "الصفحة غير موجودة"
+msgstr "Page not found"
+
+#: templates/404.html:14
+msgid ""
+"قد يكون الرابط غير صحيح أو أن الصفحة نُقلت. يمكنك العودة إلى الصفحة الرئيسية"
+" أو تسجيل الدخول إلى حسابك."
+msgstr ""
+"The link may be incorrect or the page has been moved. You can return to the "
+"homepage or sign in to your account."
+
+#: templates/404.html:16
+#| msgid "العودة إلى التقارير"
+msgid "العودة إلى الرئيسية"
+msgstr "Return to homepage"
+
+#: templates/404.html:17 templates/base.html:233
+#: templates/core/landing.html:132 templates/core/landing.html:148
+#: templates/core/landing.html:526 templates/core/landing.html:564
+#: templates/core/login.html:3 templates/core/login.html:40
+#: templates/core/password_reset_complete.html:24
+#: templates/onboarding/auth_base.html:170
+#: templates/onboarding/register.html:169 templates/onboarding/start.html:55
+msgid "تسجيل الدخول"
+msgstr "Sign in"
+
+#: templates/ai_engine/gap_analysis_advisory.html:3
+#: templates/ai_engine/gap_analysis_advisory.html:9
 msgid "تحليل الفجوات الاستشاري"
 msgstr "Advisory gap analysis"
 
+#: templates/ai_engine/gap_analysis_advisory.html:15
 msgid ""
-"تحليل الفجوات هنا استشاري ويساعدك على فهم جاهزيتك، ولا يُعد قرارًا نهائيًا أو "
-"شهادة امتثال رسمية."
+"تحليل الفجوات هنا استشاري ويساعدك على فهم جاهزيتك، ولا يُعد قرارًا نهائيًا "
+"أو شهادة امتثال رسمية."
 msgstr ""
 "This analysis assists the auditor and is not a final decision or compliance "
-"certificate.This analysis assists the auditor and is not a final decision or "
-"compliance certificate.This analysis assists the auditor and is not a final "
-"decision or compliance certificate.This analysis assists the auditor and is "
-"not a final decision or compliance certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.Evidence uploaded. "
-"Advisory analysis is running and is not a final decision."
+"certificate.This analysis assists the auditor and is not a final decision or"
+" compliance certificate.This analysis assists the auditor and is not a final"
+" decision or compliance certificate.This analysis assists the auditor and is"
+" not a final decision or compliance certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is"
+" advisory and is not a final decision or a certificate.This classification "
+"is advisory and is not a final decision or a certificate.This classification"
+" is advisory and is not a final decision or a certificate.Evidence uploaded."
+" Advisory analysis is running and is not a final decision."
 
+#: templates/ai_engine/gap_analysis_advisory.html:16
+#: templates/compliance/applicability_preview.html:19
+#: templates/compliance/evidence_ai_analysis.html:17
 msgid "النتيجة النهائية تعتمد على الأدلة ومراجعة المدقق."
 msgstr "The final result depends on evidence and auditor review."
 
+#: templates/ai_engine/gap_analysis_advisory.html:20
 msgid ""
 "للاطّلاع على تقارير الجاهزية وتحليل الفجوات التفصيلي، استخدم صفحة التقارير "
 "ولوحة مسار الامتثال."
 msgstr ""
 
+#: templates/ai_engine/gap_analysis_advisory.html:22 templates/base.html:139
+#: templates/base.html:202 templates/core/landing.html:228
+#: templates/onboarding/welcome.html:91
 msgid "التقارير"
 msgstr "Reports"
 
+#: templates/ai_engine/gap_analysis_advisory.html:23
 msgid "لوحة مسار الامتثال"
 msgstr "Compliance journey dashboard"
 
+#: templates/base.html:126 templates/base.html:184
+msgid "Get Solution CRM"
+msgstr ""
+
+#: templates/base.html:127 templates/base.html:185
+#| msgid "الشركة"
+msgid "الشركات"
+msgstr "Companies"
+
+#: templates/base.html:128 templates/base.html:186
+#| msgid "المدينة"
+msgid "المدققون"
+msgstr "Auditors"
+
+#: templates/base.html:130 templates/base.html:188
+msgid "لوحة المدقق"
+msgstr "Auditor Dashboard"
+
+#: templates/base.html:131 templates/base.html:189
+#| msgid "أدلة قيد المراجعة"
+msgid "طابور المراجعة"
+msgstr "Review Queue"
+
+#: templates/base.html:132 templates/base.html:190
+#| msgid "مراجعة الإدارة"
+msgid "مساحة مراجعة الأدلة"
+msgstr "Evidence Review Workspace"
+
+#: templates/base.html:133 templates/base.html:191
+#| msgid "إكمال ملف التصنيف"
+msgid "الملف الشخصي"
+msgstr "Profile"
+
+#: templates/base.html:135 templates/base.html:193
 msgid "لوحة التحكم"
 msgstr "Dashboard"
 
+#: templates/base.html:136 templates/base.html:194
 msgid "مسار الامتثال"
-msgstr "Compliance Journey"
+msgstr "Compliance Path"
 
+#: templates/base.html:137 templates/base.html:196
+#: templates/compliance/applicability_preview.html:27
+#: templates/core/landing.html:118 templates/core/landing.html:142
+#: templates/core/landing.html:549
 msgid "الأطر"
 msgstr "Frameworks"
 
+#: templates/base.html:138 templates/base.html:198
+#: templates/core/landing.html:223 templates/core/landing.html:263
+#: templates/core/landing.html:363 templates/core/landing.html:394
+#: templates/core/landing.html:425
 msgid "الأدلة"
 msgstr "Evidence"
 
+#: templates/base.html:140 templates/base.html:203
+#: templates/core/landing.html:227 templates/core/landing.html:406
 msgid "المراقبة"
 msgstr "Monitoring"
 
+#: templates/base.html:142
 msgid "المزيد"
 msgstr "More"
 
+#: templates/base.html:144 templates/base.html:204
+#: templates/core/landing.html:361
 msgid "الضوابط"
 msgstr "Controls"
 
+#: templates/base.html:145 templates/base.html:197
+#: templates/onboarding/welcome.html:87
 msgid "خطة الضوابط"
-msgstr "Control plan"
+msgstr "Controls Plan"
 
+#: templates/base.html:146 templates/base.html:199
+#: templates/core/landing.html:365
+msgid "تحليل الفجوات"
+msgstr "Gap analysis"
+
+#: templates/base.html:147 templates/base.html:200
+#| msgid "الفجوات والمعالجة"
+msgid "المخاطر والمعالجة"
+msgstr "Risks and Remediation"
+
+#: templates/base.html:149
+#| msgid "مراجعة المدقّق"
+msgid "حالة مراجعة المدقّق"
+msgstr "Auditor Review Status"
+
+#: templates/base.html:150
+#| msgid "ملخص قرارات المدقق"
+msgid "ملاحظات التدقيق"
+msgstr "Audit Notes"
+
+#: templates/base.html:151 templates/base.html:201
+#| msgid "الأطر المدعومة"
+msgid "طلبات المعلومات (RFI)"
+msgstr "Requests for Information (RFI)"
+
+#: templates/base.html:152
+#| msgid "المراقبة"
+msgid "المراسلة"
+msgstr "Correspondence"
+
+#: templates/base.html:153
 msgid "المراجعة"
 msgstr "Review"
 
-msgid "لوحة المدقق"
-msgstr "Auditor dashboard"
+#: templates/base.html:155 templates/base.html:205
+msgid "الاشتراك"
+msgstr "Subscription"
 
+#: templates/base.html:156
+#| msgid "للسوق السعودي"
+msgid "فريق العمل"
+msgstr "Team"
+
+#: templates/base.html:157 templates/core/landing.html:229
+msgid "الإعدادات"
+msgstr "Settings"
+
+#: templates/base.html:171
+msgid "الإشعارات"
+msgstr "Notifications"
+
+#: templates/base.html:179 templates/onboarding/auth_base.html:166
 msgid "تسجيل الخروج"
 msgstr "Log out"
 
+#: templates/base.html:181
+#| msgid "فتح القائمة"
+msgid "القائمة"
+msgstr "Menu"
+
+#: templates/base.html:195
 msgid "التصنيف"
 msgstr "Classification"
 
-msgid "تسجيل الدخول"
-msgstr "Sign in"
+#: templates/base.html:261
+#| msgid ""
+#| "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية."
+msgid "منصّة امتثال الأمن السيبراني المدعومة بالذكاء الاصطناعي."
+msgstr "AI-powered Cybersecurity Compliance Platform."
 
+#: templates/base.html:263 templates/core/landing.html:572
+#: templates/onboarding/auth_base.html:197
+msgid "تطوير"
+msgstr "Development"
+
+#: templates/base.html:265
+msgid "Developed by"
+msgstr ""
+
+#: templates/base.html:268 templates/core/landing.html:557
+#: templates/core/privacy.html:3 templates/core/privacy.html:7
+#: templates/core/terms.html:37 templates/onboarding/auth_base.html:205
 msgid "سياسة الخصوصية"
-msgstr "Privacy policy"
+msgstr "Privacy Policy"
 
+#: templates/base.html:270 templates/core/landing.html:558
+#: templates/core/privacy.html:40 templates/core/terms.html:3
+#: templates/core/terms.html:7 templates/onboarding/auth_base.html:207
 msgid "شروط الاستخدام"
-msgstr "Terms of use"
+msgstr "Terms of Use"
 
+#: templates/base.html:285
+#| msgid "المعالجة"
+msgid "جارٍ المعالجة..."
+msgstr "Processing..."
+
+#: templates/base.html:286
+msgid "يرجى الانتظار، قد تستغرق هذه الخطوة لحظات."
+msgstr "Please wait, this step may take a few moments."
+
+#: templates/compliance/applicability_preview.html:3
+#: templates/compliance/applicability_preview.html:9
+#: templates/compliance/applicability_preview.html:54
 msgid "قابلية تطبيق الضوابط"
 msgstr "Control applicability"
 
+#: templates/compliance/applicability_preview.html:11
 msgid "تحليل استشاري لقابلية تطبيق الضوابط بناءً على بيانات الشركة."
 msgstr "An advisory analysis of control applicability based on company data."
 
+#: templates/compliance/applicability_preview.html:18
 msgid "هذا التحليل لا يقرر الامتثال أو عدم الامتثال."
 msgstr "This analysis does not decide compliance or non-compliance."
 
+#: templates/compliance/applicability_preview.html:28
 msgid "إجمالي الضوابط"
 msgstr "Total controls"
 
+#: templates/compliance/applicability_preview.html:29
 msgid "قابلة للتطبيق"
 msgstr "Applicable"
 
+#: templates/compliance/applicability_preview.html:30
 msgid "غير قابلة للتطبيق"
 msgstr "Not applicable"
 
+#: templates/compliance/applicability_preview.html:31
 msgid "تحتاج بيانات إضافية"
 msgstr "Needs more information"
 
+#: templates/compliance/applicability_preview.html:32
+#: templates/compliance/auditor_reviewed_report.html:76
+#: templates/compliance/auditor_verdict.html:76
+#: templates/compliance/evidence_ai_analysis.html:54
+#: templates/compliance/evidence_rule_evaluation.html:41
 msgid "مستوى الثقة"
 msgstr "Confidence"
 
+#: templates/compliance/applicability_preview.html:59
+#: templates/compliance/auditor_verdict.html:74
 msgid "سبب القرار"
 msgstr "Decision reason"
 
+#: templates/compliance/applicability_preview.html:70
 msgid ""
-"تعرض هذه الصفحة ملخصًا على مستوى الأطر. سيظهر تفصيل الضوابط بعد استيراد مكتبة "
-"الضوابط الرسمية."
+"تعرض هذه الصفحة ملخصًا على مستوى الأطر. سيظهر تفصيل الضوابط بعد استيراد "
+"مكتبة الضوابط الرسمية."
 msgstr ""
 
+#: templates/compliance/applicability_preview.html:77
+#: templates/compliance/classification.html:76
 msgid "البيانات الناقصة"
 msgstr "Missing inputs"
 
+#: templates/compliance/applicability_preview.html:87
+#: templates/compliance/classification.html:86
 msgid "الخطوة التالية"
 msgstr "Next step"
 
+#: templates/compliance/applicability_preview.html:92
 msgid "عرض التصنيف الذكي"
 msgstr "View Smart Classification"
 
+#: templates/compliance/applicability_preview.html:95
+#: templates/compliance/classification.html:94
 msgid "العودة إلى لوحة الرحلة"
 msgstr "Back to the journey dashboard"
 
+#: templates/compliance/auditor_reviewed_report.html:3
+#: templates/compliance/auditor_reviewed_report.html:9
 msgid "تقرير مراجعة امتثال داخلي"
 msgstr "Internal compliance review report"
 
+#: templates/compliance/auditor_reviewed_report.html:11
 msgid "ملخص قرارات المدقق"
 msgstr "Auditor decisions summary"
 
+#: templates/compliance/auditor_reviewed_report.html:17
 msgid ""
-"هذا التقرير يعرض نتائج مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية "
-"أو اعتمادًا من أي جهة."
+"هذا التقرير يعرض نتائج مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية"
+" أو اعتمادًا من أي جهة."
 msgstr ""
 "This decision is an internal platform review and is not an official "
 "compliance certificate.This analysis assists the auditor and is not a final "
 "decision or compliance certificate.This analysis assists the auditor and is "
 "not a final decision or compliance certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.This classification is "
-"advisory and is not a final decision or a certificate.Evidence uploaded. "
-"Advisory analysis is running and is not a final decision."
+"advisory and is not a final decision or a certificate.This classification is"
+" advisory and is not a final decision or a certificate.This classification "
+"is advisory and is not a final decision or a certificate.This classification"
+" is advisory and is not a final decision or a certificate.Evidence uploaded."
+" Advisory analysis is running and is not a final decision."
 
-msgid "لا توجد قرارات مدقق نهائية بعد. يرجى إكمال مراجعة الأدلة أولًا."
+#: templates/compliance/auditor_reviewed_report.html:24
+#, fuzzy
+#| msgid "لا توجد شركة مرتبطة بحسابك."
+msgid "لا يوجد تقرير مدقق بعد."
+msgstr "No company is associated with your account."
+
+#: templates/compliance/auditor_reviewed_report.html:25
+msgid ""
+"سيظهر التقرير الداخلي بعد مراجعة المدقق للأدلة وإصدار الحكم الداخلي. تأكد من"
+" رفع الأدلة المطلوبة وإسناد الملف إلى مدقق داخل المنصة."
 msgstr ""
-"There are no final auditor decisions yet. Please complete the evidence "
-"review first.There are no final auditor decisions yet. Please complete the "
-"evidence review first."
 
+#: templates/compliance/auditor_reviewed_report.html:32
 msgid "إجمالي الأدلة"
 msgstr "Total evidence"
 
+#: templates/compliance/auditor_reviewed_report.html:36
 msgid "الأدلة التي تمت مراجعتها"
 msgstr "Reviewed evidence"
 
+#: templates/compliance/auditor_reviewed_report.html:40
+#: templates/compliance/evidence_rule_evaluation.html:38
+#: templates/components/evidence_status.html:31
 msgid "بانتظار مراجعة المدقق"
 msgstr "Pending auditor review"
 
+#: templates/compliance/auditor_reviewed_report.html:44
+#: templates/compliance/auditor_reviewed_report.html:78
 msgid "آخر مراجعة"
 msgstr "Last review"
 
+#: templates/compliance/auditor_reviewed_report.html:49
+msgid "أحكام متقادمة (رُفعت نسخة أحدث)"
+msgstr ""
+
+#: templates/compliance/auditor_reviewed_report.html:58
 msgid "توزيع الحالات بعد مراجعة المدقق"
 msgstr "Distribution of statuses after auditor review"
 
+#: templates/compliance/auditor_reviewed_report.html:69
 msgid "تفاصيل القرارات"
 msgstr "Decision details"
 
+#: templates/compliance/auditor_reviewed_report.html:73
 msgid "الضابط"
 msgstr "Control"
 
+#: templates/compliance/auditor_reviewed_report.html:74
+#: templates/compliance/auditor_verdict.html:22
 msgid "الحالة المقترحة من محرك القواعد"
 msgstr "Rule-engine suggested status"
 
+#: templates/compliance/auditor_reviewed_report.html:75
+#: templates/compliance/auditor_verdict.html:53
+#: templates/compliance/auditor_verdict.html:69
+#: templates/compliance/auditor_verdict.html:70
 msgid "الحالة بعد مراجعة المدقق"
 msgstr "Status after auditor review"
 
+#: templates/compliance/auditor_reviewed_report.html:77
+#: templates/compliance/auditor_verdict.html:79
+#: templates/core/landing.html:256
 msgid "الإجراءات المطلوبة"
 msgstr "Required actions"
 
+#: templates/compliance/auditor_reviewed_report.html:90
+msgid "متقادم — يلزم إعادة مراجعة"
+msgstr ""
+
+#: templates/compliance/auditor_reviewed_report.html:104
 msgid "العودة إلى التقارير"
 msgstr "Back to reports"
 
+#: templates/compliance/auditor_verdict.html:3
+#: templates/compliance/auditor_verdict.html:9
 msgid "قرار المدقق النهائي"
 msgstr "Auditor final verdict"
 
+#: templates/compliance/auditor_verdict.html:16
 msgid "هذا القرار يمثل مراجعة داخلية داخل المنصة ولا يُعد شهادة امتثال رسمية."
 msgstr ""
 "This decision is an internal platform review and is not an official "
 "compliance certificate.This decision is an internal platform review and is "
-"not an official compliance certificate.This decision is an internal platform "
-"review and is not an official compliance certificate.This analysis assists "
+"not an official compliance certificate.This decision is an internal platform"
+" review and is not an official compliance certificate.This analysis assists "
 "the auditor and is not a final decision or compliance certificate.This "
 "analysis assists the auditor and is not a final decision or compliance "
-"certificate.This classification is advisory and is not a final decision or a "
-"certificate.This classification is advisory and is not a final decision or a "
-"certificate.This classification is advisory and is not a final decision or a "
-"certificate.This classification is advisory and is not a final decision or a "
-"certificate.Evidence uploaded. Advisory analysis is running and is not a "
-"final decision."
+"certificate.This classification is advisory and is not a final decision or a"
+" certificate.This classification is advisory and is not a final decision or "
+"a certificate.This classification is advisory and is not a final decision or"
+" a certificate.This classification is advisory and is not a final decision "
+"or a certificate.Evidence uploaded. Advisory analysis is running and is not "
+"a final decision."
 
+#: templates/compliance/auditor_verdict.html:25
 msgid "مقترح — بانتظار مراجعة المدقق"
 msgstr "Suggested — pending auditor review"
 
+#: templates/compliance/auditor_verdict.html:29
+#: templates/compliance/evidence_ai_analysis.html:3
+#: templates/compliance/evidence_ai_analysis.html:9
 msgid "التحليل الاستشاري للذكاء الاصطناعي"
 msgstr "AI advisory analysis"
 
+#: templates/compliance/auditor_verdict.html:32
 msgid "استشاري فقط"
 msgstr "Advisory only"
 
+#: templates/compliance/auditor_verdict.html:36
 msgid "النص المستخرج من الدليل"
 msgstr "Extracted evidence text"
 
+#: templates/compliance/auditor_verdict.html:38
 msgid "حرف"
 msgstr "characters"
 
+#: templates/compliance/auditor_verdict.html:45
+#: templates/compliance/evidence_rule_evaluation.html:48
 msgid "سبب الاقتراح"
 msgstr "Reason for suggestion"
 
+#: templates/compliance/auditor_verdict.html:60
 msgid "تمت مراجعته بواسطة المدقق"
 msgstr "Reviewed by the auditor"
 
+#: templates/compliance/auditor_verdict.html:83
 msgid "حفظ قرار المدقق"
 msgstr "Save auditor decision"
 
+#: templates/compliance/auditor_verdict.html:87
 msgid "يمكنك عرض القرار، ولا تملك صلاحية تعديله."
 msgstr "You can view the decision but do not have permission to edit it."
 
+#: templates/compliance/auditor_verdict.html:94
+#: templates/compliance/evidence_ai_analysis.html:109
+#: templates/compliance/evidence_extraction.html:79
+#: templates/compliance/evidence_rule_evaluation.html:78
 msgid "العودة إلى تفاصيل الدليل"
 msgstr "Back to evidence details"
 
+#: templates/compliance/classification.html:3
+#: templates/compliance/classification.html:9
 msgid "التصنيف الذكي"
 msgstr "Smart Classification"
 
-msgid "تصنيف أولي استشاري بناءً على بيانات الشركة."
-msgstr "An advisory preliminary classification based on company data."
-
-msgid "هذا التصنيف استشاري ولا يُعد قرارًا نهائيًا أو شهادة."
+#: templates/compliance/classification.html:12
+#, fuzzy
+#| msgid ""
+#| "تحليل الفجوات هنا استشاري ويساعدك على فهم جاهزيتك، ولا يُعد قرارًا نهائيًا "
+#| "أو شهادة امتثال رسمية."
+msgid ""
+"تصنيف أولي استشاري فقط بناءً على بيانات الشركة، ولا يُعد قرارًا نهائيًا أو "
+"شهادة، ولا يُعد شهادة امتثال رسمية."
 msgstr ""
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"This analysis assists the auditor and is not a final decision or compliance "
+"certificate.This analysis assists the auditor and is not a final decision or"
+" compliance certificate.This analysis assists the auditor and is not a final"
+" decision or compliance certificate.This analysis assists the auditor and is"
+" not a final decision or compliance certificate.This classification is "
+"advisory and is not a final decision or a certificate.This classification is"
+" advisory and is not a final decision or a certificate.This classification "
+"is advisory and is not a final decision or a certificate.This classification"
+" is advisory and is not a final decision or a certificate.Evidence uploaded."
+" Advisory analysis is running and is not a final decision."
 
+#: templates/compliance/classification.html:21
 msgid "مستوى المخاطر"
 msgstr "Risk level"
 
+#: templates/compliance/classification.html:27
+#: templates/compliance/classification.html:49
 msgid "الأطر المقترحة"
 msgstr "Recommended frameworks"
 
+#: templates/compliance/classification.html:31
+#: templates/compliance/classification.html:67
 msgid "عدد الضوابط المتوقع"
 msgstr "Expected control count"
 
+#: templates/compliance/classification.html:35
 msgid "ثقة التصنيف"
 msgstr "Classification confidence"
 
+#: templates/compliance/classification.html:55
 msgid "سبب التصنيف"
 msgstr "Reason"
 
-msgid "إكمال ملف التصنيف"
+#: templates/compliance/classification.html:65
+#, fuzzy
+#| msgid "عدد الضوابط المتوقع"
+msgid "معاينة الضوابط المقترحة"
+msgstr "Expected control count"
+
+#: templates/compliance/classification.html:66
+msgid "عرض"
+msgstr ""
+
+#: templates/compliance/classification.html:66 templates/core/landing.html:423
+msgid "ضابط"
+msgstr "Officer"
+
+#: templates/compliance/classification.html:91
+#, fuzzy
+#| msgid "عزل بيانات المؤسسات"
+msgid "تعديل بيانات التصنيف"
+msgstr "Organization data isolation"
+
+#: templates/compliance/classification.html:91
+#, fuzzy
+#| msgid "إكمال ملف التصنيف"
+msgid "إكمال بيانات التصنيف"
 msgstr "Complete the intake profile"
 
+#: templates/compliance/evidence_ai_analysis.html:16
 msgid "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال."
 msgstr ""
 "This analysis assists the auditor and is not a final decision or compliance "
-"certificate.This analysis assists the auditor and is not a final decision or "
-"compliance certificate.This analysis assists the auditor and is not a final "
-"decision or compliance certificate.This analysis assists the auditor and is "
-"not a final decision or compliance certificate.This analysis assists the "
+"certificate.This analysis assists the auditor and is not a final decision or"
+" compliance certificate.This analysis assists the auditor and is not a final"
+" decision or compliance certificate.This analysis assists the auditor and is"
+" not a final decision or compliance certificate.This analysis assists the "
 "auditor and is not a final decision or compliance certificate.This "
-"classification is advisory and is not a final decision or a certificate.This "
-"classification is advisory and is not a final decision or a certificate.This "
-"classification is advisory and is not a final decision or a certificate.This "
-"classification is advisory and is not a final decision or a certificate."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"classification is advisory and is not a final decision or a certificate.This"
+" classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a"
+" certificate.This classification is advisory and is not a final decision or "
+"a certificate.Evidence uploaded. Advisory analysis is running and is not a "
+"final decision."
 
-msgid "يجب استخراج نص قابل للقراءة من الدليل قبل تشغيل التحليل الاستشاري."
-msgstr ""
-"Readable text must be extracted from the evidence before running the "
-"advisory analysis.Readable text must be extracted from the evidence before "
-"running the advisory analysis.Readable text must be extracted from the "
-"evidence before running the advisory analysis.Readable text must be "
-"extracted from the evidence before running the advisory analysis.Readable "
-"text must be extracted from the evidence before running the advisory "
-"analysis."
-
+#: templates/compliance/evidence_ai_analysis.html:29
+#: templates/compliance/evidence_extraction.html:4
+#: templates/compliance/evidence_extraction.html:10
 msgid "استخراج النص من الدليل"
 msgstr "Evidence text extraction"
 
+#: templates/compliance/evidence_ai_analysis.html:38
 msgid "إعادة تشغيل التحليل الاستشاري"
 msgstr "Re-run advisory analysis"
 
+#: templates/compliance/evidence_ai_analysis.html:38
 msgid "تشغيل التحليل الاستشاري"
 msgstr "Run advisory analysis"
 
+#: templates/compliance/evidence_ai_analysis.html:46
+#: templates/compliance/evidence_ai_analysis.html:103
 msgid "حالة التحليل"
 msgstr "Analysis status"
 
+#: templates/compliance/evidence_ai_analysis.html:50
 msgid "مدى ارتباط الدليل بالضابط"
 msgstr "Evidence relevance to the control"
 
+#: templates/compliance/evidence_ai_analysis.html:60
 msgid "ملخص التحليل"
 msgstr "Analysis summary"
 
+#: templates/compliance/evidence_ai_analysis.html:73
 msgid "إشارات مطابقة"
 msgstr "Matched signals"
 
+#: templates/compliance/evidence_ai_analysis.html:81
 msgid "عناصر ناقصة"
 msgstr "Missing items"
 
+#: templates/compliance/evidence_ai_analysis.html:92
 msgid "توصيات استشارية"
 msgstr "Advisory recommendations"
 
+#: templates/compliance/evidence_extraction.html:17
 msgid "هذا الاستخراج لا يمثل تحليلًا أو حكمًا على الامتثال."
 msgstr "This extraction is not an analysis or a compliance judgment."
 
+#: templates/compliance/evidence_extraction.html:24
 msgid "إعادة استخراج النص"
 msgstr "Re-run text extraction"
 
+#: templates/compliance/evidence_extraction.html:24
 msgid "تشغيل استخراج النص"
 msgstr "Run text extraction"
 
+#: templates/compliance/evidence_extraction.html:32
 msgid "لم يتم تشغيل استخراج النص بعد."
 msgstr "Text extraction has not been run yet."
 
+#: templates/compliance/evidence_extraction.html:39
 msgid "حالة الاستخراج"
 msgstr "Extraction status"
 
+#: templates/compliance/evidence_extraction.html:43
 msgid "طريقة الاستخراج"
 msgstr "Extraction method"
 
+#: templates/compliance/evidence_extraction.html:47
 msgid "عدد الأحرف"
 msgstr "Character count"
 
+#: templates/compliance/evidence_extraction.html:51
 msgid "عدد الصفحات"
 msgstr "Page count"
 
+#: templates/compliance/evidence_extraction.html:58
 msgid "تنبيهات"
 msgstr "Warnings"
 
+#: templates/compliance/evidence_extraction.html:67
 msgid "النص المستخرج"
 msgstr "Extracted text"
 
+#: templates/compliance/evidence_extraction.html:72
 msgid "تعذر استخراج نص كافٍ من هذا الملف."
 msgstr "Could not extract sufficient text from this file."
 
+#: templates/compliance/evidence_rule_evaluation.html:3
+#: templates/compliance/evidence_rule_evaluation.html:9
 msgid "محرك القواعد"
 msgstr "Rule engine"
 
+#: templates/compliance/evidence_rule_evaluation.html:16
 msgid "هذه نتيجة نظامية مقترحة وليست قرارًا نهائيًا."
 msgstr ""
 "This is a system-suggested result, not a final decision.This is a system-"
 "suggested result, not a final decision.This is a system-suggested result, "
-"not a final decision.This is a system-suggested result, not a final decision."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"This classification is advisory and is not a final decision or a certificate."
-"Evidence uploaded. Advisory analysis is running and is not a final decision."
+"not a final decision.This is a system-suggested result, not a final "
+"decision.This classification is advisory and is not a final decision or a "
+"certificate.This classification is advisory and is not a final decision or a"
+" certificate.This classification is advisory and is not a final decision or "
+"a certificate.This classification is advisory and is not a final decision or"
+" a certificate.This classification is advisory and is not a final decision "
+"or a certificate.Evidence uploaded. Advisory analysis is running and is not "
+"a final decision."
 
+#: templates/compliance/evidence_rule_evaluation.html:17
 msgid "النتيجة النهائية تعتمد على مراجعة المدقق."
 msgstr "The final result depends on auditor review."
 
+#: templates/compliance/evidence_rule_evaluation.html:24
 msgid "إعادة تشغيل التقييم النظامي"
 msgstr "Re-run system evaluation"
 
+#: templates/compliance/evidence_rule_evaluation.html:24
 msgid "تشغيل التقييم النظامي"
 msgstr "Run system evaluation"
 
+#: templates/compliance/evidence_rule_evaluation.html:30
 msgid "لم يتم تشغيل التقييم النظامي بعد."
 msgstr "The system evaluation has not been run yet."
 
+#: templates/compliance/evidence_rule_evaluation.html:36
+#: templates/compliance/evidence_rule_evaluation.html:72
 msgid "حالة نظامية مقترحة"
 msgstr "Suggested system status"
 
+#: templates/compliance/evidence_rule_evaluation.html:55
 msgid "إشارات القواعد"
 msgstr "Rule signals"
 
+#: templates/compliance/evidence_rule_evaluation.html:64
 msgid "العناصر الناقصة"
 msgstr "Missing items"
 
+#: templates/compliance/evidence_submission_list.html:9
+#: templates/compliance/evidence_upload_v2.html:80
+#, fuzzy
+#| msgid "الأطر المقترحة"
+msgid "الأدلة المرفوعة"
+msgstr "Recommended frameworks"
+
+#: templates/compliance/evidence_submission_list.html:15
+#, fuzzy
+#| msgid "رفع الأدلة"
+msgid "رفع دليل جديد"
+msgstr "Evidence upload"
+
+#: templates/compliance/evidence_submission_list.html:31
+#: templates/compliance/evidence_upload_v2.html:93
+#, fuzzy
+#| msgid "التفعيل"
+msgid "التفاصيل"
+msgstr "Activation"
+
+#: templates/compliance/evidence_submission_list.html:37
+#, fuzzy
+#| msgid "لا توجد شركة مرتبطة بحسابك."
+msgid "لا أدلة مرفوعة بعد."
+msgstr "No company is associated with your account."
+
+#: templates/compliance/evidence_upload_v2.html:13
+msgid "المتطلّب"
+msgstr ""
+
+#: templates/compliance/evidence_upload_v2.html:32
+msgid "اسحب ملفًا أو اضغط للاختيار"
+msgstr ""
+
+#: templates/compliance/evidence_upload_v2.html:39
+msgid "اسحب الملف هنا أو اضغط للاختيار"
+msgstr ""
+
+#: templates/compliance/evidence_upload_v2.html:40
+#, fuzzy
+#| msgid "الاسم الأول"
+msgid "الحد الأقصى"
+msgstr "First name"
+
+#: templates/compliance/evidence_upload_v2.html:51
+#, fuzzy
+#| msgid "حالة التحليل"
+msgid "إزالة الملف"
+msgstr "Analysis status"
+
+#: templates/compliance/evidence_upload_v2.html:54
+#, fuzzy
+#| msgid "اختياري"
+msgid "ملاحظات (اختياري)"
+msgstr "Optional"
+
+#: templates/compliance/evidence_upload_v2.html:61
+#, fuzzy
+#| msgid "إدارة الأصول"
+msgid "إعادة المحاولة"
+msgstr "Asset management"
+
+#: templates/compliance/evidence_upload_v2.html:72
+#, fuzzy
+#| msgid "مدعوم بالذكاء الاصطناعي"
+msgid "رفع وتحليل بالذكاء الاصطناعي"
+msgstr "AI-assisted"
+
+#: templates/compliance/evidence_upload_v2.html:74
+#, fuzzy
+#| msgid "تحليل استشاري للأدلة المرفوعة"
+msgid "عرض كل الأدلة المرفوعة"
+msgstr "Advisory analysis of uploaded evidence"
+
+#: templates/compliance/evidence_upload_v2.html:99
+msgid "لا أدلة مرفوعة بعد"
+msgstr ""
+
+#: templates/compliance/evidence_upload_v2.html:105
+msgid "لا يُعد رفع الدليل قرار امتثال — يخضع لمراجعة بشرية."
+msgstr ""
+
+#: templates/compliance/intake.html:3 templates/compliance/intake.html:89
+#: templates/onboarding/_setup_stepper.html:23
+#: templates/onboarding/_setup_stepper.html:37
+#| msgid "منصة الامتثال السيبراني"
+msgid "نطاق الامتثال والتصنيف"
+msgstr "Compliance and classification scope"
+
+#: templates/compliance/intake.html:90
+#, fuzzy
+#| msgid "تحديد الأطر والمتطلبات المنطبقة على مؤسستك."
+msgid "نحدّد معًا الأطر التنظيمية والمتطلبات الأكثر ملاءمة لمنشأتك."
+msgstr ""
+"Identify the frameworks and requirements applicable to your organization."
+
+#: templates/compliance/intake.html:106
+msgid "مرحبًا بك في مرحلة تحديد نطاق الامتثال والتصنيف"
+msgstr ""
+
+#: templates/compliance/intake.html:107
+msgid ""
+"لتمكيننا من تحديد الأطر التنظيمية والضوابط الأكثر ملاءمة لمنشأتك، أجب عن "
+"الأسئلة التالية حول طبيعة عملك وعلاقاتك بالجهات التنظيمية والخدمات والتقنيات"
+" التي تستخدمها. تُستخدم هذه البيانات لتجهيز التصنيف الأولي وخطة الضوابط."
+msgstr ""
+
+#: templates/compliance/intake.html:114
+msgid "لماذا نحتاج هذه المعلومات؟"
+msgstr ""
+
+#: templates/compliance/intake.html:117
+#, fuzzy
+#| msgid "حدّد الأطر والنطاق"
+msgid "تحديد الأطر المناسبة"
+msgstr "Define frameworks and scope"
+
+#: templates/compliance/intake.html:117
+#, fuzzy
+#| msgid "تحديد الأطر والمتطلبات المنطبقة على مؤسستك."
+msgid "نحدّد الأطر التي تنطبق فعلًا على منشأتك."
+msgstr ""
+"Identify the frameworks and requirements applicable to your organization."
+
+#: templates/compliance/intake.html:118
+#, fuzzy
+#| msgid "رقم الجوال"
+msgid "تركيز الجهود"
+msgstr "Mobile number"
+
+#: templates/compliance/intake.html:118
+msgid "نركّز على المتطلبات ذات الأولوية."
+msgstr ""
+
+#: templates/compliance/intake.html:119
+#, fuzzy
+#| msgid "القطاع / نوع الجهة"
+msgid "توفير الوقت والجهد"
+msgstr "Sector / entity type"
+
+#: templates/compliance/intake.html:119
+#, fuzzy
+#| msgid "مسار جاهزية الامتثال"
+msgid "خارطة طريق واضحة لرحلة الامتثال."
+msgstr "Compliance readiness journey"
+
+#: templates/compliance/intake.html:120
+#, fuzzy
+#| msgid "مؤشّر الجاهزية"
+msgid "تحسين الجاهزية"
+msgstr "Readiness indicator"
+
+#: templates/compliance/intake.html:120
+#, fuzzy
+#| msgid "ابدأ رحلة الامتثال السيبراني بثقة"
+msgid "رفع مستوى جاهزيتك السيبرانية بفعالية."
+msgstr "Start your cybersecurity compliance journey with confidence"
+
+#: templates/compliance/intake.html:125
+#, fuzzy
+#| msgid "جارٍ حفظ البيانات..."
+msgid "جارٍ حفظ البيانات وتحديد الأطر..."
+msgstr "Saving…"
+
+#: templates/compliance/intake.html:132
+#, fuzzy
+#| msgid "حساب المنشأة جاهز"
+msgid "طبيعة المنشأة ونشاطها"
+msgstr "Organization account ready"
+
+#: templates/compliance/intake.html:133
+#, fuzzy
+#| msgid "إعداد معلومات المنشأة"
+msgid "أجب بنعم على ما ينطبق على منشأتك."
+msgstr "Set up organization details"
+
+#: templates/compliance/intake.html:138
+#, fuzzy
+#| msgid "الخطوة التالية الموصى بها"
+msgid "البيئة التقنية والبيانات"
+msgstr "Recommended next step"
+
+#: templates/compliance/intake.html:139
+#, fuzzy
+#| msgid "توحيد الأدلة وتقليل تكرار العمل"
+msgid "الخدمات السحابية والبيانات وأنماط العمل."
+msgstr "Unify evidence and reduce duplicate work"
+
+#: templates/compliance/intake.html:144
+msgid "علاقات وجهات تنظيمية"
+msgstr ""
+
+#: templates/compliance/intake.html:145
+msgid "التعامل مع الجهات الوطنية الكبرى (أرامكو، سابك)."
+msgstr ""
+
+#: templates/compliance/intake.html:150
+msgid "ملاحظات"
+msgstr ""
+
+#: templates/compliance/intake.html:157
+#, fuzzy
+#| msgid "جارٍ حفظ البيانات..."
+msgid "خصوصية وأمان البيانات"
+msgstr "Saving…"
+
+#: templates/compliance/intake.html:158
+msgid ""
+"جميع البيانات التي تقدّمها يتم التعامل معها بسرية تامة واستخدامها فقط لأغراض"
+" تحديد نطاق الامتثال والتصنيف."
+msgstr ""
+
+#: templates/compliance/intake.html:163 templates/onboarding/register.html:131
+#: templates/onboarding/register.html:152
+msgid "السابق"
+msgstr "Previous"
+
+#: templates/compliance/intake.html:166
+#, fuzzy
+#| msgid "المرحلة الحالية:"
+msgid "عرض نتيجة المراجعة الحالية"
+msgstr "Current stage:"
+
+#: templates/compliance/intake.html:168
+#, fuzzy
+#| msgid "حدّد الأطر والنطاق"
+msgid "حفظ وتحديد الأطر المنطبقة"
+msgstr "Define frameworks and scope"
+
+#: templates/components/evidence_status.html:10
+msgid "حالة الملف: قُبل كدليل للمراجعة (ليست حكم امتثال)"
+msgstr ""
+
+#: templates/components/evidence_status.html:11
+#, fuzzy
+#| msgid "تحليل ذكي"
+msgid "دليل مقبول"
+msgstr "Smart analysis"
+
+#: templates/components/evidence_status.html:15
+msgid "مرفوض"
+msgstr ""
+
+#: templates/components/evidence_status.html:19
+#, fuzzy
+#| msgid "يحتاج إجراء"
+msgid "يحتاج إعادة رفع"
+msgstr "Needs action"
+
+#: templates/components/evidence_status.html:23
+msgid "مؤرشف"
+msgstr ""
+
+#: templates/components/evidence_status.html:27
+msgid "مرفوع"
+msgstr ""
+
+#: templates/components/evidence_status.html:37
+#: templates/components/evidence_status.html:40
+#: templates/components/evidence_status.html:43
+#: templates/components/evidence_status.html:46
+#: templates/components/evidence_status.html:49
+#, fuzzy
+#| msgid "حفظ قرار المدقق"
+msgid "حكم امتثال المدقق"
+msgstr "Save auditor decision"
+
+#: templates/components/evidence_status.html:38
+#, fuzzy
+#| msgid "منصة الامتثال السيبراني"
+msgid "الامتثال: متوافق"
+msgstr "Cybersecurity Compliance Platform"
+
+#: templates/components/evidence_status.html:41
+#, fuzzy
+#| msgid "منصة الامتثال السيبراني"
+msgid "الامتثال: جزئي"
+msgstr "Cybersecurity Compliance Platform"
+
+#: templates/components/evidence_status.html:44
+#, fuzzy
+#| msgid "منصة الامتثال السيبراني"
+msgid "الامتثال: غير متوافق"
+msgstr "Cybersecurity Compliance Platform"
+
+#: templates/components/evidence_status.html:47
+#, fuzzy
+#| msgid "منصة الامتثال السيبراني"
+msgid "الامتثال: غير منطبق"
+msgstr "Cybersecurity Compliance Platform"
+
+#: templates/components/evidence_status.html:50
+#, fuzzy
+#| msgid "منصة الامتثال السيبراني"
+msgid "الامتثال: بحاجة أدلة إضافية"
+msgstr "Cybersecurity Compliance Platform"
+
+#: templates/components/journey_wizard.html:7
 msgid "مسار جاهزية الامتثال"
 msgstr "Compliance readiness journey"
 
+#: templates/components/journey_wizard.html:9
 msgid ""
 "اتبع الخطوات التالية لتحديد الأطر المطلوبة، تقييم الضوابط، رفع الأدلة، "
 "معالجة الفجوات، وتجهيز التقارير."
 msgstr ""
 
+#: templates/components/journey_wizard.html:14
 msgid "نسبة الإنجاز"
 msgstr "Progress"
 
+#: templates/components/journey_wizard.html:19
 msgid "المرحلة الحالية:"
 msgstr "Current stage:"
 
+#: templates/components/journey_wizard.html:22
 msgid "الخطوة التالية الموصى بها"
 msgstr "Recommended next step"
 
+#: templates/components/status_badge.html:12
 msgid "مكتمل"
 msgstr "Completed"
 
+#: templates/components/status_badge.html:13
 msgid "الخطوة الحالية"
 msgstr "Current step"
 
+#: templates/components/status_badge.html:14
 msgid "يحتاج إجراء"
 msgstr "Needs action"
 
+#: templates/components/status_badge.html:15
+#, fuzzy
+#| msgid "بانتظار مراجعة المدقق"
+msgid "بانتظار خطوة سابقة"
+msgstr "Pending auditor review"
+
+#: templates/components/status_badge.html:16
 msgid "مقفل"
 msgstr "Locked"
 
+#: templates/components/status_badge.html:17
 msgid "قيد التجهيز"
 msgstr "Planned"
 
+#: templates/components/status_badge.html:18
 msgid "غير متاح حاليًا"
 msgstr "Not available yet"
 
+#: templates/components/status_badge.html:19
 msgid "اختياري"
 msgstr "Optional"
 
-msgid "منصة جاهزية الامتثال السيبراني"
-msgstr "Cybersecurity compliance readiness platform"
-
-msgid "ابدأ الآن"
-msgstr "Get started"
-
-msgid "جاهزية الامتثال السيبراني المستمرة"
-msgstr "Continuous cybersecurity compliance readiness"
-
-msgid "للسوق السعودي"
-msgstr "for the Saudi market"
-
-msgid ""
-"منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل "
-"الفجوات، وإعداد تقارير الامتثال وفق أطر NCA وAramco وSABIC. القرار النهائي "
-"يبقى للمدقّق أو فريق الامتثال المختص."
-msgstr "The 1SaudiCyber platform for cybersecurity compliance readiness: organize evidence, analyze gaps, and prepare compliance reports against the NCA, Aramco, and SABIC frameworks. The final decision always remains with the auditor or the responsible compliance team."
-
-msgid "ابدأ تقييم الامتثال"
-msgstr "Start your compliance assessment"
-
-msgid "كيف تعمل المنصّة"
-msgstr "How the platform works"
-
-msgid "مؤشّر الجاهزية"
-msgstr "Readiness indicator"
-
-msgid "مثال توضيحي"
-msgstr "Illustrative example"
-
-msgid "تغطية لـ 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC"
-msgstr "Coverage of 417 official controls across the NCA, Aramco, and SABIC frameworks"
-
-msgid "إنجاز أسرع للتقييم"
-msgstr "Faster assessment"
-
-msgid "خفض في الكلفة"
-msgstr "Cost reduction"
-
-msgid "ضابطًا رسميًا مهيكلًا"
-msgstr "structured official controls"
-
-msgid "جاهزية للمراقبة المستمرة"
-msgstr "Continuous monitoring readiness"
-
-msgid "أساس تقني عند ربط مصادر البيانات المناسبة"
-msgstr "Technical foundation once data sources are connected"
-
-msgid ""
-"مؤشرات توضيحية تعتمد على نضج بيانات العميل واكتمال الأدلة، وليست نتائج "
-"مضمونة."
+#: templates/components/status_badge.html:20
+msgid "لم يبدأ"
 msgstr ""
 
-msgid "مسار الامتثال في خمس خطوات"
-msgstr "The compliance journey in five steps"
+#: templates/core/landing.html:3
+msgid "منصّة جاهزية الامتثال السيبراني للسوق السعودي"
+msgstr "Cybersecurity Compliance Readiness Platform for the Saudi market"
 
+#: templates/core/landing.html:6
+#| msgid ""
+#| "منصّة 1SaudiCyber لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل "
+#| "الفجوات، وإعداد تقارير الامتثال وفق أطر NCA وAramco وSABIC. القرار النهائي "
+#| "يبقى للمدقّق أو فريق الامتثال المختص."
 msgid ""
-"من التسجيل إلى تقارير الجاهزية والامتثال — رحلة منظّمة وواضحة خطوة بخطوة."
-msgstr "From registration to readiness and compliance reports — a clear, structured journey, step by step."
-
-msgid "التسجيل"
-msgstr "Registration"
-
-msgid "ملف الشركة وأهداف الامتثال"
-msgstr "Company profile and compliance objectives"
-
-msgid "تحديد الأطر المنطبقة وخطة الضوابط"
-msgstr "Identify the applicable frameworks and the control plan"
-
-msgid "رفع الأدلة"
-msgstr "Evidence upload"
-
-msgid "تنظيم الأدلة وتحليل استشاري مساعد"
-msgstr "Organize evidence with assistive advisory analysis"
-
-msgid "تحليل الفجوات"
-msgstr "Gap analysis"
-
-msgid "قياس الجاهزية وتحديد الفجوات"
-msgstr "Measure readiness and identify gaps"
-
-msgid "مراجعة المدقّق"
-msgstr "Auditor review"
-
-msgid "القرار النهائي للامتثال يتّخذه المدقّق"
-msgstr "The final compliance decision is made by the auditor"
-
-msgid "الأطر المدعومة"
-msgstr "Supported frameworks"
-
-msgid "منصّة واحدة لمتطلبات الامتثال السيبراني في السوق السعودي"
-msgstr "One platform for cybersecurity compliance requirements in the Saudi market"
-
-msgid ""
-"الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني للجهات "
-"الحكومية والبنى التحتية الحرجة."
-msgstr "The Essential Cybersecurity Controls from the National Cybersecurity Authority for government entities and critical infrastructure."
-
-msgid "108 ضوابط (ECC) — إجمالي أطر NCA 231 ضابطًا"
-msgstr "108 controls (ECC) — 231 controls in total across the NCA frameworks"
-
-msgid ""
-"معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة لجميع الموردين ومزوّدي "
-"الخدمات."
-msgstr "Saudi Aramco's third-party cybersecurity standard for all suppliers and service providers."
-
-msgid "92 ضابطًا"
-msgstr "92 controls"
-
-msgid "معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات."
-msgstr "SABIC's CyberTrust standard for petrochemical-sector suppliers and service providers."
-
-msgid "94 ضابطًا"
-msgstr "94 controls"
-
-msgid "إجمالي التغطية: 417 ضابطًا رسميًا عبر أطر NCA وAramco وSABIC."
-msgstr "Total coverage: 417 official controls across the NCA, Aramco, and SABIC frameworks."
-
-msgid "جاهزون لرفع جاهزية الامتثال؟"
-msgstr "Ready to raise your compliance readiness?"
-
-msgid ""
-"انضم إلى الشركات والجهات في السعودية التي تنظّم أدلّتها وتُعدّ تقارير جاهزيتها "
-"للمراجعة."
-msgstr "Join the companies and entities in Saudi Arabia that organize their evidence and prepare their readiness reports for review."
-
-msgid "سجّل شركتك"
-msgstr "Register your company"
-
-msgid "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية."
-msgstr "A cybersecurity compliance readiness management platform in the Kingdom of Saudi Arabia."
-
-msgid "الضوابط الأساسية NCA ECC"
-msgstr "NCA ECC Essential Controls"
-
-msgid "معيار SABIC CyberTrust"
-msgstr "SABIC CyberTrust standard"
-
-msgid "المنصّة"
-msgstr "The platform"
-
-msgid "جميع الحقوق محفوظة. متوافقة مع رؤية المملكة 2030."
-msgstr "All rights reserved. Aligned with Saudi Vision 2030."
-
-msgid "مرحبًا بعودتك"
-msgstr "Welcome back"
-
-msgid "سجّل الدخول إلى لوحة الامتثال الخاصة بك"
-msgstr "Sign in to your compliance dashboard"
-
-msgid "البريد الإلكتروني"
-msgstr "Email"
-
-msgid "كلمة المرور"
-msgstr "Password"
-
-msgid "ليس لديك حساب؟"
-msgstr "Don't have an account?"
-
-msgid "آخر تحديث:"
-msgstr "Last updated:"
-
-# --- P0-UIUX-01 landing localization (closure) ---
-
-msgid "108 ضابطًا في ECC — و231 ضابطًا عبر أطر NCA"
-msgstr "108 ECC controls — 231 controls across the NCA frameworks"
-
-msgid "1SaudiCyber منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها."
-msgstr "1SaudiCyber is an independent platform. Regulatory framework names are shown to indicate coverage scope only, and do not imply official endorsement by, or partnership with, any regulator."
-
-msgid "325 ضابطًا رسميًا مهيكلًا عبر أطر NCA وSABIC"
-msgstr "325 official framework controls structured across the NCA and SABIC frameworks"
-
-msgid "أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال المختص. لا تُصدر المنصّة اعتمادًا رسميًا."
-msgstr "A tool to help organize compliance; the final decision stays with the auditor or the qualified compliance team. The platform does not issue any formal accreditation."
-
-msgid "أدخل بيانات المؤسسة وسياق الامتثال."
-msgstr "Enter your organization details and compliance context."
-
-msgid "أدلة قيد المراجعة"
-msgstr "Evidence under review"
-
-msgid "إدارة الضوابط"
-msgstr "Control management"
-
-msgid "إنهاء وصول المدقّق فور تعليقه أو رفضه."
-msgstr "An auditor's access ends the moment they are suspended or rejected."
-
-msgid "ابدأ بتنظيم ضوابطك وأدلّتك وإعداد جاهزيتك للمراجعة."
-msgstr "Start organizing your controls and evidence and preparing your readiness for review."
-
-msgid "الأمان"
-msgstr "Security"
-
-msgid "الأمان أولًا"
-msgstr "Security first"
-
-msgid "الإشارة إلى فجوات محتملة تحتاج تحقّقًا"
-msgstr "Flagging potential gaps that need verification"
-
-msgid "الامتثال لا يجب أن يعيش في جداول بيانات ورسائل ومجلدات أدلة متفرّقة"
-msgstr "Compliance shouldn't live across spreadsheets, emails and scattered evidence folders"
-
-msgid "التدقيق"
-msgstr "Audit"
-
-msgid "التقييم"
-msgstr "Assessment"
-
-msgid "الجاهزية العامة"
-msgstr "Overall readiness"
-
-msgid "الحساب"
-msgstr "Account"
-
-msgid "الحفاظ على الوضوح مع تغيّر وضع الجاهزية عبر الوقت."
-msgstr "Maintain clarity as your readiness changes over time."
-
-msgid "الخصوصية"
-msgstr "Privacy"
-
-msgid "الذكاء الاصطناعي"
-msgstr "Artificial intelligence"
-
-msgid "الربط يوضّح التكافؤ بين الضوابط؛ والقرار في كفاية الأدلة لكل ضابط يبقى للمراجع المختص."
-msgstr "Mapping shows how controls are equivalent; the decision on whether the evidence is sufficient for each control stays with the qualified reviewer."
-
-msgid "الشركة"
-msgstr "Company"
-
-msgid "الشركة والقانوني"
-msgstr "Company and legal"
-
-msgid "الشروط"
-msgstr "Terms"
-
-msgid "الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني، للجهات الحكومية والبنى التحتية الحسّاسة."
-msgstr "The National Cybersecurity Authority's Essential Cybersecurity Controls (ECC), for government entities and critical national infrastructure."
-
-msgid "الفجوات والمعالجة"
-msgstr "Gaps and remediation"
-
-msgid "القدرات"
-msgstr "Capabilities"
-
-msgid "القدرات الأساسية"
-msgstr "Core capabilities"
-
-msgid "القرار النهائي للمدقّق، مع جاهزية للمراقبة المستمرة."
-msgstr "The final decision rests with the auditor, with readiness for continuous monitoring."
-
-msgid "المراقبة المستمرة"
-msgstr "Continuous monitoring"
-
-msgid "المشكلة"
-msgstr "The problem"
-
-msgid "المعالجة"
-msgstr "Remediation"
-
-msgid "المنتج"
-msgstr "Product"
-
-msgid "بيانات كل مؤسسة معزولة عن غيرها."
-msgstr "Each organization's data is isolated from every other."
-
-msgid "تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف المؤسسة فعليًا قبل التدقيق. تجمع 1SaudiCyber هذه الدورة في مسار واحد متّصل."
-msgstr "Controls, evidence and findings are spread across different teams and tools, making it hard to know where the organization really stands before an audit. 1SaudiCyber brings this cycle together into one connected path."
-
-msgid "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر NCA وAramco وSABIC."
-msgstr "1SaudiCyber brings the compliance cycle into one place: assess readiness, manage controls, organize evidence, analyze gaps, track remediation and prepare for audit — across the NCA, Aramco and SABIC frameworks."
-
-msgid "تجهيز الضوابط والأدلة والملاحظات لمسار مراجعة المدقّق."
-msgstr "Prepare controls, evidence and findings for the auditor review path."
-
-msgid "تحديد الأطر والمتطلبات المنطبقة على مؤسستك."
-msgstr "Identify the frameworks and requirements applicable to your organization."
-
-msgid "تحديد الفجوات وترتيب أولويات الملاحظات ومتابعة خطط المعالجة."
-msgstr "Identify gaps, prioritize findings and track remediation plans."
-
-msgid "تحديد المتطلبات المنطبقة وقياس وضع الجاهزية الحالي للمؤسسة."
-msgstr "Identify applicable requirements and measure the organization's current readiness."
-
-msgid "تحليل استشاري للأدلة المرفوعة"
-msgstr "Advisory analysis of uploaded evidence"
-
-msgid "تحليل الفجوات وترتيب أولويات المعالجة ومتابعتها."
-msgstr "Analyze gaps, prioritize remediation and track it."
-
-msgid "تحليل مدعوم بالذكاء الاصطناعي — مساعِد، لا قرار"
-msgstr "AI-assisted analysis — an assistant, not a decision"
-
-msgid "تخزين خاص للأدلة"
-msgstr "Private evidence storage"
-
+"منصّة Cyber-5 لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات،"
+" وإعداد تقارير الجاهزية وفق أطر NCA وSABIC."
+msgstr ""
+"Cyber-5 platform to manage cybersecurity compliance readiness: organizing "
+"evidence, gap analysis, and readiness reporting in accordance with NCA and "
+"SABIC frameworks."
+
+#: templates/core/landing.html:104
 msgid "تخطَّ إلى المحتوى"
 msgstr "Skip to content"
 
-msgid "تسجيل الإجراءات الحسّاسة للمراجعة."
-msgstr "Sensitive actions are logged for review."
-
-msgid "تطوير"
-msgstr "Developed by"
-
-msgid "تغطية مهيكلة لضوابط الأطر المنشورة في السوق السعودي، من مساحة عمل واحدة."
-msgstr "Structured coverage of the published framework controls used in the Saudi market, from a single workspace."
-
-msgid "تقييم وضع الجاهزية وربط الأدلة بالضوابط."
-msgstr "Assess readiness and link evidence to controls."
-
-msgid "تُربط الضوابط المتكافئة بين NCA وSABIC، فتظهر المتطلبات المتشابهة في مكان واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار."
-msgstr "Equivalent controls are mapped across NCA and SABIC, so overlapping requirements appear in one place and duplicated work is reduced when covering more than one framework."
-
-msgid "جاهزية الامتثال السيبراني، مُبسّطة للمؤسسات السعودية"
-msgstr "Cybersecurity compliance readiness, simplified for Saudi organizations"
-
-msgid "جميع الحقوق محفوظة."
-msgstr "All rights reserved."
-
-msgid "حدود واضحة"
-msgstr "Clear limits"
-
-msgid "حدّد الأطر والنطاق"
-msgstr "Define frameworks and scope"
-
-msgid "حلّل الفجوات وعالِجها"
-msgstr "Analyze and remediate gaps"
-
-msgid "ربط الأطر"
-msgstr "Framework mapping"
-
-msgid "رفع الأدلة وتنظيمها ومراجعتها وربطها بالضوابط ذات العلاقة."
-msgstr "Upload, organize, review and link evidence to the relevant controls."
-
+#: templates/core/landing.html:116
 msgid "روابط الصفحة"
 msgstr "Page links"
 
-msgid "سجلّ تدقيق"
-msgstr "Audit log"
+#: templates/core/landing.html:117 templates/core/landing.html:141
+#: templates/core/landing.html:545 templates/core/landing.html:546
+msgid "المنتج"
+msgstr "Product"
 
-msgid "شاهد كيف تعمل"
-msgstr "See how it works"
-
-msgid "شرح الملاحظات واقتراح خطوات تالية"
-msgstr "Explaining findings and suggesting next steps"
-
-msgid "صلاحيات حسب الدور"
-msgstr "Role-based access"
-
-msgid "ضابط"
-msgstr "Control"
-
-msgid "ضابط متكافئ"
-msgstr "Equivalent control"
-
-msgid "ضوابط وصول وحماية للبيانات مطبّقة في المنصّة."
-msgstr "Access controls and data protection applied across the platform."
-
-msgid "طبقة تحقّق إضافية عند تسجيل الدخول."
-msgstr "An extra verification layer at sign-in."
-
-msgid "عرِّف مؤسستك"
-msgstr "Define your organization"
-
-msgid "عزل بيانات المؤسسات"
-msgstr "Organization data isolation"
-
-msgid "عن المنصّة"
-msgstr "About"
-
-msgid "فتح القائمة"
-msgstr "Open menu"
-
-msgid "فجوات حرجة"
-msgstr "Critical gaps"
-
-msgid "قائمة الجوال"
-msgstr "Mobile menu"
-
-msgid "قيّم الضوابط وارفع الأدلة"
-msgstr "Assess controls and upload evidence"
-
-msgid "كل ما تحتاجه لإدارة الامتثال في مكان واحد"
-msgstr "Everything you need to manage compliance in one place"
-
+#: templates/core/landing.html:119 templates/core/landing.html:143
+#: templates/core/landing.html:464
 msgid "كيف تعمل"
 msgstr "How it works"
 
-msgid "لا يضمن الامتثال ولا يُغني عن مراجعة المدقّق المختص."
-msgstr "It does not guarantee compliance and is no substitute for review by a qualified auditor."
+#: templates/core/landing.html:120 templates/core/landing.html:144
+#: templates/core/landing.html:550
+msgid "الأمان"
+msgstr "Security"
 
-msgid "لا يمثّل موافقة أو اعتمادًا من أي جهة تنظيمية."
-msgstr "It does not represent approval or accreditation by any regulator."
+#: templates/core/landing.html:121 templates/core/landing.html:145
+#: templates/core/landing.html:556
+msgid "عن المنصّة"
+msgstr "About the platform"
 
-msgid "مؤشرات توضيحية"
-msgstr "Illustrative figures"
+#: templates/core/landing.html:133 templates/core/landing.html:149
+#: templates/core/landing.html:173 templates/core/landing.html:525
+#: templates/core/landing.html:565 templates/core/login.html:43
+msgid "ابدأ الآن"
+msgstr "Get started"
 
-msgid "مبنية للسوق السعودي"
-msgstr "Built for the Saudi market"
+#: templates/core/landing.html:136
+msgid "فتح القائمة"
+msgstr "Open menu"
 
-msgid "مبنية مع مراعاة الأمان"
-msgstr "Built with security in mind"
+#: templates/core/landing.html:140
+msgid "قائمة الجوال"
+msgstr "Mobile menu"
 
-msgid "متابعة الضوابط عبر الأطر المطبّقة من مساحة عمل واحدة موحّدة."
-msgstr "Track controls across the applicable frameworks from a single unified workspace."
-
-msgid "متطلبات متداخلة، مربوطة عبر الأطر"
-msgstr "Overlapping requirements, mapped across frameworks"
-
-msgid "مصادقة ثنائية (MFA)"
-msgstr "Two-factor authentication (MFA)"
-
-msgid "معيار أرامكو السعودية للأمن السيبراني للأطراف الثالثة، للموردين ومزوّدي الخدمات."
-msgstr "Saudi Aramco's third-party cybersecurity standard (SACS-002), for suppliers and service providers."
-
-msgid "ملفات الأدلة تُخدَم عبر تنزيل مُصرّح فقط."
-msgstr "Evidence files are served through authorized download only."
-
+#: templates/core/landing.html:167
 msgid "منصّة جاهزية الامتثال السيبراني"
-msgstr "Cybersecurity compliance readiness platform"
+msgstr "Cybersecurity Compliance Readiness Platform"
 
-msgid "منصّة جاهزية الامتثال السيبراني للسوق السعودي"
-msgstr "Cybersecurity compliance readiness platform for the Saudi market"
-
-msgid "نزع صلاحية المدقّق"
-msgstr "Auditor de-provisioning"
-
-msgid "وصول مقيّد بحسب دور المستخدم."
-msgstr "Access restricted by the user's role."
-
-msgid "يخضع لسياسة سيادة البيانات: لا تُرسل بيانات العميل خارجيًا إلا عند التفعيل الصريح."
-msgstr "Subject to the data-sovereignty policy: customer data is not sent externally unless explicitly enabled."
-
-msgid "يدعم قرار الإنسان ولا يحلّ محلّه."
-msgstr "It supports human decisions and does not replace them."
-
-msgid "يساعد الذكاء الاصطناعي فرق الامتثال والمدقّقين على العمل بأسرع، مع بقاء القرار النهائي للإنسان."
-msgstr "AI helps compliance teams and auditors work faster, while the final decision stays with a human."
-
-# --- P0-UIUX-01 refinement polish ---
-
-msgid "231 ضابطًا عبر أطر NCA"
-msgstr "231 controls across the NCA frameworks"
-
-msgid "منها 108 في إطار ECC"
-msgstr "including 108 in the ECC framework"
-
-msgid "بيئة عرض تجريبية"
-msgstr "Demo workspace"
-
-msgid "نظرة عامة"
-msgstr "Overview"
-
-msgid "الفجوات المفتوحة"
-msgstr "Open gaps"
-
-msgid "الفجوات حسب الفئة"
-msgstr "Gaps by category"
-
-msgid "فجوة"
-msgstr "gaps"
-
-msgid "ضوابط الوصول"
-msgstr "Access controls"
-
-msgid "إدارة الأصول"
-msgstr "Asset management"
-
-msgid "استجابة الحوادث"
-msgstr "Incident response"
-
-msgid "إدارة المخاطر"
-msgstr "Risk management"
-
-msgid "أخرى"
-msgstr "Other"
-
-msgid "تقدّم الأطر"
-msgstr "Framework progress"
-
-msgid "بيانات توضيحية لأغراض العرض فقط"
-msgstr "Illustrative data, for display purposes only"
-
-msgid "حساب شركة"
-msgstr "Company account"
-
-msgid "إنشاء حساب شركة"
-msgstr "Create a company account"
-
-msgid "تسجيل شركة"
-msgstr "Register a company"
-
-msgid "سجّل شركتك في 1SaudiCyber"
-msgstr "Register your company on 1SaudiCyber"
-
-msgid "أكمل الخطوات التالية لبدء مسار الامتثال. الحقول المعلّمة بـ * مطلوبة."
-msgstr "Complete the steps below to start your compliance journey. Fields marked with * are required."
-
-msgid "يرجى تصحيح الحقول المحددة ثم المتابعة."
-msgstr "Please correct the highlighted fields and continue."
-
-msgid "بيانات المستخدم"
-msgstr "User details"
-
-msgid "بيانات الشركة"
-msgstr "Company details"
-
-msgid "أهداف الامتثال"
-msgstr "Compliance goals"
-
-msgid "اختر هدفًا واحدًا على الأقل."
-msgstr "Choose at least one goal."
-
-msgid "التالي"
-msgstr "Next"
-
-msgid "السابق"
-msgstr "Previous"
-
-msgid "إنشاء الحساب والمتابعة"
-msgstr "Create account and continue"
-
-msgid "رجوع"
-msgstr "Back"
-
-msgid "جارٍ حفظ البيانات..."
-msgstr "Saving…"
-
-msgid "لديك حساب بالفعل؟"
-msgstr "Already have an account?"
-
-msgid "إظهار كلمة المرور"
-msgstr "Show password"
-
-msgid "إخفاء كلمة المرور"
-msgstr "Hide password"
-
-msgid "توثيق البريد الإلكتروني"
-msgstr "Email verification"
-
-msgid "أدخل رمز التحقق"
-msgstr "Enter the verification code"
-
-msgid "أرسلنا رمزًا من 6 أرقام إلى"
-msgstr "We sent a 6-digit code to"
-
-msgid "رمز التحقق"
-msgstr "Verification code"
-
-msgid "تأكيد الرمز"
-msgstr "Confirm code"
-
-msgid "الرمز صالح لمدة 10 دقائق، ولديك 5 محاولات."
-msgstr "The code is valid for 10 minutes, and you have 5 attempts."
-
-msgid "لم يصلك الرمز؟"
-msgstr "Didn't receive the code?"
-
-msgid "إعادة إرسال الرمز"
-msgstr "Resend code"
-
-msgid "يمكنك طلب رمز جديد بعد 60 ثانية."
-msgstr "You can request a new code after 60 seconds."
-
-msgid "نوع الحساب"
-msgstr "Account type"
-
-msgid "إنشاء الحساب"
-msgstr "Create account"
-
-msgid "تأكيد البريد الإلكتروني"
-msgstr "Email verification"
-
-msgid "إعداد المنشأة"
-msgstr "Organization setup"
-
-msgid "مراحل التسجيل"
-msgstr "Registration steps"
-
-msgid "الخطوة %(step)s من 4"
-msgstr "Step %(step)s of 4"
-
-
-msgid "الاسم الأول"
-msgstr "First name"
-
-msgid "اسم العائلة"
-msgstr "Last name"
-
-msgid "رقم الجوال"
-msgstr "Mobile number"
-
-msgid "استخدم كلمة مرور قوية لا تقل عن 12 حرفًا، ويفضّل أن تحتوي على أحرف وأرقام ورمز خاص."
-msgstr "Use a strong password of at least 12 characters, ideally including letters, numbers and a special character."
-
-msgid "تأكيد كلمة المرور"
-msgstr "Confirm password"
-
-msgid "اسم الشركة بالعربية"
-msgstr "Company name (Arabic)"
-
-msgid "اسم الشركة بالإنجليزية"
-msgstr "Company name (English)"
-
-msgid "رقم السجل التجاري"
-msgstr "Commercial registration (CR) number"
-
-msgid "رقم السجل التجاري في السعودية يتكوّن غالبًا من 10 أرقام."
-msgstr "A Saudi commercial registration (CR) number is usually 10 digits."
-
-msgid "القطاع / نوع الجهة"
-msgstr "Sector / entity type"
-
-msgid "حجم الشركة"
-msgstr "Company size"
-
-msgid "المدينة"
-msgstr "City"
-
-msgid "الدولة"
-msgstr "Country"
-
-msgid "وصف مختصر"
-msgstr "Short description"
-
-msgid "نحتاج الامتثال لـ NCA"
-msgstr "We need NCA compliance"
-
-msgid "نحتاج الامتثال لـ Aramco"
-msgstr "We need Aramco compliance"
-
-msgid "نحتاج الامتثال لـ SABIC"
-msgstr "We need SABIC compliance"
-
-msgid "أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بمنصة 1SaudiCyber."
-msgstr "I agree to 1SaudiCyber's Terms of Use and Privacy Policy."
-
-msgid "يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب."
-msgstr "You must agree to the Terms of Use and Privacy Policy before creating an account."
-
-
-msgid "شركة / جهة طالبة امتثال"
-msgstr "Company / compliance-seeking entity"
-
-
+#: templates/core/landing.html:169
 msgid "امتثال سيبراني أبسط لمنشأتك في السعودية"
-msgstr "Cybersecurity compliance, made simpler for your organization in Saudi Arabia"
+msgstr ""
+"Simpler cybersecurity compliance for your organization in Saudi Arabia"
 
+#: templates/core/landing.html:170
+#| msgid ""
+#| "تجمع 1SaudiCyber دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، "
+#| "تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر "
+#| "NCA وAramco وSABIC."
+msgid ""
+"تجمع Cyber-5 دورة الامتثال في مكان واحد: تقييم الجاهزية، إدارة الضوابط، "
+"تنظيم الأدلة، تحليل الفجوات، متابعة المعالجة، والاستعداد للتدقيق — وفق أطر "
+"NCA وSABIC."
+msgstr ""
+"Cyber-5 brings the compliance lifecycle together in one place: readiness "
+"assessment, control management, evidence organization, gap analysis, "
+"remediation tracking, and audit preparation — aligned with NCA and SABIC "
+"frameworks."
 
+#: templates/core/landing.html:177
+msgid "شاهد كيف تعمل"
+msgstr "See how it works"
+
+#: templates/core/landing.html:182
 msgid "تحليل ذكي"
-msgstr "Smart analysis"
+msgstr "Intelligent analysis"
 
-
+#: templates/core/landing.html:182
 msgid "مدعوم بالذكاء الاصطناعي"
-msgstr "AI-assisted"
+msgstr "AI-powered"
 
-
+#: templates/core/landing.html:186
 msgid "ربط بين الأطر"
-msgstr "Cross-framework mapping"
+msgstr "Framework mapping"
 
-
+#: templates/core/landing.html:186
 msgid "وتقليل تكرار العمل"
-msgstr "Reduce duplicate work"
+msgstr "and reduce redundant work"
 
-
+#: templates/core/landing.html:190
 msgid "أمن وموثوق"
-msgstr "Secure and trusted"
+msgstr "Secure and reliable"
 
-
+#: templates/core/landing.html:190
 msgid "وفق أفضل الممارسات"
-msgstr "Following best practices"
+msgstr "Aligned with best practices"
 
+#: templates/core/landing.html:195
+msgid ""
+"أداة مساعِدة لتنظيم الامتثال؛ القرار النهائي يبقى للمدقّق أو فريق الامتثال "
+"المختص. لا تُصدر المنصّة اعتمادًا رسميًا."
+msgstr ""
+"An assistive tool for organizing compliance; final decisions remain with the"
+" auditor or the designated compliance team. The platform does not provide "
+"formal approval."
 
+#: templates/core/landing.html:210
+msgid "بيئة عرض تجريبية"
+msgstr "Demo environment"
+
+#: templates/core/landing.html:218
 msgid "شركة تجريبية"
 msgstr "Demo company"
 
+#: templates/core/landing.html:221 templates/core/landing.html:234
+msgid "نظرة عامة"
+msgstr "Overview"
 
+#: templates/core/landing.html:222
 msgid "التطبيقات"
 msgstr "Applications"
 
-
+#: templates/core/landing.html:224
 msgid "الفجوات"
 msgstr "Gaps"
 
-
-msgid "الإعدادات"
-msgstr "Settings"
-
-
-msgid "منصة الامتثال السيبراني"
-msgstr "Cybersecurity Compliance Platform"
-
-
-msgid "ابدأ رحلة الامتثال السيبراني بثقة"
-msgstr "Start your cybersecurity compliance journey with confidence"
-
-
-msgid "انضم إلى 1SaudiCyber لإدارة الامتثال السيبراني لمنشأتك بكفاءة وموثوقية وفق الأطر الوطنية المدعومة."
-msgstr "Join 1SaudiCyber to manage your organization's cybersecurity compliance efficiently and reliably, aligned with the supported national frameworks."
-
-
-msgid "إدارة متطلبات الأطر التنظيمية بسهولة"
-msgstr "Manage regulatory framework requirements with ease"
-
-
-msgid "توحيد الأدلة وتقليل تكرار العمل"
-msgstr "Unify evidence and reduce duplicate work"
-
-
-msgid "رؤى ذكية ومساعدة بالذكاء الاصطناعي"
-msgstr "Smart insights with AI assistance"
-
-
-msgid "أمن وخصوصية على مستوى المؤسسات"
-msgstr "Enterprise-grade security and privacy"
-
-
-msgid "بياناتك آمنة ومشفرة وفق أعلى المعايير"
-msgstr "Your data is secure and encrypted to the highest standards"
-
-
-msgid "اختيار نوع الحساب"
-msgstr "Account type"
-
-
-msgid "كيف تريد استخدام 1SaudiCyber؟"
-msgstr "How do you want to use 1SaudiCyber?"
-
-
-msgid "اختر نوع الحساب للمتابعة."
-msgstr "Choose an account type to continue."
-
-
-msgid "الأنسب لمعظم المستخدمين"
-msgstr "Best for most users"
-
-
-msgid "حساب منشأة"
-msgstr "Organization account"
-
-
-msgid "أنشئ حساب مسؤول المنشأة لبدء إعداد الشركة والاشتراك والتصنيف وإدارة رحلة الامتثال."
-msgstr "Create the organization-administrator account to set up your company, subscription, classification, and manage the compliance journey."
-
-
-msgid "إنشاء حساب منشأة"
-msgstr "Create organization account"
-
-
-msgid "حساب مدقّق"
-msgstr "Auditor account"
-
-
-msgid "قدّم طلب تسجيل كمدقّق، وسيخضع الطلب لمراجعة الإدارة قبل التفعيل."
-msgstr "Submit an auditor registration request; it is reviewed by the administration before activation."
-
-
-msgid "طلب التسجيل"
-msgstr "Registration request"
-
-
-msgid "مراجعة الإدارة"
-msgstr "Admin review"
-
-
-msgid "التفعيل"
-msgstr "Activation"
-
-
-msgid "تسجيل كمدقّق"
-msgstr "Register as an auditor"
-
-
-msgid "اختر نوع الحساب المناسب، ويمكنك استكمال البيانات في الخطوات التالية. تُدار الصلاحيات والوصول وفق نوع الحساب وحالة التفعيل."
-msgstr "Choose the account type that fits you; you can complete the details in the following steps. Permissions and access are managed according to account type and activation status."
-
-
-msgid "التحقق"
-msgstr "Verification"
-
-
-msgid "اكتمال التسجيل"
-msgstr "Registration complete"
-
-
-msgid "حساب فردي"
-msgstr "Individual account"
-
-
-msgid "إنشاء حساب فردي"
-msgstr "Create individual account"
-
-
-msgid "للمدقّقين والمستشارين والأفراد للتعاون مع المنشآت في مراجعة الامتثال."
-msgstr "For auditors, consultants, and individuals collaborating with organizations on compliance review."
-
-
-msgid "تأكيد بريدك الإلكتروني"
-msgstr "Confirm your email"
-
-
-msgid "أرسلنا رمز تحقّق مكوّنًا من 6 أرقام لإكمال إنشاء حساب منشأتك."
-msgstr "We sent a 6-digit verification code to complete creating your organization account."
-
-
-msgid "نسخ البريد"
-msgstr "Copy email"
-
-
-msgid "لم تجد الرسالة؟ تحقّق من مجلد الرسائل غير المرغوب فيها (Spam) أو العروض الترويجية. الرمز صالح لمدة 10 دقائق، ولديك 5 محاولات."
-msgstr "Didn't find the message? Check your spam or promotions folder. The code is valid for 10 minutes, and you have 5 attempts."
-
-
+#: templates/core/landing.html:225 templates/core/landing.html:367
+msgid "المعالجة"
+msgstr "Remediation"
+
+#: templates/core/landing.html:226 templates/core/landing.html:369
+#: templates/core/landing.html:402
+msgid "التدقيق"
+msgstr "Audit"
+
+#: templates/core/landing.html:236
+msgid "مؤشرات توضيحية"
+msgstr "Illustrative indicators"
+
+#: templates/core/landing.html:242
+msgid "مؤشّر الجاهزية"
+msgstr "Readiness indicator"
+
+#: templates/core/landing.html:249
+msgid "الفجوات المفتوحة"
+msgstr "Open gaps"
+
+#: templates/core/landing.html:273
+msgid "الفجوات حسب الفئة"
+msgstr "Gaps by category"
+
+#: templates/core/landing.html:279
+msgid "فجوة"
+msgstr "Gap"
+
+#: templates/core/landing.html:283
+msgid "ضوابط الوصول"
+msgstr "Access controls"
+
+#: templates/core/landing.html:284
+msgid "إدارة الأصول"
+msgstr "Asset Management"
+
+#: templates/core/landing.html:285
+msgid "استجابة الحوادث"
+msgstr "Incident Response"
+
+#: templates/core/landing.html:286
+msgid "إدارة المخاطر"
+msgstr "Risk Management"
+
+#: templates/core/landing.html:287
+msgid "أخرى"
+msgstr "Other"
+
+#: templates/core/landing.html:292
+msgid "تقدّم الأطر"
+msgstr "Framework Progress"
+
+#: templates/core/landing.html:307
+msgid "بيانات توضيحية لأغراض العرض فقط"
+msgstr "Illustrative data for demonstration purposes only"
+
+#: templates/core/landing.html:321
+msgid "مبنية للسوق السعودي"
+msgstr "Built for the Saudi market"
+
+#: templates/core/landing.html:322
+msgid "الأطر المدعومة"
+msgstr "Supported frameworks"
+
+#: templates/core/landing.html:323
+msgid ""
+"تغطية مهيكلة لضوابط الأطر المنشورة في السوق السعودي، من مساحة عمل واحدة."
+msgstr ""
+"Structured coverage of controls from frameworks published in the Saudi "
+"market, from one workspace."
+
+#: templates/core/landing.html:329
+msgid ""
+"الضوابط الأساسية للأمن السيبراني من الهيئة الوطنية للأمن السيبراني، للجهات "
+"الحكومية والبنى التحتية الحسّاسة."
+msgstr ""
+"Core cybersecurity controls from the National Cybersecurity Authority (NCA) "
+"for government entities and critical infrastructure."
+
+# --- P0-UIUX-01 refinement polish ---
+#: templates/core/landing.html:331
+msgid "231 ضابطًا عبر أطر NCA"
+msgstr "231 controls across NCA frameworks"
+
+#: templates/core/landing.html:332
+msgid "منها 108 في إطار ECC"
+msgstr "Including 108 in the ECC framework"
+
+#: templates/core/landing.html:338
+msgid ""
+"معيار سابك للثقة السيبرانية لموردي قطاع البتروكيماويات ومزوّدي الخدمات."
+msgstr ""
+"SABIC Cyber Trust Standard for petrochemical sector suppliers and service "
+"providers."
+
+#: templates/core/landing.html:339
+msgid "94 ضابطًا"
+msgstr "94 controls"
+
+#: templates/core/landing.html:344
+msgid "325 ضابطًا رسميًا مهيكلًا عبر أطر NCA وSABIC"
+msgstr "325 officially structured controls across NCA and SABIC frameworks"
+
+#: templates/core/landing.html:346
+#| msgid ""
+#| "1SaudiCyber منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق "
+#| "التغطية فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها."
+msgid ""
+"Cyber-5 منصّة مستقلة. أسماء الأطر التنظيمية تُذكر للإشارة إلى نطاق التغطية "
+"فقط، ولا تعني اعتمادًا رسميًا من أي جهة تنظيمية أو شراكة معها."
+msgstr ""
+"Cyber-5 is an independent platform. Regulatory framework names are mentioned"
+" only to indicate coverage and do not imply official endorsement or "
+"partnership with any regulatory body."
+
+#: templates/core/landing.html:354
+msgid "المشكلة"
+msgstr "The problem"
+
+#: templates/core/landing.html:355
+msgid "الامتثال لا يجب أن يعيش في جداول بيانات ورسائل ومجلدات أدلة متفرّقة"
+msgstr ""
+"Compliance should not live in disparate spreadsheets, emails, and document "
+"folders"
+
+#: templates/core/landing.html:356
+#| msgid ""
+#| "تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف"
+#| " المؤسسة فعليًا قبل التدقيق. تجمع 1SaudiCyber هذه الدورة في مسار واحد متّصل."
+msgid ""
+"تتوزّع الضوابط والأدلة والملاحظات بين فرق وأدوات مختلفة، فيصعب معرفة أين تقف"
+" المؤسسة فعليًا قبل التدقيق. تجمع Cyber-5 هذه الدورة في مسار واحد متّصل."
+msgstr ""
+"Controls, evidence, and notes are spread across different teams and tools, "
+"making it hard to know where the organization actually stands before an "
+"audit. Cyber-5 consolidates this cycle into a single connected workflow."
+
+#: templates/core/landing.html:359 templates/core/landing.html:386
+msgid "التقييم"
+msgstr "Assessment"
+
+#: templates/core/landing.html:371
+msgid "المراقبة المستمرة"
+msgstr "Continuous Monitoring"
+
+#: templates/core/landing.html:380
+msgid "القدرات الأساسية"
+msgstr "Core Capabilities"
+
+#: templates/core/landing.html:381
+msgid "كل ما تحتاجه لإدارة الامتثال في مكان واحد"
+msgstr "Everything you need to manage compliance in one place."
+
+#: templates/core/landing.html:386
+msgid "تحديد المتطلبات المنطبقة وقياس وضع الجاهزية الحالي للمؤسسة."
+msgstr ""
+"Identify applicable requirements and measure the organization's current "
+"readiness."
+
+#: templates/core/landing.html:390
+msgid "إدارة الضوابط"
+msgstr "Controls Management"
+
+#: templates/core/landing.html:390
+msgid "متابعة الضوابط عبر الأطر المطبّقة من مساحة عمل واحدة موحّدة."
+msgstr ""
+"Track controls across applied frameworks from a single unified workspace."
+
+#: templates/core/landing.html:394
+msgid "رفع الأدلة وتنظيمها ومراجعتها وربطها بالضوابط ذات العلاقة."
+msgstr "Upload, organize, review, and link evidence to related controls."
+
+#: templates/core/landing.html:398
+msgid "الفجوات والمعالجة"
+msgstr "Gaps and Remediation"
+
+#: templates/core/landing.html:398
+msgid "تحديد الفجوات وترتيب أولويات الملاحظات ومتابعة خطط المعالجة."
+msgstr "Identify gaps, prioritize findings, and track remediation plans."
+
+#: templates/core/landing.html:402
+msgid "تجهيز الضوابط والأدلة والملاحظات لمسار مراجعة المدقّق."
+msgstr ""
+"Prepare controls, evidence, and findings for the auditor review workflow."
+
+#: templates/core/landing.html:406
+msgid "الحفاظ على الوضوح مع تغيّر وضع الجاهزية عبر الوقت."
+msgstr "Maintain clarity as readiness evolves over time."
+
+#: templates/core/landing.html:416
+msgid "ربط الأطر"
+msgstr "Link Frameworks"
+
+#: templates/core/landing.html:417
+msgid "متطلبات متداخلة، مربوطة عبر الأطر"
+msgstr "Overlapping requirements, linked across frameworks."
+
+#: templates/core/landing.html:418
+msgid ""
+"تُربط الضوابط المتكافئة بين NCA وSABIC، فتظهر المتطلبات المتشابهة في مكان "
+"واحد وتقلّ ازدواجية العمل عند تغطية أكثر من إطار."
+msgstr ""
+"Equivalent controls between NCA and SABIC are linked so similar requirements"
+" appear in one place, reducing duplicated work when covering multiple "
+"frameworks."
+
+#: templates/core/landing.html:419
+msgid ""
+"الربط يوضّح التكافؤ بين الضوابط؛ والقرار في كفاية الأدلة لكل ضابط يبقى "
+"للمراجع المختص."
+msgstr ""
+"Links clarify control equivalence; the decision on the adequacy of evidence "
+"for each control remains with the designated reviewer."
+
+#: templates/core/landing.html:427
+msgid "ضابط متكافئ"
+msgstr "Equivalent Control"
+
+#: templates/core/landing.html:437
+msgid "الذكاء الاصطناعي"
+msgstr "Artificial Intelligence"
+
+#: templates/core/landing.html:438
+msgid "تحليل مدعوم بالذكاء الاصطناعي — مساعِد، لا قرار"
+msgstr "AI-assisted analysis — an assistant, not a decision-maker."
+
+#: templates/core/landing.html:439
+msgid ""
+"يساعد الذكاء الاصطناعي فرق الامتثال والمدقّقين على العمل بأسرع، مع بقاء "
+"القرار النهائي للإنسان."
+msgstr ""
+"AI helps compliance teams and auditors work faster, with the final decision "
+"remaining with humans."
+
+#: templates/core/landing.html:441
+msgid "تحليل استشاري للأدلة المرفوعة"
+msgstr "Advisory analysis of uploaded evidence"
+
+#: templates/core/landing.html:443
+msgid "شرح الملاحظات واقتراح خطوات تالية"
+msgstr "Explain findings and propose next steps"
+
+#: templates/core/landing.html:445 templates/core/landing.html:492
+#: templates/onboarding/welcome.html:90
+msgid "مراجعة المدقّق"
+msgstr "Auditor review"
+
+#: templates/core/landing.html:449
+msgid "حدود واضحة"
+msgstr "Clear boundaries"
+
+#: templates/core/landing.html:451
+msgid "يدعم قرار الإنسان ولا يحلّ محلّه."
+msgstr "Supports human decision-making and does not replace it."
+
+#: templates/core/landing.html:452
+msgid "لا يمثّل موافقة أو اعتمادًا من أي جهة تنظيمية."
+msgstr ""
+"Does not represent approval or endorsement by any regulatory authority."
+
+#: templates/core/landing.html:453
+msgid "لا يضمن الامتثال ولا يُغني عن مراجعة المدقّق المختص."
+msgstr ""
+"Does not guarantee compliance and is not a substitute for review by a "
+"qualified auditor."
+
+#: templates/core/landing.html:454
+msgid ""
+"يخضع لسياسة سيادة البيانات: لا تُرسل بيانات العميل خارجيًا إلا عند التفعيل "
+"الصريح."
+msgstr ""
+"Subject to the data sovereignty policy: customer data is not sent externally"
+" except when explicitly enabled."
+
+#: templates/core/landing.html:465
+msgid "مسار الامتثال في خمس خطوات"
+msgstr "The compliance journey in five steps"
+
+#: templates/core/landing.html:472
+msgid "عرِّف مؤسستك"
+msgstr "Define your organization"
+
+#: templates/core/landing.html:473
+msgid "أدخل بيانات المؤسسة وسياق الامتثال."
+msgstr "Enter organization details and compliance context."
+
+#: templates/core/landing.html:477
+msgid "حدّد الأطر والنطاق"
+msgstr "Define frameworks and scope"
+
+#: templates/core/landing.html:478
+msgid "تحديد الأطر والمتطلبات المنطبقة على مؤسستك."
+msgstr "Identify frameworks and requirements applicable to your organization."
+
+#: templates/core/landing.html:482
+msgid "قيّم الضوابط وارفع الأدلة"
+msgstr "Assess controls and upload evidence"
+
+#: templates/core/landing.html:483
+msgid "تقييم وضع الجاهزية وربط الأدلة بالضوابط."
+msgstr "Assess readiness and link evidence to controls."
+
+#: templates/core/landing.html:487
+msgid "حلّل الفجوات وعالِجها"
+msgstr "Analyze gaps and remediate them"
+
+#: templates/core/landing.html:488
+msgid "تحليل الفجوات وترتيب أولويات المعالجة ومتابعتها."
+msgstr "Analyze gaps, prioritize remediation, and track progress."
+
+#: templates/core/landing.html:493
+msgid "القرار النهائي للمدقّق، مع جاهزية للمراقبة المستمرة."
+msgstr "Auditor's final decision, ready for continuous monitoring."
+
+#: templates/core/landing.html:504
+msgid "الأمان أولًا"
+msgstr "Security first"
+
+#: templates/core/landing.html:505
+msgid "مبنية مع مراعاة الأمان"
+msgstr "Built with security in mind"
+
+#: templates/core/landing.html:506
+msgid "ضوابط وصول وحماية للبيانات مطبّقة في المنصّة."
+msgstr "Access and data protection controls applied on the platform."
+
+#: templates/core/landing.html:509
+msgid "مصادقة ثنائية (MFA)"
+msgstr "Two-Factor Authentication (MFA)"
+
+#: templates/core/landing.html:509
+msgid "طبقة تحقّق إضافية عند تسجيل الدخول."
+msgstr "An additional verification layer at login."
+
+#: templates/core/landing.html:510
+msgid "صلاحيات حسب الدور"
+msgstr "Role-based Permissions"
+
+#: templates/core/landing.html:510
+msgid "وصول مقيّد بحسب دور المستخدم."
+msgstr "Access restricted by user role."
+
+#: templates/core/landing.html:511
+msgid "عزل بيانات المؤسسات"
+msgstr "Organizational Data Isolation"
+
+#: templates/core/landing.html:511
+msgid "بيانات كل مؤسسة معزولة عن غيرها."
+msgstr "Each organization's data is isolated from others."
+
+#: templates/core/landing.html:512
+msgid "سجلّ تدقيق"
+msgstr "Audit Log"
+
+#: templates/core/landing.html:512
+msgid "تسجيل الإجراءات الحسّاسة للمراجعة."
+msgstr "Record sensitive actions for review."
+
+#: templates/core/landing.html:513
+msgid "تخزين خاص للأدلة"
+msgstr "Dedicated Evidence Storage"
+
+#: templates/core/landing.html:513
+msgid "ملفات الأدلة تُخدَم عبر تنزيل مُصرّح فقط."
+msgstr "Evidence files are served via authorized download only."
+
+#: templates/core/landing.html:514
+msgid "نزع صلاحية المدقّق"
+msgstr "Revoke Auditor Access"
+
+#: templates/core/landing.html:514
+msgid "إنهاء وصول المدقّق فور تعليقه أو رفضه."
+msgstr "Terminate auditor access immediately upon suspension or revocation."
+
+#: templates/core/landing.html:522
+msgid "جاهزون لرفع جاهزية الامتثال؟"
+msgstr "Ready to raise your compliance readiness?"
+
+#: templates/core/landing.html:523
+msgid "ابدأ بتنظيم ضوابطك وأدلّتك وإعداد جاهزيتك للمراجعة."
+msgstr "Start organizing your controls and evidence to prepare for review."
+
+#: templates/core/landing.html:542
+msgid "منصّة إدارة جاهزية الامتثال السيبراني في المملكة العربية السعودية."
+msgstr ""
+"The cybersecurity compliance readiness management platform in the Kingdom of"
+" Saudi Arabia."
+
+#: templates/core/landing.html:548
+msgid "القدرات"
+msgstr "Capabilities"
+
+#: templates/core/landing.html:553
+msgid "الشركة والقانوني"
+msgstr "Company & Legal"
+
+#: templates/core/landing.html:554
+msgid "الشركة"
+msgstr "Company"
+
+#: templates/core/landing.html:561 templates/core/landing.html:562
+msgid "الحساب"
+msgstr "Account"
+
+#: templates/core/landing.html:572 templates/onboarding/auth_base.html:197
+msgid "جميع الحقوق محفوظة."
+msgstr "All rights reserved."
+
+#: templates/core/landing.html:580
+msgid "الخصوصية"
+msgstr "Privacy"
+
+#: templates/core/landing.html:582
+msgid "الشروط"
+msgstr "Terms"
+
+#: templates/core/login.html:16
+msgid "مرحبًا بعودتك"
+msgstr "Welcome back"
+
+#: templates/core/login.html:17
+msgid "سجّل الدخول إلى لوحة الامتثال الخاصة بك"
+msgstr "Sign in to your compliance dashboard"
+
+#: templates/core/login.html:36
+#| msgid "تأكيد كلمة المرور"
+msgid "نسيت كلمة المرور؟"
+msgstr "Forgot your password?"
+
+#: templates/core/login.html:43
+msgid "ليس لديك حساب؟"
+msgstr "Don't have an account?"
+
+#: templates/core/password_reset.html:3 templates/core/password_reset.html:16
+#| msgid "إظهار كلمة المرور"
+msgid "إعادة تعيين كلمة المرور"
+msgstr "Reset Password"
+
+#: templates/core/password_reset.html:18
+msgid ""
+"أدخل بريد حسابك وسنرسل لك تعليمات إعادة التعيين إذا كان الحساب موجودًا."
+msgstr ""
+"Enter your account email and we'll send reset instructions if the account "
+"exists."
+
+#: templates/core/password_reset.html:25
+#| msgid "جارٍ حفظ البيانات..."
+msgid "جارٍ الإرسال..."
+msgstr "Sending..."
+
+#: templates/core/password_reset.html:29
+msgid "إرسال تعليمات إعادة التعيين"
+msgstr "Send reset instructions"
+
+#: templates/core/password_reset.html:34
+#: templates/core/password_reset_done.html:23
+#: templates/core/verify_email_otp.html:77
 msgid "العودة لتسجيل الدخول"
 msgstr "Back to sign in"
 
+#: templates/core/password_reset_complete.html:3
+#: templates/core/password_reset_complete.html:19
+#| msgid "تأكيد كلمة المرور"
+msgid "تم تغيير كلمة المرور"
+msgstr "Password changed"
 
+#: templates/core/password_reset_complete.html:21
+#| msgid "تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي."
+msgid "تم تحديث كلمة مرورك بنجاح. يمكنك الآن تسجيل الدخول."
+msgstr "Your password has been updated successfully. You can now sign in."
+
+#: templates/core/password_reset_confirm.html:3
+#: templates/core/password_reset_confirm.html:17
+#| msgid "تأكيد كلمة المرور"
+msgid "تعيين كلمة مرور جديدة"
+msgstr "Set a new password"
+
+#: templates/core/password_reset_confirm.html:18
+msgid "اختر كلمة مرور قوية جديدة لحسابك."
+msgstr "Choose a new strong password for your account."
+
+#: templates/core/password_reset_confirm.html:24
+#: templates/core/password_reset_confirm.html:95
+#| msgid "جارٍ حفظ البيانات..."
+msgid "جارٍ الحفظ..."
+msgstr "Saving..."
+
+#: templates/core/password_reset_confirm.html:35
+#: templates/core/password_reset_confirm.html:57
+#| msgid "إخفاء كلمة المرور"
+msgid "إظهار/إخفاء كلمة المرور"
+msgstr "Show/Hide password"
+
+#: templates/core/password_reset_confirm.html:45
+#| msgid "اختر هدفًا واحدًا على الأقل."
+msgid "٨ أحرف على الأقل"
+msgstr "At least 8 characters"
+
+#: templates/core/password_reset_confirm.html:46
+msgid "ليست أرقامًا فقط"
+msgstr "Not just numbers"
+
+#: templates/core/password_reset_confirm.html:47
+msgid "تحتوي أحرفًا وأرقامًا"
+msgstr "Contains letters and numbers"
+
+#: templates/core/password_reset_confirm.html:66
+#| msgid "تأكيد كلمة المرور"
+msgid "تغيير كلمة المرور"
+msgstr "Change Password"
+
+#: templates/core/password_reset_confirm.html:89
+#| msgid "كلمة المرور"
+msgid "كلمتا المرور متطابقتان"
+msgstr "Passwords match"
+
+#: templates/core/password_reset_confirm.html:89
+msgid "كلمتا المرور غير متطابقتين"
+msgstr "Passwords do not match"
+
+#: templates/core/password_reset_confirm.html:103
+#| msgid "روابط الصفحة"
+msgid "الرابط غير صالح"
+msgstr "Invalid link"
+
+#: templates/core/password_reset_confirm.html:105
+msgid "رابط إعادة التعيين غير صالح أو انتهت صلاحيته. اطلب رابطًا جديدًا."
+msgstr "The reset link is invalid or has expired. Request a new link."
+
+#: templates/core/password_reset_confirm.html:107
+#| msgid "طلب التسجيل"
+msgid "طلب رابط جديد"
+msgstr "Request a new link"
+
+#: templates/core/password_reset_done.html:3
+#| msgid "مراحل التسجيل"
+msgid "تم إرسال التعليمات"
+msgstr "Instructions sent"
+
+#: templates/core/password_reset_done.html:19
+#| msgid "تأكيد بريدك الإلكتروني"
+msgid "تحقّق من بريدك الإلكتروني"
+msgstr "Check your email"
+
+#: templates/core/password_reset_done.html:21
+msgid ""
+"إذا كان هناك حساب مرتبط بهذا البريد، فقد أرسلنا إليه تعليمات إعادة تعيين "
+"كلمة المرور."
+msgstr ""
+"If an account exists for this email, we've sent password reset instructions "
+"to it."
+
+#: templates/core/privacy.html:8 templates/core/terms.html:8
+msgid "آخر تحديث:"
+msgstr "Last updated:"
+
+#: templates/core/verify_email_otp.html:3
+#: templates/onboarding/_setup_sidebar.html:16
+#: templates/onboarding/_setup_stepper.html:18
+msgid "تأكيد البريد الإلكتروني"
+msgstr "Email confirmation"
+
+#: templates/core/verify_email_otp.html:38
+msgid "تأكيد بريدك الإلكتروني"
+msgstr "Confirm your email"
+
+#: templates/core/verify_email_otp.html:39
+msgid "أرسلنا رمز تحقّق مكوّنًا من 6 أرقام لإكمال إنشاء حساب منشأتك."
+msgstr ""
+"We sent a 6-digit verification code to complete creating your organization "
+"account."
+
+#: templates/core/verify_email_otp.html:44
+msgid "نسخ البريد"
+msgstr "Copy email"
+
+#: templates/core/verify_email_otp.html:56
+msgid "رمز التحقق"
+msgstr "Verification code"
+
+#: templates/core/verify_email_otp.html:59
+#: templates/onboarding/welcome.html:59
+msgid "تأكيد الرمز"
+msgstr "Confirm code"
+
+#: templates/core/verify_email_otp.html:64
+msgid ""
+"لم تجد الرسالة؟ تحقّق من مجلد الرسائل غير المرغوب فيها (Spam) أو العروض "
+"الترويجية. الرمز صالح لمدة 10 دقائق، ولديك 5 محاولات."
+msgstr ""
+"Can't find the message? Check your Spam or Promotions folder. The code is "
+"valid for 10 minutes and you have 5 attempts."
+
+#: templates/core/verify_email_otp.html:68
+msgid "لم يصلك الرمز؟"
+msgstr "Didn't receive the code?"
+
+#: templates/core/verify_email_otp.html:72
+msgid "إعادة إرسال الرمز"
+msgstr "Resend code"
+
+#: templates/core/verify_email_otp.html:98
 msgid "يمكنك إعادة الإرسال خلال"
 msgstr "You can resend in"
 
+#: templates/onboarding/_au_pw_field.html:8
+#: templates/onboarding/_au_pw_field.html:9
+msgid "إظهار كلمة المرور"
+msgstr "Show password"
 
+#: templates/onboarding/_au_pw_field.html:9
+msgid "إخفاء كلمة المرور"
+msgstr "Hide password"
+
+#: templates/onboarding/_setup_sidebar.html:6
+#| msgid "تقدّم الأطر"
+msgid "تقدّم الإعداد"
+msgstr "Setup progress"
+
+#: templates/onboarding/_setup_sidebar.html:12
+#| msgid "إنشاء الحساب"
+msgid "١. إعداد الحساب"
+msgstr "1. Account setup"
+
+#: templates/onboarding/_setup_sidebar.html:14
+#: templates/onboarding/_setup_stepper.html:8
+#: templates/onboarding/_stepper.html:8 templates/onboarding/_stepper.html:32
+#: templates/onboarding/registration_complete.html:45
+msgid "نوع الحساب"
+msgstr "Account type"
+
+#: templates/onboarding/_setup_sidebar.html:15
+#: templates/onboarding/_setup_stepper.html:13
+#: templates/onboarding/_stepper.html:13 templates/onboarding/_stepper.html:32
+msgid "إنشاء الحساب"
+msgstr "Create account"
+
+#: templates/onboarding/_setup_sidebar.html:21
+#| msgid "إعداد المنشأة"
+msgid "٢. إعداد المنشأة"
+msgstr "2. Organization setup"
+
+#: templates/onboarding/_setup_sidebar.html:23
+#| msgid "أدخل تفاصيل منشأتك الأساسية."
+msgid "بيانات المنشأة الأساسية"
+msgstr "Basic organization information"
+
+#: templates/onboarding/_setup_sidebar.html:30
+#| msgid "منصة الامتثال السيبراني"
+msgid "٣. نطاق الامتثال والتصنيف"
+msgstr "3. Compliance scope and classification"
+
+#: templates/onboarding/_setup_sidebar.html:33
+#: templates/onboarding/welcome.html:84
+#| msgid "التصنيف"
+msgid "ملف التصنيف"
+msgstr "Classification profile"
+
+#: templates/onboarding/_setup_sidebar.html:34
+#| msgid "جاهزية الامتثال السيبراني المستمرة"
+msgid "نتيجة النطاق والأطر المنطبقة"
+msgstr "Scope and applicable frameworks result"
+
+#: templates/onboarding/_setup_sidebar.html:39
+#: templates/onboarding/_setup_stepper.html:28
+#: templates/onboarding/_setup_stepper.html:37
+#| msgid "اكتمال التسجيل"
+msgid "إكمال الإعداد"
+msgstr "Complete setup"
+
+#: templates/onboarding/_setup_sidebar.html:47
+#: templates/onboarding/welcome.html:106
+#| msgid "تحتاج بيانات إضافية"
+msgid "تحتاج مساعدة؟"
+msgstr "Need help?"
+
+#: templates/onboarding/_setup_sidebar.html:48
+#: templates/onboarding/welcome.html:107
+#| msgid "هذا التحليل لا يقرر الامتثال أو عدم الامتثال."
+msgid "فريق الدعم جاهز لمساعدتك في إعداد ملف الامتثال."
+msgstr "Our support team is ready to help you set up your compliance profile."
+
+#: templates/onboarding/_setup_stepper.html:3
+#| msgid "مراجعة الإدارة"
+msgid "مراحل الإعداد"
+msgstr "Setup stages"
+
+#: templates/onboarding/_setup_stepper.html:35
+#, python-format
+#| msgid "الخطوة %(step)s من 4"
+msgid "الخطوة %(step)s من 5"
+msgstr "Step %(step)s of 5"
+
+#: templates/onboarding/_stepper.html:3
+msgid "مراحل التسجيل"
+msgstr "Registration stages"
+
+#: templates/onboarding/_stepper.html:18 templates/onboarding/_stepper.html:32
+msgid "التحقق"
+msgstr "Verification"
+
+#: templates/onboarding/_stepper.html:23 templates/onboarding/_stepper.html:32
+#: templates/onboarding/registration_complete.html:3
+msgid "اكتمال التسجيل"
+msgstr "Registration complete"
+
+#: templates/onboarding/_stepper.html:30
+#, python-format
+msgid "الخطوة %(step)s من 4"
+msgstr "Step %(step)s of 4"
+
+#: templates/onboarding/auth_base.html:147
+msgid "منصة الامتثال السيبراني"
+msgstr "Cybersecurity Compliance Platform"
+
+#: templates/onboarding/auth_base.html:164
+#| msgid "اسم المنشأة"
+msgid "مسؤول المنشأة"
+msgstr "Facility Administrator"
+
+#: templates/onboarding/register.html:3
+msgid "تسجيل شركة"
+msgstr "Company Registration"
+
+#: templates/onboarding/register.html:44
+msgid "ابدأ رحلة الامتثال السيبراني بثقة"
+msgstr "Start your cybersecurity compliance journey with confidence"
+
+#: templates/onboarding/register.html:45
+#| msgid ""
+#| "انضم إلى 1SaudiCyber لإدارة الامتثال السيبراني لمنشأتك بكفاءة وموثوقية وفق "
+#| "الأطر الوطنية المدعومة."
+msgid ""
+"انضم إلى Cyber-5 لإدارة الامتثال السيبراني لمنشأتك بكفاءة وموثوقية وفق الأطر"
+" الوطنية المدعومة."
+msgstr ""
+"Join Cyber-5 to manage your establishment's cybersecurity compliance "
+"efficiently and reliably, aligned with supported national frameworks."
+
+#: templates/onboarding/register.html:47
+msgid "إدارة متطلبات الأطر التنظيمية بسهولة"
+msgstr "Manage regulatory framework requirements with ease"
+
+#: templates/onboarding/register.html:48
+msgid "توحيد الأدلة وتقليل تكرار العمل"
+msgstr "Consolidate evidence and reduce duplicate work"
+
+#: templates/onboarding/register.html:49
+msgid "رؤى ذكية ومساعدة بالذكاء الاصطناعي"
+msgstr "Smart insights and AI assistance"
+
+#: templates/onboarding/register.html:50
+msgid "أمن وخصوصية على مستوى المؤسسات"
+msgstr "Enterprise-grade security and privacy"
+
+#: templates/onboarding/register.html:61
+msgid "بياناتك آمنة ومشفرة وفق أعلى المعايير"
+msgstr "Your data is secure and encrypted to the highest standards."
+
+#: templates/onboarding/register.html:68
+#| msgid "سجّل شركتك في 1SaudiCyber"
+msgid "سجّل شركتك في Cyber-5"
+msgstr "Register your company with Cyber-5"
+
+#: templates/onboarding/register.html:69
+msgid "أكمل الخطوات التالية لبدء مسار الامتثال. الحقول المعلّمة بـ * مطلوبة."
+msgstr ""
+"Complete the steps below to begin your compliance journey. Fields marked "
+"with * are required."
+
+#: templates/onboarding/register.html:79 templates/onboarding/register.html:98
+msgid "بيانات المستخدم"
+msgstr "User details"
+
+#: templates/onboarding/register.html:80
+#: templates/onboarding/register.html:119
+msgid "بيانات الشركة"
+msgstr "Company details"
+
+#: templates/onboarding/register.html:81
+#: templates/onboarding/register.html:138
+msgid "أهداف الامتثال"
+msgstr "Compliance objectives"
+
+#: templates/onboarding/register.html:86
+msgid "يرجى تصحيح الحقول المحددة ثم المتابعة."
+msgstr "Please correct the highlighted fields and then proceed."
+
+#: templates/onboarding/register.html:91
+msgid "جارٍ حفظ البيانات..."
+msgstr "Saving data..."
+
+#: templates/onboarding/register.html:114
+#: templates/onboarding/register.html:132
+msgid "التالي"
+msgstr "Next"
+
+#: templates/onboarding/register.html:139
+msgid "اختر هدفًا واحدًا على الأقل."
+msgstr "Select at least one objective."
+
+#: templates/onboarding/register.html:153
+#: templates/onboarding/register.html:160
+msgid "إنشاء الحساب والمتابعة"
+msgstr "Create account and continue"
+
+#: templates/onboarding/register.html:168 templates/onboarding/start.html:54
+msgid "لديك حساب بالفعل؟"
+msgstr "Already have an account?"
+
+#: templates/onboarding/registration_complete.html:36
 msgid "تم التحقق بنجاح"
-msgstr "Verified successfully"
+msgstr "Successfully verified"
 
+#: templates/onboarding/registration_complete.html:37
+msgid ""
+"تم تأكيد بريدك الإلكتروني وإنشاء حساب منشأتك بنجاح. الخطوة التالية: استكمال "
+"إعداد المنشأة لبدء رحلة الامتثال."
+msgstr ""
+"Your email has been confirmed and your organization account has been created"
+" successfully. Next: complete your organization setup to begin the "
+"compliance journey."
 
-msgid "تم تأكيد بريدك الإلكتروني وإنشاء حساب منشأتك بنجاح. الخطوة التالية: استكمال إعداد المنشأة لبدء رحلة الامتثال."
-msgstr "Your email is confirmed and your organization account is created. Next: complete your organization setup to start the compliance journey."
-
-
+#: templates/onboarding/registration_complete.html:42
 msgid "حساب المنشأة جاهز"
-msgstr "Organization account ready"
+msgstr "Organization account is ready"
 
-
+#: templates/onboarding/registration_complete.html:43
 msgid "اسم المنشأة"
 msgstr "Organization name"
 
+#: templates/onboarding/registration_complete.html:45
+#: templates/onboarding/start.html:31
+msgid "حساب منشأة"
+msgstr "Organization account"
 
+#: templates/onboarding/registration_complete.html:46
 msgid "تاريخ الإنشاء"
-msgstr "Created on"
+msgstr "Creation date"
 
-
+#: templates/onboarding/registration_complete.html:47
 msgid "حالة التحقق"
 msgstr "Verification status"
 
-
+#: templates/onboarding/registration_complete.html:47
 msgid "تم التحقق"
 msgstr "Verified"
 
-
+#: templates/onboarding/registration_complete.html:52
 msgid "ما هي الخطوة التالية؟"
-msgstr "What's next?"
+msgstr "What's the next step?"
 
-
+#: templates/onboarding/registration_complete.html:54
 msgid "إعداد معلومات المنشأة"
-msgstr "Set up organization details"
+msgstr "Set up organization information"
 
-
+#: templates/onboarding/registration_complete.html:54
 msgid "أدخل تفاصيل منشأتك الأساسية."
 msgstr "Enter your organization's basic details."
 
-
+#: templates/onboarding/registration_complete.html:55
 msgid "تحديد نطاق الامتثال"
 msgstr "Define compliance scope"
 
-
+#: templates/onboarding/registration_complete.html:55
 msgid "حدّد الأطر والقطاعات ونطاق التقييم."
-msgstr "Choose frameworks, sectors, and assessment scope."
+msgstr "Specify frameworks, sectors, and assessment scope."
 
-
+#: templates/onboarding/registration_complete.html:56
 msgid "دعوة الفريق"
-msgstr "Invite your team"
+msgstr "Invite the team"
 
-
+#: templates/onboarding/registration_complete.html:56
 msgid "أضف أعضاء فريقك وحدّد صلاحياتهم."
-msgstr "Add team members and set their permissions."
+msgstr "Add your team members and set their permissions."
 
-
+#: templates/onboarding/registration_complete.html:58
 msgid "متابعة إعداد المنشأة"
-msgstr "Continue to organization setup"
+msgstr "Continue organization setup"
 
-
+#: templates/onboarding/registration_complete.html:60
 msgid "سأكمل لاحقًا من لوحة التحكم"
-msgstr "I'll continue later from the dashboard"
+msgstr "I'll complete this later from the dashboard"
 
-msgid "يرجى اختيار هدف امتثال واحد على الأقل (NCA أو SABIC)."
-msgstr "Please select at least one compliance goal (NCA or SABIC)."
+#: templates/onboarding/start.html:3 templates/onboarding/start.html:23
+#| msgid "إنشاء حساب فردي"
+msgid "إنشاء حساب جديد"
+msgstr "Create a new account"
+
+#: templates/onboarding/start.html:24
+#| msgid "اختر نوع الحساب للمتابعة."
+msgid "اختر نوع الحساب المناسب للبدء في استخدام منصّة Cyber-5."
+msgstr ""
+"Choose the appropriate account type to start using the Cyber-5 platform."
+
+#: templates/onboarding/start.html:32
+#| msgid "منصّة واحدة لمتطلبات الامتثال السيبراني في السوق السعودي"
+msgid ""
+"لإدارات الامتثال والمؤسسات لتقييم الامتثال السيبراني وإدارته وفق الأطر "
+"المدعومة."
+msgstr ""
+"For compliance departments and organizations to assess and manage "
+"cybersecurity compliance according to supported frameworks."
+
+#: templates/onboarding/start.html:33
+msgid "إنشاء حساب منشأة"
+msgstr "Create organization account"
+
+#: templates/onboarding/start.html:38
+msgid "حساب فردي"
+msgstr "Individual account"
+
+#: templates/onboarding/start.html:39
+msgid "للمدقّقين والمستشارين والأفراد للتعاون مع المنشآت في مراجعة الامتثال."
+msgstr ""
+"For auditors, consultants, and individuals to collaborate with organizations"
+" on compliance reviews."
+
+#: templates/onboarding/start.html:40
+msgid "إنشاء حساب فردي"
+msgstr "Create individual account"
+
+#: templates/onboarding/start.html:48
+#| msgid "البيانات الناقصة"
+msgid "بياناتك آمنة معنا"
+msgstr "Your data is safe with us."
+
+#: templates/onboarding/start.html:49
+msgid "نلتزم بأعلى معايير الأمان لحماية بياناتك ومعلومات منشأتك."
+msgstr ""
+"We adhere to the highest security standards to protect your data and your "
+"organization's information."
+
+#: templates/onboarding/welcome.html:3
+msgid "التهيئة"
+msgstr "Setup"
+
+#: templates/onboarding/welcome.html:44
+#| msgid "مرحبًا بعودتك"
+msgid "مرحبًا بك في Cyber-5"
+msgstr "Welcome to Cyber-5"
+
+#: templates/onboarding/welcome.html:45
+#, python-format
+msgid "أهلًا، %(name)s"
+msgstr "Hello, %(name)s"
+
+#: templates/onboarding/welcome.html:46
+msgid ""
+"تم إنشاء حساب منشأتك بنجاح. ابدأ بملف التصنيف لتحديد الأطر المنطبقة، "
+"وستُرشدك لوحة الرحلة خطوة بخطوة حتى تقرير الجاهزية."
+msgstr ""
+"Your organization account has been created successfully. Start the "
+"classification profile to identify applicable frameworks, and the Journey "
+"dashboard will guide you step-by-step to the readiness report."
+
+#: templates/onboarding/welcome.html:54
+#| msgid "تأكيد بريدك الإلكتروني"
+msgid "أكّد بريدك الإلكتروني للمتابعة"
+msgstr "Confirm your email to continue."
+
+#: templates/onboarding/welcome.html:55
+#, python-format
+#| msgid "أرسلنا رمزًا من 6 أرقام إلى"
+msgid "أرسلنا رمز تحقّق من 6 أرقام إلى %(email)s."
+msgstr "We've sent a 6-digit verification code to %(email)s."
+
+#: templates/onboarding/welcome.html:56
+#| msgid "حالة التحقق"
+msgid "جارٍ التحقق..."
+msgstr "Verifying..."
+
+#: templates/onboarding/welcome.html:61
+#| msgid "إعادة إرسال الرمز"
+msgid "جارٍ إرسال الرمز..."
+msgstr "Sending code..."
+
+#: templates/onboarding/welcome.html:63
+#| msgid "يمكنك إعادة الإرسال خلال"
+msgid "لم يصلك الرمز؟ إعادة الإرسال"
+msgstr "Didn't receive the code? Resend"
+
+#: templates/onboarding/welcome.html:68
+msgid "جاهز للبدء"
+msgstr "Ready to start"
+
+#: templates/onboarding/welcome.html:69
+#| msgid "تحديد الأطر والمتطلبات المنطبقة على مؤسستك."
+msgid "تم تأكيد بريدك. ابدأ ملف التصنيف لتحديد الأطر المنطبقة على منشأتك."
+msgstr ""
+"Your email has been confirmed. Start the classification profile to determine"
+" the frameworks applicable to your organization."
+
+#: templates/onboarding/welcome.html:71
+#| msgid "إكمال ملف التصنيف"
+msgid "ابدأ ملف التصنيف"
+msgstr "Start classification profile"
+
+#: templates/onboarding/welcome.html:72
+#| msgid "العودة إلى لوحة الرحلة"
+msgid "جارٍ تجهيز لوحة الرحلة..."
+msgstr "Preparing the Journey dashboard..."
+
+#: templates/onboarding/welcome.html:74
+#| msgid "العودة إلى لوحة الرحلة"
+msgid "الانتقال إلى لوحة الرحلة"
+msgstr "Go to the Journey Dashboard"
+
+#: templates/onboarding/welcome.html:81
+#| msgid "مراحل التسجيل"
+msgid "مراحل رحلتك"
+msgstr "Your Journey Stages"
+
+#: templates/onboarding/welcome.html:82
+#| msgid ""
+#| "من التسجيل إلى تقارير الجاهزية والامتثال — رحلة منظّمة وواضحة خطوة بخطوة."
+msgid "من التصنيف حتى تقرير الجاهزية — ثمانِ مراحل موجّهة."
+msgstr "From classification to the readiness report — eight guided stages."
+
+#: templates/onboarding/welcome.html:84
+#| msgid "ابدأ رحلة الامتثال السيبراني بثقة"
+msgid "أجب عن أسئلة التصنيف لحساب الأطر المنطبقة."
+msgstr "Answer classification questions to determine applicable frameworks."
+
+#: templates/onboarding/welcome.html:85
+#| msgid "مراجعة الإدارة"
+msgid "مراجعة الأطر"
+msgstr "Review Frameworks"
+
+#: templates/onboarding/welcome.html:85
+#| msgid "الأطر المقترحة"
+msgid "اطّلع على الأطر المقترحة لمنشأتك."
+msgstr "View frameworks proposed for your organization."
+
+#: templates/onboarding/welcome.html:86
+#| msgid "العناصر الناقصة"
+msgid "اعتماد النطاق"
+msgstr "Approve Scope"
+
+#: templates/onboarding/welcome.html:86
+#| msgid "تحديد الأطر والمتطلبات المنطبقة على مؤسستك."
+msgid "اعتماد الأطر المنطبقة على منشأتك."
+msgstr "Approve frameworks applicable to your organization."
+
+#: templates/onboarding/welcome.html:87
+#| msgid "متابعة الضوابط عبر الأطر المطبّقة من مساحة عمل واحدة موحّدة."
+msgid "الضوابط الرسمية المنطبقة تحت الأطر المعتمدة."
+msgstr "Official controls applicable under the approved frameworks."
+
+#: templates/onboarding/welcome.html:88
+#| msgid "قائمة الجوال"
+msgid "قائمة الأدلة ورفعها"
+msgstr "Evidence List and Upload"
+
+#: templates/onboarding/welcome.html:88
+msgid "خطّط الأدلة وارفعها لكل ضابط."
+msgstr "Plan and upload evidence for each control."
+
+#: templates/onboarding/welcome.html:89
+#| msgid "تشغيل التحليل الاستشاري"
+msgid "التحليل الاستشاري"
+msgstr "Advisory Analysis"
+
+#: templates/onboarding/welcome.html:89
+#| msgid ""
+#| "هذا التحليل يساعد المدقق ولا يُعد قرارًا نهائيًا أو شهادة امتثال."
+msgid "تحليل مساعد للأدلة — لا يتّخذ قرار الامتثال."
+msgstr "Advisory analysis of evidence — does not make a compliance decision."
+
+#: templates/onboarding/welcome.html:90
+#| msgid "القرار النهائي للامتثال يتّخذه المدقّق"
+msgid "القرار النهائي للامتثال يتّخذه المدقّق."
+msgstr "The final compliance decision is made by the auditor."
+
+#: templates/onboarding/welcome.html:91
+#| msgid "قياس الجاهزية وتحديد الفجوات"
+msgid "تقارير الجاهزية وتحليل الفجوات."
+msgstr "Readiness reports and gap analysis."
+
+#: templates/onboarding/welcome.html:98
+msgid "نصائح للبداية"
+msgstr "Getting Started Tips"
+
+#: templates/onboarding/welcome.html:100
+msgid "جهّز أدلة ضوابطك (سياسات، إعدادات، لقطات) لرفعها لاحقًا."
+msgstr ""
+"Prepare your control evidence (policies, settings, screenshots) to upload "
+"later."
+
+#: templates/onboarding/welcome.html:101
+#| msgid "القرار النهائي للامتثال يتّخذه المدقّق"
+msgid "التحليل الآلي استشاري فقط — القرار النهائي يتّخذه المدقّق."
+msgstr ""
+"Automated analysis is advisory only — the final decision is made by the "
+"auditor."
+
+#: templates/onboarding/welcome.html:102
+msgid "يمكنك دعوة زملائك للعمل على الملف من إعدادات الفريق."
+msgstr "You can invite colleagues to work on the file from Team Settings."

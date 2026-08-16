@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "الصفحة غير موجودة" %} — Cyber-5{% endblock %}
+
+{% block content %}
+<section class="mx-auto flex min-h-[60vh] max-w-2xl items-center justify-center py-12 text-center" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
+  <div class="cx-card w-full p-8 sm:p-12">
+    <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full" style="background:var(--soft);color:var(--brand);">
+      <i class="fas fa-compass text-2xl" aria-hidden="true"></i>
+    </div>
+    <p class="mb-2 text-sm font-semibold" style="color:var(--brand);">404</p>
+    <h1 class="mb-3 text-2xl font-bold" style="color:var(--navy);">{% trans "الصفحة غير موجودة" %}</h1>
+    <p class="mx-auto mb-7 max-w-lg" style="color:var(--text2);">{% trans "قد يكون الرابط غير صحيح أو أن الصفحة نُقلت. يمكنك العودة إلى الصفحة الرئيسية أو تسجيل الدخول إلى حسابك." %}</p>
+    <div class="flex flex-wrap justify-center gap-3">
+      <a href="{% url 'core:landing' %}" class="cx-btn cx-btn-primary"><i class="fas fa-house" aria-hidden="true"></i>{% trans "العودة إلى الرئيسية" %}</a>
+      <a href="{% url 'core:login' %}" class="cx-btn cx-btn-secondary"><i class="fas fa-arrow-right-to-bracket" aria-hidden="true"></i>{% trans "تسجيل الدخول" %}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
