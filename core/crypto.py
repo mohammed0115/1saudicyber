@@ -1,13 +1,6 @@
-"""Symmetric encryption for secrets at rest (DD P1 — MFA secret was stored in plaintext).
+"""Encryption for MFA secrets with an independently rotatable Fernet key."""
+from __future__ import annotations
 
-A single Fernet key is derived from ``settings.SECRET_KEY`` so no new key material has to
-be provisioned. Values are stored with an ``enc:`` prefix; anything without the prefix is
-treated as legacy plaintext and passed through unchanged, so pre-existing TOTP secrets keep
-working and get upgraded to ciphertext the next time they are written.
-
-If SECRET_KEY is rotated, old ciphertext becomes undecryptable; decrypt_secret returns ''
-in that case (forcing a clean MFA re-enrolment) rather than raising.
-"""
 import base64
 import hashlib
 
@@ -16,28 +9,44 @@ from django.conf import settings
 _PREFIX = 'enc:'
 
 
-def _fernet():
+def _legacy_derived_key() -> str:
+    """Compatibility key for ciphertext produced before MFA_ENCRYPTION_KEY existed."""
+    return base64.urlsafe_b64encode(hashlib.sha256(settings.SECRET_KEY.encode()).digest()).decode()
+
+
+def _key_material() -> tuple[str, ...]:
+    """Return primary then fallbacks; development retains a deterministic compatibility key."""
+    primary = (getattr(settings, 'MFA_ENCRYPTION_KEY', '') or '').strip()
+    previous = tuple(getattr(settings, 'MFA_PREVIOUS_ENCRYPTION_KEYS', ()) or ())
+    if primary:
+        return (primary, *previous, _legacy_derived_key())
+    return (_legacy_derived_key(),)
+
+
+def _fernet(key: str):
     from cryptography.fernet import Fernet
-    key = base64.urlsafe_b64encode(hashlib.sha256(settings.SECRET_KEY.encode()).digest())
-    return Fernet(key)
+    return Fernet(key.encode())
 
 
 def encrypt_secret(plain):
-    """Encrypt a plaintext secret. Empty/None passes through unchanged."""
+    """Encrypt a non-empty MFA secret using the configured primary key."""
     if not plain:
         return plain
-    return _PREFIX + _fernet().encrypt(plain.encode()).decode()
+    return _PREFIX + _fernet(_key_material()[0]).encrypt(plain.encode()).decode()
 
 
 def decrypt_secret(value):
-    """Decrypt a stored value. Legacy plaintext (no prefix) is returned as-is;
-    undecryptable ciphertext returns '' rather than raising."""
+    """Decrypt current/previous ciphertext; preserve legacy plaintext for controlled migration."""
     if not value:
         return value
     if not value.startswith(_PREFIX):
-        return value  # legacy plaintext — backward compatible
+        return value
     from cryptography.fernet import InvalidToken
-    try:
-        return _fernet().decrypt(value[len(_PREFIX):].encode()).decode()
-    except (InvalidToken, ValueError, TypeError):
-        return ''
+
+    ciphertext = value[len(_PREFIX):].encode()
+    for key in _key_material():
+        try:
+            return _fernet(key).decrypt(ciphertext).decode()
+        except (InvalidToken, ValueError, TypeError):
+            continue
+    return ''

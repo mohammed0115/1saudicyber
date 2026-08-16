@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
+    <style nonce="{{ csp_nonce }}">
         /* ── Calm, government-grade shell tokens (aligned with the onboarding shell). ── */
         :root{
             /* Cyber-5 brand palette (calm royal blue + navy; migrated from green). */
@@ -45,7 +45,7 @@
         /* ── Palette unification: remap the darker gov-green content shades (600–900)
            to the calm brand so in-app screens match the onboarding/shell green. The
            light shades (50/100/200) are already calm and are intentionally kept. This
-           <style> loads after app.css, so equal-specificity rules win — no !important. ── */
+           <style nonce="{{ csp_nonce }}"> loads after app.css, so equal-specificity rules win — no !important. ── */
         .text-gov-green-600, .text-gov-green-700, .text-gov-green-800, .text-gov-green-900{ color:var(--brand); }
         .hover\:text-gov-green-700:hover, .hover\:text-gov-green-800:hover, .hover\:text-gov-green-900:hover{ color:var(--brand-h); }
         .bg-gov-green-500, .bg-gov-green-600, .bg-gov-green-700, .bg-gov-green-800, .bg-gov-green-900{ background-color:var(--brand); }
@@ -286,8 +286,8 @@
             <p style="color:#5b5c53;font-size:0.8rem;margin:6px 0 0;">يرجى الانتظار، قد تستغرق هذه الخطوة لحظات.</p>
         </div>
     </div>
-    <style>@keyframes ct-spin{to{transform:rotate(360deg)}}</style>
-    <script>
+    <style nonce="{{ csp_nonce }}">@keyframes ct-spin{to{transform:rotate(360deg)}}</style>
+    <script nonce="{{ csp_nonce }}">
     (function () {
         var overlay = document.getElementById('ct-busy-overlay');
         var msg = document.getElementById('ct-busy-msg');
@@ -312,6 +312,39 @@
                     overlay.style.display = 'none';
                     overlay.setAttribute('aria-hidden', 'true');
                 }, 2500);
+            });
+        });
+        document.querySelectorAll('[data-modal-show]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var modal = document.getElementById(button.getAttribute('data-modal-show'));
+                if (modal) { modal.classList.remove('hidden'); }
+            });
+        });
+        document.querySelectorAll('[data-modal-hide]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var modal = document.getElementById(button.getAttribute('data-modal-hide'));
+                if (modal) { modal.classList.add('hidden'); }
+            });
+        });
+        document.querySelectorAll('[data-submit-on-change]').forEach(function (field) {
+            field.addEventListener('change', function () { if (field.form) { field.form.submit(); } });
+        });
+        document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!window.confirm(form.getAttribute('data-confirm'))) { event.preventDefault(); }
+            });
+        });
+        document.querySelectorAll('[data-print]').forEach(function (button) {
+            button.addEventListener('click', function () { window.print(); });
+        });
+        document.querySelectorAll('[data-company-filter]').forEach(function (field) {
+            field.addEventListener('input', function () {
+                var target = document.querySelector(field.getAttribute('data-company-filter'));
+                if (!target) { return; }
+                var query = field.value.toLowerCase();
+                target.querySelectorAll('tr[data-company]').forEach(function (row) {
+                    row.style.display = row.getAttribute('data-company').toLowerCase().indexOf(query) > -1 ? '' : 'none';
+                });
             });
         });
     })();

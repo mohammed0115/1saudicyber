@@ -3,7 +3,7 @@
 {% block title %}Cyber-5 — {% trans "تسجيل شركة" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
-<style>
+<style nonce="{{ csp_nonce }}">
   /* Company registration wizard — light palette, inside the split form panel. */
   .ct-form .au-field{ margin:0; }
   .ct-section{ border-bottom:1px solid var(--border); padding-bottom:.5rem; margin:.15rem 0 1.15rem;
@@ -171,7 +171,7 @@
 {% endblock %}
 
 {% block auth_js %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   var form = document.getElementById('reg-form');
   if (!form) return;

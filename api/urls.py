@@ -1,6 +1,6 @@
 """/api/v1 URL routes (SRS Appendix D)."""
 from django.urls import path
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .authentication import VerifiedTokenObtainPairView, VerifiedTokenRefreshView
 from drf_spectacular.views import (
     SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView,
 )
@@ -16,8 +16,8 @@ urlpatterns = [
     path('redoc/', SpectacularRedocView.as_view(url_name='api:schema'), name='redoc'),
 
     path('register/', views.register, name='register'),
-    path('login/', TokenObtainPairView.as_view(), name='login'),          # JWT (NFR-013)
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('login/', VerifiedTokenObtainPairView.as_view(), name='login'),
+    path('token/refresh/', VerifiedTokenRefreshView.as_view(), name='token_refresh'),
     path('classify/', views.classify, name='classify'),
     path('controls/', views.controls, name='controls'),                      # deprecated (legacy CompanyControl)
     path('controls/<int:control_id>/', views.control_detail, name='control_detail'),

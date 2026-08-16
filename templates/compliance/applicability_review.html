@@ -3,7 +3,7 @@
 {% block title %}الأطر المنطبقة - Cyber-5{% endblock %}
 
 {% block extra_head %}{{ block.super }}
-<style>
+<style nonce="{{ csp_nonce }}">
   .ar{ max-width:980px; margin-inline:auto; }
   .ar-head .ic{ width:50px;height:50px;flex:0 0 auto;border-radius:13px;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.2rem }
   .ar-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden }

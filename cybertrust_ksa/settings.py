@@ -11,9 +11,17 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-from .env_checks import DEFAULT_SECRET_KEY, validate_secret_key, validate_allowed_hosts
+from .env_checks import (
+    DEFAULT_SECRET_KEY, validate_secret_key, validate_allowed_hosts,
+    validate_operational_services,
+)
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', DEFAULT_SECRET_KEY)
+# Independent Fernet key for MFA secrets; required in production and rotatable separately.
+MFA_ENCRYPTION_KEY = os.getenv('MFA_ENCRYPTION_KEY', '')
+MFA_PREVIOUS_ENCRYPTION_KEYS = tuple(
+    value.strip() for value in os.getenv('MFA_PREVIOUS_ENCRYPTION_KEYS', '').split(',') if value.strip()
+)
 # Safe-by-default: DEBUG is OFF unless explicitly enabled via the environment.
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 # Explicit hostnames only in production (no wildcard default). Empty in DEBUG lets Django
@@ -73,6 +81,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.ContentSecurityPolicyMiddleware',
+    'core.middleware.EnforceAccountVerificationMiddleware',
     'core.middleware.EnforceAdminMFAMiddleware',
     'core.middleware.AuditLogMiddleware',
 ]
@@ -91,6 +100,7 @@ TEMPLATES = [
                 'django.template.context_processors.i18n',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.csp_nonce',
                 'core.context_processors.notifications',
             ],
         },
@@ -217,6 +227,10 @@ REST_FRAMEWORK = {
     # Auto-generated OpenAPI schema (drf-spectacular) for /api/v1/docs.
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+if TESTING:
+    # Keep throttling code enabled while preventing shared test-client counters from
+    # contaminating independent test cases.
+    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'].update({'user': '100000/min', 'anon': '100000/min'})
 
 # OpenAPI / Swagger docs (drf-spectacular). Schema served at /api/v1/schema/,
 # Swagger UI at /api/v1/docs/, ReDoc at /api/v1/redoc/.
@@ -299,10 +313,12 @@ MOYASAR_WEBHOOK_SECRET = os.getenv('MOYASAR_WEBHOOK_SECRET', '')
 # ---- Content Security Policy (NFR-017) ----
 CONTENT_SECURITY_POLICY = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; "
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; "
+    "script-src 'self' 'nonce-{NONCE}' https://cdn.moyasar.com; "
+    "style-src 'self' 'nonce-{NONCE}' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+    "style-src-attr 'unsafe-inline'; "
     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
-    "img-src 'self' data:; connect-src 'self'"
+    "img-src 'self' data:; connect-src 'self' https://api.moyasar.com"
 )
 
 # ---- Production security hardening (active when DEBUG is off, but never in tests) ----
@@ -320,6 +336,14 @@ if not DEBUG and not TESTING:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     X_FRAME_OPTIONS = 'DENY'
+
+# X-Forwarded-For is honored only when the direct peer is declared here.
+TRUSTED_PROXY_IPS = tuple(
+    value.strip() for value in os.getenv('TRUSTED_PROXY_IPS', '').split(',') if value.strip()
+)
+
+# Email-link validity is intentionally bounded; OTP verification has its own shorter TTL.
+EMAIL_VERIFICATION_LINK_MAX_AGE = int(os.getenv('EMAIL_VERIFICATION_LINK_MAX_AGE', str(24 * 60 * 60)))
 
 # ---- Data retention / PDPL (NFR-045 / NFR-047 / NFR-048) ----
 DATA_RETENTION_DAYS = {
@@ -397,3 +421,18 @@ if _SENTRY_DSN and not DEBUG and not TESTING:
                         send_default_pii=False, environment=os.getenv('SENTRY_ENV', 'production'))
     except Exception:
         pass   # never let telemetry wiring break boot
+
+# Final production gate: dependent services must be configured before the application starts.
+validate_operational_services(
+    debug=DEBUG,
+    testing=TESTING,
+    email_backend=EMAIL_BACKEND,
+    async_enabled=EVIDENCE_ASYNC_ENABLED,
+    redis_url=_REDIS_URL,
+    broker_url=CELERY_BROKER_URL,
+    payment_provider=PAYMENT_PROVIDER,
+    payment_mode=MOYASAR_MODE,
+    payment_secret=MOYASAR_SECRET_KEY,
+    webhook_secret=MOYASAR_WEBHOOK_SECRET,
+    mfa_encryption_key=MFA_ENCRYPTION_KEY,
+)

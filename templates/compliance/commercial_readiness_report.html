@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}تقرير الجاهزية الداخلي - Cyber-5{% endblock %}
 {% block extra_head %}
-<style>@media print { nav, footer, .no-print { display:none !important; } body { background:#fff; } }</style>
+<style nonce="{{ csp_nonce }}">@media print { nav, footer, .no-print { display:none !important; } body { background:#fff; } }</style>
 {% endblock %}
 {% block content %}
 <div dir="rtl" style="font-family:'Inter','Noto Sans Arabic',sans-serif;">
@@ -23,7 +23,7 @@
         </form>
         <a href="{% url 'compliance:commercial_readiness_report_pdf' %}" data-busy="جارٍ تجهيز ملف PDF..."
            class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-file-pdf mr-1"></i> تصدير PDF</a>
-        <button onclick="window.print()" class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-print mr-1"></i> طباعة</button>
+        <button data-print class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm"><i class="fas fa-print mr-1"></i> طباعة</button>
       </div>
     </div>
     {% include "components/smart_processing.html" %}

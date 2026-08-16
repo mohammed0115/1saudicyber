@@ -3,7 +3,7 @@
 {% block title %}Cyber-5 — {% trans "التهيئة" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
-<style>
+<style nonce="{{ csp_nonce }}">
   .wc{ max-width:960px; margin-inline:auto; }
   .wc-hero{ display:flex; align-items:flex-start; gap:16px; margin-bottom:26px }
   .wc-hero .ic{ width:56px;height:56px;flex:0 0 auto;border-radius:16px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:1.3rem;box-shadow:0 8px 20px rgba(30,86,201,.2) }
@@ -28,6 +28,15 @@
 {% endblock %}
 
 {% block auth_main %}
+{% if messages %}
+  <div class="mb-5 space-y-2" aria-live="polite">
+    {% for message in messages %}
+      <div class="rounded-xl px-4 py-3 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-gov-green-50 text-gov-green-800 border border-gov-green-200{% else %}bg-gov-gray-100 text-gov-gray-700 border border-gov-gray-200{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
 <div class="wc" data-au-reveal="2">
   <div class="wc-hero">
     <span class="ic"><i class="fas fa-rocket" aria-hidden="true"></i></span>

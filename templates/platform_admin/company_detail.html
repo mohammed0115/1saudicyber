@@ -458,7 +458,7 @@
               <input type="text" name="reason" required placeholder="السبب (مطلوب)" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-40">
               <button type="submit" class="bg-gov-green-50 text-gov-green-700 hover:bg-gov-green-100 px-3 py-1.5 rounded text-xs font-medium">تفعيل</button>
             </form>
-            <form method="post" action="{% url 'platform_admin:subscription_action' company.id %}" class="flex items-center gap-2" onsubmit="return confirm('تأكيد إلغاء اشتراك هذه الشركة؟');">
+            <form method="post" action="{% url 'platform_admin:subscription_action' company.id %}" class="flex items-center gap-2" data-confirm="'تأكيد إلغاء اشتراك هذه الشركة؟'">
               {% csrf_token %}<input type="hidden" name="action" value="cancel">
               <input type="text" name="reason" required placeholder="السبب (مطلوب)" class="border border-gov-gray-300 rounded px-2 py-1 text-xs w-40">
               <button type="submit" class="bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded text-xs font-medium">إلغاء</button>
@@ -517,7 +517,7 @@
                         {% csrf_token %}<input type="text" name="reason" required placeholder="السبب" class="border border-gov-gray-300 rounded px-1.5 py-0.5 text-xs w-20">
                         <button class="text-gov-green-700 hover:underline font-medium">تأكيد</button>
                       </form>
-                      <form method="post" action="{% url 'platform_admin:reject_manual_payment' company.id p.id %}" class="inline-flex items-center gap-1 me-2" onsubmit="return confirm('تأكيد رفض هذه الدفعة اليدوية؟');">
+                      <form method="post" action="{% url 'platform_admin:reject_manual_payment' company.id p.id %}" class="inline-flex items-center gap-1 me-2" data-confirm="'تأكيد رفض هذه الدفعة اليدوية؟'">
                         {% csrf_token %}<input type="text" name="reason" required placeholder="السبب" class="border border-gov-gray-300 rounded px-1.5 py-0.5 text-xs w-20">
                         <button class="text-red-700 hover:underline font-medium">رفض</button>
                       </form>
@@ -579,7 +579,7 @@
               <div class="text-xs text-gov-gray-500 mt-0.5">{{ u.role|role_ar }}</div>
               {% if not u.is_staff and not u.is_superuser %}
               <form method="post" action="{% url 'platform_admin:unlink_user' company.id %}"
-                    onsubmit="return confirm('إلغاء ربط {{ u.email|escapejs }} من هذه الشركة؟');"
+                    data-confirm="'إلغاء ربط {{ u.email|escapejs }} من هذه الشركة؟'"
                     class="flex flex-wrap items-center gap-2 mt-2">
                 {% csrf_token %}
                 <input type="hidden" name="user_id" value="{{ u.id }}">
@@ -708,11 +708,11 @@
 
   {# F8: progressive enhancement — highlight the current page section in the anchor nav. #}
   {# Pure anchor links still work with JS disabled; this only adds a visual/aria hint. #}
-  <style>
+  <style nonce="{{ csp_nonce }}">
     #company-sections-nav a.nav-active { background:#e1ece7; color:#1E56C9; font-weight:600; }
     #company-sections-nav a:focus-visible { outline:2px solid #1E56C9; outline-offset:2px; }
   </style>
-  <script>
+  <script nonce="{{ csp_nonce }}">
   (function () {
     var nav = document.getElementById('company-sections-nav');
     if (!nav || !('IntersectionObserver' in window)) return;   // no-JS / old browser: plain anchors
@@ -743,7 +743,7 @@
   </script>
 
   {# Company-360 tabs: show one section at a time. Progressive enhancement — without JS all sections remain visible. #}
-  <script>
+  <script nonce="{{ csp_nonce }}">
   (function(){
     var MAIN=['admin-journey','overview','journey','auditor','evidence','billing','users','followup','log'];
     var AUDITOR_EXTRA=['verdict-conflicts','findings','auditors'];

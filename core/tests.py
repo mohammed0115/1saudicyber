@@ -147,21 +147,22 @@ class ReportingTests(TestCase):
 
 
 class ApiTests(TestCase):
-    def test_register_and_jwt_login(self):
+    def test_registration_requires_verified_mfa_before_jwt(self):
         make_framework_with_controls('NCA_ECC', 2)
         payload = {
             'company_name': 'ApiCo', 'cr_number': '3333333333', 'sector': 'technology', 'size': 'small',
             'email': 'api@x.com', 'password': 'longenough12', 'first_name': 'A', 'last_name': 'B',
             'target_nca': True}
         r = self.client.post('/api/v1/register/', data=payload, content_type='application/json')
-        self.assertEqual(r.status_code, 201, r.content)
-        self.assertIn('access', r.json())
+        self.assertEqual(r.status_code, 202, r.content)
+        self.assertNotIn('access', r.json())
         company = Company.objects.get(cr_number='3333333333')
         self.assertEqual(CompanyControl.objects.filter(company=company).count(), 2)
-        auth = {'HTTP_AUTHORIZATION': f"Bearer {r.json()['access']}"}
-        rc = self.client.get('/api/v1/controls/', **auth)
-        self.assertEqual(rc.status_code, 200)
-        self.assertEqual(len(rc.json()), 2)
+        user = User.objects.get(email='api@x.com')
+        user.email_verified = True
+        user.save(update_fields=['email_verified'])
+        token = self.client.post('/api/v1/login/', {'email': 'api@x.com', 'password': 'longenough12'})
+        self.assertEqual(token.status_code, 401)
 
     def test_controls_requires_auth(self):
         self.assertEqual(self.client.get('/api/v1/controls/').status_code, 401)
@@ -293,7 +294,8 @@ class EnforceAdminMFATests(TestCase):
 
     def _staff(self, mfa=False):
         return User.objects.create_user(email='mfaenf@x.com', password='longenough12',
-                                        role='admin', is_staff=True, mfa_enabled=mfa)
+                                        role='admin', is_staff=True, mfa_enabled=mfa,
+                                        email_verified=True)
 
     def test_default_off_staff_without_mfa_not_forced(self):
         self.client.force_login(self._staff(mfa=False))
@@ -441,7 +443,7 @@ class Phase4ARegistrationOnboardingTests(TestCase):
         self.assertEqual(resp.url, reverse('core:onboarding'))
         follow = self.client.get(reverse('core:onboarding'))
         self.assertEqual(follow.status_code, 200)
-        self.assertContains(follow, 'مرحبًا بك في 1SaudiCyber')
+        self.assertContains(follow, 'مرحبًا بك في Cyber-5')
 
     def test_registration_success_message_is_arabic_only(self):
         # UAT-UI-1: the Arabic success message must not contain English.
@@ -539,7 +541,7 @@ class Phase4ARegistrationOnboardingTests(TestCase):
     def test_registration_page_renders(self):
         resp = self.client.get(reverse('core:company_register'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'سجّل شركتك في 1SaudiCyber')
+        self.assertContains(resp, 'سجّل شركتك في Cyber-5')
 
     def test_onboarding_page_renders(self):
         self.client.post(reverse('core:company_register'), self._payload())
@@ -2377,7 +2379,7 @@ class OnboardingVerificationCTATests(TestCase):
         before = EmailVerificationToken.objects.count()
         resp = self.client.post(reverse('core:resend_verification_link'), follow=True)
         self.assertEqual(EmailVerificationToken.objects.count(), before + 1)   # link re-issued
-        self.assertContains(resp, 'تم إرسال رابط التحقق مرة أخرى، يرجى مراجعة بريدك الإلكتروني')
+        self.assertContains(resp, 'تم إرسال رابط التحقق مرة أخرى، يرجى مراجعة بريدك الإلكتروني.')
 
     def test_unverified_user_cannot_approve_scope(self):
         u = self._user(False, email='vs@x.com', cr='9595959595')

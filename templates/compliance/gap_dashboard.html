@@ -87,7 +87,7 @@
       <div class="px-4 py-3 bg-gov-green-50 text-gov-green-800 font-semibold flex items-center justify-between gap-3 flex-wrap">
         <span>الضوابط والحالة</span>
         <form method="get" class="flex items-center gap-2">
-          <select name="status" aria-label="تصفية حسب الحالة" onchange="this.form.submit()" class="text-xs border border-gov-gray-300 rounded-lg px-2 py-1.5 bg-white text-gov-gray-700">
+          <select name="status" aria-label="تصفية حسب الحالة" data-submit-on-change class="text-xs border border-gov-gray-300 rounded-lg px-2 py-1.5 bg-white text-gov-gray-700">
             <option value="">كل الحالات</option>
             <option value="missing" {% if sel_status == 'missing' %}selected{% endif %}>مفقود</option>
             <option value="needs_review" {% if sel_status == 'needs_review' %}selected{% endif %}>يحتاج مراجعة</option>
@@ -96,7 +96,7 @@
             <option value="not_applicable" {% if sel_status == 'not_applicable' %}selected{% endif %}>غير منطبق</option>
           </select>
           {% if fw_codes %}
-          <select name="framework" aria-label="تصفية حسب الإطار" onchange="this.form.submit()" class="text-xs border border-gov-gray-300 rounded-lg px-2 py-1.5 bg-white text-gov-gray-700">
+          <select name="framework" aria-label="تصفية حسب الإطار" data-submit-on-change class="text-xs border border-gov-gray-300 rounded-lg px-2 py-1.5 bg-white text-gov-gray-700">
             <option value="">كل الأطر</option>
             {% for fw in fw_codes %}<option value="{{ fw }}" {% if sel_fw == fw %}selected{% endif %}>{{ fw }}</option>{% endfor %}
           </select>

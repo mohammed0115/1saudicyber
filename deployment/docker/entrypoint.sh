@@ -11,8 +11,8 @@ set -eu
 # PermissionError. Fix ownership as root on every start, then re-exec this same script
 # as the unprivileged app user (uid 10001) via gosu so the app never runs as root.
 if [ "$(id -u)" = "0" ]; then
-    mkdir -p /app/media /app/staticfiles
-    chown -R appuser:appuser /app/media /app/staticfiles
+    mkdir -p /app/media /app/private_media /app/staticfiles
+    chown -R appuser:appuser /app/media /app/private_media /app/staticfiles
     exec gosu appuser "$0" "$@"
 fi
 
@@ -33,13 +33,21 @@ if [ -n "${POSTGRES_DB:-}" ]; then
     echo "PostgreSQL is reachable."
 fi
 
-# --- Migrate ---
-echo "Applying database migrations ..."
-python manage.py migrate --noinput
+# Database migrations and static collection are release steps, not restart side effects.
+# The guarded deploy workflow invokes them explicitly after backups and preflight checks.
+if [ "${RUN_MIGRATIONS_ON_START:-False}" = "True" ]; then
+    echo "Applying database migrations by explicit override ..."
+    python manage.py migrate --noinput
+else
+    echo "Skipping automatic migrations; use the guarded deployment workflow."
+fi
 
-# --- Collect static files ---
-echo "Collecting static files ..."
-python manage.py collectstatic --noinput
+if [ "${RUN_COLLECTSTATIC_ON_START:-False}" = "True" ]; then
+    echo "Collecting static files by explicit override ..."
+    python manage.py collectstatic --noinput
+else
+    echo "Skipping automatic static collection; use the guarded deployment workflow."
+fi
 
 # --- Launch the app (replace shell with the given command) ---
 echo "Starting: $*"

@@ -3,7 +3,7 @@
 {% block title %}Cyber-5 — {% trans "تأكيد البريد الإلكتروني" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
-<style>
+<style nonce="{{ csp_nonce }}">
   .vf{ max-width:480px; margin-inline:auto; text-align:center; }
   .vf-env{ width:96px;height:96px;margin:0 auto 22px;position:relative }
   .vf-env .circle{ width:96px;height:96px;border-radius:50%;background:var(--soft);display:grid;place-items:center;color:var(--brand);font-size:2.2rem }
@@ -80,7 +80,7 @@
 {% endblock %}
 
 {% block auth_js %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function(){
   // Copy email
   var copy = document.getElementById('vf-copy'), addr = document.getElementById('vf-addr');

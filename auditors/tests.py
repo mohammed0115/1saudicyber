@@ -345,7 +345,7 @@ class GuidedAuditorWorkflowTests(TestCase):
         self.client.force_login(u)
         resp = self.client.get(reverse('auditors:dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'حسابك قيد مراجعة إدارة منصة 1SaudiCyber لدى شركة احصل الحل')
+        self.assertContains(resp, 'حسابك قيد مراجعة إدارة منصة Cyber-5 لدى شركة احصل الحل')
         self.assertContains(resp, 'بعد التفعيل ستظهر لك ملفات الشركات المسندة')
 
     def test_active_auditor_no_assignments_shows_guidance(self):

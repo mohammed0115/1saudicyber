@@ -4,7 +4,7 @@
 
 {% block extra_head %}
 <meta name="description" content="{% trans 'منصّة Cyber-5 لإدارة جاهزية الامتثال السيبراني: تنظيم الأدلة، تحليل الفجوات، وإعداد تقارير الجاهزية وفق أطر NCA وSABIC.' %}">
-<style>
+<style nonce="{{ csp_nonce }}">
   /* ============================================================
      P0-UIUX-01 — Light, calm enterprise/GRC landing (management direction).
      Green is a brand accent, not a dark dominant surface. Scoped to .lp.
@@ -587,7 +587,7 @@
 
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   (function () {
     var root = document.querySelector('.lp');
     if (!root) return;

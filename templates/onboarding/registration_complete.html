@@ -3,7 +3,7 @@
 {% block title %}Cyber-5 — {% trans "اكتمال التسجيل" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
-<style>
+<style nonce="{{ csp_nonce }}">
   .rc{ max-width:760px; margin-inline:auto; }
   .rc-hero{ text-align:center; margin-bottom:26px }
   .rc-check{ width:64px;height:64px;margin:0 auto 16px;border-radius:50%;background:var(--soft);color:var(--brand);display:grid;place-items:center;font-size:1.7rem }

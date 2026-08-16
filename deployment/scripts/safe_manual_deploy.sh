@@ -200,7 +200,7 @@ write_report() {
     echo "cd ${PROJECT_PATH}"
     echo "git checkout ${ROLLBACK_COMMIT:-${GIT_HEAD_BEFORE:-<previous_commit>}}"
     echo "docker compose build web"
-    echo "docker compose up -d --force-recreate web"
+    echo "docker compose up -d --force-recreate web worker beat"
     echo "sleep 30"
     echo "docker compose ps"
     echo "curl -I ${DOMAIN}/healthz/"
@@ -262,11 +262,12 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 ok "docker compose available"
 
-# GATE 9 — db container reachable/healthy
-if ! docker compose ps db 2>/dev/null | grep -qiE "up|running|healthy"; then
-  fail "db container is not running/healthy (gate 9)"
-fi
-ok "db container reachable"
+# GATE 9 — database must be explicitly healthy, not merely running.
+DB_CONTAINER="$(docker compose ps -q db 2>/dev/null || true)"
+[[ -n "$DB_CONTAINER" ]] || fail "db container is absent (gate 9)"
+DB_HEALTH="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$DB_CONTAINER" 2>/dev/null || true)"
+[[ "$DB_HEALTH" == "healthy" ]] || fail "db container health is '$DB_HEALTH', expected healthy (gate 9)"
+ok "db container is healthy"
 
 # ----------------------------------------------------------------------------
 # Backups
@@ -323,7 +324,7 @@ if run_mutating docker compose run --rm web python manage.py migrate; then MIGRA
 
 if run_mutating docker compose run --rm web python manage.py collectstatic --noinput; then COLLECTSTATIC_STATUS="ok"; else COLLECTSTATIC_STATUS="failed"; fail "collectstatic failed (gate 16)"; fi
 
-run_mutating docker compose up -d --force-recreate web || fail "docker compose up --force-recreate web failed (gate 17)"
+run_mutating docker compose up -d --force-recreate web worker beat || fail "docker compose up --force-recreate web worker beat failed (gate 17)"
 
 if [[ "$DRY_RUN" -eq 0 ]]; then
   info "waiting 30s for web container to settle..."
@@ -331,11 +332,16 @@ if [[ "$DRY_RUN" -eq 0 ]]; then
   docker compose ps && DOCKER_PS_STATUS="captured" || true
   docker compose logs --tail=120 web || true
   GIT_HEAD_AFTER="$(git rev-parse HEAD)"
-  # GATE 17 — web container healthy after recreate
-  if ! docker compose ps web 2>/dev/null | grep -qiE "up|running|healthy"; then
-    fail "web container is not running/healthy after recreate (gate 17)"
-  fi
-  ok "web container running after recreate"
+  # GATE 17 — all release processes are running and the web healthcheck is healthy.
+  for service in web worker beat; do
+    if ! docker compose ps "$service" 2>/dev/null | grep -qiE "up|running"; then
+      fail "$service container is not running after recreate (gate 17)"
+    fi
+  done
+  WEB_CONTAINER="$(docker compose ps -q web 2>/dev/null || true)"
+  WEB_HEALTH="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$WEB_CONTAINER" 2>/dev/null || true)"
+  [[ "$WEB_HEALTH" == "healthy" ]] || fail "web container health is '$WEB_HEALTH', expected healthy (gate 17)"
+  ok "web, worker, and beat are running; web healthcheck is healthy"
 else
   GIT_HEAD_AFTER="$TARGET_SHA (dry-run: not applied)"
 fi

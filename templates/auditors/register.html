@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}التسجيل كمدقّق - Cyber-5{% endblock %}
 {% block extra_head %}
-<style>
+<style nonce="{{ csp_nonce }}">
   .ct-form label{display:block;font-size:.82rem;font-weight:600;color:#42433c;margin:0 0 6px;}
   .ct-form input[type=text],.ct-form input[type=email],.ct-form input[type=password],
   .ct-form select,.ct-form textarea{

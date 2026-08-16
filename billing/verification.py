@@ -227,8 +227,13 @@ def process_moyasar_webhook(payload, headers=None):
     provider_status = (obj.get('status') or '') if isinstance(obj, dict) else ''
     _audit(None, None, 'moyasar_webhook_received', None, 'webhook', provider_status)
 
-    # Optional shared-secret gate (plain token compare; not invented cryptography).
+    # Live payments require an authenticated webhook before any identifier is trusted.
     expected = moyasar.webhook_secret()
+    if moyasar.is_live() and not expected:
+        _audit(None, None, 'moyasar_webhook_invalid', None, 'webhook', provider_status,
+               extra={'reason': 'webhook_secret_not_configured'})
+        return {'ok': False, 'action': 'rejected', 'http_status': 503,
+                'reason': 'webhook_secret_not_configured'}
     if expected:
         provided = str(payload.get('secret_token') or '') if isinstance(payload, dict) else ''
         if not provided and headers is not None:
@@ -262,16 +267,14 @@ def process_moyasar_webhook(payload, headers=None):
     # Server-side Fetch is the source of truth for activation.
     fetch_id = ppid or payment.provider_payment_id
     fetched = moyasar.fetch_moyasar_payment(fetch_id) if fetch_id else {'ok': False, 'error': 'no_id'}
-    if fetched.get('ok'):
-        authoritative, allow = fetched['payload'], True
-    else:
-        # Cannot server-verify -> never activate; still allow safe downgrades from body.
-        authoritative, allow = payload, False
+    if not fetched.get('ok'):
+        # Do not trust the inbound body for *any* state transition when the provider is unavailable.
         _audit(None, payment.company, 'moyasar_webhook_invalid', payment, 'webhook',
                provider_status, extra={'reason': 'fetch_failed:%s' % fetched.get('error', '')})
+        return {'ok': False, 'action': 'deferred', 'http_status': 503, 'reason': 'fetch_failed'}
 
-    result = process_moyasar_payment_result(payment, authoritative, source='webhook',
-                                            allow_activation=allow)
+    result = process_moyasar_payment_result(payment, fetched['payload'], source='webhook',
+                                            allow_activation=True)
     result['http_status'] = 200
     return result
 

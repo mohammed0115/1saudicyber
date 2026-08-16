@@ -4201,7 +4201,7 @@ class ArabicShellRtlTests(TestCase):
         body = resp.content.decode()
         self.assertNotIn('(Intake)', body)
         self.assertNotIn('Business intake', body)
-        self.assertIn('تصنيف الشركة', body)
+        self.assertIn('نطاق الامتثال والتصنيف', body)
 
     def test_mobile_nav_and_overflow_guard_present(self):
         body = self.client.get(reverse('compliance:dashboard')).content.decode()
@@ -7070,17 +7070,18 @@ class CompanyJourneyNavTests(TestCase):
     def _body(self, name):
         return self.client.get(reverse(name)).content.decode()
 
-    def test_intake_has_stepper_back_and_locked_next(self):
+    def test_intake_has_setup_stepper_back_and_submit(self):
         body = self._body('compliance:intake')
-        self.assertIn('مسار عمل الشركة', body)              # stepper
-        self.assertIn('العودة للوحة الامتثال', body)         # back button
-        self.assertIn('أكمل بيانات التصنيف أولًا', body)     # next locked (no intake yet)
+        self.assertIn('مراحل الإعداد', body)                 # setup stepper
+        self.assertIn('نطاق الامتثال والتصنيف', body)         # current setup stage
+        self.assertIn('السابق', body)                         # return to onboarding
+        self.assertIn('حفظ وتحديد الأطر المنطبقة', body)      # submit current intake
 
-    def test_intake_next_unlocks_after_profile(self):
+    def test_intake_shows_review_link_after_profile(self):
         CompanyIntakeProfile.objects.create(company=self.c, uses_cloud_services=True)
         body = self._body('compliance:intake')
-        self.assertIn('الخطوة التالية: التصنيف الذكي', body)
-        self.assertNotIn('أكمل بيانات التصنيف أولًا', body)  # now enabled
+        self.assertIn('عرض نتيجة المراجعة الحالية', body)
+        self.assertNotIn('أكمل بيانات التصنيف أولًا', body)
 
     def test_classification_next_is_review(self):
         CompanyIntakeProfile.objects.create(company=self.c, uses_cloud_services=True)

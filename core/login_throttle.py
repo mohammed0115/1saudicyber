@@ -9,10 +9,11 @@ LOGIN_FAILURE_WINDOW seconds. No extra dependency.
 from django.conf import settings
 from django.core.cache import cache
 
+from core.security import trusted_client_ip
+
 
 def _client_ip(request):
-    xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    return (xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR', '')) or 'unknown'
+    return trusted_client_ip(request) or 'unknown'
 
 
 def _key(username, request):

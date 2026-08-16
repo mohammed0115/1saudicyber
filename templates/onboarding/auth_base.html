@@ -3,7 +3,7 @@
 {# Shared light registration shell for Scenario 2 (consistent with the new landing). #}
 {% block extra_head %}
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
+<style nonce="{{ csp_nonce }}">
   .au{
     /* Cyber-5 brand palette (calm royal blue + navy; migrated from green). */
     --brand:#1E56C9; --brand-h:#173F94; --brand-soft:#3B72E0;
@@ -176,6 +176,15 @@
 
   <!-- ===================== Page body ===================== -->
   <main id="au-main" class="au-container" style="padding-block:2.5rem;flex:1;">
+    {% if messages %}
+      <div class="mb-5 space-y-2" aria-live="polite">
+        {% for message in messages %}
+          <div class="rounded-xl px-4 py-3 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-gov-green-50 text-gov-green-800 border border-gov-green-200{% else %}bg-gov-gray-100 text-gov-gray-700 border border-gov-gray-200{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% block auth_main %}{% endblock %}
   </main>
 
@@ -203,7 +212,7 @@
 
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   (function () {
     var root = document.querySelector('.au');
     if (!root) return;

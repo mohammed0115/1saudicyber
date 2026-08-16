@@ -40,7 +40,7 @@ Include once on any page that has a data-smart-processing form.
   </div>
 </div>
 
-<style>
+<style nonce="{{ csp_nonce }}">
   @keyframes ct-smart-spin { to { transform: rotate(360deg); } }
   @keyframes ct-dot-pulse { 0%,80%,100% { opacity:.25; transform:scale(.8);} 40% { opacity:1; transform:scale(1);} }
   @keyframes ct-scan { 0% { top:-40%; } 100% { top:120%; } }
@@ -54,7 +54,7 @@ Include once on any page that has a data-smart-processing form.
   #ct-smart-overlay .ct-step.active { color:#1E56C9 !important; font-weight:600; }
 </style>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   var overlay = document.getElementById('ct-smart-overlay');
   if (!overlay) return;

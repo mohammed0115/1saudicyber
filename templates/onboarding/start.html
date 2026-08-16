@@ -3,7 +3,7 @@
 {% block title %}Cyber-5 — {% trans "إنشاء حساب جديد" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
-<style>
+<style nonce="{{ csp_nonce }}">
   /* 2.1 Account-type choice — سيناريو language: two calm cards + skyline shell. */
   .au-choice{ display:flex; flex-direction:column; }
   .au-choice .ic{ width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:1.75rem;margin:0 auto 20px }

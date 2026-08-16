@@ -64,8 +64,8 @@
 
 {% block extra_js %}
 {% if configured %}
-<script src="{{ moyasar_js }}"></script>
-<script>
+<script nonce="{{ csp_nonce }}" src="{{ moyasar_js }}"></script>
+<script nonce="{{ csp_nonce }}">
   (function () {
     try {
       Moyasar.init({

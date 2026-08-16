@@ -5,10 +5,9 @@ from django.utils import timezone
 
 from rest_framework import status, serializers
 from rest_framework.decorators import api_view, permission_classes, parser_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from drf_spectacular.types import OpenApiTypes
 
@@ -18,6 +17,7 @@ from compliance.models import (
 )
 from monitoring.models import ComplianceScore, Alert
 from ai_engine.models import GapAnalysis
+from .permissions import VerifiedAccountPermission
 from .serializers import (
     RegisterSerializer, ControlSerializer, CompanyControlSerializer,
     EvidenceSerializer, ComplianceScoreSerializer, AlertSerializer,
@@ -34,7 +34,7 @@ def _require_company(request):
 
 
 @extend_schema(summary="تسجيل شركة جديدة + مستخدم مسؤول", request=RegisterSerializer,
-               responses={201: OpenApiTypes.OBJECT})
+               responses={202: OpenApiTypes.OBJECT})
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
@@ -57,18 +57,17 @@ def register(request):
     _create_company_control_checklist(company)
     from core.services import send_verification_email
     send_verification_email(user)
-    refresh = RefreshToken.for_user(user)
     return Response({
         'company': CompanySerializer(company).data,
-        'access': str(refresh.access_token), 'refresh': str(refresh),
-    }, status=status.HTTP_201_CREATED)
+        'detail': 'تم إنشاء الحساب. أكّد البريد الإلكتروني قبل تسجيل الدخول إلى الواجهة البرمجية.',
+    }, status=status.HTTP_202_ACCEPTED)
 
 
 @extend_schema(summary="ضوابط الشركة (قديم — استخدم /assessments/)", deprecated=True,
                parameters=[OpenApiParameter('framework', str, description='رمز الإطار للتصفية (مثل NCA-ECC).')],
                responses=CompanyControlSerializer(many=True))
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def controls(request):
     company = _require_company(request)
     if not company:
@@ -83,7 +82,7 @@ def controls(request):
 
 @extend_schema(summary="تفاصيل ضابط رسمي", responses=ControlSerializer)
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def control_detail(request, control_id):
     try:
         control = Control.objects.select_related('framework', 'domain').get(id=control_id)
@@ -97,7 +96,7 @@ def control_detail(request, control_id):
                            OpenApiParameter('status', str, description='تصفية بالحالة (compliant/non_compliant/…).')],
                responses=ControlAssessmentSerializer(many=True))
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def assessments(request):
     """Phase 3G — the auditor's final ControlAssessment per official control (tenant-scoped).
     Modern replacement for the legacy `controls` (CompanyControl) endpoint."""
@@ -119,7 +118,7 @@ def assessments(request):
                parameters=[OpenApiParameter('status', str, description='تصفية بالحالة (accepted/pending_review/…).')],
                responses=EvidenceSubmissionSerializer(many=True))
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def evidence_submissions(request):
     """Upload-v2 EvidenceSubmission list (tenant-scoped). Modern replacement for the
     legacy Evidence view."""
@@ -135,7 +134,7 @@ def evidence_submissions(request):
 
 @extend_schema(summary="تصنيف الشركة (استشاري)", request=None, responses=OpenApiTypes.OBJECT)
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def classify(request):
     company = _require_company(request)
     if not company:
@@ -160,7 +159,7 @@ def classify(request):
                    {'control_id': serializers.IntegerField(), 'evidence_file': serializers.FileField()}),
                responses={201: OpenApiTypes.OBJECT})
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 @parser_classes([MultiPartParser, FormParser])
 def evidence_upload(request):
     company = _require_company(request)
@@ -216,7 +215,7 @@ def evidence_upload(request):
 
 @extend_schema(summary="تشغيل تحليل دليل", request=None, responses=OpenApiTypes.OBJECT)
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def evidence_analyze(request, evidence_id):
     from compliance.services import process_evidence_pipeline
     # TENANT ISOLATION: IsAuthenticated only proves login, NOT ownership. Without this
@@ -233,7 +232,7 @@ def evidence_analyze(request, evidence_id):
 
 @extend_schema(summary="أحدث تحليل فجوات لكل إطار", responses=GapAnalysisSerializer(many=True))
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def gap_analysis(request):
     company = _require_company(request)
     if not company:
@@ -250,7 +249,7 @@ def gap_analysis(request):
 
 @extend_schema(summary="لوحة تنفيذية (شركة + تنبيهات + نقاط)", responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def dashboard_executive(request):
     company = _require_company(request)
     if not company:
@@ -266,7 +265,7 @@ def dashboard_executive(request):
 
 @extend_schema(summary="توزيع حالة الضوابط", responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def dashboard_compliance(request):
     company = _require_company(request)
     if not company:
@@ -281,7 +280,7 @@ def dashboard_compliance(request):
 
 @extend_schema(summary="سلسلة نقاط الامتثال (آخر 90)", responses=ComplianceScoreSerializer(many=True))
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def monitoring_scores(request):
     company = _require_company(request)
     if not company:
@@ -292,7 +291,7 @@ def monitoring_scores(request):
 
 @extend_schema(summary="تنبيهات المراقبة (آخر 100)", responses=AlertSerializer(many=True))
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def monitoring_alerts(request):
     company = _require_company(request)
     if not company:
@@ -304,7 +303,7 @@ def monitoring_alerts(request):
 @extend_schema(summary="تكليفات المدقّق (قديم — نموذج Assessment)", deprecated=True,
                responses=OpenApiTypes.OBJECT)
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([VerifiedAccountPermission])
 def auditor_assignments(request):
     if request.user.role != 'auditor':
         return Response({'detail': 'Auditor role required.'}, status=403)

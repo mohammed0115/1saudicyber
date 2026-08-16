@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from core.models import Company
+from core.models import Company, User
 from core.tests import make_framework_with_controls
 from compliance.models import CompanyControl, Evidence
 
@@ -19,9 +19,15 @@ class EvidenceAnalyzeIsolationTests(TestCase):
                    'size': 'small', 'email': email, 'password': 'longenough12',
                    'first_name': 'A', 'last_name': 'B', 'target_nca': True}
         r = self.client.post('/api/v1/register/', data=payload, content_type='application/json')
-        self.assertEqual(r.status_code, 201, r.content)
+        self.assertEqual(r.status_code, 202, r.content)
         company = Company.objects.get(cr_number=cr)
-        auth = {'HTTP_AUTHORIZATION': f"Bearer {r.json()['access']}"}
+        user = User.objects.get(email=email)
+        user.email_verified = True
+        user.role = 'compliance_officer'
+        user.save(update_fields=['email_verified', 'role'])
+        login = self.client.post('/api/v1/login/', {'email': email, 'password': payload['password']})
+        self.assertEqual(login.status_code, 200, login.content)
+        auth = {'HTTP_AUTHORIZATION': f"Bearer {login.json()['access']}"}
         return company, auth
 
     def setUp(self):
@@ -59,8 +65,14 @@ class ApiEndpointCoverageTests(TestCase):
                    'size': 'small', 'email': email, 'password': 'longenough12',
                    'first_name': 'A', 'last_name': 'B', 'target_nca': True}
         r = self.client.post('/api/v1/register/', data=payload, content_type='application/json')
-        self.assertEqual(r.status_code, 201, r.content)
-        return {'HTTP_AUTHORIZATION': f"Bearer {r.json()['access']}"}, r.json()
+        self.assertEqual(r.status_code, 202, r.content)
+        user = User.objects.get(email=email)
+        user.email_verified = True
+        user.role = 'compliance_officer'
+        user.save(update_fields=['email_verified', 'role'])
+        login = self.client.post('/api/v1/login/', {'email': email, 'password': payload['password']})
+        self.assertEqual(login.status_code, 200, login.content)
+        return {'HTTP_AUTHORIZATION': f"Bearer {login.json()['access']}"}, login.json()
 
     def setUp(self):
         make_framework_with_controls('NCA_ECC', 3)
@@ -129,8 +141,14 @@ class ApiUploadMagicByteTests(TestCase):
                    'size': 'small', 'email': email, 'password': 'longenough12',
                    'first_name': 'A', 'last_name': 'B', 'target_nca': True}
         r = self.client.post('/api/v1/register/', data=payload, content_type='application/json')
-        self.assertEqual(r.status_code, 201, r.content)
-        return {'HTTP_AUTHORIZATION': f"Bearer {r.json()['access']}"}
+        self.assertEqual(r.status_code, 202, r.content)
+        user = User.objects.get(email=email)
+        user.email_verified = True
+        user.role = 'compliance_officer'
+        user.save(update_fields=['email_verified', 'role'])
+        login = self.client.post('/api/v1/login/', {'email': email, 'password': payload['password']})
+        self.assertEqual(login.status_code, 200, login.content)
+        return {'HTTP_AUTHORIZATION': f"Bearer {login.json()['access']}"}
 
     def setUp(self):
         from compliance.models import Control

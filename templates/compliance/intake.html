@@ -3,7 +3,7 @@
 {% block title %}Cyber-5 — {% trans "نطاق الامتثال والتصنيف" %}{% endblock %}
 
 {% block extra_head %}{{ block.super }}
-<style>
+<style nonce="{{ csp_nonce }}">
   /* Setup screens are clean/white — the decorative skyline is hidden here. */
   .au-skyline{ display:none; }
   .su-wrap{ display:grid; grid-template-columns:1fr 300px; gap:24px; align-items:start; }
@@ -177,7 +177,7 @@
 {% endblock %}
 
 {% block auth_js %}
-<script>
+<script nonce="{{ csp_nonce }}">
 {# UAT-3: reveal a supplier category only when its supplier checkbox is ticked (progressive enhancement; backend clears stale values in CompanyIntakeForm.clean). #}
 (function () {
   function bind(checkboxId, fieldName) {

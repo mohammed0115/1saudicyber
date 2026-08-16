@@ -41,7 +41,7 @@
       <div class="space-y-4">
         {% for act in available_actions %}
         <form method="post" action="{% url 'platform_admin:auditor_action' profile.id %}"
-              onsubmit="return confirm('تأكيد تنفيذ الإجراء: {{ act.label }} على حساب {{ profile.full_name|escapejs }}؟');"
+              data-confirm="'تأكيد تنفيذ الإجراء: {{ act.label }} على حساب {{ profile.full_name|escapejs }}؟'"
               class="flex flex-col md:flex-row md:items-center gap-3 border border-gov-gray-100 rounded-lg p-3">
           {% csrf_token %}
           <input type="hidden" name="action" value="{{ act.action }}">

@@ -2,6 +2,11 @@
 from .notify_services import unread_count
 
 
+def csp_nonce(request):
+    """Expose the response CSP nonce to trusted templates only."""
+    return {'csp_nonce': getattr(request, 'csp_nonce', '')}
+
+
 def notifications(request):
     user = getattr(request, 'user', None)
     if user is None or not getattr(user, 'is_authenticated', False):

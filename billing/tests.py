@@ -1222,7 +1222,7 @@ class MoyasarWebhookEndpointTests(TestCase):
         with mock.patch('billing.moyasar.fetch_moyasar_payment',
                         return_value={'ok': False, 'error': 'network', 'status_code': 0, 'payload': {}}):
             resp = self._post(_moyasar_payload(pay, ppid='moy_wh_fail', status='paid', wrap=True))
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 503)
         pay.refresh_from_db()
         self.assertEqual(pay.status, 'pending')          # fetch failed -> not activated
         self.assertFalse(company_has_active_subscription(c))
@@ -1297,7 +1297,7 @@ class MoyasarMissingSecretTests(TestCase):
         resp = self.client.post(reverse('billing:moyasar_webhook'),
                                 data=_json.dumps(_moyasar_payload(pay, ppid='moy_ns', status='paid', wrap=True)),
                                 content_type='application/json')
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 503)
         pay.refresh_from_db()
         self.assertEqual(pay.status, 'pending')
         self.assertFalse(company_has_active_subscription(c))

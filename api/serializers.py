@@ -1,7 +1,8 @@
 """DRF serializers for the CyberTrust KSA REST API (/api/v1)."""
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from core.models import Company
+from core.models import Company, User
 from compliance.models import (
     Control, CompanyControl, Evidence, ControlAssessment, EvidenceSubmission,
 )
@@ -116,7 +117,20 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError('This CR number is already registered.')
         return value
 
+    def validate_email(self, value):
+        email = value.strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError('هذا البريد الإلكتروني مسجل بالفعل.')
+        return email
+
     def validate(self, data):
         if not (data.get('target_nca') or data.get('target_aramco') or data.get('target_sabic')):
             raise serializers.ValidationError('Select at least one certification target.')
+        candidate = User(
+            email=data.get('email', ''),
+            username=data.get('email', ''),
+            first_name=data.get('first_name', ''),
+            last_name=data.get('last_name', ''),
+        )
+        validate_password(data.get('password'), user=candidate)
         return data

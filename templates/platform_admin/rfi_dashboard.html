@@ -25,7 +25,7 @@
   <form method="get" class="flex flex-wrap gap-2 items-end mb-4">
     <div>
       <label class="block text-xs text-gov-gray-500 mb-1">الحالة</label>
-      <select name="status" onchange="this.form.submit()" class="border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
+      <select name="status" data-submit-on-change class="border border-gov-gray-300 rounded-lg px-3 py-2 text-sm">
         <option value="">الكل</option>
         <option value="open" {% if selected_status == 'open' %}selected{% endif %}>مفتوح</option>
         <option value="responded" {% if selected_status == 'responded' %}selected{% endif %}>تم الرد</option>

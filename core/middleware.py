@@ -1,13 +1,18 @@
-"""
-Custom middleware:
-  - ContentSecurityPolicyMiddleware: adds a CSP header (NFR-017).
-  - AuditLogMiddleware: records authenticated, state-changing actions (FR-012.8 / NFR-021).
-"""
-from django.conf import settings
+"""Security headers, account-access gates, and audit logging middleware."""
+from __future__ import annotations
 
-# Paths we never log (noise / static).
+import logging
+import secrets
+
+from django.conf import settings
+from django.http import JsonResponse
+from django.shortcuts import redirect
+
+from core.security import account_ready_for_access, mfa_required, trusted_client_ip
+
+logger = logging.getLogger(__name__)
+
 _SKIP_PREFIXES = ('/static/', '/media/', '/favicon')
-# Only these methods change state and are worth auditing.
 _AUDIT_METHODS = {'POST', 'PUT', 'PATCH', 'DELETE'}
 
 
@@ -16,24 +21,52 @@ class ContentSecurityPolicyMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        request.csp_nonce = secrets.token_urlsafe(18)
         response = self.get_response(request)
-        policy = getattr(settings, 'CONTENT_SECURITY_POLICY', '')
+        policy = getattr(settings, 'CONTENT_SECURITY_POLICY', '').replace('{NONCE}', request.csp_nonce)
         if policy and 'Content-Security-Policy' not in response:
             response['Content-Security-Policy'] = policy
             response['X-Content-Type-Options'] = 'nosniff'
             response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+            response['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+            response['Cross-Origin-Opener-Policy'] = 'same-origin'
         return response
 
 
-class EnforceAdminMFAMiddleware:
-    """DD-fix: when settings.ENFORCE_ADMIN_MFA is on, a staff/admin user who has not
-    enabled MFA is redirected to the MFA setup page before reaching any other view.
+class EnforceAccountVerificationMiddleware:
+    """Keep unverified accounts inside the email-verification journey only."""
 
-    Opt-in (default off) so existing deployments are unaffected until they choose to
-    require it. Exempts the auth/MFA/logout/static paths so the user can actually set it up.
-    """
-    _EXEMPT = ('/login', '/logout', '/mfa/', '/static/', '/media/', '/healthz', '/i18n/',
-               '/password-reset', '/reset/', '/invite/')
+    _EXEMPT = (
+        '/logout', '/verify-email/', '/mfa/', '/static/', '/media/', '/healthz',
+        '/readyz', '/i18n/', '/privacy/', '/terms/', '/password-reset', '/reset/',
+        '/invite/', '/registration-complete/',
+    )
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if getattr(settings, 'TESTING', False):
+            return self.get_response(request)
+        user = getattr(request, 'user', None)
+        if user and user.is_authenticated and not account_ready_for_access(user):
+            if request.path.startswith('/api/'):
+                return JsonResponse(
+                    {'detail': 'يجب تأكيد البريد الإلكتروني قبل استخدام الواجهة البرمجية.'},
+                    status=403,
+                )
+            if not request.path.startswith(self._EXEMPT):
+                return redirect('core:verify_email_otp')
+        return self.get_response(request)
+
+
+class EnforceAdminMFAMiddleware:
+    """Require MFA for platform staff and business-sensitive roles."""
+
+    _EXEMPT = (
+        '/login', '/logout', '/verify-email/', '/mfa/', '/static/', '/media/', '/healthz',
+        '/readyz', '/i18n/', '/privacy/', '/terms/', '/password-reset', '/reset/', '/invite/',
+    )
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -41,11 +74,17 @@ class EnforceAdminMFAMiddleware:
     def __call__(self, request):
         if getattr(settings, 'ENFORCE_ADMIN_MFA', False):
             user = getattr(request, 'user', None)
-            if (user is not None and user.is_authenticated
-                    and (user.is_staff or user.is_superuser)
-                    and not getattr(user, 'mfa_enabled', False)
-                    and not request.path.startswith(self._EXEMPT)):
-                from django.shortcuts import redirect
+            if (
+                account_ready_for_access(user)
+                and mfa_required(user)
+                and not getattr(user, 'mfa_enabled', False)
+                and not request.path.startswith(self._EXEMPT)
+            ):
+                if request.path.startswith('/api/'):
+                    return JsonResponse(
+                        {'detail': 'تتطلب هذه الحسابات مصادقة متعددة العوامل عبر بوابة الويب.'},
+                        status=403,
+                    )
                 return redirect('core:mfa_setup')
         return self.get_response(request)
 
@@ -59,28 +98,27 @@ class AuditLogMiddleware:
         try:
             self._maybe_log(request, response)
         except Exception:
-            # Auditing must never break the request.
-            pass
+            # Telemetry failure must not break the request, but must remain observable.
+            logger.exception('تعذر تسجيل عملية تدقيق')
         return response
 
     def _maybe_log(self, request, response):
         path = request.path
         if request.method not in _AUDIT_METHODS:
             return
-        if any(path.startswith(p) for p in _SKIP_PREFIXES):
+        if any(path.startswith(prefix) for prefix in _SKIP_PREFIXES):
             return
         user = getattr(request, 'user', None)
         if not user or not user.is_authenticated:
             return
         from core.models import AuditLog
-        xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
-        ip = xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR')
+
         AuditLog.objects.create(
             user=user,
             company=getattr(user, 'company', None),
             method=request.method,
             path=path[:300],
             status_code=getattr(response, 'status_code', 0),
-            ip_address=ip or None,
+            ip_address=trusted_client_ip(request),
             user_agent=request.META.get('HTTP_USER_AGENT', '')[:300],
         )

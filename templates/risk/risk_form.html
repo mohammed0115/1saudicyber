@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{% if mode == 'edit' %}تعديل الخطر{% else %}خطر جديد{% endif %} - Cyber-5{% endblock %}
 {% block extra_head %}
-<style>
+<style nonce="{{ csp_nonce }}">
 .ct-form input, .ct-form select, .ct-form textarea{width:100%;box-sizing:border-box;border:1px solid #e3e1d9;
   border-radius:10px;padding:9px 11px;font-size:.92rem;color:#2b2c27;background:#fff;font-family:inherit;}
 .ct-form input:focus,.ct-form select:focus,.ct-form textarea:focus{outline:none;border-color:#1E56C9;box-shadow:0 0 0 3px rgba(31,107,99,.12);}

@@ -103,7 +103,7 @@
         <div class="px-5 sm:px-6 py-3.5 bg-gov-green-50 border-b border-gov-green-100 text-gov-green-800 font-bold flex items-center justify-between gap-3 flex-wrap">
           <span>الشركات المقبولة/المسندة</span>
           <input type="text" id="assignedSearch" placeholder="بحث باسم الشركة…" aria-label="بحث الشركات المُسندة"
-                 oninput="(function(q){document.querySelectorAll('#assignedTbody tr[data-company]').forEach(function(r){r.style.display=r.getAttribute('data-company').indexOf(q)>-1?'':'none'})})(this.value.toLowerCase())"
+                 data-company-filter="#assignedTbody"
                  class="text-xs font-normal border border-gov-gray-300 rounded-lg px-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-gov-green-500/30">
         </div>
         <div class="overflow-x-auto">

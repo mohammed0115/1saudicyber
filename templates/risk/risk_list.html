@@ -10,9 +10,6 @@
         <p class="text-gov-gray-600">إدارة مخاطر شركتك ومهام المعالجة. القرار النهائي للامتثال يبقى للمدقّق.</p>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
-        <a href="{% url 'risk:aggregate' %}"
-           class="bg-white text-gov-green-800 border border-gov-green-700 px-4 py-2 rounded-lg text-sm">
-          <i class="fas fa-layer-group ms-1"></i> عرض مجمّع حسب المجال</a>
         <form method="post" action="{% url 'risk:generate' %}" data-smart-processing class="inline">
           {% csrf_token %}
           <button type="submit" class="bg-gov-green-700 hover:bg-gov-green-800 text-white px-4 py-2 rounded-lg text-sm">

@@ -1,6 +1,7 @@
 """
 Core Views - Landing page, Registration, Authentication
 """
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
@@ -8,7 +9,9 @@ from django.contrib import messages
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.utils.translation import gettext as _
+from django.utils import timezone
 from .models import Company, User
+from .security import safe_next_url
 from .forms import CompanyRegistrationForm
 from .forms import SECTOR_CHOICES_AR as _SECTOR_AR, SIZE_CHOICES_AR as _SIZE_AR
 from ai_engine.services import classify_company
@@ -140,8 +143,8 @@ def register_company(request):
         send_verification_email(user)
 
         login(request, user)
-        messages.success(request, _('تم تسجيل الشركة بنجاح. جارٍ تجهيز التصنيف الأولي.'))
-        return redirect('dashboard:main')
+        messages.success(request, _('تم إنشاء الحساب. أكّد بريدك الإلكتروني للمتابعة.'))
+        return redirect('core:verify_email_otp')
 
     return render(request, 'core/register.html', {
         'form': CompanyRegistrationForm(),
@@ -166,13 +169,16 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login_throttle.clear(username, request)
+            if not user.email_verified:
+                login(request, user)
+                messages.info(request, 'أكّد بريدك الإلكتروني قبل الوصول إلى بيانات المنشأة.')
+                return redirect('core:verify_email_otp')
             if getattr(user, 'mfa_enabled', False):
                 request.session['mfa_pending_user'] = user.id
-                request.session['mfa_next'] = request.GET.get('next', '/dashboard/')
+                request.session['mfa_next'] = safe_next_url(request)
                 return redirect('core:mfa_challenge')
             login(request, user)
-            next_url = request.GET.get('next', '/dashboard/')
-            return redirect(next_url)
+            return redirect(safe_next_url(request))
         login_throttle.record_failure(username, request)
         # PILOT-HOTFIX-B (C): surface the failure INLINE on /login/ via template
         # context — NOT via global django messages, which persist in the session and
@@ -229,6 +235,10 @@ def verify_email(request, token):
         vt = EmailVerificationToken.objects.select_related('user').get(token=token, used=False)
     except EmailVerificationToken.DoesNotExist:
         messages.error(request, 'رابط التحقق غير صالح أو استُخدم من قبل.')
+        return redirect('core:login')
+    max_age = getattr(settings, 'EMAIL_VERIFICATION_LINK_MAX_AGE', 86400)
+    if (timezone.now() - vt.created_at).total_seconds() > max_age:
+        messages.error(request, 'انتهت صلاحية رابط التحقق. اطلب رمزًا جديدًا.')
         return redirect('core:login')
     vt.used = True
     vt.save(update_fields=['used'])

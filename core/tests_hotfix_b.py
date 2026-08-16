@@ -34,9 +34,9 @@ class AdminBrandingSafetyTests(TestCase):
         self.client.force_login(self.su)
 
     def test_admin_branding_values(self):
-        self.assertEqual(django_admin.site.site_header, 'Get Solution Company — 1SaudiCyber Admin')
+        self.assertEqual(django_admin.site.site_header, 'Get Solution Company — Cyber-5 Admin')
         self.assertEqual(django_admin.site.site_title, 'Get Solution Company')
-        self.assertEqual(django_admin.site.index_title, '1SaudiCyber Operations Administration')
+        self.assertEqual(django_admin.site.index_title, 'Cyber-5 Operations Administration')
 
     def test_user_change_password_is_not_raw_editable_field(self):
         target = _user('someuser@x.com', company=_company())
