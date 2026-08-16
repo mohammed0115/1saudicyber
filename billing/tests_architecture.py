@@ -50,3 +50,16 @@ class PaymentEventInboxTests(TestCase):
         event.event_type = 'mutated'
         with self.assertRaises(RuntimeError):
             event.save()
+
+
+class EntitlementFailClosedTests(TestCase):
+    def test_missing_subscription_hard_blocks_metered_feature(self):
+        from billing.access import check_feature_access
+        company = Company.objects.create(
+            name='No Subscription Tenant', cr_number='9900000012',
+            sector='technology', size='micro',
+        )
+        result = check_feature_access(company, 'evidence_upload')
+        self.assertFalse(result.allowed)
+        self.assertTrue(result.blocks_view)
+        self.assertEqual(result.reason_code, 'no_subscription')

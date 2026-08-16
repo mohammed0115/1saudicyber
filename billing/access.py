@@ -67,11 +67,13 @@ class FeatureAccessResult:
 
     @property
     def blocks_view(self):
-        """True only for hard plan restrictions (disabled flag / limit reached).
+        """Fail closed whenever the company has no entitlement for a feature.
 
-        A missing subscription does NOT hard-block the internal readiness tools.
+        Registration and intake are intentionally outside this feature gate. All
+        metered readiness operations must have an active subscription, an enabled
+        plan flag and remaining quota before a view may execute them.
         """
-        return (not self.allowed) and self.reason_code in ('feature_disabled', 'limit_reached')
+        return not self.allowed
 
     def as_dict(self):
         return {
@@ -194,8 +196,7 @@ def audit_feature_block(actor, company, result, request=None):
 
 
 def enforce_feature(request, company, feature_code, usage=None):
-    """Check + audit. Returns (result, blocked: bool). ``blocked`` is True only for hard
-    plan restrictions; the caller then renders/redirects with a safe upgrade message."""
+    """Check + audit. ``blocked`` is true for every denied entitlement."""
     result = check_feature_access(company, feature_code, usage=usage)
     blocked = result.blocks_view
     if blocked:
