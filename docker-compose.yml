@@ -50,7 +50,7 @@ services:
       # web-servable. No route or proxy exposes /app/private_media; only authorized views read it.
       - private_media_volume:/app/private_media
     ports:
-      - "${WEB_BIND_HOST:-127.0.0.1}:${WEB_PORT:-8000}:8000"
+      - "${WEB_PORT:-8000}:8000"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz/', timeout=5).status==200 else 1)\""]
       interval: 30s
