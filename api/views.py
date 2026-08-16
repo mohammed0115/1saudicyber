@@ -12,6 +12,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serial
 from drf_spectacular.types import OpenApiTypes
 
 from core.models import Company, User
+from core.tenancy import TenantScopeError, require_company_for, scoped_queryset
 from compliance.models import (
     Control, CompanyControl, Evidence, ControlAssessment, EvidenceSubmission,
 )
@@ -30,7 +31,11 @@ MAXSZ = lambda: getattr(settings, 'MAX_EVIDENCE_FILE_SIZE', 50 * 1024 * 1024)
 
 
 def _require_company(request):
-    return getattr(request.user, 'company', None)
+    """Resolve the active tenant through the central membership boundary."""
+    try:
+        return require_company_for(request.user)
+    except TenantScopeError:
+        return None
 
 
 @extend_schema(summary="تسجيل شركة جديدة + مستخدم مسؤول", request=RegisterSerializer,
@@ -53,6 +58,9 @@ def register(request):
             first_name=d['first_name'], last_name=d['last_name'],
             company=company, role='company_admin',
         )
+        from core.tenant_services import ensure_company_journey, ensure_company_membership
+        ensure_company_membership(user, company, role='company_admin')
+        ensure_company_journey(company)
     from core.views import _create_company_control_checklist
     _create_company_control_checklist(company)
     from core.services import send_verification_email
@@ -72,7 +80,7 @@ def controls(request):
     company = _require_company(request)
     if not company:
         return Response({'detail': 'No company associated.'}, status=400)
-    qs = CompanyControl.objects.filter(company=company).select_related(
+    qs = scoped_queryset(CompanyControl, company).select_related(
         'control', 'control__framework', 'control__domain')
     fw = request.query_params.get('framework')
     if fw:
@@ -103,7 +111,7 @@ def assessments(request):
     company = _require_company(request)
     if not company:
         return Response({'detail': 'No company associated.'}, status=400)
-    qs = ControlAssessment.objects.filter(company=company).select_related(
+    qs = scoped_queryset(ControlAssessment, company).select_related(
         'control', 'control__framework')
     fw = request.query_params.get('framework')
     if fw:
@@ -125,7 +133,7 @@ def evidence_submissions(request):
     company = _require_company(request)
     if not company:
         return Response({'detail': 'No company associated.'}, status=400)
-    qs = EvidenceSubmission.objects.filter(company=company)
+    qs = scoped_queryset(EvidenceSubmission, company)
     st = request.query_params.get('status')
     if st:
         qs = qs.filter(status=st)
@@ -237,7 +245,7 @@ def gap_analysis(request):
     company = _require_company(request)
     if not company:
         return Response({'detail': 'No company associated.'}, status=400)
-    latest = (GapAnalysis.objects.filter(company=company)
+    latest = (scoped_queryset(GapAnalysis, company)
               .order_by('framework_code', '-generated_at'))
     seen, rows = set(), []
     for g in latest:
@@ -256,10 +264,10 @@ def dashboard_executive(request):
         return Response({'detail': 'No company associated.'}, status=400)
     return Response({
         'company': CompanySerializer(company).data,
-        'open_alerts': Alert.objects.filter(company=company, is_resolved=False).count(),
-        'critical_alerts': Alert.objects.filter(company=company, is_resolved=False, severity='critical').count(),
+        'open_alerts': scoped_queryset(Alert, company).filter(is_resolved=False).count(),
+        'critical_alerts': scoped_queryset(Alert, company).filter(is_resolved=False, severity='critical').count(),
         'scores': ComplianceScoreSerializer(
-            ComplianceScore.objects.filter(company=company).order_by('-date')[:30], many=True).data,
+            scoped_queryset(ComplianceScore, company).order_by('-date')[:30], many=True).data,
     })
 
 
@@ -285,7 +293,7 @@ def monitoring_scores(request):
     company = _require_company(request)
     if not company:
         return Response({'detail': 'No company associated.'}, status=400)
-    qs = ComplianceScore.objects.filter(company=company).order_by('-date')[:90]
+    qs = scoped_queryset(ComplianceScore, company).order_by('-date')[:90]
     return Response(ComplianceScoreSerializer(qs, many=True).data)
 
 
@@ -296,7 +304,7 @@ def monitoring_alerts(request):
     company = _require_company(request)
     if not company:
         return Response({'detail': 'No company associated.'}, status=400)
-    qs = Alert.objects.filter(company=company).order_by('-created_at')[:100]
+    qs = scoped_queryset(Alert, company).order_by('-created_at')[:100]
     return Response(AlertSerializer(qs, many=True).data)
 
 

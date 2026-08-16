@@ -113,6 +113,9 @@ def register_company(request):
                 company=company,
                 role='company_admin',
             )
+            from .tenant_services import ensure_company_journey, ensure_company_membership
+            ensure_company_membership(user, company, role='company_admin')
+            ensure_company_journey(company)
 
         # Run AI Classification (best-effort; failure must not block registration)
         try:
@@ -387,6 +390,9 @@ def company_self_register(request):
                     first_name=d['first_name'], last_name=d['last_name'],
                     phone=d.get('phone', ''), company=company, role='company_admin',
                 )
+                from .tenant_services import ensure_company_journey, ensure_company_membership
+                ensure_company_membership(user, company, role='company_admin')
+                ensure_company_journey(company)
             login(request, user)
             # Phase 8D-3B-AUTH-A: issue + email a 6-digit verification OTP (non-blocking).
             from . import otp_services as otp

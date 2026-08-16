@@ -38,24 +38,36 @@ def _sweep(per_company):
              soft_time_limit=_SWEEP_SOFT, time_limit=_SWEEP_HARD)
 def recalculate_all_scores():
     from monitoring.services import recalculate_score
-    ok, failed = _sweep(recalculate_score)
-    return f'recalculated {ok} companies ({failed} failed)'
+    from monitoring.task_locks import task_lease
+    with task_lease('recalculate_all_scores', timeout=_SWEEP_HARD + 60) as acquired:
+        if not acquired:
+            return 'skipped: another score sweep is running'
+        ok, failed = _sweep(recalculate_score)
+        return f'recalculated {ok} companies ({failed} failed)'
 
 
 @shared_task(name='monitoring.tasks.generate_monthly_reports', acks_late=True,
              soft_time_limit=_SWEEP_SOFT, time_limit=_SWEEP_HARD)
 def generate_monthly_reports():
     from monitoring.services import generate_monthly_report
-    ok, failed = _sweep(generate_monthly_report)
-    return f'generated {ok} monthly reports ({failed} failed)'
+    from monitoring.task_locks import task_lease
+    with task_lease('generate_monthly_reports', timeout=_SWEEP_HARD + 60) as acquired:
+        if not acquired:
+            return 'skipped: another monthly-report sweep is running'
+        ok, failed = _sweep(generate_monthly_report)
+        return f'generated {ok} monthly reports ({failed} failed)'
 
 
 @shared_task(name='monitoring.tasks.run_compliance_checks', acks_late=True,
              soft_time_limit=_SWEEP_SOFT, time_limit=_SWEEP_HARD)
 def run_compliance_checks():
     from monitoring.services import run_company_checks
-    ok, failed = _sweep(run_company_checks)
-    return {'companies_checked': ok, 'companies_failed': failed}
+    from monitoring.task_locks import task_lease
+    with task_lease('run_compliance_checks', timeout=_SWEEP_HARD + 60) as acquired:
+        if not acquired:
+            return {'companies_checked': 0, 'companies_failed': 0, 'skipped': True}
+        ok, failed = _sweep(run_company_checks)
+        return {'companies_checked': ok, 'companies_failed': failed, 'skipped': False}
 
 
 @shared_task(bind=True, name='ai_engine.tasks.analyze_evidence_async',

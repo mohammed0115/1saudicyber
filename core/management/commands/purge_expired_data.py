@@ -21,7 +21,7 @@ class Command(BaseCommand):
         from ai_engine.models import AIAuditLog, AIClassificationLog
 
         if 'audit_logs' in ret:
-            n, _ = AuditLog.objects.filter(created_at__lt=now - timedelta(days=ret['audit_logs'])).delete()
+            n = AuditLog.objects.purge_before(now - timedelta(days=ret['audit_logs']))
             deleted['audit_logs'] = n
         if 'alerts' in ret:
             n, _ = Alert.objects.filter(created_at__lt=now - timedelta(days=ret['alerts']), is_resolved=True).delete()

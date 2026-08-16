@@ -34,10 +34,14 @@ def is_auditor_user(user):
 
 
 def get_user_company(user):
-    """The user's linked Company or None."""
+    """Resolve the user's active company through the central tenant boundary."""
     if not getattr(user, 'is_authenticated', False):
         return None
-    return getattr(user, 'company', None)
+    from core.tenancy import TenantScopeError, active_company_for
+    try:
+        return active_company_for(user)
+    except TenantScopeError:
+        return None
 
 
 def is_company_user(user):

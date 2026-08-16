@@ -3,6 +3,7 @@ Core Models - User and Company Registration
 """
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.models import Q
 
 
 class CustomUserManager(BaseUserManager):
@@ -70,6 +71,36 @@ class User(AbstractUser):
         return decrypt_secret(self.mfa_secret)
 
 
+class CompanyMembership(models.Model):
+    """Explicit, auditable membership of a user in a company tenant.
+
+    ``User.company`` remains a compatibility pointer for legacy code. New tenant
+    resolution uses active memberships, which allows one account to work with
+    more than one company without weakening the tenant boundary.
+    """
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='company_memberships')
+    company = models.ForeignKey('Company', on_delete=models.CASCADE, related_name='memberships')
+    role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, default='compliance_officer')
+    is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(default=True)
+    joined_at = models.DateTimeField(auto_now_add=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'company_memberships'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'company'], name='company_membership_unique'),
+            models.UniqueConstraint(
+                fields=['user'], condition=Q(is_active=True, is_default=True),
+                name='company_membership_one_active_default',
+            ),
+        ]
+        indexes = [models.Index(fields=['company', 'is_active'])]
+
+    def __str__(self):
+        return f'{self.user_id}@{self.company_id} ({self.role})'
+
+
 class CompanyDeletionProtected(Exception):
     """Raised when application code tries to hard-delete a Company that owns a final audit
     record (an issued AuditReport) — those records must be retained, not silently cascaded away."""
@@ -127,8 +158,10 @@ class Company(models.Model):
         ('classified', 'Classified'),
         ('in_assessment', 'In Assessment'),
         ('audit_ready', 'Audit Ready'),
-        ('certified', 'Certified'),
-        ('expired', 'Certificate Expired'),
+        # Cyber-5 provides readiness tooling and internal reviews; it never
+        # represents an official external certification.
+        ('review_ready', 'Ready for Internal Review'),
+        ('expired', 'Review Expired'),
     ]
 
     name = models.CharField(max_length=255)
@@ -205,6 +238,38 @@ class Company(models.Model):
         return frameworks
 
 
+class CompanyJourney(models.Model):
+    """Single persisted source for the company-facing readiness journey.
+
+    Product screens use this state instead of inferring a journey from unrelated
+    status fields. Transitions are intentionally product-neutral and do not
+    imply a regulator-issued certificate.
+    """
+    STATE_CHOICES = [
+        ('registered', 'Registered'),
+        ('subscription_pending', 'Subscription Pending'),
+        ('intake_in_progress', 'Intake In Progress'),
+        ('scope_ready', 'Framework Scope Ready'),
+        ('evidence_in_progress', 'Evidence In Progress'),
+        ('review_ready', 'Ready for Internal Review'),
+        ('under_internal_review', 'Under Internal Review'),
+        ('review_closed', 'Internal Review Closed'),
+    ]
+    company = models.OneToOneField(Company, on_delete=models.CASCADE, related_name='journey')
+    state = models.CharField(max_length=32, choices=STATE_CHOICES, default='registered')
+    state_reason = models.CharField(max_length=250, blank=True)
+    version = models.PositiveIntegerField(default=1)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'company_journeys'
+        indexes = [models.Index(fields=['state', 'updated_at'])]
+
+    def __str__(self):
+        return f'{self.company_id}: {self.state}'
+
+
 class EmailVerificationToken(models.Model):
     """One-time token emailed to a user to verify their address (FR-002.8)."""
     import uuid as _uuid
@@ -252,6 +317,18 @@ class EmailOTP(models.Model):
         return timezone.now() >= self.expires_at
 
 
+class AuditLogQuerySet(models.QuerySet):
+    """Application-facing audit logs are immutable after insertion."""
+    def delete(self):
+        raise RuntimeError('AuditLog is append-only; use the retention service.')
+
+
+class AuditLogManager(models.Manager.from_queryset(AuditLogQuerySet)):
+    def purge_before(self, when):
+        """Retention-only hard delete, intentionally not exposed as QuerySet.delete()."""
+        return self.get_queryset().filter(created_at__lt=when)._raw_delete(self.db)
+
+
 class AuditLog(models.Model):
     """General system audit trail for all user actions (FR-012.8 / NFR-021 / NFR-046)."""
     user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_entries')
@@ -265,6 +342,8 @@ class AuditLog(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
+    objects = AuditLogManager()
+
     class Meta:
         db_table = 'audit_logs'
         ordering = ['-created_at']
@@ -273,6 +352,14 @@ class AuditLog(models.Model):
     def __str__(self):
         who = self.user.email if self.user else 'anonymous'
         return f"{who} {self.method} {self.path} [{self.status_code}]"
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise RuntimeError('AuditLog is append-only and cannot be updated.')
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise RuntimeError('AuditLog is append-only; use the retention service.')
 
 
 class UserInvite(models.Model):

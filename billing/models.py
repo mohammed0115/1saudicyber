@@ -147,3 +147,54 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.company_id}:{self.amount} {self.currency} ({self.status})"
+
+
+class PaymentEvent(models.Model):
+    """Append-only provider event inbox used for idempotent payment processing."""
+    PROVIDER_CHOICES = Payment.PROVIDER_CHOICES
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='payment_events')
+    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='provider_events')
+    provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES)
+    provider_event_id = models.CharField(max_length=160)
+    event_type = models.CharField(max_length=80, blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    signature_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'payment_events'
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['provider', 'provider_event_id'],
+                                    name='payment_event_provider_event_unique'),
+        ]
+        indexes = [models.Index(fields=['payment', 'created_at'])]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise RuntimeError('PaymentEvent is append-only and cannot be updated.')
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise RuntimeError('PaymentEvent is append-only and cannot be deleted.')
+
+
+class PaymentEventProcessing(models.Model):
+    """Mutable processing projection for an immutable provider event."""
+    STATUS_CHOICES = [
+        ('received', 'Received'), ('processing', 'Processing'), ('completed', 'Completed'),
+        ('deferred', 'Deferred'), ('failed', 'Failed'),
+    ]
+    event = models.OneToOneField(PaymentEvent, on_delete=models.CASCADE, related_name='processing')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='received')
+    attempt_count = models.PositiveIntegerField(default=0)
+    last_error = models.CharField(max_length=500, blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'payment_event_processing'
+        indexes = [models.Index(fields=['status', 'updated_at'])]

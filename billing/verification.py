@@ -17,6 +17,7 @@ import hmac
 from django.db import transaction
 from django.utils import timezone
 
+from . import event_services as event_inbox
 from . import moyasar
 from . import subscription_services as svc
 
@@ -264,17 +265,27 @@ def process_moyasar_webhook(payload, headers=None):
                extra={'reason': 'unknown_payment'})
         return {'ok': True, 'action': 'ignored', 'http_status': 200, 'reason': 'unknown_payment'}
 
+    # Claim a provider event before fetching. The immutable inbox suppresses an
+    # identical retry while the processing projection preserves deferred work.
+    event, claimed = event_inbox.record_event(
+        'moyasar', payload, payment=payment, company=payment.company, signature_verified=True,
+    )
+    if not claimed:
+        return {'ok': True, 'action': 'duplicate', 'http_status': 200, 'reason': 'event_already_claimed'}
+
     # Server-side Fetch is the source of truth for activation.
     fetch_id = ppid or payment.provider_payment_id
     fetched = moyasar.fetch_moyasar_payment(fetch_id) if fetch_id else {'ok': False, 'error': 'no_id'}
     if not fetched.get('ok'):
         # Do not trust the inbound body for *any* state transition when the provider is unavailable.
+        event_inbox.mark_event_outcome(event, status='deferred', error=fetched.get('error', 'fetch_failed'))
         _audit(None, payment.company, 'moyasar_webhook_invalid', payment, 'webhook',
                provider_status, extra={'reason': 'fetch_failed:%s' % fetched.get('error', '')})
         return {'ok': False, 'action': 'deferred', 'http_status': 503, 'reason': 'fetch_failed'}
 
     result = process_moyasar_payment_result(payment, fetched['payload'], source='webhook',
                                             allow_activation=True)
+    event_inbox.mark_event_outcome(event, status='completed')
     result['http_status'] = 200
     return result
 
