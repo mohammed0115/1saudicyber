@@ -37,9 +37,12 @@ done
 verify_sql() {
   [[ -s "$1" ]] || { echo "SQL backup is empty or missing: $1" >&2; return 1; }
   gzip -t "$1"
-  # pg_dump always emits this header; reject gzip files that are empty or contain
-  # a proxy/error response instead of a real dump.
-  gzip -cd "$1" | head -200 | grep -q 'PostgreSQL database dump'
+  # pg_dump always emits this header. sed consumes the complete decompressed
+  # stream while emitting only its first 200 lines, so pipefail does not treat a
+  # deliberately closed head pipe as a gzip/SIGPIPE failure.
+  local header
+  header="$(gzip -cd "$1" | sed -n '1,200p')"
+  grep -q 'PostgreSQL database dump' <<< "$header"
 }
 
 verify_media() {
